@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { PaymentVoucherRecord } from "@/lib/mock-data";
 import {
@@ -31,7 +32,7 @@ import {
 } from "lucide-react";
 
 interface PaymentsTabProps {
-  onSelectVoucher: (voucher: PaymentVoucherRecord) => void;
+  onSelectVoucher?: (voucher: PaymentVoucherRecord) => void;
 }
 
 export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
@@ -480,10 +481,11 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
 
                     <MuiTableCell align="center">
                       <MuiButton
+                        component={Link}
+                        href={`/accounting/vouchers/${vch.id}`}
                         variant="outlined"
                         size="small"
                         color="primary"
-                        onClick={() => onSelectVoucher(vch)}
                         startIcon={<Printer className="h-3 w-3" />}
                       >
                         Print Voucher

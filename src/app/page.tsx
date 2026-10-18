@@ -6,10 +6,6 @@ import Link from "next/link";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import { formatCurrency } from "@/lib/utils";
-import { VehicleDeedModal } from "@/components/VehicleDeedModal";
-import { VehicleIntakeModal } from "@/components/VehicleIntakeModal";
-import { VehicleQuickViewModal } from "@/components/VehicleQuickViewModal";
-import { VehicleCompareModal } from "@/components/VehicleCompareModal";
 import { CompareBar } from "@/components/CompareBar";
 import { VehicleItem } from "@/lib/mock-data";
 import { exportInventoryToCSV } from "@/lib/export-utils";
@@ -67,10 +63,6 @@ export default function ErpOperationsCockpit() {
 
   const t = translations[language];
 
-  const [isIntakeOpen, setIsIntakeOpen] = useState(false);
-  const [selectedDeedVehicle, setSelectedDeedVehicle] = useState<VehicleItem | null>(null);
-  const [quickViewVehicle, setQuickViewVehicle] = useState<VehicleItem | null>(null);
-  const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -213,10 +205,11 @@ export default function ErpOperationsCockpit() {
           </MuiButton>
 
           <MuiButton
+            component={Link}
+            href="/intake"
             variant="contained"
             color="primary"
             size="small"
-            onClick={() => setIsIntakeOpen(true)}
             startIcon={<Plus className="h-4 w-4" />}
           >
             {t.addNewVehicle}
@@ -565,10 +558,10 @@ export default function ErpOperationsCockpit() {
                       {/* Vehicle & Stock with Thumbnail */}
                       <MuiTableCell>
                         <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => setQuickViewVehicle(veh)}
-                            className="relative h-11 w-14 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 group/thumb cursor-pointer"
-                            title="Click for quick view"
+                          <Link
+                            href={`/vehicles/${veh.id}`}
+                            className="relative h-11 w-14 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 group/thumb cursor-pointer block"
+                            title="Inspect vehicle dossier"
                           >
                             <Image
                               src={veh.images[0]}
@@ -579,7 +572,7 @@ export default function ErpOperationsCockpit() {
                             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center text-white transition-opacity">
                               <Eye className="h-3 w-3" />
                             </div>
-                          </button>
+                          </Link>
 
                           <div>
                             <Link
@@ -661,18 +654,20 @@ export default function ErpOperationsCockpit() {
                       <MuiTableCell align="right">
                         <div className="flex items-center justify-end gap-1">
                           <IconButton
+                            component={Link}
+                            href={`/vehicles/${veh.id}`}
                             size="small"
                             color="primary"
-                            onClick={() => setQuickViewVehicle(veh)}
-                            title="Quick Inspect"
+                            title="Inspect vehicle dossier"
                           >
                             <Eye className="h-4 w-4" />
                           </IconButton>
 
                           <IconButton
+                            component={Link}
+                            href={`/vehicles/${veh.id}/deed`}
                             size="small"
                             color="warning"
-                            onClick={() => setSelectedDeedVehicle(veh)}
                             title="Generate Official Bilingual Deed"
                           >
                             <FileText className="h-4 w-4" />
@@ -712,33 +707,7 @@ export default function ErpOperationsCockpit() {
         </div>
       </div>
 
-      {/* Global Modals */}
-      <VehicleIntakeModal
-        isOpen={isIntakeOpen}
-        onClose={() => setIsIntakeOpen(false)}
-      />
-
-      <VehicleQuickViewModal
-        vehicle={quickViewVehicle}
-        isOpen={!!quickViewVehicle}
-        onClose={() => setQuickViewVehicle(null)}
-        onOpenDeed={(v) => setSelectedDeedVehicle(v)}
-      />
-
-      {selectedDeedVehicle && (
-        <VehicleDeedModal
-          vehicle={selectedDeedVehicle}
-          isOpen={!!selectedDeedVehicle}
-          onClose={() => setSelectedDeedVehicle(null)}
-        />
-      )}
-
-      <VehicleCompareModal
-        isOpen={isCompareOpen}
-        onClose={() => setIsCompareOpen(false)}
-      />
-
-      <CompareBar onOpenCompare={() => setIsCompareOpen(true)} />
+      <CompareBar />
     </div>
   );
 }

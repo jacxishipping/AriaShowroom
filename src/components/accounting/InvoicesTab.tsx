@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { InvoiceRecord } from "@/lib/mock-data";
 import {
@@ -28,7 +29,7 @@ import {
 } from "lucide-react";
 
 interface InvoicesTabProps {
-  onSelectInvoice: (invoice: InvoiceRecord) => void;
+  onSelectInvoice?: (invoice: InvoiceRecord) => void;
 }
 
 export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
@@ -334,9 +335,10 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                   </MuiTableCell>
                   <MuiTableCell align="right">
                     <IconButton
+                      component={Link}
+                      href={`/accounting/invoices/${inv.id}`}
                       size="small"
                       color="primary"
-                      onClick={() => onSelectInvoice(inv)}
                       title="View & Print Official Invoice"
                     >
                       <Eye className="h-4 w-4" />

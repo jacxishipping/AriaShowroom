@@ -1,12 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useShowroomStore, RoleType } from "@/store/useShowroomStore";
-import { VehicleIntakeModal } from "@/components/VehicleIntakeModal";
-import { VehicleDeedModal } from "@/components/VehicleDeedModal";
-import { CommercialInvoiceModal } from "@/components/CommercialInvoiceModal";
-import { PaymentVoucherModal } from "@/components/PaymentVoucherModal";
-import { SupplierLedgerModal } from "@/components/SupplierLedgerModal";
 import { InvoicesTab } from "@/components/accounting/InvoicesTab";
 import { SuppliersTab } from "@/components/accounting/SuppliersTab";
 import { ExpensesTab } from "@/components/accounting/ExpensesTab";
@@ -108,13 +104,6 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<
     "inventory" | "crm" | "sales" | "invoices" | "suppliers" | "expenses" | "payments" | "accounting"
   >("inventory");
-
-  // Modals
-  const [isIntakeOpen, setIsIntakeOpen] = useState(false);
-  const [selectedDeedVehicle, setSelectedDeedVehicle] = useState<VehicleItem | null>(null);
-  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRecord | null>(null);
-  const [selectedVoucher, setSelectedVoucher] = useState<PaymentVoucherRecord | null>(null);
-  const [selectedSupplier, setSelectedSupplier] = useState<SupplierRecord | null>(null);
 
   // Search in inventory table
   const [inventorySearch, setInventorySearch] = useState("");
@@ -305,10 +294,11 @@ export default function AdminDashboardPage() {
 
             {currentRole !== "Accountant" && (
               <MuiButton
+                component={Link}
+                href="/intake"
                 variant="contained"
                 color="primary"
                 size="small"
-                onClick={() => setIsIntakeOpen(true)}
                 startIcon={<Plus className="h-4 w-4" />}
               >
                 <span>{t.addNewVehicle}</span>
@@ -379,9 +369,10 @@ export default function AdminDashboardPage() {
                             <Eye className="h-4 w-4" />
                           </IconButton>
                           <IconButton
+                            component={Link}
+                            href={`/vehicles/${veh.id}/deed`}
                             size="small"
                             color="primary"
-                            onClick={() => setSelectedDeedVehicle(veh)}
                             title="Print Legal Deed"
                           >
                             <FileText className="h-4 w-4" />
@@ -666,67 +657,19 @@ export default function AdminDashboardPage() {
       )}
 
       {/* TAB 4: COMMERCIAL INVOICING */}
-      {activeTab === "invoices" && (
-        <InvoicesTab onSelectInvoice={(inv) => setSelectedInvoice(inv)} />
-      )}
+      {activeTab === "invoices" && <InvoicesTab />}
 
       {/* TAB 5: SUPPLIER LEDGER (ACCOUNTS PAYABLE) */}
-      {activeTab === "suppliers" && (
-        <SuppliersTab onSelectSupplier={(sup) => setSelectedSupplier(sup)} />
-      )}
+      {activeTab === "suppliers" && <SuppliersTab />}
 
       {/* TAB 6: VEHICLE EXPENSES & DIRECT LANDED COST */}
       {activeTab === "expenses" && <ExpensesTab />}
 
       {/* TAB 7: PAYMENT VOUCHERS & CASHFLOW */}
-      {activeTab === "payments" && (
-        <PaymentsTab onSelectVoucher={(vch) => setSelectedVoucher(vch)} />
-      )}
+      {activeTab === "payments" && <PaymentsTab />}
 
       {/* TAB 8: FULL GENERAL LEDGER ACCOUNTING */}
       {activeTab === "accounting" && <AccountingTab />}
-
-      {/* Vehicle Stock Intake Modal */}
-      <VehicleIntakeModal
-        isOpen={isIntakeOpen}
-        onClose={() => setIsIntakeOpen(false)}
-      />
-
-      {/* Vehicle Deed Triggered from Inventory */}
-      {selectedDeedVehicle && (
-        <VehicleDeedModal
-          vehicle={selectedDeedVehicle}
-          isOpen={!!selectedDeedVehicle}
-          onClose={() => setSelectedDeedVehicle(null)}
-        />
-      )}
-
-      {/* Commercial Invoice Modal */}
-      {selectedInvoice && (
-        <CommercialInvoiceModal
-          invoice={selectedInvoice}
-          isOpen={!!selectedInvoice}
-          onClose={() => setSelectedInvoice(null)}
-        />
-      )}
-
-      {/* Payment Voucher Modal */}
-      {selectedVoucher && (
-        <PaymentVoucherModal
-          voucher={selectedVoucher}
-          isOpen={!!selectedVoucher}
-          onClose={() => setSelectedVoucher(null)}
-        />
-      )}
-
-      {/* Supplier Statement Ledger Modal */}
-      {selectedSupplier && (
-        <SupplierLedgerModal
-          supplier={selectedSupplier}
-          isOpen={!!selectedSupplier}
-          onClose={() => setSelectedSupplier(null)}
-        />
-      )}
     </div>
   );
 }

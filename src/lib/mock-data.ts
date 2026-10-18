@@ -34,6 +34,7 @@ export interface VehicleItem {
   driveType: "4WD" | "AWD" | "FWD" | "RWD";
   color: string;
   status: "In Transit" | "Under Prep/Maintenance" | "Available on Lot" | "Reserved/Deposit Paid" | "Sold";
+  yardLocation?: string;
   purchasePrice: number; // USD
   freightCost: number; // USD
   customsDuty: number; // USD (Herat Customs)

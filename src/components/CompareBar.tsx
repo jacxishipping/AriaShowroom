@@ -2,12 +2,13 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { X, ArrowRight, Layers } from "lucide-react";
 import { MuiButton, IconButton } from "@/components/mui";
 
 interface CompareBarProps {
-  onOpenCompare: () => void;
+  onOpenCompare?: () => void;
 }
 
 export function CompareBar({ onOpenCompare }: CompareBarProps) {
@@ -57,7 +58,8 @@ export function CompareBar({ onOpenCompare }: CompareBarProps) {
             Clear
           </MuiButton>
           <MuiButton
-            onClick={onOpenCompare}
+            component={Link}
+            href="/compare"
             variant="contained"
             color="primary"
             size="small"

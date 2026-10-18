@@ -25,15 +25,16 @@ import {
   HelpCircle,
   Sparkles,
   Layers,
+  ScanLine,
 } from "lucide-react";
 
 interface ErpSidebarProps {
-  onOpenIntake: () => void;
+  onOpenIntake?: () => void;
 }
 
 export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
   const pathname = usePathname();
-  const { vehicles, customers, sales, language, currentRole } = useShowroomStore();
+  const { vehicles, customers, sales, language, currentRole, compareIds } = useShowroomStore();
   const [collapsed, setCollapsed] = useState(false);
 
   const t = translations[language];
@@ -54,6 +55,24 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
       href: "/inventory",
       icon: Car,
       badge: `${vehicles.length}`,
+    },
+    {
+      title: language === "ps" ? "د موټر ثبت او عکاسي" : language === "fa" ? "ثبت موتر و عکاسی" : "Vehicle Intake",
+      href: "/intake",
+      icon: PlusCircle,
+      badge: "New",
+    },
+    {
+      title: language === "ps" ? "د موټرونو مقایسه" : language === "fa" ? "مقایسه موترها" : "Fleet Comparison",
+      href: "/compare",
+      icon: Layers,
+      badge: compareIds.length > 0 ? `${compareIds.length}` : null,
+    },
+    {
+      title: language === "ps" ? "د بارکوډ او شاسي سکنر" : language === "fa" ? "اسکنر بارکد و شاسی" : "Lot VIN Scanner",
+      href: "/scanner",
+      icon: ScanLine,
+      badge: null,
     },
     {
       title: language === "ps" ? "د مدیریت او پلور انجن (ERP)" : language === "fa" ? "سیستم جامع مدیریت و CRM" : "Dealership ERP Hub",
@@ -111,11 +130,12 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
       {/* Quick Intake Button (Material Contained Button) */}
       <div className="p-3">
         <MuiButton
+          component={Link}
+          href="/intake"
           variant="contained"
           color="primary"
           fullWidth
           size="medium"
-          onClick={onOpenIntake}
           startIcon={<PlusCircle className="h-4 w-4" />}
           className={collapsed ? "!px-0 !min-w-0" : ""}
         >

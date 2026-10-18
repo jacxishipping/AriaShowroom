@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useShowroomStore, RoleType } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
-import { LotBarcodeScannerModal } from "@/components/LotBarcodeScannerModal";
 import { formatCurrency } from "@/lib/utils";
 import { MuiButton, IconButton } from "@/components/mui";
 import {
@@ -58,7 +57,6 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
 
   const [isRateEditOpen, setIsRateEditOpen] = useState(false);
   const [tempRate, setTempRate] = useState(exchangeRate.toString());
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
@@ -218,13 +216,13 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
               </button>
             )}
 
-            <button
-              onClick={() => setIsScannerOpen(true)}
+            <Link
+              href="/scanner"
               className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1"
               title="Scan VIN Barcode"
             >
               <ScanLine className="h-3.5 w-3.5" />
-            </button>
+            </Link>
 
             <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-400 border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
               ⌘K
@@ -336,21 +334,17 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                   Quick Showroom Actions
                 </span>
                 <div className="grid grid-cols-1 gap-1">
-                  {onOpenIntake && (
-                    <button
-                      onClick={() => {
-                        setIsSearchFocused(false);
-                        onOpenIntake();
-                      }}
-                      className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-200 text-left transition-colors cursor-pointer"
-                    >
-                      <Plus className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <span className="font-semibold block">Add New Vehicle Intake</span>
-                        <span className="text-[10px] text-slate-400">Register VIN, customs tariff, and landed costs</span>
-                      </div>
-                    </button>
-                  )}
+                  <Link
+                    href="/intake"
+                    onClick={() => setIsSearchFocused(false)}
+                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-200 text-left transition-colors cursor-pointer"
+                  >
+                    <Plus className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <span className="font-semibold block">Add New Vehicle Intake</span>
+                      <span className="text-[10px] text-slate-400">Register VIN, customs tariff, and landed costs</span>
+                    </div>
+                  </Link>
 
                   <Link
                     href="/inventory"
@@ -385,19 +379,18 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
       {/* Right Controls: Executive Tools & Preferences */}
       <div className="flex items-center gap-1.5 sm:gap-2.5">
         {/* Quick Add Vehicle Intake Button */}
-        {onOpenIntake && (
-          <div className="hidden sm:block">
-            <MuiButton
-              onClick={onOpenIntake}
-              variant="contained"
-              color="primary"
-              size="small"
-              startIcon={<Plus className="h-3.5 w-3.5" />}
-            >
-              New Intake
-            </MuiButton>
-          </div>
-        )}
+        <div className="hidden sm:block">
+          <MuiButton
+            component={Link}
+            href="/intake"
+            variant="contained"
+            color="primary"
+            size="small"
+            startIcon={<Plus className="h-3.5 w-3.5" />}
+          >
+            New Intake
+          </MuiButton>
+        </div>
 
         {/* Sarrafi Exchange Rate Pill */}
         <div className="relative">
@@ -640,11 +633,6 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
         </div>
       </div>
 
-      {/* Lot Barcode Scanner Modal */}
-      <LotBarcodeScannerModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-      />
     </header>
   );
 }

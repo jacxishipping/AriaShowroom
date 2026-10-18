@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { SupplierRecord } from "@/lib/mock-data";
 import {
@@ -32,7 +33,7 @@ import {
 } from "lucide-react";
 
 interface SuppliersTabProps {
-  onSelectSupplier: (supplier: SupplierRecord) => void;
+  onSelectSupplier?: (supplier: SupplierRecord) => void;
 }
 
 export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
@@ -403,10 +404,11 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                   <MuiTableCell align="center">
                     <div className="flex items-center justify-center gap-2">
                       <MuiButton
+                        component={Link}
+                        href={`/accounting/suppliers/${sup.id}`}
                         variant="outlined"
                         size="small"
                         color="primary"
-                        onClick={() => onSelectSupplier(sup)}
                         startIcon={<Eye className="h-3 w-3" />}
                       >
                         Ledger Statement

@@ -7,10 +7,7 @@ import { useParams } from "next/navigation";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { formatCurrency, formatMileage } from "@/lib/utils";
 import { translations } from "@/lib/translations";
-import { VehicleDeedModal } from "@/components/VehicleDeedModal";
 import { CustomsDocumentVault } from "@/components/CustomsDocumentVault";
-import { SarrafiSettlementModal } from "@/components/SarrafiSettlementModal";
-import { VehicleCompareModal } from "@/components/VehicleCompareModal";
 import { CompareBar } from "@/components/CompareBar";
 import { MuiCard, MuiButton, MuiChip } from "@/components/mui";
 import {
@@ -63,11 +60,8 @@ export default function VehicleDetailsPage() {
   const vehicle = vehicles.find((v) => v.id === vehicleId) || vehicles[0];
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
-  const [isDeedModalOpen, setIsDeedModalOpen] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isAllPhotosModalOpen, setIsAllPhotosModalOpen] = useState(false);
-  const [isSarrafiModalOpen, setIsSarrafiModalOpen] = useState(false);
-  const [isCompareOpen, setIsCompareOpen] = useState(false);
 
   // Financing Calculator State
   const [downPaymentPercent, setDownPaymentPercent] = useState(30);
@@ -574,7 +568,8 @@ Please schedule a viewing or share more photos.`
               </MuiButton>
 
               <MuiButton
-                onClick={() => setIsDeedModalOpen(true)}
+                component={Link}
+                href={`/vehicles/${vehicle.id}/deed`}
                 variant="contained"
                 color="primary"
                 fullWidth
@@ -585,7 +580,8 @@ Please schedule a viewing or share more photos.`
               </MuiButton>
 
               <MuiButton
-                onClick={() => setIsSarrafiModalOpen(true)}
+                component={Link}
+                href={`/vehicles/${vehicle.id}/settlement`}
                 variant="outlined"
                 color="inherit"
                 fullWidth
@@ -745,13 +741,13 @@ Please schedule a viewing or share more photos.`
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsDeedModalOpen(true)}
+            <Link
+              href={`/vehicles/${vehicle.id}/deed`}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
             >
               <FileText className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Official Deed</span>
-            </button>
+            </Link>
 
             <a
               href={whatsappUrl}
@@ -766,27 +762,7 @@ Please schedule a viewing or share more photos.`
         </div>
       </div>
 
-      {/* Bilingual Sales Deed & Contract Modal */}
-      <VehicleDeedModal
-        vehicle={vehicle}
-        isOpen={isDeedModalOpen}
-        onClose={() => setIsDeedModalOpen(false)}
-      />
-
-      {/* Sarrafi Settlement & Installment Modal */}
-      <SarrafiSettlementModal
-        vehicle={vehicle}
-        isOpen={isSarrafiModalOpen}
-        onClose={() => setIsSarrafiModalOpen(false)}
-      />
-
-      {/* Comparison Modal */}
-      <VehicleCompareModal
-        isOpen={isCompareOpen}
-        onClose={() => setIsCompareOpen(false)}
-      />
-
-      <CompareBar onOpenCompare={() => setIsCompareOpen(true)} />
+      <CompareBar />
 
       {/* Fullscreen Lightbox Modal */}
       {isLightboxOpen && (
