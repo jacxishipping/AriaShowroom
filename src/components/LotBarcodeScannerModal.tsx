@@ -13,7 +13,9 @@ import {
   Car,
   MapPin,
   Sparkles,
+  Zap,
 } from "lucide-react";
+import { MuiButton, MuiChip, MuiTextField } from "@/components/mui";
 
 interface LotBarcodeScannerModalProps {
   isOpen: boolean;
@@ -73,9 +75,15 @@ export function LotBarcodeScannerModal({
 
   if (!isOpen) return null;
 
+  const [scanningSuccess, setScanningSuccess] = useState<string | null>(null);
+
   const handleSelectVehicle = (vehicleId: string) => {
-    onClose();
-    router.push(`/vehicles/${vehicleId}`);
+    setScanningSuccess(vehicleId);
+    setTimeout(() => {
+      onClose();
+      router.push(`/vehicles/${vehicleId}`);
+      setScanningSuccess(null);
+    }, 450);
   };
 
   const handleManualSearch = (e: React.FormEvent) => {
@@ -97,11 +105,11 @@ export function LotBarcodeScannerModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
-      <div className="relative w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl dark:bg-navy-950 sm:p-8">
+      <div className="relative w-full max-w-xl rounded-2xl bg-white p-6 shadow-mui-24 dark:bg-[#121824] sm:p-7 border border-slate-200 dark:border-slate-800">
         {/* Header */}
         <div className="flex items-center justify-between border-b pb-4 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#D97706]/15 text-[#D97706]">
               <ScanLine className="h-5 w-5" />
             </div>
             <div>
@@ -122,15 +130,15 @@ export function LotBarcodeScannerModal({
         </div>
 
         {/* Yard Location Picker */}
-        <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 p-2.5 dark:bg-navy-900 border border-slate-200 dark:border-slate-800 text-xs">
+        <div className="mt-4 flex items-center justify-between rounded-lg bg-slate-50 p-2.5 dark:bg-[#1A202C] border border-slate-200 dark:border-slate-800 text-xs">
           <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-            <MapPin className="h-4 w-4 text-gold shrink-0" />
+            <MapPin className="h-4 w-4 text-[#D97706] shrink-0" />
             <span className="font-semibold">Current Yard:</span>
           </div>
           <select
             value={selectedYard}
             onChange={(e) => setSelectedYard(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium dark:border-slate-700 dark:bg-navy-950 dark:text-white"
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
           >
             <option value="Main Showroom - Bagh-e-Azadi">Main Showroom (باغ آزادی)</option>
             <option value="Yard 2 - Islam Qala Highway">Yard 2 (سرک اسلام قلعه)</option>
@@ -139,7 +147,7 @@ export function LotBarcodeScannerModal({
         </div>
 
         {/* Camera Viewport or Fallback Graphic */}
-        <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-2xl bg-black flex items-center justify-center border-2 border-slate-800">
+        <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-xl bg-black flex items-center justify-center border-2 border-slate-800">
           {hasCamera ? (
             <video
               ref={videoRef}
@@ -153,36 +161,50 @@ export function LotBarcodeScannerModal({
               <p className="text-xs text-slate-400">
                 {cameraError || "Camera scanner simulation active"}
               </p>
-              <span className="inline-block rounded-full bg-gold/10 px-3 py-1 text-[11px] font-semibold text-gold">
-                Select from verified yard stock below
-              </span>
+              <MuiChip
+                label="Select from verified yard stock below"
+                color="gold"
+                size="small"
+              />
             </div>
           )}
 
           {/* Scanner Target Box with Pulsing Laser */}
-          <div className="pointer-events-none absolute inset-x-12 inset-y-8 rounded-xl border-2 border-gold/70">
-            <div className="absolute inset-x-0 top-1/2 h-0.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse" />
+          <div className="pointer-events-none absolute inset-x-12 inset-y-8 rounded-xl border-2 border-[#D97706]/70">
+            <div className={`absolute inset-x-0 top-1/2 h-0.5 ${scanningSuccess ? "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,1)]" : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"} animate-pulse`} />
           </div>
+
+          {/* Lock Confirmation Overlay */}
+          {scanningSuccess && (
+            <div className="absolute inset-0 bg-emerald-950/70 backdrop-blur-xs flex flex-col items-center justify-center text-white animate-fadeIn">
+              <CheckCircle2 className="h-12 w-12 text-emerald-400 animate-bounce mb-1" />
+              <span className="text-sm font-bold tracking-wider uppercase text-emerald-300">
+                Barcode Recognized • Loading Sheet...
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Manual Input / Quick Match Form */}
-        <form onSubmit={handleManualSearch} className="mt-4 flex gap-2">
+        <form onSubmit={handleManualSearch} className="mt-4 flex gap-2 items-center">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
+            <MuiTextField
               placeholder="Or type Stock # or VIN (e.g. JTMCY7... or SM-HRT-101)"
               value={scannedVin}
               onChange={(e) => setScannedVin(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-9 pr-3 text-xs dark:border-slate-800 dark:bg-navy-900 dark:text-white"
+              startAdornment={<Search className="h-4 w-4 text-slate-400" />}
+              sizeVariant="small"
             />
           </div>
-          <button
+          <MuiButton
             type="submit"
-            className="rounded-xl bg-gold px-4 py-2 text-xs font-bold text-slate-950 hover:bg-gold-light transition-colors"
+            variant="contained"
+            color="gold"
+            size="small"
+            className="shrink-0 h-[34px]"
           >
             Locate Car
-          </button>
+          </MuiButton>
         </form>
 
         {/* Quick Pick Vehicles on Current Lot */}
@@ -195,10 +217,10 @@ export function LotBarcodeScannerModal({
               <button
                 key={v.id}
                 onClick={() => handleSelectVehicle(v.id)}
-                className="w-full flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/50 p-2.5 text-left text-xs transition-colors hover:border-gold hover:bg-gold/5 dark:border-slate-800 dark:bg-navy-900/60 cursor-pointer"
+                className="w-full flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/50 p-2.5 text-left text-xs transition-colors hover:border-[#1976D2] hover:bg-[#1976D2]/5 dark:border-slate-800 dark:bg-[#1A202C]/60 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <Car className="h-4 w-4 text-gold shrink-0" />
+                  <Car className="h-4 w-4 text-[#D97706] shrink-0" />
                   <div>
                     <span className="font-bold text-slate-900 dark:text-white block">
                       {v.year} {v.make} {v.model}
@@ -209,13 +231,15 @@ export function LotBarcodeScannerModal({
                   </div>
                 </div>
 
-                <div className="text-right">
+                <div className="text-right flex items-center gap-3">
                   <span className="font-mono font-bold text-slate-900 dark:text-white block">
                     ${v.sellingPrice.toLocaleString()}
                   </span>
-                  <span className="text-[10px] text-emerald-500 font-semibold">
-                    {v.status}
-                  </span>
+                  <MuiChip
+                    label={v.status}
+                    color={v.status === "Available on Lot" ? "success" : "default"}
+                    size="small"
+                  />
                 </div>
               </button>
             ))}

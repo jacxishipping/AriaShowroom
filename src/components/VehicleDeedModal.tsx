@@ -6,6 +6,7 @@ import { VehicleItem } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/utils";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { Printer, X, ShieldCheck, FileCheck, Stamp, CheckCircle2, QrCode } from "lucide-react";
+import { MuiButton, MuiTextField, MuiChip } from "@/components/mui";
 
 interface VehicleDeedModalProps {
   vehicle: VehicleItem;
@@ -80,13 +81,15 @@ export function VehicleDeedModal({ vehicle, isOpen, onClose }: VehicleDeedModalP
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <MuiButton
+              variant="contained"
+              color="gold"
+              size="small"
               onClick={handlePrint}
-              className="flex items-center gap-1.5 rounded-lg bg-navy px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-navy-800 dark:bg-gold dark:text-slate-950 dark:hover:bg-gold-light transition-colors cursor-pointer"
+              startIcon={<Printer className="h-4 w-4" />}
             >
-              <Printer className="h-4 w-4" />
-              <span>Print / Save PDF (چاپ قباله)</span>
-            </button>
+              Print / Save PDF (چاپ قباله)
+            </MuiButton>
             <button
               onClick={onClose}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 transition-colors cursor-pointer"
@@ -97,41 +100,32 @@ export function VehicleDeedModal({ vehicle, isOpen, onClose }: VehicleDeedModalP
         </div>
 
         {/* Live Buyer Input Strip (Hidden in Print) */}
-        <div className="mt-4 rounded-xl bg-slate-50 p-3 dark:bg-navy-900 border border-slate-200 dark:border-slate-800 print:hidden">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+        <div className="mt-4 rounded-xl bg-slate-50 p-4 dark:bg-[#121824] border border-slate-200 dark:border-slate-800 print:hidden space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
               Quick Buyer Data Entry (مشخصات خریدار جهت درج در قباله):
             </span>
             <span className="text-[10px] text-slate-400 font-mono">Changes update deed & QR code in real-time</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-[10px] text-slate-400 block mb-0.5">Buyer Full Name (نام خریدار)</label>
-              <input
-                type="text"
-                value={buyerName}
-                onChange={(e) => setBuyerName(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1 text-xs dark:bg-navy-950 dark:border-slate-700 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-slate-400 block mb-0.5">Tazkira / National ID (نمبر تذکره)</label>
-              <input
-                type="text"
-                value={buyerTazkira}
-                onChange={(e) => setBuyerTazkira(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1 text-xs dark:bg-navy-950 dark:border-slate-700 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-slate-400 block mb-0.5">Phone Number (شماره تماس)</label>
-              <input
-                type="text"
-                value={buyerPhone}
-                onChange={(e) => setBuyerPhone(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1 text-xs dark:bg-navy-950 dark:border-slate-700 dark:text-white"
-              />
-            </div>
+            <MuiTextField
+              label="Buyer Full Name (نام خریدار)"
+              value={buyerName}
+              onChange={(e) => setBuyerName(e.target.value)}
+              sizeVariant="small"
+            />
+            <MuiTextField
+              label="Tazkira / National ID (نمبر تذکره)"
+              value={buyerTazkira}
+              onChange={(e) => setBuyerTazkira(e.target.value)}
+              sizeVariant="small"
+            />
+            <MuiTextField
+              label="Phone Number (شماره تماس)"
+              value={buyerPhone}
+              onChange={(e) => setBuyerPhone(e.target.value)}
+              sizeVariant="small"
+            />
           </div>
         </div>
 

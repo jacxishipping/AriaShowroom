@@ -57,11 +57,22 @@ export default function InventoryPage() {
   const [selectedDeedVehicle, setSelectedDeedVehicle] = useState<VehicleItem | null>(null);
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
   const [page, setPage] = useState(0);
+  const [sortField, setSortField] = useState<"sellingPrice" | "landedCost" | "year" | "stockNumber" | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const rowsPerPage = 10;
+
+  const handleSort = (field: "sellingPrice" | "landedCost" | "year" | "stockNumber") => {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
+  };
 
   // Client-side instant faceted filtering
   const filteredVehicles = useMemo(() => {
-    return vehicles.filter((v) => {
+    let result = vehicles.filter((v) => {
       // Search
       if (filters.search) {
         const query = filters.search.toLowerCase();
@@ -87,7 +98,20 @@ export default function InventoryPage() {
 
       return true;
     });
-  }, [vehicles, filters]);
+
+    if (sortField) {
+      result = [...result].sort((a, b) => {
+        let valA: any = a[sortField];
+        let valB: any = b[sortField];
+        if (typeof valA === "string") {
+          return sortDir === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        return sortDir === "asc" ? valA - valB : valB - valA;
+      });
+    }
+
+    return result;
+  }, [vehicles, filters, sortField, sortDir]);
 
   // Paginated vehicles
   const paginatedVehicles = useMemo(() => {
@@ -173,14 +197,47 @@ export default function InventoryPage() {
               <MuiTable dense>
                 <MuiTableHead>
                   <MuiTableRow hover={false}>
-                    <MuiTableCell header>Stock # / Vehicle</MuiTableCell>
+                    <MuiTableCell
+                      header
+                      onClick={() => handleSort("stockNumber")}
+                      className="cursor-pointer select-none hover:text-[#1976D2]"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Stock # / Vehicle</span>
+                        {sortField === "stockNumber" && (
+                          <span className="text-xs text-[#1976D2]">{sortDir === "asc" ? "▲" : "▼"}</span>
+                        )}
+                      </div>
+                    </MuiTableCell>
                     <MuiTableCell header>VIN / Chassis</MuiTableCell>
                     <MuiTableCell header>Origin & Specs</MuiTableCell>
                     <MuiTableCell header>Gomrok Customs</MuiTableCell>
                     <MuiTableCell header>Status</MuiTableCell>
                     <MuiTableCell header>40+ Photos</MuiTableCell>
-                    <MuiTableCell header>Landed Cost</MuiTableCell>
-                    <MuiTableCell header>Selling Price</MuiTableCell>
+                    <MuiTableCell
+                      header
+                      onClick={() => handleSort("landedCost")}
+                      className="cursor-pointer select-none hover:text-[#1976D2]"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Landed Cost</span>
+                        {sortField === "landedCost" && (
+                          <span className="text-xs text-[#1976D2]">{sortDir === "asc" ? "▲" : "▼"}</span>
+                        )}
+                      </div>
+                    </MuiTableCell>
+                    <MuiTableCell
+                      header
+                      onClick={() => handleSort("sellingPrice")}
+                      className="cursor-pointer select-none hover:text-[#1976D2]"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Selling Price</span>
+                        {sortField === "sellingPrice" && (
+                          <span className="text-xs text-[#1976D2]">{sortDir === "asc" ? "▲" : "▼"}</span>
+                        )}
+                      </div>
+                    </MuiTableCell>
                     <MuiTableCell header>Gross Margin</MuiTableCell>
                     <MuiTableCell header align="right">
                       Actions

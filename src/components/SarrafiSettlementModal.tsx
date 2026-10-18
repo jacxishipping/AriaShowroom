@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   ArrowRight,
 } from "lucide-react";
+import { MuiButton, MuiChip, MuiTextField } from "@/components/mui";
 
 interface InstallmentMilestone {
   id: string;
@@ -147,13 +148,15 @@ export function SarrafiSettlementModal({
           </div>
 
           <div className="flex items-center gap-3">
-            <button
+            <MuiButton
+              variant="contained"
+              color="gold"
+              size="small"
               onClick={handlePrint}
-              className="flex items-center gap-1.5 rounded-lg bg-navy px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-navy-800 dark:bg-gold dark:text-slate-950 dark:hover:bg-gold-light transition-colors cursor-pointer"
+              startIcon={<Printer className="h-4 w-4" />}
             >
-              <Printer className="h-4 w-4" />
-              <span>Print Settlement Slip (چاپ رسید)</span>
-            </button>
+              Print Settlement Slip (چاپ رسید)
+            </MuiButton>
             <button
               onClick={onClose}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 cursor-pointer"

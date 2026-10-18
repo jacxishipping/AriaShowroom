@@ -71,6 +71,9 @@ export default function ErpOperationsCockpit() {
   const [selectedDeedVehicle, setSelectedDeedVehicle] = useState<VehicleItem | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [page, setPage] = useState(0);
+  const [sortField, setSortField] = useState<"sellingPrice" | "landedCost" | "year" | "stockNumber" | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [quickFilter, setQuickFilter] = useState<"ALL" | "AVAILABLE" | "IN_TRANSIT" | "RESERVED" | "DUBAI" | "CLEARED">("ALL");
   const rowsPerPage = 10;
 
   // Active lot vehicles
@@ -102,10 +105,21 @@ export default function ErpOperationsCockpit() {
   const underPrepCount = vehicles.filter((v) => v.status === "Under Prep/Maintenance").length;
   const reservedCount = vehicles.filter((v) => v.status === "Reserved/Deposit Paid").length;
   const soldCount = vehicles.filter((v) => v.status === "Sold").length;
+  const dubaiCount = vehicles.filter((v) => v.originCountry === "UAE").length;
+  const clearedCount = vehicles.filter((v) => v.customsClearance.includes("Islam Qala") || v.customsClearance.includes("Cleared")).length;
 
-  // Faceted list filtering
+  const handleSort = (field: "sellingPrice" | "landedCost" | "year" | "stockNumber") => {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
+  };
+
+  // Faceted list filtering + Quick Filters + Sorting
   const filteredVehicles = useMemo(() => {
-    return vehicles.filter((v) => {
+    let result = vehicles.filter((v) => {
       if (filters.search) {
         const q = filters.search.toLowerCase();
         const matches =
@@ -117,9 +131,30 @@ export default function ErpOperationsCockpit() {
       }
       if (filters.make !== "ALL" && v.make !== filters.make) return false;
       if (filters.status !== "ALL" && v.status !== filters.status) return false;
+
+      // Quick filter presets
+      if (quickFilter === "AVAILABLE" && v.status !== "Available on Lot") return false;
+      if (quickFilter === "IN_TRANSIT" && v.status !== "In Transit") return false;
+      if (quickFilter === "RESERVED" && v.status !== "Reserved/Deposit Paid") return false;
+      if (quickFilter === "DUBAI" && v.originCountry !== "UAE") return false;
+      if (quickFilter === "CLEARED" && !(v.customsClearance.includes("Islam Qala") || v.customsClearance.includes("Cleared"))) return false;
+
       return true;
     });
-  }, [vehicles, filters]);
+
+    if (sortField) {
+      result = [...result].sort((a, b) => {
+        let valA: any = a[sortField];
+        let valB: any = b[sortField];
+        if (typeof valA === "string") {
+          return sortDir === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        return sortDir === "asc" ? valA - valB : valB - valA;
+      });
+    }
+
+    return result;
+  }, [vehicles, filters, quickFilter, sortField, sortDir]);
 
   // Paginated vehicles
   const paginatedVehicles = useMemo(() => {
@@ -270,6 +305,67 @@ export default function ErpOperationsCockpit() {
         </MuiCard>
       </div>
 
+      {/* Executive Fleet Allocation Visual Distribution */}
+      <MuiCard elevation={1} className="p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+              Fleet Allocation & Yard Status
+            </span>
+            <span className="text-[11px] font-mono text-slate-400">
+              ({vehicles.length} Units Tracked)
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#2E7D32]" />
+              <span className="text-slate-600 dark:text-slate-300 font-medium">Available: {availableCount} ({vehicles.length > 0 ? ((availableCount / vehicles.length) * 100).toFixed(0) : 0}%)</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#0288D1]" />
+              <span className="text-slate-600 dark:text-slate-300 font-medium">In Transit: {inTransitCount}</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#ED6C02]" />
+              <span className="text-slate-600 dark:text-slate-300 font-medium">Reserved: {reservedCount}</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-slate-400" />
+              <span className="text-slate-600 dark:text-slate-300 font-medium">Sold: {soldCount}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Multi-segment progress bar */}
+        <div className="flex h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div
+            style={{ width: `${(availableCount / vehicles.length) * 100}%` }}
+            className="bg-[#2E7D32] transition-all"
+            title={`Available: ${availableCount}`}
+          />
+          <div
+            style={{ width: `${(inTransitCount / vehicles.length) * 100}%` }}
+            className="bg-[#0288D1] transition-all"
+            title={`In Transit: ${inTransitCount}`}
+          />
+          <div
+            style={{ width: `${(reservedCount / vehicles.length) * 100}%` }}
+            className="bg-[#ED6C02] transition-all"
+            title={`Reserved: ${reservedCount}`}
+          />
+          <div
+            style={{ width: `${(underPrepCount / vehicles.length) * 100}%` }}
+            className="bg-[#7B1FA2] transition-all"
+            title={`Under Prep: ${underPrepCount}`}
+          />
+          <div
+            style={{ width: `${(soldCount / vehicles.length) * 100}%` }}
+            className="bg-slate-400 transition-all"
+            title={`Sold: ${soldCount}`}
+          />
+        </div>
+      </MuiCard>
+
       {/* Main Lot Stock Management Section (Material Paper) */}
       <MuiCard elevation={1}>
         <MuiCardHeader
@@ -322,6 +418,34 @@ export default function ErpOperationsCockpit() {
           }
         />
 
+        {/* Quick Filter Chips Strip */}
+        <div className="flex items-center gap-1.5 px-6 py-2.5 overflow-x-auto border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#121824]/50 scrollbar-none">
+          <span className="text-[10px] font-bold uppercase text-slate-400 mr-1 shrink-0">Quick Views:</span>
+          {[
+            { id: "ALL", label: `All Fleet (${vehicles.length})` },
+            { id: "AVAILABLE", label: `Available on Lot (${availableCount})` },
+            { id: "IN_TRANSIT", label: `In Transit (${inTransitCount})` },
+            { id: "RESERVED", label: `Reserved / Deposit (${reservedCount})` },
+            { id: "DUBAI", label: `Dubai Direct (${dubaiCount})` },
+            { id: "CLEARED", label: `Customs 100% Cleared (${clearedCount})` },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setQuickFilter(item.id as any);
+                setPage(0);
+              }}
+              className={`rounded-full px-3 py-1 text-xs font-semibold shrink-0 transition-all cursor-pointer ${
+                quickFilter === item.id
+                  ? "bg-[#1976D2] text-white shadow-mui-1"
+                  : "bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         {/* View Mode 1: Material Dense Data Table */}
         {viewMode === "table" ? (
           <div>
@@ -329,14 +453,47 @@ export default function ErpOperationsCockpit() {
               <MuiTable dense>
                 <MuiTableHead>
                   <MuiTableRow hover={false}>
-                    <MuiTableCell header>Stock # / Unit</MuiTableCell>
+                    <MuiTableCell
+                      header
+                      onClick={() => handleSort("stockNumber")}
+                      className="cursor-pointer select-none hover:text-[#1976D2]"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Stock # / Unit</span>
+                        {sortField === "stockNumber" && (
+                          <span className="text-xs text-[#1976D2]">{sortDir === "asc" ? "▲" : "▼"}</span>
+                        )}
+                      </div>
+                    </MuiTableCell>
                     <MuiTableCell header>VIN / Chassis</MuiTableCell>
                     <MuiTableCell header>Origin & Steering</MuiTableCell>
                     <MuiTableCell header>Customs Slip</MuiTableCell>
                     <MuiTableCell header>Status</MuiTableCell>
                     <MuiTableCell header>Photos</MuiTableCell>
-                    <MuiTableCell header>Landed Cost</MuiTableCell>
-                    <MuiTableCell header>Selling Price</MuiTableCell>
+                    <MuiTableCell
+                      header
+                      onClick={() => handleSort("landedCost")}
+                      className="cursor-pointer select-none hover:text-[#1976D2]"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Landed Cost</span>
+                        {sortField === "landedCost" && (
+                          <span className="text-xs text-[#1976D2]">{sortDir === "asc" ? "▲" : "▼"}</span>
+                        )}
+                      </div>
+                    </MuiTableCell>
+                    <MuiTableCell
+                      header
+                      onClick={() => handleSort("sellingPrice")}
+                      className="cursor-pointer select-none hover:text-[#1976D2]"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Selling Price</span>
+                        {sortField === "sellingPrice" && (
+                          <span className="text-xs text-[#1976D2]">{sortDir === "asc" ? "▲" : "▼"}</span>
+                        )}
+                      </div>
+                    </MuiTableCell>
                     <MuiTableCell header>Target Margin</MuiTableCell>
                     <MuiTableCell header align="right">
                       Actions
