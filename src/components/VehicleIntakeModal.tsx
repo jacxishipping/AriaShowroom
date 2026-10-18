@@ -226,11 +226,11 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-4xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-navy-900 sm:p-8 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-4xl rounded-xl bg-white p-6 shadow-2xl dark:bg-[#121824] sm:p-7 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
         <div className="flex items-center justify-between border-b pb-4 dark:border-slate-800">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              Vehicle Stock Intake & 40+ Photo Album Vault
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              Vehicle Stock Intake & Photo Vault
             </h3>
             <p className="text-xs text-slate-500">
               Register arrival, calculate landed cost, and attach up to 40+ high-resolution vehicle photos
@@ -238,16 +238,16 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+        <form onSubmit={handleSubmit} className="mt-5 space-y-5">
           {/* Section 1: Identification & General Info */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gold dark:text-gold-light mb-3">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
               1. Basic Vehicle Identification
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -262,7 +262,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                     setFormData({ ...formData, stockNumber: e.target.value })
                   }
                   required
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs font-mono font-bold dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs font-mono font-medium dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 />
               </div>
 
@@ -277,7 +277,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                     setFormData({ ...formData, vin: e.target.value })
                   }
                   required
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs font-mono font-bold dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs font-mono font-medium dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 />
               </div>
 
@@ -290,7 +290,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                   onChange={(e) =>
                     setFormData({ ...formData, status: e.target.value as any })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 >
                   <option value="Available on Lot">Available on Lot</option>
                   <option value="In Transit">In Transit to Herat</option>
@@ -310,7 +310,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                     setFormData({ ...formData, make: e.target.value })
                   }
                   required
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 />
               </div>
 
@@ -325,7 +325,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                     setFormData({ ...formData, model: e.target.value })
                   }
                   required
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 />
               </div>
 
@@ -340,7 +340,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                     setFormData({ ...formData, year: Number(e.target.value) })
                   }
                   required
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 />
               </div>
 
@@ -353,7 +353,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                   onChange={(e) =>
                     setFormData({ ...formData, yardLocation: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 >
                   <option value="Main Showroom - Bagh-e-Azadi">Main Showroom (باغ آزادی)</option>
                   <option value="Yard 2 - Islam Qala Highway">Yard 2 (سرک اسلام قلعه)</option>
@@ -365,13 +365,13 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
           </div>
 
           {/* Section 2: Acquisition & Landed Cost Breakdown */}
-          <div className="rounded-xl border border-gold/30 bg-gold/5 p-4 dark:border-gold/20 dark:bg-gold/5">
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/40">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gold dark:text-gold-light flex items-center gap-1.5">
-                <Calculator className="h-4 w-4" />
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <Calculator className="h-4 w-4 text-[#1976D2]" />
                 2. Landed Cost Breakdown (Herat Islam Qala)
               </h4>
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <span className="text-xs font-mono font-medium text-slate-500">
                 All amounts in USD ($)
               </span>
             </div>
@@ -387,7 +387,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                   onChange={(e) =>
                     setFormData({ ...formData, purchasePrice: Number(e.target.value) })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-navy-900 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs font-mono font-medium dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 />
               </div>
 
@@ -401,7 +401,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                   onChange={(e) =>
                     setFormData({ ...formData, freightCost: Number(e.target.value) })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-navy-900 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs font-mono font-medium dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 />
               </div>
 
@@ -415,7 +415,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                   onChange={(e) =>
                     setFormData({ ...formData, customsDuty: Number(e.target.value) })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-navy-900 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs font-mono font-medium dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 />
               </div>
 
@@ -429,25 +429,25 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                   onChange={(e) =>
                     setFormData({ ...formData, repairCost: Number(e.target.value) })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-navy-900 dark:text-white"
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs font-mono font-medium dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 />
               </div>
             </div>
 
             {/* Calculated Landed Cost & Selling Price */}
-            <div className="mt-4 pt-3 border-t border-gold/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div>
                   <span className="text-[10px] text-slate-500 block">Total Landed Cost:</span>
-                  <span className="text-lg font-black text-slate-900 dark:text-white">
+                  <span className="text-base font-bold font-mono text-slate-900 dark:text-white">
                     ${totalLandedCost.toLocaleString()} USD
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 block">Projected Profit:</span>
                   <span
-                    className={`text-lg font-black ${
-                      estimatedProfit >= 0 ? "text-emerald-500" : "text-red-500"
+                    className={`text-base font-bold font-mono ${
+                      estimatedProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600"
                     }`}
                   >
                     +${estimatedProfit.toLocaleString()} ({marginPercent}%)
@@ -456,7 +456,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
               </div>
 
               <div className="w-full sm:w-auto">
-                <label className="block text-[10px] uppercase font-bold text-gold">
+                <label className="block text-[10px] uppercase font-semibold text-slate-500 mb-1">
                   Showroom Selling Price (USD)
                 </label>
                 <input
@@ -465,18 +465,18 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                   onChange={(e) =>
                     setFormData({ ...formData, sellingPrice: Number(e.target.value) })
                   }
-                  className="mt-1 rounded-lg border-2 border-gold bg-white px-3 py-1.5 text-sm font-extrabold text-slate-900 dark:bg-navy-900 dark:text-white"
+                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-bold font-mono text-slate-900 dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 3: 40+ Vehicle Photos Upload & Gallery Manager */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-navy-950/60 space-y-4">
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-[#121824] space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-gold dark:text-gold-light flex items-center gap-1.5">
-                  <ImageIcon className="h-4 w-4" />
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <ImageIcon className="h-4 w-4 text-[#1976D2]" />
                   3. 40+ Vehicle Photography Vault
                 </h4>
                 <p className="text-[11px] text-slate-500">
@@ -485,17 +485,17 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-bold text-gold">
-                  {images.length} Photos Attached {images.length >= 40 && "✓ (40+ Reached)"}
+                <span className="rounded-md bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 text-xs font-mono font-medium text-slate-700 dark:text-slate-300">
+                  {images.length} Photos {images.length >= 40 && "✓"}
                 </span>
 
                 <button
                   type="button"
                   onClick={handleLoadSample42Photos}
-                  className="flex items-center gap-1 rounded-lg border border-gold/40 bg-navy px-2.5 py-1 text-[11px] font-semibold text-gold-light hover:bg-navy-800 transition-colors"
+                  className="flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-gold" />
-                  <span>Load 42 Sample 4K Photos</span>
+                  <Sparkles className="h-3 w-3 text-[#1976D2]" />
+                  <span>Load Sample 4K Album</span>
                 </button>
               </div>
             </div>
@@ -503,7 +503,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
             {/* Upload Zone (Drag-and-Drop + Multi-File Browser) */}
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="relative cursor-pointer rounded-xl border-2 border-dashed border-slate-300 p-6 text-center hover:border-gold hover:bg-gold/5 dark:border-slate-700 dark:hover:border-gold dark:hover:bg-navy-900 transition-all"
+              className="relative cursor-pointer rounded-lg border-2 border-dashed border-slate-300 p-6 text-center hover:border-[#1976D2] hover:bg-[#1976D2]/5 dark:border-slate-700 dark:hover:border-[#1976D2] dark:hover:bg-slate-800/40 transition-all"
             >
               <input
                 ref={fileInputRef}
@@ -513,8 +513,8 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              <Upload className="mx-auto h-8 w-8 text-gold animate-bounce" />
-              <p className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+              <Upload className="mx-auto h-7 w-7 text-slate-400" />
+              <p className="mt-2 text-xs font-semibold text-slate-800 dark:text-slate-200">
                 Click or Drag & Drop Multiple Photos (Select 40+ images at once)
               </p>
               <p className="text-[11px] text-slate-400">
@@ -526,23 +526,23 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                 </span>
               </div>
               {uploadNotice && (
-                <p className="mt-2 text-xs font-bold text-emerald-500">
+                <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                   {uploadNotice}
                 </p>
               )}
             </div>
 
             {/* Auto-Watermark & WebP Compression Toggle */}
-            <div className="flex items-center justify-between rounded-xl bg-slate-100 p-2.5 dark:bg-navy-900 border border-slate-200 dark:border-slate-800 text-xs">
+            <div className="flex items-center justify-between rounded-lg bg-slate-100/70 p-2.5 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={applyWatermark}
                   onChange={(e) => setApplyWatermark(e.target.checked)}
-                  className="rounded border-slate-300 text-gold focus:ring-gold"
+                  className="rounded border-slate-300 text-[#1976D2] focus:ring-[#1976D2]"
                 />
-                <ShieldCheck className="h-4 w-4 text-gold shrink-0" />
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <ShieldCheck className="h-4 w-4 text-[#1976D2] shrink-0" />
+                <span className="font-medium text-slate-800 dark:text-slate-200">
                   Auto-stamp "Sadozai Motors Herat • Verified Lot" Watermark & Optimize to WebP
                 </span>
               </label>
@@ -556,7 +556,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
               <button
                 type="button"
                 onClick={() => setIsBulkOpen(!isBulkOpen)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-gold dark:text-slate-400"
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-[#1976D2] dark:text-slate-400 cursor-pointer"
               >
                 <LinkIcon className="h-3.5 w-3.5" />
                 <span>Or Paste 40+ Image URLs from Cloudflare R2 / AWS S3 / CDN</span>
@@ -569,13 +569,13 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                     placeholder="Paste multiple image URLs (separated by newlines or commas)..."
                     value={bulkUrlInput}
                     onChange={(e) => setBulkUrlInput(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-mono dark:border-slate-700 dark:bg-navy-900 dark:text-white"
+                    className="w-full rounded-md border border-slate-300 bg-white p-2.5 text-xs font-mono dark:border-slate-700 dark:bg-[#1A2234] dark:text-white outline-none focus:border-[#1976D2]"
                   />
                   <div className="flex justify-end">
                     <button
                       type="button"
                       onClick={handleAddBulkUrls}
-                      className="rounded-lg bg-navy px-3 py-1.5 text-xs font-semibold text-gold hover:bg-navy-800"
+                      className="rounded-md bg-[#1976D2] hover:bg-[#1565C0] px-3 py-1.5 text-xs font-medium text-white transition-colors cursor-pointer"
                     >
                       Import URLs to Album
                     </button>
@@ -593,19 +593,19 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                     <button
                       type="button"
                       onClick={() => setImages([])}
-                      className="text-red-500 hover:underline"
+                      className="text-rose-500 hover:underline cursor-pointer"
                     >
                       Clear all photos
                     </button>
                   )}
                 </div>
 
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-48 overflow-y-auto p-1 border rounded-xl dark:border-slate-800 bg-white dark:bg-navy-900">
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg dark:border-slate-800 bg-white dark:bg-[#1A2234]">
                   {images.map((imgUrl, idx) => (
                     <div
                       key={idx}
-                      className={`group relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all ${
-                        idx === 0 ? "border-gold ring-2 ring-gold/40" : "border-slate-200 dark:border-slate-700"
+                      className={`group relative aspect-[4/3] rounded-md overflow-hidden border transition-all ${
+                        idx === 0 ? "border-[#1976D2] ring-2 ring-[#1976D2]/30" : "border-slate-200 dark:border-slate-700"
                       }`}
                     >
                       <Image
@@ -617,7 +617,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
 
                       {/* Primary Badge */}
                       {idx === 0 && (
-                        <span className="absolute top-1 left-1 rounded bg-gold px-1 py-0.2 text-[9px] font-bold text-slate-950">
+                        <span className="absolute top-1 left-1 rounded bg-[#1976D2] px-1 py-0.2 text-[9px] font-bold text-white">
                           Cover
                         </span>
                       )}
@@ -633,7 +633,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                           <button
                             type="button"
                             onClick={() => handleSetPrimary(idx)}
-                            className="p-1 rounded bg-gold text-slate-950 hover:scale-110"
+                            className="p-1 rounded bg-white text-slate-900 hover:scale-110 cursor-pointer"
                             title="Make Primary Cover"
                           >
                             <Star className="h-3 w-3" />
@@ -642,7 +642,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                         <button
                           type="button"
                           onClick={() => handleRemovePhoto(idx)}
-                          className="p-1 rounded bg-red-600 text-white hover:scale-110"
+                          className="p-1 rounded bg-rose-600 text-white hover:scale-110 cursor-pointer"
                           title="Delete photo"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -660,13 +660,13 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
+              className="rounded-md border border-slate-300 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 rounded-xl bg-gold px-5 py-2.5 text-xs font-bold text-slate-950 shadow-md hover:bg-gold-light transition-colors"
+              className="flex items-center gap-1.5 rounded-md bg-[#1976D2] hover:bg-[#1565C0] px-5 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
             >
               <Plus className="h-4 w-4" />
               <span>Intake Vehicle with {images.length} Photos</span>

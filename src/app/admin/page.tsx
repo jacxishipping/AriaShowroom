@@ -157,29 +157,29 @@ export default function AdminDashboardPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       {/* Top Header: Title & Role Switcher */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-navy-900">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-[#121824]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-gold dark:text-gold-light">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Herat Automotive ERP / CRM System
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
             {t.erpTitle}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Authenticated Showroom Management Portal • Sadozai Motors Herat
           </p>
         </div>
 
         {/* Role Switcher Pill */}
         <div className="flex items-center gap-3">
-          <div className="text-right">
+          <div className="text-right hidden sm:block">
             <span className="text-[10px] font-semibold uppercase text-slate-400 block">
               {t.switchRole}
             </span>
-            <span className="text-xs font-bold text-slate-900 dark:text-white">
+            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
               {currentRole === "SuperAdmin" && "SuperAdmin (Haji Ahmad Shah)"}
               {currentRole === "SalesAgent" && "Sales Agent (Farhad Timori)"}
               {currentRole === "Accountant" && "Accountant (Mirwais Saljuqi)"}
@@ -188,7 +188,7 @@ export default function AdminDashboardPage() {
           <select
             value={currentRole}
             onChange={(e) => setCurrentRole(e.target.value as RoleType)}
-            className="rounded-xl border border-gold/40 bg-navy px-3 py-2 text-xs font-bold text-gold-light outline-none"
+            className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-800 dark:border-slate-700 dark:bg-[#1a2234] dark:text-slate-200 outline-none focus:border-[#1976D2]"
           >
             <option value="SuperAdmin">SuperAdmin</option>
             <option value="SalesAgent">Sales Agent</option>
@@ -270,7 +270,7 @@ export default function AdminDashboardPage() {
             {currentRole !== "Accountant" && (
               <MuiButton
                 variant="contained"
-                color="gold"
+                color="primary"
                 size="small"
                 onClick={() => setIsIntakeOpen(true)}
                 startIcon={<Plus className="h-4 w-4" />}
@@ -301,13 +301,13 @@ export default function AdminDashboardPage() {
                   {filteredInventory.map((veh) => (
                     <MuiTableRow key={veh.id}>
                       <MuiTableCell>
-                        <div className="font-bold text-slate-900 dark:text-white">
+                        <div className="font-semibold text-slate-900 dark:text-white">
                           {veh.year} {veh.make} {veh.model}
                         </div>
-                        <div className="text-[11px] font-mono text-[#D97706] flex items-center gap-2">
-                          <span>{veh.stockNumber} ({veh.originCountry})</span>
-                          <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] text-slate-500 font-sans">
-                            📸 {veh.images.length} Photos
+                        <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                          <span>{veh.stockNumber} • {veh.originCountry}</span>
+                          <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-500 font-sans">
+                            {veh.images.length} Photos
                           </span>
                         </div>
                       </MuiTableCell>
@@ -324,10 +324,10 @@ export default function AdminDashboardPage() {
                       <MuiTableCell className="text-slate-600 dark:text-slate-400 truncate max-w-[160px]">
                         {veh.customsClearance}
                       </MuiTableCell>
-                      <MuiTableCell className="font-mono">
+                      <MuiTableCell className="font-mono text-slate-600 dark:text-slate-300">
                         ${veh.landedCost.toLocaleString()} USD
                       </MuiTableCell>
-                      <MuiTableCell className="font-mono font-bold text-slate-900 dark:text-white">
+                      <MuiTableCell className="font-mono font-semibold text-slate-900 dark:text-white">
                         ${veh.sellingPrice.toLocaleString()} USD
                       </MuiTableCell>
                       <MuiTableCell align="right">
@@ -336,14 +336,14 @@ export default function AdminDashboardPage() {
                             href={`/vehicles/${veh.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded p-1 text-slate-500 hover:text-[#1976D2] hover:bg-slate-100 dark:hover:bg-slate-800"
-                            title="View 40+ Photo Gallery & Specs"
+                            className="rounded p-1 text-slate-400 hover:text-[#1976D2] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            title="View Photo Gallery & Specs"
                           >
                             <Eye className="h-4 w-4" />
                           </a>
                           <button
                             onClick={() => setSelectedDeedVehicle(veh)}
-                            className="rounded p-1 text-[#D97706] hover:bg-amber-500/10"
+                            className="rounded p-1 text-slate-400 hover:text-[#1976D2] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Print Legal Deed"
                           >
                             <FileText className="h-4 w-4" />
@@ -355,7 +355,7 @@ export default function AdminDashboardPage() {
                                   deleteVehicle(veh.id);
                                 }
                               }}
-                              className="rounded p-1 text-[#D32F2F] hover:bg-red-500/10"
+                              className="rounded p-1 text-slate-400 hover:text-[#D32F2F] hover:bg-red-500/10 transition-colors cursor-pointer"
                               title="Delete vehicle"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -403,7 +403,7 @@ export default function AdminDashboardPage() {
                         ? "success"
                         : cust.leadStage === "Lost"
                         ? "error"
-                        : "gold"
+                        : "default"
                     }
                   />
                   <span className="text-[11px] font-mono text-slate-400">
@@ -416,7 +416,7 @@ export default function AdminDashboardPage() {
                     {cust.fullName}
                   </h4>
                   <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                    <Phone className="h-3 w-3 text-[#D97706]" />
+                    <Phone className="h-3 w-3 text-slate-400" />
                     <span>{cust.phone}</span>
                   </p>
                   <p className="text-[11px] font-mono text-slate-400">
@@ -466,8 +466,8 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Sale Initiation Form */}
           <MuiCard elevation={1} className="lg:col-span-5 p-6 space-y-4">
-            <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <BadgeDollarSign className="h-5 w-5 text-[#D97706]" />
+            <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+              <BadgeDollarSign className="h-4 w-4 text-[#1976D2]" />
               Execute Showroom Sale & Issue Contract
             </h3>
 
@@ -565,7 +565,7 @@ export default function AdminDashboardPage() {
               <MuiButton
                 type="submit"
                 variant="contained"
-                color="gold"
+                color="primary"
                 fullWidth
                 size="medium"
               >
@@ -595,11 +595,11 @@ export default function AdminDashboardPage() {
                 <MuiTableBody>
                   {sales.map((s) => (
                     <MuiTableRow key={s.id}>
-                      <MuiTableCell className="font-mono font-bold text-[#D97706]">
+                      <MuiTableCell className="font-mono font-semibold text-[#1976D2] dark:text-[#42A5F5]">
                         {s.contractNumber}
                       </MuiTableCell>
                       <MuiTableCell>
-                        <div className="font-bold text-slate-900 dark:text-white">
+                        <div className="font-semibold text-slate-900 dark:text-white">
                           {s.vehicleName}
                         </div>
                         <div className="text-[11px] text-slate-400">
@@ -612,13 +612,13 @@ export default function AdminDashboardPage() {
                           {s.customerTazkira}
                         </div>
                       </MuiTableCell>
-                      <MuiTableCell className="font-mono font-bold text-slate-900 dark:text-white">
+                      <MuiTableCell className="font-mono font-semibold text-slate-900 dark:text-white">
                         ${s.salePriceUSD.toLocaleString()}
                       </MuiTableCell>
                       <MuiTableCell>
                         <MuiChip
                           label={s.paymentType}
-                          color={s.paymentType === "Full Cash" ? "success" : "primary"}
+                          color={s.paymentType === "Full Cash" ? "success" : "default"}
                           size="small"
                         />
                       </MuiTableCell>
@@ -637,23 +637,23 @@ export default function AdminDashboardPage() {
           {/* Executive KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MuiCard elevation={1} className="p-5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                 {t.totalActiveValue}
               </span>
-              <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white font-mono">
-                ${totalActiveInventoryValue.toLocaleString()} USD
+              <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white font-mono">
+                ${totalActiveInventoryValue.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-slate-500 font-mono">
                 ؋ {(totalActiveInventoryValue * exchangeRate).toLocaleString()} AFN
               </p>
             </MuiCard>
 
             <MuiCard elevation={1} className="p-5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                 {t.monthlyRevenue}
               </span>
-              <p className="mt-2 text-2xl font-black text-[#2E7D32] dark:text-emerald-400 font-mono">
-                +${totalMonthlyRevenue.toLocaleString()} USD
+              <p className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                +${totalMonthlyRevenue.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 {sales.length} verified sales deeds executed
@@ -661,11 +661,11 @@ export default function AdminDashboardPage() {
             </MuiCard>
 
             <MuiCard elevation={1} className="p-5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                 {t.netProfitPerCar}
               </span>
-              <p className="mt-2 text-2xl font-black text-[#D97706] font-mono">
-                +${avgMargin.toLocaleString()} USD
+              <p className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400 font-mono">
+                +${avgMargin.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 After Islam Qala tariffs & freight
@@ -673,10 +673,10 @@ export default function AdminDashboardPage() {
             </MuiCard>
 
             <MuiCard elevation={1} className="p-5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                 {t.daysOnLot}
               </span>
-              <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
+              <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                 18.4 Days
               </p>
               <p className="mt-1 text-xs text-slate-500">
@@ -688,8 +688,8 @@ export default function AdminDashboardPage() {
           {/* Expense Voucher Logging & List */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <MuiCard elevation={1} className="lg:col-span-5 p-6 space-y-4">
-              <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-[#D97706]" />
+              <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+                <Receipt className="h-4 w-4 text-[#1976D2]" />
                 Book Showroom Expense / Customs Duty
               </h3>
 
@@ -767,16 +767,16 @@ export default function AdminDashboardPage() {
                   <MuiTableBody>
                     {expenses.map((exp) => (
                       <MuiTableRow key={exp.id}>
-                        <MuiTableCell className="font-semibold text-[#D97706]">
+                        <MuiTableCell className="font-medium text-slate-800 dark:text-slate-200">
                           {exp.category}
                         </MuiTableCell>
                         <MuiTableCell className="text-slate-600 dark:text-slate-300">
                           {exp.description}
                         </MuiTableCell>
-                        <MuiTableCell className="text-slate-400 font-mono">
+                        <MuiTableCell className="text-slate-400 font-mono text-xs">
                           {exp.date}
                         </MuiTableCell>
-                        <MuiTableCell align="right" className="font-mono font-bold text-[#D32F2F]">
+                        <MuiTableCell align="right" className="font-mono font-semibold text-rose-600 dark:text-rose-400">
                           -${exp.amountUSD.toLocaleString()}
                         </MuiTableCell>
                       </MuiTableRow>

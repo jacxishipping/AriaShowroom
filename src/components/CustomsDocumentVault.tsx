@@ -127,7 +127,7 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#D97706]/10 text-[#D97706]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1976D2]/10 text-[#1976D2]">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
@@ -160,7 +160,7 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
             <div>
               <div className="flex items-start justify-between gap-2 mb-2">
                 <span className="inline-flex items-center gap-1 rounded bg-white px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-700 shadow-2xs dark:bg-[#1A202C] dark:text-slate-300 border border-slate-200/80 dark:border-slate-700">
-                  <FileText className="h-3 w-3 text-[#D97706]" />
+                  <FileText className="h-3 w-3 text-slate-400" />
                   {doc.slipNumber}
                 </span>
 
@@ -187,9 +187,9 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSelectedDoc(doc)}
-                  className="flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-950 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-2xs hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
                 >
-                  <Eye className="h-3 w-3 text-gold" />
+                  <Eye className="h-3 w-3 text-[#1976D2]" />
                   <span>Preview</span>
                 </button>
 
@@ -197,7 +197,7 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
                   href={doc.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-lg bg-slate-200/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-300 dark:bg-navy-700 dark:text-slate-200 dark:hover:bg-navy-600 transition-colors"
+                  className="flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
                 >
                   <Download className="h-3 w-3" />
                   <span>Download</span>
@@ -209,10 +209,10 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
       </div>
 
       {/* Upload New Document Box */}
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/40 p-4 dark:border-slate-700 dark:bg-navy-950/40">
+      <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-[#121824]/60">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-navy text-gold dark:bg-gold/10">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-slate-800">
               <UploadCloud className="h-4 w-4" />
             </div>
             <div>
@@ -229,7 +229,7 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
             <select
               value={newDocType}
               onChange={(e) => setNewDocType(e.target.value as any)}
-              className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-navy-900 dark:text-slate-200"
+              className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-[#121824] dark:text-slate-200 outline-none focus:border-[#1976D2]"
             >
               <option value="MAKTOUB">Islam Qala Maktoub</option>
               <option value="BILL_OF_LADING">Bill of Lading (B/L)</option>
@@ -238,7 +238,7 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
               <option value="HAWALA_SLIP">Sarrafi Voucher</option>
             </select>
 
-            <label className="relative flex items-center justify-center gap-1.5 rounded-lg bg-navy px-3 py-1.5 text-xs font-semibold text-white hover:bg-navy-800 dark:bg-gold dark:text-slate-950 dark:hover:bg-gold-light transition-colors cursor-pointer shrink-0">
+            <label className="relative flex items-center justify-center gap-1.5 rounded-lg bg-[#1976D2] hover:bg-[#1565C0] px-3 py-1.5 text-xs font-medium text-white transition-colors cursor-pointer shrink-0">
               {isUploading ? (
                 <span>Uploading...</span>
               ) : (
@@ -262,10 +262,10 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
       {/* Document Lightbox Preview Modal */}
       {selectedDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-3xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-navy-950">
+          <div className="relative w-full max-w-3xl rounded-xl bg-white p-6 shadow-2xl dark:bg-[#121824]">
             <div className="flex items-center justify-between border-b pb-3 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <FileCheck2 className="h-5 w-5 text-gold" />
+                <FileCheck2 className="h-5 w-5 text-emerald-500" />
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-white text-sm">
                     {selectedDoc.title}
@@ -283,7 +283,7 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
               </button>
             </div>
 
-            <div className="mt-4 flex items-center justify-center overflow-hidden rounded-xl bg-slate-950 max-h-[65vh]">
+            <div className="mt-4 flex items-center justify-center overflow-hidden rounded-lg bg-slate-950 max-h-[65vh]">
               <img
                 src={selectedDoc.fileUrl}
                 alt={selectedDoc.title}
@@ -299,10 +299,10 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
                 href={selectedDoc.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg bg-gold px-3 py-1.5 font-bold text-slate-950 hover:bg-gold-light"
+                className="flex items-center gap-1.5 rounded-lg bg-[#1976D2] hover:bg-[#1565C0] px-3 py-1.5 font-medium text-white transition-colors"
               >
                 <Download className="h-3.5 w-3.5" />
-                <span>Download Original Resolution</span>
+                <span>Download Original</span>
               </a>
             </div>
           </div>
