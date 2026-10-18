@@ -302,23 +302,42 @@ Please schedule a viewing or share more photos.`
               {vehicle.trim}
             </p>
 
-            {/* Pricing Box */}
-            <div className="mt-6 rounded-2xl bg-slate-50 p-4 dark:bg-navy-800 border border-slate-200/60 dark:border-slate-700/60">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                Selling Price (Herat Lot)
-              </span>
-              <div className="mt-1 flex items-baseline gap-3">
-                <span className="text-3xl font-black text-slate-950 dark:text-white">
-                  {formatCurrency(vehicle.sellingPrice, currency, exchangeRate)}
+            {/* ERP Pricing & Margin Box */}
+            <div className="mt-6 rounded-2xl bg-slate-50 p-4 dark:bg-navy-800 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Lot Selling Price
                 </span>
-                {currency === "AFN" && (
-                  <span className="text-sm font-semibold text-slate-500">
-                    (${vehicle.sellingPrice.toLocaleString()} USD)
+                <div className="mt-1 flex items-baseline gap-3">
+                  <span className="text-3xl font-black text-slate-950 dark:text-white">
+                    {formatCurrency(vehicle.sellingPrice, currency, exchangeRate)}
                   </span>
-                )}
+                  {currency === "AFN" && (
+                    <span className="text-sm font-semibold text-slate-500">
+                      (${vehicle.sellingPrice.toLocaleString()} USD)
+                    </span>
+                  )}
+                </div>
               </div>
-              <p className="mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Includes Islam Qala customs clearance & verified paperwork
+
+              {/* Landed Cost vs Margin Breakdown */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-xs font-mono">
+                <div className="rounded-lg bg-white dark:bg-navy-900 p-2 border border-slate-200/60 dark:border-slate-700">
+                  <span className="text-[10px] text-slate-400 block uppercase font-sans">Total Landed Cost</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    ${vehicle.landedCost.toLocaleString()} USD
+                  </span>
+                </div>
+                <div className="rounded-lg bg-white dark:bg-navy-900 p-2 border border-slate-200/60 dark:border-slate-700">
+                  <span className="text-[10px] text-slate-400 block uppercase font-sans">Net Target Margin</span>
+                  <span className="font-bold text-emerald-500">
+                    +${(vehicle.sellingPrice - vehicle.landedCost).toLocaleString()} ({vehicle.landedCost > 0 ? (((vehicle.sellingPrice - vehicle.landedCost) / vehicle.landedCost) * 100).toFixed(1) : 0}%)
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Customs duty settled at Herat Islam Qala Port
               </p>
             </div>
 
