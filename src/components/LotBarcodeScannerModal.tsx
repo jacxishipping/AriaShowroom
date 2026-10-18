@@ -33,6 +33,7 @@ export function LotBarcodeScannerModal({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [selectedYard, setSelectedYard] = useState("Main Showroom - Bagh-e-Azadi");
   const [scannedVin, setScannedVin] = useState("");
+  const [scanningSuccess, setScanningSuccess] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -74,8 +75,6 @@ export function LotBarcodeScannerModal({
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const [scanningSuccess, setScanningSuccess] = useState<string | null>(null);
 
   const handleSelectVehicle = (vehicleId: string) => {
     setScanningSuccess(vehicleId);

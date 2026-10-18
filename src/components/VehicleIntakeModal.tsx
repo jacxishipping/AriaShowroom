@@ -70,6 +70,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [applyWatermark, setApplyWatermark] = useState(true);
+  const [uploadNotice, setUploadNotice] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -85,9 +86,6 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
     totalLandedCost > 0
       ? ((estimatedProfit / totalLandedCost) * 100).toFixed(1)
       : "0";
-
-  // Handle multi-file upload with Vercel Blob cloud storage integration
-  const [uploadNotice, setUploadNotice] = useState<string | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawFiles = e.target.files;
