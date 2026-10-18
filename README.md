@@ -127,8 +127,8 @@ npm run db:push
 npm run db:seed
 ```
 
-### 4. Development Server
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) for the public showroom or [http://localhost:3000/admin](http://localhost:3000/admin) for the dealership ERP.
+### 5. Media & Cloud Storage (Vercel Blob)
+The application utilizes **Vercel Blob Storage** (`@vercel/blob`) for permanent edge storage of 40+ vehicle photo albums and customs document scans:
+- **Client & Server Upload Handlers:** Direct `/api/upload` endpoint with multi-file form-data and client token negotiation.
+- **Environment Token:** Set `BLOB_READ_WRITE_TOKEN` from your Vercel Project Dashboard.
+- **Remote CDN Whitelist:** Configured in `next.config.mjs` (`*.public.blob.vercel-storage.com`).
