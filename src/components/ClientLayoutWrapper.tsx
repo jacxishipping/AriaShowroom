@@ -8,8 +8,13 @@ import { VehicleIntakeModal } from "@/components/VehicleIntakeModal";
 import { ToastContainer } from "@/components/ToastContainer";
 
 export function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
-  const { darkMode, language } = useShowroomStore();
+  const { darkMode, language, fetchDatabaseRecords } = useShowroomStore();
   const [isIntakeModalOpen, setIsIntakeModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Initial sync with live PostgreSQL database
+    fetchDatabaseRecords();
+  }, [fetchDatabaseRecords]);
 
   useEffect(() => {
     const root = document.documentElement;

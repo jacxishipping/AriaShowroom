@@ -126,6 +126,9 @@ interface ShowroomStore {
   }>;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
+
+  // Live PostgreSQL Database Sync
+  fetchDatabaseRecords: () => Promise<void>;
 }
 
 const initialFilters: FilterState = {
@@ -598,6 +601,127 @@ export const useShowroomStore = create<ShowroomStore>()(
         set((state) => ({
           notifications: state.notifications.map((n) => ({ ...n, read: true })),
         })),
+
+      // Live PostgreSQL Database Sync
+      fetchDatabaseRecords: async () => {
+        try {
+          const [vehRes, custRes] = await Promise.all([
+            fetch("/api/vehicles").then((r) => r.json()).catch(() => null),
+            fetch("/api/customers").then((r) => r.json()).catch(() => null),
+          ]);
+
+          if (vehRes?.success && Array.isArray(vehRes.data) && vehRes.data.length > 0) {
+            const statusMap: Record<string, VehicleItem["status"]> = {
+              AVAILABLE: "Available on Lot",
+              IN_TRANSIT: "In Transit",
+              RESERVED: "Reserved/Deposit Paid",
+              SOLD: "Sold",
+              UNDER_PREP: "Under Prep/Maintenance",
+            };
+
+            const steeringMap: Record<string, VehicleItem["steering"]> = {
+              LEFT_HAND: "Left-Hand Drive (LHD)",
+              RIGHT_HAND_CONVERTED: "Right-Hand Drive (RHD Converted)",
+            };
+
+            const fuelMap: Record<string, VehicleItem["fuelType"]> = {
+              PETROL: "Petrol",
+              HYBRID: "Hybrid",
+              DIESEL: "Diesel",
+              ELECTRIC: "Electric",
+            };
+
+            const transMap: Record<string, VehicleItem["transmission"]> = {
+              AUTOMATIC: "Automatic",
+              MANUAL: "Manual",
+            };
+
+            const mappedVehicles: VehicleItem[] = vehRes.data.map((v: any) => {
+              const imageUrls =
+                Array.isArray(v.images) && v.images.length > 0
+                  ? v.images.map((img: any) => img.url)
+                  : [
+                      "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=1400&q=85",
+                    ];
+
+              return {
+                id: v.id,
+                stockNumber: v.stockNumber,
+                vin: v.vin,
+                make: v.make,
+                model: v.model,
+                year: v.year,
+                trim: v.trim || "",
+                bodyType: v.bodyType || "SUV",
+                originCountry: v.originCountry || "UAE",
+                steering: steeringMap[v.steering] || "Left-Hand Drive (LHD)",
+                customsClearance: v.customsClearance || "Gomrok Herat - Verified",
+                cleanTitle: Boolean(v.cleanTitle),
+                mileage: v.mileage,
+                fuelType: fuelMap[v.fuelType] || "Petrol",
+                transmission: transMap[v.transmission] || "Automatic",
+                driveType: v.driveType || "4WD",
+                color: v.color || "White",
+                status: statusMap[v.status] || "Available on Lot",
+                purchasePrice: v.purchasePrice || 0,
+                freightCost: v.freightCost || 0,
+                customsDuty: v.customsDuty || 0,
+                repairCost: v.repairCost || 0,
+                landedCost: v.landedCost || 0,
+                minTargetPrice: v.minTargetPrice || 0,
+                sellingPrice: v.sellingPrice || 0,
+                features: v.features || [],
+                description: v.description || "",
+                descriptionDari: v.descriptionDari || "",
+                conditionNotes: v.conditionNotes || {
+                  exterior: "Clean original condition",
+                  interior: "Leather interior, smoke-free",
+                  engine: "Factory standard inspection",
+                  tires: "Good condition",
+                  accidentHistory: "Clean Title",
+                },
+                images: imageUrls,
+                documents: v.documents || [],
+                viewsCount: 0,
+                inquiriesCount: 0,
+              };
+            });
+
+            set({ vehicles: mappedVehicles });
+          }
+
+          if (custRes?.success && Array.isArray(custRes.data) && custRes.data.length > 0) {
+            const leadMap: Record<string, CustomerRecord["leadStage"]> = {
+              NEW_INQUIRY: "New Inquiry",
+              FOLLOW_UP: "Follow-Up",
+              TEST_DRIVE: "Test Drive",
+              NEGOTIATION: "Negotiation",
+              CLOSED_WON: "Closed/Won",
+              LOST: "Lost",
+            };
+
+            const mappedCusts: CustomerRecord[] = custRes.data.map((c: any) => ({
+              id: c.id,
+              fullName: c.fullName,
+              phone: c.phone,
+              whatsapp: c.whatsapp || c.phone,
+              tazkiraNumber: c.tazkiraNumber,
+              city: c.city || "Herat",
+              address: c.address || "",
+              tradeInRecord: c.tradeInRecord || undefined,
+              leadStage: leadMap[c.leadStage] || "New Inquiry",
+              budget: 45000,
+              interestedInVehicleId: "",
+              notes: c.notes || "",
+              createdAt: c.createdAt ? new Date(c.createdAt).toISOString().split("T")[0] : "",
+            }));
+
+            set({ customers: mappedCusts });
+          }
+        } catch (error) {
+          console.warn("Failed syncing from database, using cached showroom state:", error);
+        }
+      },
     }),
     {
       name: "sadozai_motors_storage",
