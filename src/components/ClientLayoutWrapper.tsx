@@ -5,6 +5,7 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { ErpSidebar } from "@/components/ErpSidebar";
 import { ErpHeader } from "@/components/ErpHeader";
 import { VehicleIntakeModal } from "@/components/VehicleIntakeModal";
+import { ToastContainer } from "@/components/ToastContainer";
 
 export function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
   const { darkMode, language } = useShowroomStore();
@@ -31,13 +32,13 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
   }, [darkMode, language]);
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-obsidian text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors selection:bg-blue-600 selection:text-white">
       {/* Enterprise ERP Sidebar */}
       <ErpSidebar onOpenIntake={() => setIsIntakeModalOpen(true)} />
 
       {/* Main ERP Cockpit Area */}
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
-        <ErpHeader />
+        <ErpHeader onOpenIntake={() => setIsIntakeModalOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {children}
         </main>
@@ -48,6 +49,9 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
         isOpen={isIntakeModalOpen}
         onClose={() => setIsIntakeModalOpen(false)}
       />
+
+      {/* Global Floating Toast Notifications */}
+      <ToastContainer />
     </div>
   );
 }

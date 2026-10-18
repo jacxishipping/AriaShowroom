@@ -27,7 +27,7 @@ export function LotBarcodeScannerModal({
   onClose,
 }: LotBarcodeScannerModalProps) {
   const router = useRouter();
-  const { vehicles } = useShowroomStore();
+  const { vehicles, addToast } = useShowroomStore();
 
   const [hasCamera, setHasCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -98,7 +98,7 @@ export function LotBarcodeScannerModal({
     if (matched) {
       handleSelectVehicle(matched.id);
     } else {
-      alert(`No vehicle found with VIN/Stock matching "${scannedVin}"`);
+      addToast(`No vehicle found with VIN/Stock matching "${scannedVin}"`, "error");
     }
   };
 

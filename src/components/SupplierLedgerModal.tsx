@@ -27,7 +27,7 @@ export function SupplierLedgerModal({
   isOpen,
   onClose,
 }: SupplierLedgerModalProps) {
-  const { exchangeRate, recordSupplierPayment, addSupplierBill } = useShowroomStore();
+  const { exchangeRate, recordSupplierPayment, addSupplierBill, addToast } = useShowroomStore();
 
   const [isPaying, setIsPaying] = useState(false);
   const [payAmount, setPayAmount] = useState<number>(0);
@@ -57,7 +57,7 @@ export function SupplierLedgerModal({
     setIsPaying(false);
     setPayAmount(0);
     setPayRef("");
-    alert(`Payment of $${payAmount.toLocaleString()} recorded for ${supplier.companyName}!`);
+    addToast(`Payment of $${payAmount.toLocaleString()} recorded for ${supplier.companyName}!`, "success");
   };
 
   const handleBillSubmit = (e: React.FormEvent) => {
@@ -79,7 +79,7 @@ export function SupplierLedgerModal({
     setBillStock("");
     setBillDesc("");
     setBillAmount(0);
-    alert("New purchase bill booked to supplier ledger!");
+    addToast("New purchase bill booked to supplier ledger!", "success");
   };
 
   const handlePrint = () => {

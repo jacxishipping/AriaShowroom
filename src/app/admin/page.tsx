@@ -97,6 +97,7 @@ export default function AdminDashboardPage() {
     updateInvoiceStatus,
     addPaymentVoucher,
     addJournalEntry,
+    addToast,
   } = useShowroomStore();
 
   const t = translations[language];
@@ -159,7 +160,7 @@ export default function AdminDashboardPage() {
       status: Number(saleForm.installmentsRemaining) > 0 ? "Pending Installments" : "Completed",
     });
 
-    alert("Sale registered successfully! Marked vehicle as Sold and generated contract number.");
+    addToast("Sale registered successfully! Marked vehicle as Sold and generated contract.", "success");
   };
 
   return (

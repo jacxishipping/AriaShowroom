@@ -98,6 +98,34 @@ interface ShowroomStore {
   accounts: AccountRecord[];
   journalEntries: JournalEntryRecord[];
   addJournalEntry: (entry: Omit<JournalEntryRecord, "id" | "entryNumber">) => void;
+
+  // UI/UX Enhancements: Favorites & Comparison
+  favoriteIds: string[];
+  toggleFavorite: (id: string) => void;
+  compareIds: string[];
+  toggleCompare: (id: string) => void;
+  clearCompare: () => void;
+
+  // Quick Status Actions
+  setVehicleStatus: (id: string, status: VehicleItem["status"]) => void;
+  batchUpdateVehicleStatus: (ids: string[], status: VehicleItem["status"]) => void;
+
+  // Toast Notification System
+  toasts: Array<{ id: string; type: "success" | "info" | "warning" | "error"; message: string }>;
+  addToast: (message: string, type?: "success" | "info" | "warning" | "error") => void;
+  removeToast: (id: string) => void;
+
+  // Showroom Activity Notifications
+  notifications: Array<{
+    id: string;
+    title: string;
+    desc: string;
+    time: string;
+    read: boolean;
+    type: "customs" | "sale" | "lead" | "rate";
+  }>;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
 }
 
 const initialFilters: FilterState = {
@@ -447,6 +475,129 @@ export const useShowroomStore = create<ShowroomStore>()(
           };
           return { journalEntries: [newEntry, ...state.journalEntries] };
         }),
+
+      // UI/UX Enhancements: Favorites & Comparison
+      favoriteIds: [],
+      toggleFavorite: (id) =>
+        set((state) => {
+          const exists = state.favoriteIds.includes(id);
+          const next = exists
+            ? state.favoriteIds.filter((favId) => favId !== id)
+            : [...state.favoriteIds, id];
+          return { favoriteIds: next };
+        }),
+
+      compareIds: [],
+      toggleCompare: (id) =>
+        set((state) => {
+          const exists = state.compareIds.includes(id);
+          if (exists) {
+            return { compareIds: state.compareIds.filter((cId) => cId !== id) };
+          }
+          if (state.compareIds.length >= 3) {
+            return state; // maximum 3 vehicles to compare side-by-side
+          }
+          return { compareIds: [...state.compareIds, id] };
+        }),
+      clearCompare: () => set({ compareIds: [] }),
+
+      // Quick Status Actions with Toast
+      setVehicleStatus: (id, status) =>
+        set((state) => {
+          const target = state.vehicles.find((v) => v.id === id);
+          const updated = state.vehicles.map((v) => (v.id === id ? { ...v, status } : v));
+          const toastId = `toast-${Date.now()}`;
+          const newToast = {
+            id: toastId,
+            type: "success" as const,
+            message: target
+              ? `${target.make} ${target.model} status changed to "${status}"`
+              : `Vehicle status changed to "${status}"`,
+          };
+          return {
+            vehicles: updated,
+            toasts: [...state.toasts, newToast],
+          };
+        }),
+
+      batchUpdateVehicleStatus: (ids, status) =>
+        set((state) => {
+          const updated = state.vehicles.map((v) =>
+            ids.includes(v.id) ? { ...v, status } : v
+          );
+          const toastId = `toast-${Date.now()}`;
+          return {
+            vehicles: updated,
+            toasts: [
+              ...state.toasts,
+              {
+                id: toastId,
+                type: "success",
+                message: `Updated status for ${ids.length} vehicle(s) to "${status}"`,
+              },
+            ],
+          };
+        }),
+
+      // Toast Notification System
+      toasts: [],
+      addToast: (message, type = "info") =>
+        set((state) => ({
+          toasts: [
+            ...state.toasts,
+            { id: `toast-${Date.now()}-${Math.random()}`, type, message },
+          ],
+        })),
+      removeToast: (id) =>
+        set((state) => ({
+          toasts: state.toasts.filter((t) => t.id !== id),
+        })),
+
+      // Showroom Activity Notifications
+      notifications: [
+        {
+          id: "notif-1",
+          title: "Customs Clearance Verified",
+          desc: "Toyota Land Cruiser 300 VXR (SM-HRT-101) negative plate papers stamped at Gomrok Herat.",
+          time: "10 mins ago",
+          read: false,
+          type: "customs",
+        },
+        {
+          id: "notif-2",
+          title: "Deposit Paid & Reserved",
+          desc: "Lexus LX 570 Super Sport (SM-HRT-102) reserved by Haji Mohammad Gul. Deposit: $15,000 USD.",
+          time: "45 mins ago",
+          read: false,
+          type: "sale",
+        },
+        {
+          id: "notif-3",
+          title: "New High-Value Inquiry",
+          desc: "Customer inquiry received via WhatsApp for Hilux Revo Rocco (SM-HRT-103).",
+          time: "2 hours ago",
+          read: false,
+          type: "lead",
+        },
+        {
+          id: "notif-4",
+          title: "Sarrafi Exchange Rate Alert",
+          desc: "Herat market rate settled at $1 USD = 70.5 AFN. Accounting ledgers synced.",
+          time: "5 hours ago",
+          read: true,
+          type: "rate",
+        },
+      ],
+      markNotificationRead: (id) =>
+        set((state) => ({
+          notifications: state.notifications.map((n) =>
+            n.id === id ? { ...n, read: true } : n
+          ),
+        })),
+      markAllNotificationsRead: () =>
+        set((state) => ({
+          notifications: state.notifications.map((n) => ({ ...n, read: true })),
+        })),
     }),
     {
       name: "sadozai_motors_storage",
