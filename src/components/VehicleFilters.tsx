@@ -5,22 +5,24 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import { Search, RotateCcw, Filter, Car, Fuel, Globe2, Compass } from "lucide-react";
 
+import { MuiCard, MuiTextField, MuiButton } from "@/components/mui";
+
 export function VehicleFilters() {
   const { filters, setFilter, resetFilters, language } = useShowroomStore();
   const t = translations[language];
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-navy-900">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+    <MuiCard elevation={1} className="p-5">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-gold" />
-          <h3 className="font-bold text-slate-900 dark:text-white">
+          <Filter className="h-4 w-4 text-[#D97706]" />
+          <h3 className="font-bold text-sm text-slate-900 dark:text-white">
             {t.filterTitle}
           </h3>
         </div>
         <button
           onClick={resetFilters}
-          className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-gold dark:text-slate-400 dark:hover:text-gold transition-colors"
+          className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-[#1976D2] dark:text-slate-400 transition-colors"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           <span>{t.clearFilters}</span>
@@ -29,16 +31,13 @@ export function VehicleFilters() {
 
       {/* Search Input */}
       <div className="mt-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            value={filters.search}
-            onChange={(e) => setFilter("search", e.target.value)}
-            placeholder={t.searchPlaceholder}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-xs font-medium text-slate-900 placeholder-slate-400 outline-none transition-colors focus:border-gold focus:bg-white dark:border-slate-800 dark:bg-navy-800 dark:text-white dark:focus:border-gold"
-          />
-        </div>
+        <MuiTextField
+          value={filters.search}
+          onChange={(e) => setFilter("search", e.target.value)}
+          placeholder={t.searchPlaceholder}
+          startAdornment={<Search className="h-4 w-4 text-slate-400" />}
+          sizeVariant="small"
+        />
       </div>
 
       {/* Grid of Select Dropdowns */}
@@ -148,6 +147,6 @@ export function VehicleFilters() {
           </select>
         </div>
       </div>
-    </div>
+    </MuiCard>
   );
 }

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useShowroomStore, RoleType } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import { LotBarcodeScannerModal } from "@/components/LotBarcodeScannerModal";
+import { MuiChip, MuiButton } from "@/components/mui";
 import {
   Search,
   DollarSign,
@@ -57,8 +58,8 @@ export function ErpHeader({ onSearch }: ErpHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 dark:border-slate-800 dark:bg-navy-900 transition-colors">
-      {/* Left: Global Omni-Search Bar & Camera Scanner Trigger */}
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 sm:px-6 dark:border-slate-800/80 dark:bg-[#121824]/95 backdrop-blur-sm shadow-mui-1 transition-colors">
+      {/* Left: Material Outlined Search Field & Camera Scanner */}
       <div className="flex items-center gap-2 w-full max-w-md">
         <div className="relative w-full">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -73,11 +74,11 @@ export function ErpHeader({ onSearch }: ErpHeaderProps) {
             }
             value={filters.search}
             onChange={(e) => setFilter("search", e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-9 text-xs font-medium text-slate-800 placeholder-slate-400 outline-none transition-colors focus:border-gold focus:bg-white dark:border-slate-800 dark:bg-navy-950 dark:text-slate-100 dark:focus:border-gold"
+            className="w-full rounded-md border border-slate-300 bg-slate-50/50 py-1.5 pl-9 pr-9 text-xs font-normal text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-[#1976D2] focus:bg-white focus:ring-1 focus:ring-[#1976D2] dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:border-[#42A5F5] dark:focus:bg-[#121824]"
           />
           <button
             onClick={() => setIsScannerOpen(true)}
-            className="absolute right-2 top-2 p-1 text-slate-400 hover:text-gold dark:hover:text-gold transition-colors cursor-pointer"
+            className="absolute right-2 top-1.5 p-1 text-slate-400 hover:text-[#D97706] dark:hover:text-[#F59E0B] transition-colors cursor-pointer"
             title="Scan VIN Barcode or Windshield Sticker (اسکن بارکد)"
           >
             <ScanLine className="h-4 w-4" />
@@ -85,20 +86,26 @@ export function ErpHeader({ onSearch }: ErpHeaderProps) {
         </div>
       </div>
 
-      {/* Right: Exchange Rate, Currency, Tri-lingual, Theme, and Profile */}
+      {/* Right: Exchange Rate Chip, Currency Toggle, Tri-lingual, Theme, and Profile */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Live Exchange Rate Modifier (USD / AFN) */}
+        {/* Live Sarrafi Exchange Rate Chip */}
         <div className="relative">
           <button
             onClick={() => setIsRateEditOpen(!isRateEditOpen)}
-            className="hidden md:flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1.5 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+            className="cursor-pointer"
             title="Click to update market exchange rate"
           >
-            <span>$1 = {exchangeRate} AFN</span>
+            <MuiChip
+              variant="outlined"
+              color="success"
+              size="medium"
+              label={`$1 = ${exchangeRate} AFN`}
+              className="font-mono font-bold"
+            />
           </button>
 
           {isRateEditOpen && (
-            <div className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-800 dark:bg-navy-900">
+            <div className="absolute right-0 top-11 z-50 w-56 rounded-lg border border-slate-200 bg-white p-3 shadow-mui-8 dark:border-slate-800 dark:bg-[#121824]">
               <form onSubmit={handleSaveRate} className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase text-slate-400">
                   Update Herat Sarrafi Rate:
@@ -109,13 +116,13 @@ export function ErpHeader({ onSearch }: ErpHeaderProps) {
                     step="0.1"
                     value={tempRate}
                     onChange={(e) => setTempRate(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 p-1.5 text-xs font-mono font-bold dark:border-slate-700 dark:bg-navy-800"
+                    className="w-full rounded border border-slate-300 px-2 py-1 text-xs font-mono dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                   />
                   <button
                     type="submit"
-                    className="rounded-lg bg-gold px-2.5 py-1.5 text-xs font-bold text-slate-950 hover:bg-gold-light"
+                    className="rounded bg-[#1976D2] px-2.5 py-1 text-xs font-bold text-white hover:bg-[#115293]"
                   >
-                    Set
+                    Save
                   </button>
                 </div>
               </form>
@@ -123,124 +130,108 @@ export function ErpHeader({ onSearch }: ErpHeaderProps) {
           )}
         </div>
 
-        {/* Currency Switcher */}
-        <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-800 dark:bg-navy-950">
+        {/* Currency Switcher (USD / AFN Material Segmented) */}
+        <div className="flex items-center rounded-md border border-slate-300 p-0.5 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60">
           <button
             onClick={() => setCurrency("USD")}
-            className={`rounded-lg px-2 py-1 text-xs font-bold transition-all ${
+            className={`rounded px-2 py-0.5 text-xs font-bold transition-all ${
               currency === "USD"
-                ? "bg-navy text-gold shadow-xs dark:bg-gold dark:text-slate-950"
-                : "text-slate-600 dark:text-slate-400"
+                ? "bg-[#1976D2] text-white shadow-2xs"
+                : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
             }`}
           >
-            USD $
+            USD ($)
           </button>
           <button
             onClick={() => setCurrency("AFN")}
-            className={`rounded-lg px-2 py-1 text-xs font-bold transition-all ${
+            className={`rounded px-2 py-0.5 text-xs font-bold transition-all ${
               currency === "AFN"
-                ? "bg-navy text-gold shadow-xs dark:bg-gold dark:text-slate-950"
-                : "text-slate-600 dark:text-slate-400"
+                ? "bg-[#1976D2] text-white shadow-2xs"
+                : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
             }`}
           >
-            AFN ؋
+            AFN (؋)
           </button>
         </div>
 
         {/* Tri-Lingual Language Switcher */}
-        <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-800 dark:bg-navy-950">
+        <div className="flex items-center rounded-md border border-slate-300 p-0.5 dark:border-slate-700 text-xs font-bold bg-slate-50 dark:bg-slate-900/60">
           <button
             onClick={() => setLanguage("en")}
-            className={`rounded-lg px-2 py-1 text-xs font-bold transition-all ${
-              language === "en"
-                ? "bg-navy text-gold shadow-xs dark:bg-gold dark:text-slate-950"
-                : "text-slate-500 dark:text-slate-400"
+            className={`rounded px-1.5 py-0.5 ${
+              language === "en" ? "bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900" : "text-slate-500"
             }`}
           >
             EN
           </button>
           <button
             onClick={() => setLanguage("fa")}
-            className={`rounded-lg px-2 py-1 text-xs font-bold font-dari transition-all ${
-              language === "fa"
-                ? "bg-navy text-gold shadow-xs dark:bg-gold dark:text-slate-950"
-                : "text-slate-500 dark:text-slate-400"
+            className={`rounded px-1.5 py-0.5 ${
+              language === "fa" ? "bg-[#D97706] text-white font-dari" : "text-slate-500 font-dari"
             }`}
           >
             دری
           </button>
           <button
             onClick={() => setLanguage("ps")}
-            className={`rounded-lg px-2 py-1 text-xs font-bold font-dari transition-all ${
-              language === "ps"
-                ? "bg-navy text-gold shadow-xs dark:bg-gold dark:text-slate-950"
-                : "text-slate-500 dark:text-slate-400"
+            className={`rounded px-1.5 py-0.5 ${
+              language === "ps" ? "bg-[#D97706] text-white font-dari" : "text-slate-500 font-dari"
             }`}
           >
             پښتو
           </button>
         </div>
 
-        {/* Theme Toggle */}
+        {/* Theme Toggle (Material IconButton) */}
         <button
           onClick={toggleDarkMode}
-          className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
-          aria-label="Toggle theme"
+          className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors cursor-pointer"
+          title="Toggle Light / Dark Material Theme"
         >
-          {darkMode ? <Sun className="h-4 w-4 text-gold" /> : <Moon className="h-4 w-4" />}
+          {darkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
         </button>
 
-        {/* System Notifications Bell */}
+        {/* Notifications Icon with Badge */}
         <div className="relative">
           <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="relative rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="relative rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors cursor-pointer"
           >
             <Bell className="h-4 w-4" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-gold animate-ping" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-gold" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#D32F2F] ring-2 ring-white dark:ring-[#121824]" />
           </button>
 
           {isNotificationsOpen && (
-            <div className="absolute right-0 top-11 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-800 dark:bg-navy-900 text-xs space-y-2">
-              <div className="flex items-center justify-between font-bold border-b pb-2 dark:border-slate-800">
-                <span>Herat Lot Alerts</span>
-                <span className="rounded bg-gold/15 px-1.5 py-0.5 text-[10px] text-gold font-mono">
-                  3 New
+            <div className="absolute right-0 top-11 z-50 w-80 rounded-lg border border-slate-200 bg-white p-4 shadow-mui-16 dark:border-slate-800 dark:bg-[#121824]">
+              <div className="flex items-center justify-between border-b pb-2 dark:border-slate-800">
+                <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Showroom Alerts
                 </span>
+                <span className="text-[10px] font-semibold text-[#1976D2]">Mark all read</span>
               </div>
-              <div className="space-y-1.5 text-[11px]">
-                <p className="rounded-lg bg-emerald-500/10 p-2 text-emerald-600 dark:text-emerald-400">
-                  ✓ Customs Maktoub release confirmed for Land Cruiser 300 (Islam Qala).
-                </p>
-                <p className="rounded-lg bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
-                  ⚠️ Installment payment due in 3 days: SM-CNTR-2026-089.
-                </p>
-                <p className="rounded-lg bg-blue-500/10 p-2 text-blue-600 dark:text-blue-400">
-                  🚢 In Transit: Lexus RX 350 cleared Bandar Abbas en route to Herat.
-                </p>
+              <div className="mt-3 space-y-2.5 text-xs">
+                <div className="flex items-start gap-2.5 rounded-md bg-amber-500/10 p-2 dark:bg-amber-500/15">
+                  <AlertTriangle className="h-4 w-4 text-[#ED6C02] shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-slate-900 dark:text-white block">
+                      Islam Qala Customs Inspection Due
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Stock #SM-HRT-101 requires Maktoub clearance stamp validation.
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Active Staff Profile & Role Indicator */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-          <div className="hidden sm:block text-right">
-            <span className="text-[11px] font-bold text-slate-900 dark:text-white block leading-tight">
-              {currentRole === "SuperAdmin" && "Haji Ahmad Shah Sadozai"}
-              {currentRole === "SalesAgent" && "Farhad Timori"}
-              {currentRole === "Accountant" && "Mirwais Saljuqi"}
-            </span>
-            <span className="text-[10px] font-mono text-gold block">
-              {currentRole} • Herat Lot
-            </span>
-          </div>
-
+        {/* Role Switcher (Material Select) */}
+        <div className="border-l border-slate-200 dark:border-slate-800 pl-2">
           <select
             value={currentRole}
             onChange={(e) => setCurrentRole(e.target.value as RoleType)}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-800 dark:border-slate-700 dark:bg-navy-950 dark:text-gold-light outline-none"
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-[#121824] dark:text-slate-200 outline-none focus:border-[#1976D2] cursor-pointer"
             title="Switch Active ERP Role"
           >
             <option value="SuperAdmin">SuperAdmin</option>

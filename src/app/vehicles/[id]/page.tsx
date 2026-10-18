@@ -10,6 +10,7 @@ import { translations } from "@/lib/translations";
 import { VehicleDeedModal } from "@/components/VehicleDeedModal";
 import { CustomsDocumentVault } from "@/components/CustomsDocumentVault";
 import { SarrafiSettlementModal } from "@/components/SarrafiSettlementModal";
+import { MuiCard, MuiButton, MuiChip } from "@/components/mui";
 import {
   ShieldCheck,
   FileCheck,
@@ -104,12 +105,16 @@ Please schedule a viewing or share more photos.`
         </Link>
 
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs font-semibold text-gold bg-gold/10 px-2.5 py-1 rounded-lg">
-            Stock #{vehicle.stockNumber}
-          </span>
-          <span className="font-mono text-xs text-slate-500 bg-slate-100 dark:bg-navy-800 px-2.5 py-1 rounded-lg">
-            VIN: {vehicle.vin}
-          </span>
+          <MuiChip
+            label={`Stock #${vehicle.stockNumber}`}
+            color="gold"
+            size="small"
+          />
+          <MuiChip
+            label={`VIN: ${vehicle.vin}`}
+            size="small"
+            variant="outlined"
+          />
         </div>
       </div>
 
@@ -237,14 +242,14 @@ Please schedule a viewing or share more photos.`
           )}
 
           {/* Condition Breakdown */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-navy-900 shadow-xs">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-gold dark:text-gold-light mb-4 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+          <MuiCard elevation={1} className="p-6">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#D97706] mb-4 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[#2E7D32]" />
               Sadozai Certified Condition & Inspection Report
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="rounded-xl bg-slate-50 p-3 dark:bg-navy-800">
+              <div className="rounded-lg bg-slate-50 p-3 dark:bg-[#121824] border border-slate-200/80 dark:border-slate-800">
                 <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
                   Exterior & Paint:
                 </span>
@@ -253,7 +258,7 @@ Please schedule a viewing or share more photos.`
                 </span>
               </div>
 
-              <div className="rounded-xl bg-slate-50 p-3 dark:bg-navy-800">
+              <div className="rounded-lg bg-slate-50 p-3 dark:bg-[#121824] border border-slate-200/80 dark:border-slate-800">
                 <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
                   Interior & Upholstery:
                 </span>
@@ -262,7 +267,7 @@ Please schedule a viewing or share more photos.`
                 </span>
               </div>
 
-              <div className="rounded-xl bg-slate-50 p-3 dark:bg-navy-800">
+              <div className="rounded-lg bg-slate-50 p-3 dark:bg-[#121824] border border-slate-200/80 dark:border-slate-800">
                 <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
                   Engine & Powertrain:
                 </span>
@@ -271,7 +276,7 @@ Please schedule a viewing or share more photos.`
                 </span>
               </div>
 
-              <div className="rounded-xl bg-slate-50 p-3 dark:bg-navy-800">
+              <div className="rounded-lg bg-slate-50 p-3 dark:bg-[#121824] border border-slate-200/80 dark:border-slate-800">
                 <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
                   Tires & Suspension:
                 </span>
@@ -280,7 +285,7 @@ Please schedule a viewing or share more photos.`
                 </span>
               </div>
 
-              <div className="rounded-xl bg-slate-50 p-3 dark:bg-navy-800 sm:col-span-2">
+              <div className="rounded-lg bg-slate-50 p-3 dark:bg-[#121824] border border-slate-200/80 dark:border-slate-800 sm:col-span-2">
                 <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
                   Accident & Airbag History:
                 </span>
@@ -289,14 +294,14 @@ Please schedule a viewing or share more photos.`
                 </span>
               </div>
             </div>
-          </div>
+          </MuiCard>
         </div>
 
         {/* Right Column: Key Details, Pricing & Action Center */}
         <div className="lg:col-span-5 space-y-6">
           {/* Main Info Card */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-navy-900 shadow-md">
-            <span className="text-xs font-bold uppercase tracking-wider text-gold dark:text-gold-light">
+          <MuiCard elevation={1} className="p-6 sm:p-7">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#D97706]">
               {vehicle.make} • {vehicle.originCountry} Import
             </span>
             <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
@@ -307,7 +312,7 @@ Please schedule a viewing or share more photos.`
             </p>
 
             {/* ERP Pricing & Margin Box */}
-            <div className="mt-6 rounded-2xl bg-slate-50 p-4 dark:bg-navy-800 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
+            <div className="mt-6 rounded-lg bg-slate-50 p-4 dark:bg-[#121824] border border-slate-200/80 dark:border-slate-800 space-y-3">
               <div>
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                   Lot Selling Price
@@ -326,29 +331,29 @@ Please schedule a viewing or share more photos.`
 
               {/* Landed Cost vs Margin Breakdown */}
               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-xs font-mono">
-                <div className="rounded-lg bg-white dark:bg-navy-900 p-2 border border-slate-200/60 dark:border-slate-700">
+                <div className="rounded-md bg-white dark:bg-[#1A202C] p-2 border border-slate-200/80 dark:border-slate-700">
                   <span className="text-[10px] text-slate-400 block uppercase font-sans">Total Landed Cost</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
                     ${vehicle.landedCost.toLocaleString()} USD
                   </span>
                 </div>
-                <div className="rounded-lg bg-white dark:bg-navy-900 p-2 border border-slate-200/60 dark:border-slate-700">
+                <div className="rounded-md bg-white dark:bg-[#1A202C] p-2 border border-slate-200/80 dark:border-slate-700">
                   <span className="text-[10px] text-slate-400 block uppercase font-sans">Net Target Margin</span>
-                  <span className="font-bold text-emerald-500">
+                  <span className="font-bold text-[#2E7D32] dark:text-emerald-400">
                     +${(vehicle.sellingPrice - vehicle.landedCost).toLocaleString()} ({vehicle.landedCost > 0 ? (((vehicle.sellingPrice - vehicle.landedCost) / vehicle.landedCost) * 100).toFixed(1) : 0}%)
                   </span>
                 </div>
               </div>
 
-              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+              <p className="text-[11px] text-[#2E7D32] dark:text-emerald-400 font-medium flex items-center gap-1">
                 <CheckCircle2 className="h-3.5 w-3.5" /> Customs duty settled at Herat Islam Qala Port
               </p>
             </div>
 
             {/* Core Specs Pills */}
             <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
-              <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-3 dark:bg-navy-800">
-                <Gauge className="h-4 w-4 text-gold shrink-0" />
+              <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 dark:bg-[#121824] border border-slate-200/80 dark:border-slate-800">
+                <Gauge className="h-4 w-4 text-[#D97706] shrink-0" />
                 <div>
                   <span className="text-[10px] text-slate-400 block uppercase">Mileage</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -357,8 +362,8 @@ Please schedule a viewing or share more photos.`
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-3 dark:bg-navy-800">
-                <Fuel className="h-4 w-4 text-gold shrink-0" />
+              <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 dark:bg-[#121824] border border-slate-200/80 dark:border-slate-800">
+                <Fuel className="h-4 w-4 text-[#D97706] shrink-0" />
                 <div>
                   <span className="text-[10px] text-slate-400 block uppercase">Fuel Type</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -367,8 +372,8 @@ Please schedule a viewing or share more photos.`
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-3 dark:bg-navy-800">
-                <Compass className="h-4 w-4 text-gold shrink-0" />
+              <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 dark:bg-[#121824] border border-slate-200/80 dark:border-slate-800">
+                <Compass className="h-4 w-4 text-[#D97706] shrink-0" />
                 <div>
                   <span className="text-[10px] text-slate-400 block uppercase">Drivetrain</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -377,8 +382,8 @@ Please schedule a viewing or share more photos.`
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-3 dark:bg-navy-800">
-                <Car className="h-4 w-4 text-gold shrink-0" />
+              <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 dark:bg-[#121824] border border-slate-200/80 dark:border-slate-800">
+                <Car className="h-4 w-4 text-[#D97706] shrink-0" />
                 <div>
                   <span className="text-[10px] text-slate-400 block uppercase">Steering</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
@@ -394,41 +399,56 @@ Please schedule a viewing or share more photos.`
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 text-xs font-bold text-white shadow-md hover:bg-emerald-500 transition-colors"
+                className="block w-full"
               >
-                <Send className="h-4 w-4" />
-                <span>Inquire directly on WhatsApp (واتساپ)</span>
+                <MuiButton
+                  variant="contained"
+                  color="success"
+                  fullWidth
+                  size="medium"
+                  startIcon={<Send className="h-4 w-4" />}
+                >
+                  Inquire directly on WhatsApp (واتساپ)
+                </MuiButton>
               </a>
 
-              <button
+              <MuiButton
                 onClick={() => setIsDeedModalOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold py-3 text-xs font-bold text-slate-950 shadow-md hover:bg-gold-light transition-colors cursor-pointer"
+                variant="contained"
+                color="gold"
+                fullWidth
+                size="medium"
+                startIcon={<FileText className="h-4 w-4" />}
               >
-                <FileText className="h-4 w-4" />
-                <span>{t.generateDeed} (قباله رسمی با QR کد)</span>
-              </button>
+                {t.generateDeed} (قباله رسمی با QR کد)
+              </MuiButton>
 
-              <button
+              <MuiButton
                 onClick={() => setIsSarrafiModalOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-navy py-3 text-xs font-bold text-white shadow-md hover:bg-navy-800 dark:bg-slate-800 dark:text-gold dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                variant="contained"
+                color="primary"
+                fullWidth
+                size="medium"
+                startIcon={<Banknote className="h-4 w-4" />}
               >
-                <Banknote className="h-4 w-4" />
-                <span>Sarrafi & Milestone Installment Ledger (تسویه حساب صرافی)</span>
-              </button>
+                Sarrafi & Milestone Installment Ledger (تسویه حساب صرافی)
+              </MuiButton>
 
-              <button
+              <MuiButton
                 onClick={handlePrintSpecs}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                variant="outlined"
+                fullWidth
+                size="small"
+                startIcon={<Printer className="h-4 w-4" />}
               >
-                <Printer className="h-4 w-4" />
-                <span>{t.printSpecSheet}</span>
-              </button>
+                {t.printSpecSheet}
+              </MuiButton>
             </div>
-          </div>
+          </MuiCard>
 
           {/* Description & Features Box */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-navy-900">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gold dark:text-gold-light mb-3">
+          <MuiCard elevation={1} className="p-6">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#D97706] mb-3">
               Description & Highlights
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -452,20 +472,20 @@ Please schedule a viewing or share more photos.`
               </p>
             ) : null}
 
-            <div className="mt-4 pt-3 border-t dark:border-slate-800">
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
               <span className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider block mb-2">
                 Factory Options & Packages:
               </span>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
                 {vehicle.features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-gold shrink-0" />
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[#D97706] shrink-0" />
                     <span>{feature}</span>
                   </li>
                 ))}
               </ul>
             </div>
-          </div>
+          </MuiCard>
         </div>
       </div>
 

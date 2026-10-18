@@ -17,6 +17,7 @@ import {
   Clock,
   Stamp,
 } from "lucide-react";
+import { MuiCard, MuiChip, MuiButton } from "@/components/mui";
 
 interface CustomsDoc {
   id: string;
@@ -122,11 +123,11 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
   };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-navy-900 shadow-md space-y-6">
+    <MuiCard elevation={1} className="p-6 sm:p-8 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#D97706]/10 text-[#D97706]">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
@@ -140,10 +141,12 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>100% Islam Qala Cleared (محصول قطعی)</span>
-          </span>
+          <MuiChip
+            label="100% Islam Qala Cleared (محصول قطعی)"
+            color="success"
+            size="small"
+            icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+          />
         </div>
       </div>
 
@@ -152,19 +155,20 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
         {docs.map((doc) => (
           <div
             key={doc.id}
-            className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 transition-all hover:border-gold/50 hover:shadow-sm dark:border-slate-800 dark:bg-navy-800/60"
+            className="group relative flex flex-col justify-between rounded-xl border border-slate-200/80 bg-slate-50/60 p-4 transition-all hover:border-[#1976D2]/40 hover:shadow-mui-2 dark:border-slate-800 dark:bg-[#121824]"
           >
             <div>
               <div className="flex items-start justify-between gap-2 mb-2">
-                <span className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-700 shadow-2xs dark:bg-navy-900 dark:text-slate-300">
-                  <FileText className="h-3 w-3 text-gold" />
+                <span className="inline-flex items-center gap-1 rounded bg-white px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-700 shadow-2xs dark:bg-[#1A202C] dark:text-slate-300 border border-slate-200/80 dark:border-slate-700">
+                  <FileText className="h-3 w-3 text-[#D97706]" />
                   {doc.slipNumber}
                 </span>
 
-                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" />
-                  {doc.status === "TRAFFIC_APPROVED" ? "Traffic Verified" : "Customs Verified"}
-                </span>
+                <MuiChip
+                  label={doc.status === "TRAFFIC_APPROVED" ? "Traffic Verified" : "Customs Verified"}
+                  color="success"
+                  size="small"
+                />
               </div>
 
               <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">
@@ -304,6 +308,6 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
           </div>
         </div>
       )}
-    </div>
+    </MuiCard>
   );
 }

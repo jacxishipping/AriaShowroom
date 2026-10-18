@@ -9,6 +9,21 @@ import { translations } from "@/lib/translations";
 import { VehicleItem, CustomerRecord } from "@/lib/mock-data";
 import { exportInventoryToCSV, exportSalesLedgerToCSV } from "@/lib/export-utils";
 import {
+  MuiCard,
+  MuiCardHeader,
+  MuiCardContent,
+  MuiButton,
+  MuiChip,
+  MuiTabs,
+  MuiTableContainer,
+  MuiTable,
+  MuiTableHead,
+  MuiTableBody,
+  MuiTableRow,
+  MuiTableCell,
+  MuiTextField,
+} from "@/components/mui";
+import {
   LayoutDashboard,
   Car,
   Users,
@@ -182,77 +197,57 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Navigation Tabs & Exports Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-slate-800 gap-3">
-        <div className="flex gap-2 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab("inventory")}
-            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
-              activeTab === "inventory"
-                ? "border-gold text-gold"
-                : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-            }`}
-          >
-            <Car className="h-4 w-4" />
-            <span>{t.tabInventory} ({vehicles.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("crm")}
-            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
-              activeTab === "crm"
-                ? "border-gold text-gold"
-                : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            <span>{t.tabCrm} ({customers.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("sales")}
-            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
-              activeTab === "sales"
-                ? "border-gold text-gold"
-                : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-            }`}
-          >
-            <BadgeDollarSign className="h-4 w-4" />
-            <span>{t.tabSales} ({sales.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("financials")}
-            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
-              activeTab === "financials"
-                ? "border-gold text-gold"
-                : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-            }`}
-          >
-            <TrendingUp className="h-4 w-4" />
-            <span>{t.tabFinancials}</span>
-          </button>
-        </div>
+      {/* Material Navigation Tabs & Exports Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 gap-3">
+        <MuiTabs
+          value={activeTab}
+          onChange={(val) => setActiveTab(val as any)}
+          tabs={[
+            {
+              value: "inventory",
+              label: t.tabInventory,
+              icon: <Car className="h-4 w-4" />,
+              badge: vehicles.length,
+            },
+            {
+              value: "crm",
+              label: t.tabCrm,
+              icon: <Users className="h-4 w-4" />,
+              badge: customers.length,
+            },
+            {
+              value: "sales",
+              label: t.tabSales,
+              icon: <BadgeDollarSign className="h-4 w-4" />,
+              badge: sales.length,
+            },
+            {
+              value: "financials",
+              label: t.tabFinancials,
+              icon: <TrendingUp className="h-4 w-4" />,
+            },
+          ]}
+        />
 
         {/* Quick CSV / Excel Ledger Exports */}
         <div className="flex items-center gap-2 pb-2 sm:pb-0 shrink-0">
-          <button
+          <MuiButton
+            variant="outlined"
+            size="small"
             onClick={() => exportInventoryToCSV(vehicles)}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-900 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
-            title="Download full lot inventory spreadsheet with landed costs and margins"
+            startIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />}
           >
-            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
-            <span>Lot CSV</span>
-          </button>
+            Lot CSV
+          </MuiButton>
 
-          <button
+          <MuiButton
+            variant="outlined"
+            size="small"
             onClick={() => exportSalesLedgerToCSV(sales)}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-900 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
-            title="Download sales transactions ledger"
+            startIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-[#D97706]" />}
           >
-            <FileSpreadsheet className="h-3.5 w-3.5 text-gold" />
-            <span>Sales CSV</span>
-          </button>
+            Sales CSV
+          </MuiButton>
         </div>
       </div>
 
@@ -268,102 +263,112 @@ export default function AdminDashboardPage() {
                 placeholder="Search stock #, VIN, make..."
                 value={inventorySearch}
                 onChange={(e) => setInventorySearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-4 text-xs dark:border-slate-800 dark:bg-navy-900"
+                className="w-full rounded-md border border-slate-300 bg-white py-1.5 pl-9 pr-4 text-xs font-normal dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
               />
             </div>
 
             {currentRole !== "Accountant" && (
-              <button
+              <MuiButton
+                variant="contained"
+                color="gold"
+                size="small"
                 onClick={() => setIsIntakeOpen(true)}
-                className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-gold px-4 py-2 text-xs font-bold text-slate-950 shadow-md hover:bg-gold-light transition-colors"
+                startIcon={<Plus className="h-4 w-4" />}
               >
-                <Plus className="h-4 w-4" />
                 <span>{t.addNewVehicle}</span>
-              </button>
+              </MuiButton>
             )}
           </div>
 
-          {/* Vehicle Inventory Table */}
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-navy-900">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:bg-navy-800 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="p-4">Stock ID & Vehicle</th>
-                  <th className="p-4">VIN / Chassis</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Gomrok Customs</th>
-                  <th className="p-4">Landed Cost</th>
-                  <th className="p-4">Selling Price</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                {filteredInventory.map((veh) => (
-                  <tr key={veh.id} className="hover:bg-slate-50/60 dark:hover:bg-navy-800/40">
-                    <td className="p-4">
-                      <div className="font-bold text-slate-900 dark:text-white">
-                        {veh.year} {veh.make} {veh.model}
-                      </div>
-                      <div className="text-[11px] font-mono text-gold dark:text-gold-light flex items-center gap-2">
-                        <span>{veh.stockNumber} ({veh.originCountry})</span>
-                        <span className="rounded bg-slate-100 dark:bg-navy-800 px-1.5 py-0.2 text-[10px] text-slate-500 font-sans">
-                          📸 {veh.images.length} Photos
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-4 font-mono text-slate-600 dark:text-slate-400">
-                      {veh.vin}
-                    </td>
-                    <td className="p-4">
-                      <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                        {veh.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-600 dark:text-slate-400 truncate max-w-[160px]">
-                      {veh.customsClearance}
-                    </td>
-                    <td className="p-4 font-mono">
-                      ${veh.landedCost.toLocaleString()} USD
-                    </td>
-                    <td className="p-4 font-mono font-bold text-slate-900 dark:text-white">
-                      ${veh.sellingPrice.toLocaleString()} USD
-                    </td>
-                    <td className="p-4 text-right space-x-2">
-                      <a
-                        href={`/vehicles/${veh.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block rounded-lg p-1.5 text-slate-500 hover:text-gold hover:bg-slate-100 dark:hover:bg-navy-800"
-                        title="View 40+ Photo Gallery & Specs"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </a>
-                      <button
-                        onClick={() => setSelectedDeedVehicle(veh)}
-                        className="rounded-lg p-1.5 text-gold hover:bg-gold/10"
-                        title="Print Legal Deed"
-                      >
-                        <FileText className="h-4 w-4" />
-                      </button>
-                      {currentRole === "SuperAdmin" && (
-                        <button
-                          onClick={() => {
-                            if (confirm(`Delete stock ${veh.stockNumber}?`)) {
-                              deleteVehicle(veh.id);
-                            }
-                          }}
-                          className="rounded-lg p-1.5 text-red-500 hover:bg-red-500/10"
-                          title="Delete vehicle"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* Material Vehicle Inventory Table */}
+          <MuiCard elevation={1}>
+            <div className="overflow-x-auto">
+              <MuiTable dense>
+                <MuiTableHead>
+                  <MuiTableRow hover={false}>
+                    <MuiTableCell header>Stock ID & Vehicle</MuiTableCell>
+                    <MuiTableCell header>VIN / Chassis</MuiTableCell>
+                    <MuiTableCell header>Status</MuiTableCell>
+                    <MuiTableCell header>Gomrok Customs</MuiTableCell>
+                    <MuiTableCell header>Landed Cost</MuiTableCell>
+                    <MuiTableCell header>Selling Price</MuiTableCell>
+                    <MuiTableCell header align="right">
+                      Actions
+                    </MuiTableCell>
+                  </MuiTableRow>
+                </MuiTableHead>
+                <MuiTableBody>
+                  {filteredInventory.map((veh) => (
+                    <MuiTableRow key={veh.id}>
+                      <MuiTableCell>
+                        <div className="font-bold text-slate-900 dark:text-white">
+                          {veh.year} {veh.make} {veh.model}
+                        </div>
+                        <div className="text-[11px] font-mono text-[#D97706] flex items-center gap-2">
+                          <span>{veh.stockNumber} ({veh.originCountry})</span>
+                          <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] text-slate-500 font-sans">
+                            📸 {veh.images.length} Photos
+                          </span>
+                        </div>
+                      </MuiTableCell>
+                      <MuiTableCell className="font-mono text-slate-600 dark:text-slate-400">
+                        {veh.vin}
+                      </MuiTableCell>
+                      <MuiTableCell>
+                        <MuiChip
+                          label={veh.status}
+                          color={veh.status === "Available on Lot" ? "success" : "default"}
+                          size="small"
+                        />
+                      </MuiTableCell>
+                      <MuiTableCell className="text-slate-600 dark:text-slate-400 truncate max-w-[160px]">
+                        {veh.customsClearance}
+                      </MuiTableCell>
+                      <MuiTableCell className="font-mono">
+                        ${veh.landedCost.toLocaleString()} USD
+                      </MuiTableCell>
+                      <MuiTableCell className="font-mono font-bold text-slate-900 dark:text-white">
+                        ${veh.sellingPrice.toLocaleString()} USD
+                      </MuiTableCell>
+                      <MuiTableCell align="right">
+                        <div className="flex items-center justify-end gap-1">
+                          <a
+                            href={`/vehicles/${veh.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded p-1 text-slate-500 hover:text-[#1976D2] hover:bg-slate-100 dark:hover:bg-slate-800"
+                            title="View 40+ Photo Gallery & Specs"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </a>
+                          <button
+                            onClick={() => setSelectedDeedVehicle(veh)}
+                            className="rounded p-1 text-[#D97706] hover:bg-amber-500/10"
+                            title="Print Legal Deed"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </button>
+                          {currentRole === "SuperAdmin" && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Delete stock ${veh.stockNumber}?`)) {
+                                  deleteVehicle(veh.id);
+                                }
+                              }}
+                              className="rounded p-1 text-[#D32F2F] hover:bg-red-500/10"
+                              title="Delete vehicle"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </MuiTableCell>
+                    </MuiTableRow>
+                  ))}
+                </MuiTableBody>
+              </MuiTable>
+            </div>
+          </MuiCard>
         </div>
       )}
 
@@ -371,25 +376,37 @@ export default function AdminDashboardPage() {
       {activeTab === "crm" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Herat Showroom Customer & Lead Registry
-            </h3>
-            <span className="text-xs text-slate-500">
-              Pipeline tracked by Sales Desk (WhatsApp & Showroom Walk-ins)
-            </span>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                Herat Showroom Customer & Lead Registry
+              </h3>
+              <p className="text-xs text-slate-500">
+                Pipeline tracked by Sales Desk (WhatsApp & Showroom Walk-ins)
+              </p>
+            </div>
+            <MuiChip label={`${customers.length} Active Leads`} color="primary" size="small" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {customers.map((cust) => (
-              <div
+              <MuiCard
                 key={cust.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-navy-900 space-y-3"
+                elevation={1}
+                className="p-4 space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-gold/15 px-2.5 py-0.5 text-[10px] font-bold text-gold uppercase">
-                    {cust.leadStage}
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400">
+                  <MuiChip
+                    label={cust.leadStage}
+                    size="small"
+                    color={
+                      cust.leadStage === "Closed/Won"
+                        ? "success"
+                        : cust.leadStage === "Lost"
+                        ? "error"
+                        : "gold"
+                    }
+                  />
+                  <span className="text-[11px] font-mono text-slate-400">
                     {cust.city}
                   </span>
                 </div>
@@ -399,7 +416,7 @@ export default function AdminDashboardPage() {
                     {cust.fullName}
                   </h4>
                   <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                    <Phone className="h-3 w-3 text-gold" />
+                    <Phone className="h-3 w-3 text-[#D97706]" />
                     <span>{cust.phone}</span>
                   </p>
                   <p className="text-[11px] font-mono text-slate-400">
@@ -408,7 +425,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {cust.tradeInRecord && (
-                  <div className="rounded-lg bg-slate-50 p-2 text-[11px] dark:bg-navy-800">
+                  <div className="rounded-md bg-slate-50 p-2 text-[11px] dark:bg-[#121824] border border-slate-200 dark:border-slate-800">
                     <span className="font-bold text-slate-700 dark:text-slate-300 block">
                       Trade-In Vehicle:
                     </span>
@@ -416,9 +433,9 @@ export default function AdminDashboardPage() {
                   </div>
                 )}
 
-                <div className="border-t pt-2 dark:border-slate-800 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Budget:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-2 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 dark:text-slate-400">Budget:</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">
                     ${cust.budget.toLocaleString()} USD
                   </span>
                 </div>
@@ -429,7 +446,7 @@ export default function AdminDashboardPage() {
                   onChange={(e) =>
                     updateCustomerStage(cust.id, e.target.value as any)
                   }
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 p-1.5 text-[11px] font-semibold dark:border-slate-700 dark:bg-navy-800"
+                  className="w-full rounded-md border border-slate-300 bg-white p-1.5 text-xs font-medium dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
                 >
                   <option value="New Inquiry">New Inquiry</option>
                   <option value="Follow-Up">Follow-Up</option>
@@ -438,7 +455,7 @@ export default function AdminDashboardPage() {
                   <option value="Closed/Won">Closed / Won</option>
                   <option value="Lost">Lost</option>
                 </select>
-              </div>
+              </MuiCard>
             ))}
           </div>
         </div>
@@ -446,17 +463,17 @@ export default function AdminDashboardPage() {
 
       {/* TAB 3: SALES TRANSACTION ENGINE & DEED CONTRACTS */}
       {activeTab === "sales" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Sale Initiation Form */}
-          <div className="lg:col-span-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-navy-900 space-y-4">
+          <MuiCard elevation={1} className="lg:col-span-5 p-6 space-y-4">
             <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <BadgeDollarSign className="h-5 w-5 text-gold" />
+              <BadgeDollarSign className="h-5 w-5 text-[#D97706]" />
               Execute Showroom Sale & Issue Contract
             </h3>
 
             <form onSubmit={handleCreateSale} className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-slate-600 dark:text-slate-300">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
                   Select Stock Vehicle
                 </label>
                 <select
@@ -470,7 +487,7 @@ export default function AdminDashboardPage() {
                       downPaymentUSD: sel?.sellingPrice || 35000,
                     });
                   }}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 font-mono dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                  className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs font-mono dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
                 >
                   {vehicles
                     .filter((v) => v.status !== "Sold")
@@ -482,75 +499,53 @@ export default function AdminDashboardPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="block font-semibold text-slate-600 dark:text-slate-300">
-                  Buyer Full Name (نام خریدار)
-                </label>
-                <input
-                  type="text"
+              <MuiTextField
+                label="Buyer Full Name (نام خریدار)"
+                required
+                placeholder="e.g. Haji Abdul Qadir Alokozai"
+                value={saleForm.customerName}
+                onChange={(e) =>
+                  setSaleForm({ ...saleForm, customerName: e.target.value })
+                }
+              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Phone (شماره تماس)"
                   required
-                  placeholder="e.g. Haji Abdul Qadir Alokozai"
-                  value={saleForm.customerName}
+                  placeholder="+93 79 912 3456"
+                  value={saleForm.customerPhone}
                   onChange={(e) =>
-                    setSaleForm({ ...saleForm, customerName: e.target.value })
+                    setSaleForm({ ...saleForm, customerPhone: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                />
+                <MuiTextField
+                  label="Tazkira ID (تذکره)"
+                  required
+                  placeholder="1400-0402-88912"
+                  value={saleForm.customerTazkira}
+                  onChange={(e) =>
+                    setSaleForm({ ...saleForm, customerTazkira: e.target.value })
+                  }
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-600 dark:text-slate-300">
-                    Phone (شماره تماس)
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="+93 79 912 3456"
-                    value={saleForm.customerPhone}
-                    onChange={(e) =>
-                      setSaleForm({ ...saleForm, customerPhone: e.target.value })
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-navy-800 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-600 dark:text-slate-300">
-                    Tazkira ID (تذکره)
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="1400-0402-88912"
-                    value={saleForm.customerTazkira}
-                    onChange={(e) =>
-                      setSaleForm({ ...saleForm, customerTazkira: e.target.value })
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-navy-800 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-600 dark:text-slate-300">
-                    Agreed Price (USD)
-                  </label>
-                  <input
-                    type="number"
-                    value={saleForm.salePriceUSD}
-                    onChange={(e) =>
-                      setSaleForm({
-                        ...saleForm,
-                        salePriceUSD: Number(e.target.value),
-                      })
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 font-mono font-bold dark:border-slate-700 dark:bg-navy-800 dark:text-white"
-                  />
-                </div>
+                <MuiTextField
+                  label="Agreed Price (USD)"
+                  type="number"
+                  value={saleForm.salePriceUSD}
+                  onChange={(e) =>
+                    setSaleForm({
+                      ...saleForm,
+                      salePriceUSD: Number(e.target.value),
+                    })
+                  }
+                  startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
+                />
 
                 <div>
-                  <label className="block font-semibold text-slate-600 dark:text-slate-300">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
                     Payment Structure
                   </label>
                   <select
@@ -558,7 +553,7 @@ export default function AdminDashboardPage() {
                     onChange={(e) =>
                       setSaleForm({ ...saleForm, paymentType: e.target.value as any })
                     }
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                    className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
                   >
                     <option value="Full Cash">Full Cash</option>
                     <option value="Installment Plan">Installment Plan</option>
@@ -567,74 +562,81 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <button
+              <MuiButton
                 type="submit"
-                className="w-full rounded-xl bg-gold py-2.5 text-xs font-bold text-slate-950 shadow-md hover:bg-gold-light transition-colors"
+                variant="contained"
+                color="gold"
+                fullWidth
+                size="medium"
               >
                 Sign Contract & Convey Title
-              </button>
+              </MuiButton>
             </form>
-          </div>
+          </MuiCard>
 
           {/* Past Sales Records Table */}
-          <div className="lg:col-span-7 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-navy-900">
-            <h3 className="font-bold text-slate-900 dark:text-white mb-4">
-              Completed Showroom Contracts & Installments
-            </h3>
+          <MuiCard elevation={1} className="lg:col-span-7">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+                Completed Showroom Contracts & Installments
+              </h3>
+            </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 dark:bg-navy-800 border-b dark:border-slate-800">
-                  <tr>
-                    <th className="p-3">Contract #</th>
-                    <th className="p-3">Vehicle</th>
-                    <th className="p-3">Buyer & Tazkira</th>
-                    <th className="p-3">Price</th>
-                    <th className="p-3">Payment</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <MuiTable dense>
+                <MuiTableHead>
+                  <MuiTableRow hover={false}>
+                    <MuiTableCell header>Contract #</MuiTableCell>
+                    <MuiTableCell header>Vehicle</MuiTableCell>
+                    <MuiTableCell header>Buyer & Tazkira</MuiTableCell>
+                    <MuiTableCell header>Price</MuiTableCell>
+                    <MuiTableCell header>Payment</MuiTableCell>
+                  </MuiTableRow>
+                </MuiTableHead>
+                <MuiTableBody>
                   {sales.map((s) => (
-                    <tr key={s.id}>
-                      <td className="p-3 font-mono font-bold text-gold">
+                    <MuiTableRow key={s.id}>
+                      <MuiTableCell className="font-mono font-bold text-[#D97706]">
                         {s.contractNumber}
-                      </td>
-                      <td className="p-3">
+                      </MuiTableCell>
+                      <MuiTableCell>
                         <div className="font-bold text-slate-900 dark:text-white">
                           {s.vehicleName}
                         </div>
-                        <div className="text-[10px] text-slate-400">
+                        <div className="text-[11px] text-slate-400">
                           {s.stockNumber}
                         </div>
-                      </td>
-                      <td className="p-3">
-                        <div>{s.customerName}</div>
+                      </MuiTableCell>
+                      <MuiTableCell>
+                        <div className="text-slate-900 dark:text-white">{s.customerName}</div>
                         <div className="text-[10px] font-mono text-slate-400">
                           {s.customerTazkira}
                         </div>
-                      </td>
-                      <td className="p-3 font-mono font-bold">
+                      </MuiTableCell>
+                      <MuiTableCell className="font-mono font-bold text-slate-900 dark:text-white">
                         ${s.salePriceUSD.toLocaleString()}
-                      </td>
-                      <td className="p-3">
-                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-500">
-                          {s.paymentType}
-                        </span>
-                      </td>
-                    </tr>
+                      </MuiTableCell>
+                      <MuiTableCell>
+                        <MuiChip
+                          label={s.paymentType}
+                          color={s.paymentType === "Full Cash" ? "success" : "primary"}
+                          size="small"
+                        />
+                      </MuiTableCell>
+                    </MuiTableRow>
                   ))}
-                </tbody>
-              </table>
+                </MuiTableBody>
+              </MuiTable>
             </div>
-          </div>
+          </MuiCard>
         </div>
       )}
 
       {/* TAB 4: EXECUTIVE FINANCIALS & EXPENSES */}
       {activeTab === "financials" && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Executive KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-navy-900">
+            <MuiCard elevation={1} className="p-5">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
                 {t.totalActiveValue}
               </span>
@@ -644,33 +646,33 @@ export default function AdminDashboardPage() {
               <p className="mt-1 text-xs text-slate-500">
                 ؋ {(totalActiveInventoryValue * exchangeRate).toLocaleString()} AFN
               </p>
-            </div>
+            </MuiCard>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-navy-900">
+            <MuiCard elevation={1} className="p-5">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
                 {t.monthlyRevenue}
               </span>
-              <p className="mt-2 text-2xl font-black text-emerald-500 font-mono">
+              <p className="mt-2 text-2xl font-black text-[#2E7D32] dark:text-emerald-400 font-mono">
                 +${totalMonthlyRevenue.toLocaleString()} USD
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 {sales.length} verified sales deeds executed
               </p>
-            </div>
+            </MuiCard>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-navy-900">
+            <MuiCard elevation={1} className="p-5">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
                 {t.netProfitPerCar}
               </span>
-              <p className="mt-2 text-2xl font-black text-gold font-mono">
+              <p className="mt-2 text-2xl font-black text-[#D97706] font-mono">
                 +${avgMargin.toLocaleString()} USD
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 After Islam Qala tariffs & freight
               </p>
-            </div>
+            </MuiCard>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-navy-900">
+            <MuiCard elevation={1} className="p-5">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
                 {t.daysOnLot}
               </span>
@@ -680,20 +682,20 @@ export default function AdminDashboardPage() {
               <p className="mt-1 text-xs text-slate-500">
                 High turnover (Corolla & LC300 lead)
               </p>
-            </div>
+            </MuiCard>
           </div>
 
           {/* Expense Voucher Logging & List */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-navy-900 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <MuiCard elevation={1} className="lg:col-span-5 p-6 space-y-4">
               <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-gold" />
+                <Receipt className="h-5 w-5 text-[#D97706]" />
                 Book Showroom Expense / Customs Duty
               </h3>
 
               <form onSubmit={handleCreateExpense} className="space-y-4 text-xs">
                 <div>
-                  <label className="block font-semibold text-slate-600 dark:text-slate-300">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
                     Category
                   </label>
                   <select
@@ -701,7 +703,7 @@ export default function AdminDashboardPage() {
                     onChange={(e) =>
                       setExpenseForm({ ...expenseForm, category: e.target.value as any })
                     }
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                    className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
                   >
                     <option value="Gomrok & Port Tariffs">Gomrok & Port Tariffs (Herat)</option>
                     <option value="Transit & Ocean Freight">Transit & Ocean Freight (Bandar Abbas)</option>
@@ -711,81 +713,78 @@ export default function AdminDashboardPage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block font-semibold text-slate-600 dark:text-slate-300">
-                    Amount (USD)
-                  </label>
-                  <input
-                    type="number"
-                    value={expenseForm.amountUSD}
-                    onChange={(e) =>
-                      setExpenseForm({
-                        ...expenseForm,
-                        amountUSD: Number(e.target.value),
-                      })
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 font-mono font-bold dark:border-slate-700 dark:bg-navy-800 dark:text-white"
-                  />
-                </div>
+                <MuiTextField
+                  label="Amount (USD)"
+                  type="number"
+                  value={expenseForm.amountUSD}
+                  onChange={(e) =>
+                    setExpenseForm({
+                      ...expenseForm,
+                      amountUSD: Number(e.target.value),
+                    })
+                  }
+                  startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
+                />
 
-                <div>
-                  <label className="block font-semibold text-slate-600 dark:text-slate-300">
-                    Description & Receipt Note
-                  </label>
-                  <input
-                    type="text"
-                    value={expenseForm.description}
-                    onChange={(e) =>
-                      setExpenseForm({ ...expenseForm, description: e.target.value })
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-navy-800 dark:text-white"
-                  />
-                </div>
+                <MuiTextField
+                  label="Description & Receipt Note"
+                  type="text"
+                  value={expenseForm.description}
+                  onChange={(e) =>
+                    setExpenseForm({ ...expenseForm, description: e.target.value })
+                  }
+                  placeholder="e.g. Islam Qala border clearance fee"
+                />
 
-                <button
+                <MuiButton
                   type="submit"
-                  className="w-full rounded-xl bg-navy py-2.5 text-xs font-bold text-white hover:bg-navy-800 dark:bg-gold dark:text-slate-950 transition-colors"
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  size="medium"
                 >
                   Book Expense Voucher
-                </button>
+                </MuiButton>
               </form>
-            </div>
+            </MuiCard>
 
-            <div className="lg:col-span-7 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-navy-900">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4">
-                Recorded Operational & Import Outlays
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 dark:bg-navy-800 border-b dark:border-slate-800">
-                    <tr>
-                      <th className="p-3">Category</th>
-                      <th className="p-3">Description</th>
-                      <th className="p-3">Date</th>
-                      <th className="p-3 text-right">Amount (USD)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {expenses.map((exp) => (
-                      <tr key={exp.id}>
-                        <td className="p-3 font-semibold text-gold">
-                          {exp.category}
-                        </td>
-                        <td className="p-3 text-slate-600 dark:text-slate-300">
-                          {exp.description}
-                        </td>
-                        <td className="p-3 text-slate-400 font-mono">
-                          {exp.date}
-                        </td>
-                        <td className="p-3 text-right font-mono font-bold text-red-500">
-                          -${exp.amountUSD.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <MuiCard elevation={1} className="lg:col-span-7">
+              <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+                  Recorded Operational & Import Outlays
+                </h3>
               </div>
-            </div>
+              <div className="overflow-x-auto">
+                <MuiTable dense>
+                  <MuiTableHead>
+                    <MuiTableRow hover={false}>
+                      <MuiTableCell header>Category</MuiTableCell>
+                      <MuiTableCell header>Description</MuiTableCell>
+                      <MuiTableCell header>Date</MuiTableCell>
+                      <MuiTableCell header align="right">Amount (USD)</MuiTableCell>
+                    </MuiTableRow>
+                  </MuiTableHead>
+                  <MuiTableBody>
+                    {expenses.map((exp) => (
+                      <MuiTableRow key={exp.id}>
+                        <MuiTableCell className="font-semibold text-[#D97706]">
+                          {exp.category}
+                        </MuiTableCell>
+                        <MuiTableCell className="text-slate-600 dark:text-slate-300">
+                          {exp.description}
+                        </MuiTableCell>
+                        <MuiTableCell className="text-slate-400 font-mono">
+                          {exp.date}
+                        </MuiTableCell>
+                        <MuiTableCell align="right" className="font-mono font-bold text-[#D32F2F]">
+                          -${exp.amountUSD.toLocaleString()}
+                        </MuiTableCell>
+                      </MuiTableRow>
+                    ))}
+                  </MuiTableBody>
+                </MuiTable>
+              </div>
+            </MuiCard>
           </div>
         </div>
       )}

@@ -13,6 +13,20 @@ import { formatCurrency, formatMileage } from "@/lib/utils";
 import { VehicleItem } from "@/lib/mock-data";
 import { exportInventoryToCSV } from "@/lib/export-utils";
 import {
+  MuiCard,
+  MuiCardHeader,
+  MuiCardContent,
+  MuiButton,
+  MuiChip,
+  MuiTableContainer,
+  MuiTable,
+  MuiTableHead,
+  MuiTableBody,
+  MuiTableRow,
+  MuiTableCell,
+  MuiTablePagination,
+} from "@/components/mui";
+import {
   Car,
   SearchX,
   Table,
@@ -42,6 +56,8 @@ export default function InventoryPage() {
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [selectedDeedVehicle, setSelectedDeedVehicle] = useState<VehicleItem | null>(null);
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 10;
 
   // Client-side instant faceted filtering
   const filteredVehicles = useMemo(() => {
@@ -52,47 +68,45 @@ export default function InventoryPage() {
         const matchesQuery =
           v.make.toLowerCase().includes(query) ||
           v.model.toLowerCase().includes(query) ||
-          v.trim.toLowerCase().includes(query) ||
-          v.vin.toLowerCase().includes(query) ||
-          v.stockNumber.toLowerCase().includes(query);
+          v.stockNumber.toLowerCase().includes(query) ||
+          v.vin.toLowerCase().includes(query);
         if (!matchesQuery) return false;
       }
 
-      // Make
+      // Faceted filters
       if (filters.make !== "ALL" && v.make !== filters.make) return false;
-
-      // Body Type
       if (filters.bodyType !== "ALL" && v.bodyType !== filters.bodyType) return false;
-
-      // Fuel Type
       if (filters.fuelType !== "ALL" && v.fuelType !== filters.fuelType) return false;
-
-      // Steering Side
-      if (filters.steering !== "ALL" && v.steering !== filters.steering) return false;
-
-      // Origin
+      if (filters.transmission !== "ALL" && v.transmission !== filters.transmission) return false;
       if (filters.originCountry !== "ALL" && v.originCountry !== filters.originCountry) return false;
-
-      // Status
       if (filters.status !== "ALL" && v.status !== filters.status) return false;
+      if (filters.minPrice && v.sellingPrice < filters.minPrice) return false;
+      if (filters.maxPrice && v.sellingPrice > filters.maxPrice) return false;
+      if (filters.minYear && v.year < filters.minYear) return false;
+      if (filters.maxYear && v.year > filters.maxYear) return false;
 
       return true;
     });
   }, [vehicles, filters]);
 
+  // Paginated vehicles
+  const paginatedVehicles = useMemo(() => {
+    return filteredVehicles.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  }, [filteredVehicles, page]);
+
   return (
     <div className="space-y-6">
-      {/* ERP Inventory Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+      {/* Material Inventory Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800/80 pb-4">
         <div>
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-gold">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#D97706]">
             Lot Stock Ledger & Landed Cost Ledger
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             {language === "ps"
               ? "د موجودو موټرونو ګودام او مدیریت"
               : language === "fa"
-              ? "گدام موجودی و انبار موترهای نمایشگاه"
+              ? "گدام و موجودی موترهای نمایشگاه"
               : "Vehicle Inventory & Stock Ledger"}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -100,14 +114,14 @@ export default function InventoryPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Table / Lot Grid Switcher */}
-          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-800 dark:bg-navy-950">
+          <div className="flex items-center rounded-md border border-slate-300 p-0.5 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
             <button
               onClick={() => setViewMode("table")}
-              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+              className={`flex items-center gap-1 rounded px-2.5 py-1 text-xs font-bold transition-all ${
                 viewMode === "table"
-                  ? "bg-navy text-gold shadow-xs dark:bg-gold dark:text-slate-950"
+                  ? "bg-[#1976D2] text-white shadow-2xs"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
               }`}
             >
@@ -116,9 +130,9 @@ export default function InventoryPage() {
             </button>
             <button
               onClick={() => setViewMode("grid")}
-              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+              className={`flex items-center gap-1 rounded px-2.5 py-1 text-xs font-bold transition-all ${
                 viewMode === "grid"
-                  ? "bg-navy text-gold shadow-xs dark:bg-gold dark:text-slate-950"
+                  ? "bg-[#1976D2] text-white shadow-2xs"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
               }`}
             >
@@ -127,22 +141,24 @@ export default function InventoryPage() {
             </button>
           </div>
 
-          <button
+          <MuiButton
+            variant="outlined"
+            size="small"
             onClick={() => exportInventoryToCSV(filteredVehicles)}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-900 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
-            title="Export filtered lot stock to Excel / CSV"
+            startIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-600" />}
           >
-            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
-            <span>Export CSV</span>
-          </button>
+            Export CSV
+          </MuiButton>
 
-          <button
+          <MuiButton
+            variant="contained"
+            color="gold"
+            size="small"
             onClick={() => setIsIntakeOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-gold px-4 py-2 text-xs font-extrabold text-slate-950 shadow-md hover:bg-gold-light transition-colors cursor-pointer"
+            startIcon={<Plus className="h-4 w-4" />}
           >
-            <Plus className="h-4 w-4" />
-            <span>{t.addNewVehicle}</span>
-          </button>
+            {t.addNewVehicle}
+          </MuiButton>
         </div>
       </div>
 
@@ -152,164 +168,173 @@ export default function InventoryPage() {
       {/* Main Stock Content: Table or Grid */}
       {filteredVehicles.length > 0 ? (
         viewMode === "table" ? (
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-navy-900 shadow-xs">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:bg-navy-800 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="p-3.5">Stock # / Vehicle</th>
-                  <th className="p-3.5">VIN / Chassis</th>
-                  <th className="p-3.5">Origin & Specs</th>
-                  <th className="p-3.5">Gomrok Customs</th>
-                  <th className="p-3.5">Status</th>
-                  <th className="p-3.5">40+ Photos</th>
-                  <th className="p-3.5">Landed Cost</th>
-                  <th className="p-3.5">Selling Price</th>
-                  <th className="p-3.5">Gross Margin</th>
-                  <th className="p-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                {filteredVehicles.map((veh) => {
-                  const marginAmount = veh.sellingPrice - veh.landedCost;
-                  const marginPercent =
-                    veh.landedCost > 0
-                      ? ((marginAmount / veh.landedCost) * 100).toFixed(1)
-                      : "0";
+          <MuiCard elevation={1}>
+            <div className="overflow-x-auto">
+              <MuiTable dense>
+                <MuiTableHead>
+                  <MuiTableRow hover={false}>
+                    <MuiTableCell header>Stock # / Vehicle</MuiTableCell>
+                    <MuiTableCell header>VIN / Chassis</MuiTableCell>
+                    <MuiTableCell header>Origin & Specs</MuiTableCell>
+                    <MuiTableCell header>Gomrok Customs</MuiTableCell>
+                    <MuiTableCell header>Status</MuiTableCell>
+                    <MuiTableCell header>40+ Photos</MuiTableCell>
+                    <MuiTableCell header>Landed Cost</MuiTableCell>
+                    <MuiTableCell header>Selling Price</MuiTableCell>
+                    <MuiTableCell header>Gross Margin</MuiTableCell>
+                    <MuiTableCell header align="right">
+                      Actions
+                    </MuiTableCell>
+                  </MuiTableRow>
+                </MuiTableHead>
+                <MuiTableBody>
+                  {paginatedVehicles.map((veh) => {
+                    const marginAmount = veh.sellingPrice - veh.landedCost;
+                    const marginPercent =
+                      veh.landedCost > 0
+                        ? ((marginAmount / veh.landedCost) * 100).toFixed(1)
+                        : "0";
 
-                  return (
-                    <tr
-                      key={veh.id}
-                      className="hover:bg-slate-50/70 dark:hover:bg-navy-800/50 transition-colors"
-                    >
-                      <td className="p-3.5">
-                        <Link
-                          href={`/vehicles/${veh.id}`}
-                          className="font-bold text-slate-900 dark:text-white hover:text-gold block"
-                        >
-                          {veh.year} {veh.make} {veh.model}
-                        </Link>
-                        <span className="text-[11px] font-mono text-gold">
-                          {veh.stockNumber} • {veh.trim}
-                        </span>
-                      </td>
-
-                      <td className="p-3.5 font-mono text-slate-600 dark:text-slate-400">
-                        {veh.vin}
-                      </td>
-
-                      <td className="p-3.5">
-                        <span className="font-semibold block">{veh.originCountry}</span>
-                        <span className="text-[10px] text-slate-400">
-                          {formatMileage(veh.mileage)} • {veh.fuelType}
-                        </span>
-                      </td>
-
-                      <td className="p-3.5 text-slate-600 dark:text-slate-300 max-w-[140px] truncate">
-                        <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
-                          <ShieldCheck className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{veh.customsClearance.split("-")[0]}</span>
-                        </span>
-                      </td>
-
-                      <td className="p-3.5">
-                        <span
-                          className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                            veh.status === "Available on Lot"
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              : veh.status === "In Transit"
-                              ? "bg-blue-500/10 text-blue-500"
-                              : veh.status === "Under Prep/Maintenance"
-                              ? "bg-purple-500/10 text-purple-500"
-                              : veh.status === "Reserved/Deposit Paid"
-                              ? "bg-amber-500/10 text-amber-500"
-                              : "bg-slate-500/10 text-slate-500"
-                          }`}
-                        >
-                          {veh.status}
-                        </span>
-                      </td>
-
-                      <td className="p-3.5">
-                        <Link
-                          href={`/vehicles/${veh.id}`}
-                          className="font-mono text-[11px] font-bold text-gold hover:underline"
-                        >
-                          📸 {veh.images.length}
-                        </Link>
-                      </td>
-
-                      <td className="p-3.5 font-mono">
-                        {formatCurrency(veh.landedCost, currency, exchangeRate)}
-                      </td>
-
-                      <td className="p-3.5 font-mono font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(veh.sellingPrice, currency, exchangeRate)}
-                      </td>
-
-                      <td className="p-3.5 font-mono text-emerald-500 font-bold">
-                        +${marginAmount.toLocaleString()} ({marginPercent}%)
-                      </td>
-
-                      <td className="p-3.5 text-right space-x-1.5 whitespace-nowrap">
-                        <Link
-                          href={`/vehicles/${veh.id}`}
-                          className="inline-block rounded-lg p-1.5 text-slate-400 hover:text-gold hover:bg-slate-100 dark:hover:bg-navy-800"
-                          title="View 40+ Gallery & Specs"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                        <button
-                          onClick={() => setSelectedDeedVehicle(veh)}
-                          className="rounded-lg p-1.5 text-gold hover:bg-gold/10"
-                          title="Generate Legal Sales Deed"
-                        >
-                          <FileText className="h-4 w-4" />
-                        </button>
-                        {currentRole === "SuperAdmin" && (
-                          <button
-                            onClick={() => {
-                              if (confirm(`Delete vehicle ${veh.stockNumber}?`)) {
-                                deleteVehicle(veh.id);
-                              }
-                            }}
-                            className="rounded-lg p-1.5 text-red-500 hover:bg-red-500/10"
-                            title="Delete Stock"
+                    return (
+                      <MuiTableRow key={veh.id}>
+                        <MuiTableCell>
+                          <Link
+                            href={`/vehicles/${veh.id}`}
+                            className="font-bold text-slate-900 dark:text-white hover:text-[#1976D2] block"
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                            {veh.year} {veh.make} {veh.model}
+                          </Link>
+                          <span className="text-[11px] font-mono text-[#D97706] font-semibold">
+                            {veh.stockNumber} • {veh.trim}
+                          </span>
+                        </MuiTableCell>
+
+                        <MuiTableCell className="font-mono text-slate-600 dark:text-slate-400">
+                          {veh.vin}
+                        </MuiTableCell>
+
+                        <MuiTableCell>
+                          <span className="font-semibold block">{veh.originCountry}</span>
+                          <span className="text-[10px] text-slate-400">
+                            {formatMileage(veh.mileage)} • {veh.fuelType}
+                          </span>
+                        </MuiTableCell>
+
+                        <MuiTableCell>
+                          <MuiChip
+                            label="Islam Qala Cleared"
+                            color="success"
+                            variant="outlined"
+                            size="small"
+                          />
+                        </MuiTableCell>
+
+                        <MuiTableCell>
+                          <MuiChip
+                            label={veh.status}
+                            color={
+                              veh.status === "Available on Lot"
+                                ? "success"
+                                : veh.status === "In Transit"
+                                ? "info"
+                                : veh.status === "Reserved/Deposit Paid"
+                                ? "warning"
+                                : "default"
+                            }
+                            size="small"
+                          />
+                        </MuiTableCell>
+
+                        <MuiTableCell>
+                          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-slate-500">
+                            📷 {veh.images.length}
+                          </span>
+                        </MuiTableCell>
+
+                        <MuiTableCell className="font-mono font-medium text-slate-700 dark:text-slate-300">
+                          ${veh.landedCost.toLocaleString()}
+                        </MuiTableCell>
+
+                        <MuiTableCell>
+                          <span className="font-mono font-bold text-slate-900 dark:text-white block">
+                            {formatCurrency(veh.sellingPrice, currency, exchangeRate)}
+                          </span>
+                          {currency === "AFN" && (
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              (${veh.sellingPrice.toLocaleString()} USD)
+                            </span>
+                          )}
+                        </MuiTableCell>
+
+                        <MuiTableCell>
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 block">
+                            +${marginAmount.toLocaleString()} ({marginPercent}%)
+                          </span>
+                        </MuiTableCell>
+
+                        <MuiTableCell align="right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Link
+                              href={`/vehicles/${veh.id}`}
+                              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:text-slate-400"
+                              title="Inspection & Deal Desk"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Link>
+
+                            <button
+                              onClick={() => setSelectedDeedVehicle(veh)}
+                              className="rounded p-1 text-[#D97706] hover:bg-amber-500/10"
+                              title="Generate Afghan Deed"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </button>
+
+                            {currentRole === "SuperAdmin" && (
+                              <button
+                                onClick={() => deleteVehicle(veh.id)}
+                                className="rounded p-1 text-[#D32F2F] hover:bg-red-500/10"
+                                title="Delete Vehicle Stock"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </MuiTableCell>
+                      </MuiTableRow>
+                    );
+                  })}
+                </MuiTableBody>
+              </MuiTable>
+            </div>
+
+            <MuiTablePagination
+              count={filteredVehicles.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(newPage) => setPage(newPage)}
+            />
+          </MuiCard>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVehicles.map((vehicle) => (
               <VehicleCard key={vehicle.id} vehicle={vehicle} />
             ))}
           </div>
         )
       ) : (
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-800 dark:bg-navy-900">
+        <MuiCard elevation={1} className="p-12 text-center space-y-3">
           <SearchX className="mx-auto h-12 w-12 text-slate-400" />
-          <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
             {t.noVehiclesFound}
           </h3>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            No stock records match the selected query. Reset filters to view all lot units.
+          <p className="text-xs text-slate-500">
+            Try adjusting your search filters or status parameters
           </p>
-        </div>
+        </MuiCard>
       )}
 
       {/* Modals */}
-      <VehicleIntakeModal
-        isOpen={isIntakeOpen}
-        onClose={() => setIsIntakeOpen(false)}
-      />
-
       {selectedDeedVehicle && (
         <VehicleDeedModal
           vehicle={selectedDeedVehicle}
@@ -317,6 +342,11 @@ export default function InventoryPage() {
           onClose={() => setSelectedDeedVehicle(null)}
         />
       )}
+
+      <VehicleIntakeModal
+        isOpen={isIntakeOpen}
+        onClose={() => setIsIntakeOpen(false)}
+      />
     </div>
   );
 }

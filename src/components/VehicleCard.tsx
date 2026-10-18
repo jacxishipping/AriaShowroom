@@ -70,7 +70,7 @@ Link: http://localhost:3000/vehicles/${vehicle.id}`
   )}`;
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:shadow-xl dark:border-slate-800 dark:bg-navy-900">
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-mui-1 transition-all duration-200 hover:shadow-mui-4 hover:border-[#1976D2]/40 dark:border-slate-800 dark:bg-[#121824]">
       {/* Top Image & Badges */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
         <Image
