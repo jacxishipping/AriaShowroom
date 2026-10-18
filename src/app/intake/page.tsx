@@ -8,6 +8,7 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { SAMPLE_VEHICLE_PHOTOS_40 } from "@/lib/sample-photos";
 import { processAndWatermarkImage } from "@/lib/watermark-utils";
 import { translations } from "@/lib/translations";
+import { decodeVin } from "@/lib/vin-decoder";
 import {
   MuiCard,
   MuiButton,
@@ -32,6 +33,7 @@ import {
   DollarSign,
   Truck,
   Building2,
+  Zap,
 } from "lucide-react";
 
 export default function VehicleIntakePage() {
@@ -39,6 +41,7 @@ export default function VehicleIntakePage() {
   const { addVehicle, addToast, language, exchangeRate } = useShowroomStore();
   const t = translations[language];
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDecoding, setIsDecoding] = useState(false);
 
   const [formData, setFormData] = useState({
     stockNumber: `SM-HRT-${Math.floor(110 + Math.random() * 890)}`,
@@ -47,17 +50,17 @@ export default function VehicleIntakePage() {
     model: "Land Cruiser Prado",
     year: 2022,
     trim: "TXL V6 4.0L",
-    bodyType: "SUV" as const,
-    originCountry: "UAE" as const,
-    steering: "Left-Hand Drive (LHD)" as const,
+    bodyType: "SUV" as any,
+    originCountry: "UAE" as any,
+    steering: "Left-Hand Drive (LHD)" as any,
     customsClearance: "Gomrok Herat (Islam Qala) - Cleared",
     cleanTitle: true,
     mileage: 26000,
-    fuelType: "Petrol" as const,
-    transmission: "Automatic" as const,
-    driveType: "4WD" as const,
+    fuelType: "Petrol" as any,
+    transmission: "Automatic" as any,
+    driveType: "4WD" as any,
     color: "Pearl White",
-    status: "Available on Lot" as const,
+    status: "Available on Lot" as any,
     yardLocation: "Main Showroom - Bagh-e-Azadi",
     purchasePrice: 42000,
     freightCost: 1500,
@@ -219,6 +222,45 @@ export default function VehicleIntakePage() {
     router.push("/inventory");
   };
 
+  const handleAutoDecode = async () => {
+    if (!formData.vin || formData.vin.trim().length < 11) {
+      addToast("Please enter a valid 17-character VIN number to decode specifications", "error");
+      return;
+    }
+
+    setIsDecoding(true);
+    try {
+      const decoded = await decodeVin(formData.vin);
+      if (decoded) {
+        setFormData((prev) => ({
+          ...prev,
+          make: decoded.make || prev.make,
+          model: decoded.model || prev.model,
+          year: decoded.year || prev.year,
+          trim: decoded.trim || prev.trim,
+          bodyType: (decoded.bodyType as any) || prev.bodyType,
+          fuelType: (decoded.fuelType as any) || prev.fuelType,
+          transmission: (decoded.transmission as any) || prev.transmission,
+          originCountry: (decoded.originCountry as any) || prev.originCountry,
+          driveType: decoded.driveType || prev.driveType,
+          description: `${decoded.year} ${decoded.make} ${decoded.model} ${decoded.trim}. Factory verified specifications. Imported with clean title and verified customs documents.`,
+        }));
+
+        addToast(
+          `⚡ Decoded: ${decoded.year} ${decoded.make} ${decoded.model} (${decoded.originCountry}) specifications auto-populated!`,
+          "success"
+        );
+      }
+    } catch (err: any) {
+      addToast(
+        err?.message || "Could not automatically decode this VIN. You can still input specifications manually.",
+        "error"
+      );
+    } finally {
+      setIsDecoding(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
       {/* Top Header & Breadcrumbs */}
@@ -292,15 +334,30 @@ export default function VehicleIntakePage() {
                 }
                 required
               />
-              <MuiTextField
-                label="Chassis / VIN Number"
-                sizeVariant="small"
-                value={formData.vin}
-                onChange={(e) =>
-                  setFormData({ ...formData, vin: e.target.value.toUpperCase() })
-                }
-                required
-              />
+              <div className="space-y-1">
+                <MuiTextField
+                  label="Chassis / VIN Number"
+                  sizeVariant="small"
+                  fullWidth
+                  value={formData.vin}
+                  onChange={(e) =>
+                    setFormData({ ...formData, vin: e.target.value.toUpperCase() })
+                  }
+                  required
+                />
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] text-slate-400 font-mono">17-Char Standard</span>
+                  <button
+                    type="button"
+                    onClick={handleAutoDecode}
+                    disabled={isDecoding}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer disabled:opacity-50"
+                  >
+                    <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
+                    {isDecoding ? "Decoding..." : "⚡ Auto-Decode Specs"}
+                  </button>
+                </div>
+              </div>
               <MuiTextField
                 select
                 label="Lot Location"

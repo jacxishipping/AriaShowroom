@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { getMuiTheme } from "@/theme/muiTheme";
 import { useShowroomStore } from "@/store/useShowroomStore";
@@ -38,24 +39,34 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
 
   const muiTheme = useMemo(() => getMuiTheme(darkMode ? "dark" : "light"), [darkMode]);
 
+  const pathname = usePathname();
+  const isAuthOrPublic = pathname === "/login" || pathname?.startsWith("/verify");
+
   return (
     <ThemeProvider theme={muiTheme}>
       <CssBaseline />
-      <div className="flex min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors selection:bg-blue-600 selection:text-white">
-        {/* Enterprise ERP Sidebar */}
-        <ErpSidebar />
-
-        {/* Main ERP Cockpit Area */}
-        <div className="flex flex-1 flex-col overflow-hidden min-w-0">
-          <ErpHeader />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-            {children}
-          </main>
+      {isAuthOrPublic ? (
+        <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors">
+          {children}
+          <ToastContainer />
         </div>
+      ) : (
+        <div className="flex min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors selection:bg-blue-600 selection:text-white">
+          {/* Enterprise ERP Sidebar */}
+          <ErpSidebar />
 
-        {/* Global Floating Toast Notifications */}
-        <ToastContainer />
-      </div>
+          {/* Main ERP Cockpit Area */}
+          <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+            <ErpHeader />
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+              {children}
+            </main>
+          </div>
+
+          {/* Global Floating Toast Notifications */}
+          <ToastContainer />
+        </div>
+      )}
     </ThemeProvider>
   );
 }

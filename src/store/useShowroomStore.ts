@@ -605,9 +605,14 @@ export const useShowroomStore = create<ShowroomStore>()(
       // Live PostgreSQL Database Sync
       fetchDatabaseRecords: async () => {
         try {
-          const [vehRes, custRes] = await Promise.all([
+          const [vehRes, custRes, invRes, vouchRes, suppRes, expRes, jeRes] = await Promise.all([
             fetch("/api/vehicles").then((r) => r.json()).catch(() => null),
             fetch("/api/customers").then((r) => r.json()).catch(() => null),
+            fetch("/api/invoices").then((r) => r.json()).catch(() => null),
+            fetch("/api/vouchers").then((r) => r.json()).catch(() => null),
+            fetch("/api/suppliers").then((r) => r.json()).catch(() => null),
+            fetch("/api/expenses").then((r) => r.json()).catch(() => null),
+            fetch("/api/journal-entries").then((r) => r.json()).catch(() => null),
           ]);
 
           if (vehRes?.success && Array.isArray(vehRes.data) && vehRes.data.length > 0) {
@@ -717,6 +722,42 @@ export const useShowroomStore = create<ShowroomStore>()(
             }));
 
             set({ customers: mappedCusts });
+          }
+
+          // Live Invoices Sync
+          if (invRes?.success && Array.isArray(invRes.data) && invRes.data.length > 0) {
+            set({ invoices: invRes.data });
+          }
+
+          // Live Payment Vouchers Sync
+          if (vouchRes?.success && Array.isArray(vouchRes.data) && vouchRes.data.length > 0) {
+            set({ payments: vouchRes.data });
+          }
+
+          // Live Suppliers Sync
+          if (suppRes?.success && Array.isArray(suppRes.data) && suppRes.data.length > 0) {
+            set({ suppliers: suppRes.data });
+          }
+
+          // Live Expenses Sync
+          if (expRes?.success && Array.isArray(expRes.data) && expRes.data.length > 0) {
+            set({
+              expenses: expRes.data.map((e: any) => ({
+                id: e.id,
+                category: e.category,
+                amountUSD: e.amount,
+                amountAFN: Math.round(e.amount * 70.5),
+                description: e.description,
+                payee: e.payee || "Vendor",
+                receiptNumber: e.receiptNum || "",
+                date: e.date ? new Date(e.date).toISOString().split("T")[0] : "",
+              })),
+            });
+          }
+
+          // Live Journal Entries Sync
+          if (jeRes?.success && Array.isArray(jeRes.data) && jeRes.data.length > 0) {
+            set({ journalEntries: jeRes.data });
           }
         } catch (error) {
           console.warn("Failed syncing from database, using cached showroom state:", error);

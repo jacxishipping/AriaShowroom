@@ -628,6 +628,20 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                   );
                 })}
               </div>
+
+              <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800">
+                <Link
+                  href="/login"
+                  onClick={() => setIsRoleMenuOpen(false)}
+                  className="flex items-center justify-between p-2 rounded-xl text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Staff Sign-In Portal
+                  </span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+              </div>
             </div>
           )}
         </div>

@@ -34,7 +34,7 @@ interface ErpSidebarProps {
 
 export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
   const pathname = usePathname();
-  const { vehicles, customers, sales, language, currentRole, compareIds } = useShowroomStore();
+  const { vehicles, customers, sales, invoices, language, currentRole, compareIds } = useShowroomStore();
   const [collapsed, setCollapsed] = useState(false);
 
   const t = translations[language];
@@ -81,8 +81,14 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
       badge: "ERP",
     },
     {
+      title: language === "ps" ? "د محاسبې او صرافۍ مرکز" : language === "fa" ? "حسابداری، صرافی و فاکتور" : "Accounting & Sarrafi",
+      href: "/accounting",
+      icon: Receipt,
+      badge: `${invoices.length}`,
+    },
+    {
       title: language === "ps" ? "د اسلام قلعه او ترانزیت لوژستیک" : language === "fa" ? "لوجستیک و گمرک اسلام قلعه" : "Customs & Port Logistics",
-      href: "/#logistics",
+      href: "/logistics",
       icon: Truck,
       badge: inTransitCount > 0 ? `${inTransitCount} En Route` : null,
     },
