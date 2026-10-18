@@ -1,0 +1,360 @@
+"use client";
+
+import React, { useState } from "react";
+import { useShowroomStore } from "@/store/useShowroomStore";
+import { InvoiceRecord } from "@/lib/mock-data";
+import {
+  MuiCard,
+  MuiButton,
+  MuiChip,
+  MuiTable,
+  MuiTableHead,
+  MuiTableBody,
+  MuiTableRow,
+  MuiTableCell,
+  MuiTextField,
+} from "@/components/mui";
+import {
+  FileCheck2,
+  Plus,
+  Search,
+  Eye,
+  Printer,
+  DollarSign,
+  Car,
+  CheckCircle2,
+} from "lucide-react";
+
+interface InvoicesTabProps {
+  onSelectInvoice: (invoice: InvoiceRecord) => void;
+}
+
+export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
+  const { invoices, vehicles, exchangeRate, addInvoice } = useShowroomStore();
+  const [search, setSearch] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
+  // Form state
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerTazkira, setCustomerTazkira] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("Herat City");
+  const [selectedStock, setSelectedStock] = useState(vehicles[0]?.stockNumber || "");
+  const [basePriceUSD, setBasePriceUSD] = useState<number>(vehicles[0]?.sellingPrice || 45000);
+  const [customsFeeUSD, setCustomsFeeUSD] = useState<number>(2500);
+  const [registrationFeeUSD, setRegistrationFeeUSD] = useState<number>(400);
+  const [discountUSD, setDiscountUSD] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState("Cash (نقدی)");
+
+  const filteredInvoices = invoices.filter(
+    (inv) =>
+      inv.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
+      inv.customerName.toLowerCase().includes(search.toLowerCase()) ||
+      (inv.vehicleStock && inv.vehicleStock.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const totalInvoiced = invoices.reduce((acc, inv) => acc + inv.totalUSD, 0);
+  const totalPaid = invoices
+    .filter((inv) => inv.status === "Paid")
+    .reduce((acc, inv) => acc + inv.totalUSD, 0);
+  const totalPending = totalInvoiced - totalPaid;
+
+  const handleCreateInvoice = (e: React.FormEvent) => {
+    e.preventDefault();
+    const vehicleObj = vehicles.find((v) => v.stockNumber === selectedStock);
+    const subtotal = Number(basePriceUSD);
+    const customs = Number(customsFeeUSD);
+    const reg = Number(registrationFeeUSD);
+    const disc = Number(discountUSD);
+    const totalUSD = subtotal + customs + reg - disc;
+    const totalAFN = Math.round(totalUSD * exchangeRate);
+
+    addInvoice({
+      customerName,
+      customerPhone,
+      customerTazkira,
+      customerAddress,
+      vehicleStock: selectedStock,
+      vehicleDesc: vehicleObj ? `${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model}` : "Vehicle Import",
+      vin: vehicleObj?.vin,
+      items: [
+        {
+          description: `${vehicleObj?.year || ""} ${vehicleObj?.make || ""} ${vehicleObj?.model || "Vehicle"} Base Price`,
+          descriptionDari: "قیمت موتر وارداتی",
+          amountUSD: subtotal,
+        },
+        {
+          description: "Islam Qala Port Customs Duty & Legal Maktoub Clearance",
+          descriptionDari: "تعرفه و محصول گمرک اسلام قلعه",
+          amountUSD: customs,
+        },
+        {
+          description: "Herat Traffic Directorate Official Plate & Registration",
+          descriptionDari: "هزینه ثبت پلاک و انتقال سند ترافیک",
+          amountUSD: reg,
+        },
+      ],
+      subtotalUSD: subtotal,
+      customsFeeUSD: customs,
+      registrationFeeUSD: reg,
+      discountUSD: disc,
+      totalUSD,
+      totalAFN,
+      exchangeRate,
+      status: "Paid",
+      paymentMethod,
+      issueDate: new Date().toISOString().split("T")[0],
+      notes: "Commercial invoice generated from ERP Sales Desk",
+    });
+
+    setIsCreating(false);
+    setCustomerName("");
+    setCustomerPhone("");
+    setCustomerTazkira("");
+    alert("Commercial Invoice generated successfully!");
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Top Metrics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <MuiCard elevation={1} className="p-4 sm:p-5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+            Total Commercial Invoices
+          </span>
+          <p className="mt-1 text-2xl font-bold font-mono text-slate-900 dark:text-white">
+            ${totalInvoiced.toLocaleString()} <span className="text-xs text-slate-400">USD</span>
+          </p>
+          <span className="text-xs font-mono text-slate-500">
+            ؋{Math.round(totalInvoiced * exchangeRate).toLocaleString()} AFN
+          </span>
+        </MuiCard>
+
+        <MuiCard elevation={1} className="p-4 sm:p-5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+            Settled / Collected (تسویه‌شده)
+          </span>
+          <p className="mt-1 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
+            ${totalPaid.toLocaleString()} <span className="text-xs text-slate-400">USD</span>
+          </p>
+          <span className="text-xs font-mono text-slate-500">
+            ؋{Math.round(totalPaid * exchangeRate).toLocaleString()} AFN
+          </span>
+        </MuiCard>
+
+        <MuiCard elevation={1} className="p-4 sm:p-5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+            Outstanding Invoiced Balances
+          </span>
+          <p className="mt-1 text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
+            ${totalPending.toLocaleString()} <span className="text-xs text-slate-400">USD</span>
+          </p>
+          <span className="text-xs font-mono text-slate-500">
+            ؋{Math.round(totalPending * exchangeRate).toLocaleString()} AFN
+          </span>
+        </MuiCard>
+      </div>
+
+      {/* Toolbar & Search */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search invoice #, buyer, stock..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-md border border-slate-300 bg-white py-1.5 pl-9 pr-4 text-xs dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
+          />
+        </div>
+
+        <MuiButton
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={() => setIsCreating(!isCreating)}
+          startIcon={<Plus className="h-4 w-4" />}
+        >
+          {isCreating ? "Close Form" : "Generate Commercial Invoice"}
+        </MuiButton>
+      </div>
+
+      {/* Invoice Generator Form */}
+      {isCreating && (
+        <MuiCard elevation={1} className="p-6 space-y-4">
+          <h3 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+            <FileCheck2 className="h-4 w-4 text-[#1976D2]" />
+            Issue Official Commercial Invoice • صدور فاکتور رسمی تجارتی
+          </h3>
+
+          <form onSubmit={handleCreateInvoice} className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <MuiTextField
+              label="Buyer Full Name (نام خریدار)"
+              required
+              placeholder="e.g. Haji Mohammad Ishaq"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+            />
+
+            <MuiTextField
+              label="Phone Number (شماره تماس)"
+              required
+              placeholder="+93 79 912 3456"
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+            />
+
+            <MuiTextField
+              label="Tazkira ID (تذکره)"
+              placeholder="1400-0912-88120"
+              value={customerTazkira}
+              onChange={(e) => setCustomerTazkira(e.target.value)}
+            />
+
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                Select Stock Vehicle
+              </label>
+              <select
+                value={selectedStock}
+                onChange={(e) => {
+                  setSelectedStock(e.target.value);
+                  const sel = vehicles.find((v) => v.stockNumber === e.target.value);
+                  if (sel) setBasePriceUSD(sel.sellingPrice);
+                }}
+                className="w-full rounded-md border border-slate-300 bg-white p-2 font-mono dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
+              >
+                {vehicles.map((v) => (
+                  <option key={v.id} value={v.stockNumber}>
+                    {v.stockNumber} - {v.year} {v.make} {v.model} (${v.sellingPrice.toLocaleString()})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <MuiTextField
+              label="Base Vehicle Price (USD)"
+              type="number"
+              required
+              value={basePriceUSD}
+              onChange={(e) => setBasePriceUSD(Number(e.target.value))}
+              startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
+            />
+
+            <MuiTextField
+              label="Customs Duty Fee (USD)"
+              type="number"
+              value={customsFeeUSD}
+              onChange={(e) => setCustomsFeeUSD(Number(e.target.value))}
+              startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
+            />
+
+            <MuiTextField
+              label="Traffic Plate & Transfer (USD)"
+              type="number"
+              value={registrationFeeUSD}
+              onChange={(e) => setRegistrationFeeUSD(Number(e.target.value))}
+              startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
+            />
+
+            <MuiTextField
+              label="Special Discount (USD)"
+              type="number"
+              value={discountUSD}
+              onChange={(e) => setDiscountUSD(Number(e.target.value))}
+              startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
+            />
+
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                Payment Channel
+              </label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full rounded-md border border-slate-300 bg-white p-2 dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
+              >
+                <option value="Cash (نقدی)">Cash Safe (نقدی - صندوق)</option>
+                <option value="Sarrafi Hawala (حواله صرافی)">Sarrafi Hawala (حواله صرافی)</option>
+                <option value="Bank Transfer (حساب بانکی)">Bank Transfer (حساب بانکی)</option>
+              </select>
+            </div>
+
+            <div className="sm:col-span-3 flex justify-end">
+              <MuiButton type="submit" variant="contained" color="primary" size="medium">
+                Generate & Save Commercial Invoice
+              </MuiButton>
+            </div>
+          </form>
+        </MuiCard>
+      )}
+
+      {/* Invoices Table */}
+      <MuiCard elevation={1}>
+        <div className="overflow-x-auto">
+          <MuiTable dense>
+            <MuiTableHead>
+              <MuiTableRow hover={false}>
+                <MuiTableCell header>Invoice #</MuiTableCell>
+                <MuiTableCell header>Date</MuiTableCell>
+                <MuiTableCell header>Customer & Contact</MuiTableCell>
+                <MuiTableCell header>Vehicle & Stock</MuiTableCell>
+                <MuiTableCell header>Subtotal</MuiTableCell>
+                <MuiTableCell header>Total (USD / AFN)</MuiTableCell>
+                <MuiTableCell header>Status</MuiTableCell>
+                <MuiTableCell header align="right">Actions</MuiTableCell>
+              </MuiTableRow>
+            </MuiTableHead>
+            <MuiTableBody>
+              {filteredInvoices.map((inv) => (
+                <MuiTableRow key={inv.id}>
+                  <MuiTableCell className="font-mono font-semibold text-[#1976D2] dark:text-[#42A5F5]">
+                    {inv.invoiceNumber}
+                  </MuiTableCell>
+                  <MuiTableCell className="font-mono text-slate-500 text-xs">
+                    {inv.issueDate}
+                  </MuiTableCell>
+                  <MuiTableCell>
+                    <div className="font-semibold text-slate-900 dark:text-white">{inv.customerName}</div>
+                    <div className="text-[11px] font-mono text-slate-400">{inv.customerPhone}</div>
+                  </MuiTableCell>
+                  <MuiTableCell>
+                    <div className="font-medium text-slate-800 dark:text-slate-200">{inv.vehicleDesc}</div>
+                    <div className="text-[11px] font-mono text-slate-400">{inv.vehicleStock}</div>
+                  </MuiTableCell>
+                  <MuiTableCell className="font-mono text-slate-600 dark:text-slate-300">
+                    ${inv.subtotalUSD.toLocaleString()}
+                  </MuiTableCell>
+                  <MuiTableCell>
+                    <div className="font-mono font-semibold text-slate-900 dark:text-white">
+                      ${inv.totalUSD.toLocaleString()}
+                    </div>
+                    <div className="text-[10px] font-mono text-slate-400">
+                      ؋{inv.totalAFN.toLocaleString()}
+                    </div>
+                  </MuiTableCell>
+                  <MuiTableCell>
+                    <MuiChip
+                      label={inv.status}
+                      color={inv.status === "Paid" ? "success" : "default"}
+                      size="small"
+                    />
+                  </MuiTableCell>
+                  <MuiTableCell align="right">
+                    <button
+                      onClick={() => onSelectInvoice(inv)}
+                      className="rounded p-1 text-[#1976D2] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer"
+                      title="View & Print Official Invoice"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </MuiTableCell>
+                </MuiTableRow>
+              ))}
+            </MuiTableBody>
+          </MuiTable>
+        </div>
+      </MuiCard>
+    </div>
+  );
+}

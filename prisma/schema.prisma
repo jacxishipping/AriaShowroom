@@ -186,6 +186,117 @@ model Expense {
   amount      Float
   currency    String   @default("USD")
   description String
+  payee       String?
+  receiptNum  String?
   date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model Supplier {
+  id                  String         @id @default(cuid())
+  companyName         String
+  contactName         String
+  country             String         @default("UAE")
+  city                String?
+  phone               String
+  whatsapp            String?
+  email               String?
+  bankOrSarrafiAccount String?
+  totalPurchasedUSD   Float          @default(0)
+  totalPaidUSD        Float          @default(0)
+  balanceUSD          Float          @default(0)
+  notes               String?
+  bills               SupplierBill[]
+  payments            Payment[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+}
+
+model SupplierBill {
+  id                 String    @id @default(cuid())
+  billNumber         String    @unique
+  supplierId         String
+  supplier           Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  stockNumber        String?
+  vehicleDescription String?
+  amountUSD          Float
+  amountAFN          Float     @default(0)
+  status             String    @default("Unpaid")
+  issueDate          DateTime  @default(now())
+  dueDate            DateTime?
+  notes              String?
+  createdAt          DateTime  @default(now())
+}
+
+model Invoice {
+  id              String   @id @default(cuid())
+  invoiceNumber   String   @unique
+  customerId      String?
+  customerName    String
+  customerPhone   String
+  customerTazkira String?
+  customerAddress String?
+  vehicleStock    String?
+  vehicleDesc     String?
+  vin             String?
+  items           Json
+  subtotalUSD     Float
+  customsFeeUSD   Float    @default(0)
+  registrationFeeUSD Float  @default(0)
+  discountUSD     Float    @default(0)
+  totalUSD        Float
+  totalAFN        Float
+  exchangeRate    Float    @default(70.5)
+  status          String   @default("Paid")
+  paymentMethod   String   @default("Cash")
+  issueDate       DateTime @default(now())
+  dueDate         DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+}
+
+model Payment {
+  id              String    @id @default(cuid())
+  voucherNumber   String    @unique
+  voucherType     String // CUSTOMER_PAYMENT, SUPPLIER_PAYMENT, EXPENSE_PAYMENT
+  date            DateTime  @default(now())
+  partyName       String
+  partyPhone      String?
+  partyTazkira    String?
+  amountUSD       Float
+  amountAFN       Float
+  exchangeRate    Float     @default(70.5)
+  paymentMethod   String    @default("Cash")
+  sarrafiAccount  String?
+  referenceNumber String?
+  vehicleStock    String?
+  supplierId      String?
+  supplier        Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  purpose         String
+  recordedBy      String    @default("Accountant")
+  createdAt       DateTime  @default(now())
+}
+
+model Account {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  nameDari    String
+  type        String // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  balanceUSD  Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model JournalEntry {
+  id          String   @id @default(cuid())
+  entryNumber String   @unique
+  date        DateTime @default(now())
+  description String
+  reference   String?
+  debitAccount String
+  creditAccount String
+  amountUSD   Float
+  amountAFN   Float
   createdAt   DateTime @default(now())
 }

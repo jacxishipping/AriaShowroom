@@ -4,9 +4,23 @@ import React, { useState } from "react";
 import { useShowroomStore, RoleType } from "@/store/useShowroomStore";
 import { VehicleIntakeModal } from "@/components/VehicleIntakeModal";
 import { VehicleDeedModal } from "@/components/VehicleDeedModal";
+import { CommercialInvoiceModal } from "@/components/CommercialInvoiceModal";
+import { PaymentVoucherModal } from "@/components/PaymentVoucherModal";
+import { SupplierLedgerModal } from "@/components/SupplierLedgerModal";
+import { InvoicesTab } from "@/components/accounting/InvoicesTab";
+import { SuppliersTab } from "@/components/accounting/SuppliersTab";
+import { ExpensesTab } from "@/components/accounting/ExpensesTab";
+import { PaymentsTab } from "@/components/accounting/PaymentsTab";
+import { AccountingTab } from "@/components/accounting/AccountingTab";
 import { formatCurrency } from "@/lib/utils";
 import { translations } from "@/lib/translations";
-import { VehicleItem, CustomerRecord } from "@/lib/mock-data";
+import {
+  VehicleItem,
+  CustomerRecord,
+  InvoiceRecord,
+  SupplierRecord,
+  PaymentVoucherRecord,
+} from "@/lib/mock-data";
 import { exportInventoryToCSV, exportSalesLedgerToCSV } from "@/lib/export-utils";
 import {
   MuiCard,
@@ -47,6 +61,15 @@ import {
   Receipt,
   FileCheck2,
   FileSpreadsheet,
+  Building2,
+  Landmark,
+  Scale,
+  Wallet,
+  Banknote,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Percent,
+  BookOpen,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -55,6 +78,11 @@ export default function AdminDashboardPage() {
     customers,
     sales,
     expenses,
+    suppliers,
+    invoices,
+    payments,
+    accounts,
+    journalEntries,
     currency,
     exchangeRate,
     language,
@@ -64,16 +92,26 @@ export default function AdminDashboardPage() {
     updateCustomerStage,
     addSale,
     addExpense,
+    addSupplier,
+    addInvoice,
+    updateInvoiceStatus,
+    addPaymentVoucher,
+    addJournalEntry,
   } = useShowroomStore();
 
   const t = translations[language];
 
   // Active ERP Tab
-  const [activeTab, setActiveTab] = useState<"inventory" | "crm" | "sales" | "financials">("inventory");
+  const [activeTab, setActiveTab] = useState<
+    "inventory" | "crm" | "sales" | "invoices" | "suppliers" | "expenses" | "payments" | "accounting"
+  >("inventory");
 
   // Modals
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
   const [selectedDeedVehicle, setSelectedDeedVehicle] = useState<VehicleItem | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRecord | null>(null);
+  const [selectedVoucher, setSelectedVoucher] = useState<PaymentVoucherRecord | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<SupplierRecord | null>(null);
 
   // Search in inventory table
   const [inventorySearch, setInventorySearch] = useState("");
@@ -92,14 +130,6 @@ export default function AdminDashboardPage() {
     notes: "Herat showroom transaction settlement.",
   });
 
-  // Expense creation state
-  const [expenseForm, setExpenseForm] = useState({
-    category: "Showroom Overhead & Fuel" as const,
-    vehicleStock: "",
-    amountUSD: 500,
-    description: "Diesel fuel for backup generator & maintenance",
-  });
-
   // Filtered vehicles for inventory tab
   const filteredInventory = vehicles.filter(
     (v) =>
@@ -108,17 +138,6 @@ export default function AdminDashboardPage() {
       v.stockNumber.toLowerCase().includes(inventorySearch.toLowerCase()) ||
       v.vin.toLowerCase().includes(inventorySearch.toLowerCase())
   );
-
-  // Financial Calculations
-  const totalActiveInventoryValue = vehicles
-    .filter((v) => v.status !== "Sold")
-    .reduce((acc, v) => acc + v.sellingPrice, 0);
-
-  const totalMonthlyRevenue = sales.reduce((acc, s) => acc + s.salePriceUSD, 0);
-
-  const totalShowroomExpenses = expenses.reduce((acc, e) => acc + e.amountUSD, 0);
-
-  const avgMargin = 4850; // USD per vehicle average in Herat market
 
   const handleCreateSale = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,17 +160,6 @@ export default function AdminDashboardPage() {
     });
 
     alert("Sale registered successfully! Marked vehicle as Sold and generated contract number.");
-  };
-
-  const handleCreateExpense = (e: React.FormEvent) => {
-    e.preventDefault();
-    addExpense({
-      category: expenseForm.category,
-      vehicleStock: expenseForm.vehicleStock || undefined,
-      amountUSD: Number(expenseForm.amountUSD),
-      description: expenseForm.description,
-    });
-    alert("Expense voucher booked successfully!");
   };
 
   return (
@@ -202,29 +210,54 @@ export default function AdminDashboardPage() {
         <MuiTabs
           value={activeTab}
           onChange={(val) => setActiveTab(val as any)}
+          color="primary"
           tabs={[
             {
               value: "inventory",
-              label: t.tabInventory,
+              label: "Vehicle Inventory",
               icon: <Car className="h-4 w-4" />,
               badge: vehicles.length,
             },
             {
               value: "crm",
-              label: t.tabCrm,
+              label: "CRM & Leads",
               icon: <Users className="h-4 w-4" />,
               badge: customers.length,
             },
             {
               value: "sales",
-              label: t.tabSales,
+              label: "Sales Desk",
               icon: <BadgeDollarSign className="h-4 w-4" />,
               badge: sales.length,
             },
             {
-              value: "financials",
-              label: t.tabFinancials,
-              icon: <TrendingUp className="h-4 w-4" />,
+              value: "invoices",
+              label: "Invoices",
+              icon: <FileCheck2 className="h-4 w-4" />,
+              badge: invoices.length,
+            },
+            {
+              value: "suppliers",
+              label: "Supplier Ledger (AP)",
+              icon: <Building2 className="h-4 w-4" />,
+              badge: suppliers.length,
+            },
+            {
+              value: "expenses",
+              label: "Vehicle Expenses",
+              icon: <Receipt className="h-4 w-4" />,
+              badge: expenses.length,
+            },
+            {
+              value: "payments",
+              label: "Record Payment",
+              icon: <Banknote className="h-4 w-4" />,
+              badge: payments.length,
+            },
+            {
+              value: "accounting",
+              label: "Full Accounting (GL)",
+              icon: <Landmark className="h-4 w-4" />,
             },
           ]}
         />
@@ -631,163 +664,26 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* TAB 4: EXECUTIVE FINANCIALS & EXPENSES */}
-      {activeTab === "financials" && (
-        <div className="space-y-6">
-          {/* Executive KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MuiCard elevation={1} className="p-5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-                {t.totalActiveValue}
-              </span>
-              <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white font-mono">
-                ${totalActiveInventoryValue.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
-              </p>
-              <p className="mt-1 text-xs text-slate-500 font-mono">
-                ؋ {(totalActiveInventoryValue * exchangeRate).toLocaleString()} AFN
-              </p>
-            </MuiCard>
-
-            <MuiCard elevation={1} className="p-5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-                {t.monthlyRevenue}
-              </span>
-              <p className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                +${totalMonthlyRevenue.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                {sales.length} verified sales deeds executed
-              </p>
-            </MuiCard>
-
-            <MuiCard elevation={1} className="p-5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-                {t.netProfitPerCar}
-              </span>
-              <p className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400 font-mono">
-                +${avgMargin.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                After Islam Qala tariffs & freight
-              </p>
-            </MuiCard>
-
-            <MuiCard elevation={1} className="p-5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-                {t.daysOnLot}
-              </span>
-              <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                18.4 Days
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                High turnover (Corolla & LC300 lead)
-              </p>
-            </MuiCard>
-          </div>
-
-          {/* Expense Voucher Logging & List */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <MuiCard elevation={1} className="lg:col-span-5 p-6 space-y-4">
-              <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
-                <Receipt className="h-4 w-4 text-[#1976D2]" />
-                Book Showroom Expense / Customs Duty
-              </h3>
-
-              <form onSubmit={handleCreateExpense} className="space-y-4 text-xs">
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                    Category
-                  </label>
-                  <select
-                    value={expenseForm.category}
-                    onChange={(e) =>
-                      setExpenseForm({ ...expenseForm, category: e.target.value as any })
-                    }
-                    className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-                  >
-                    <option value="Gomrok & Port Tariffs">Gomrok & Port Tariffs (Herat)</option>
-                    <option value="Transit & Ocean Freight">Transit & Ocean Freight (Bandar Abbas)</option>
-                    <option value="Vehicle Maintenance/Detailing">Maintenance & Detailing</option>
-                    <option value="Showroom Overhead & Fuel">Showroom Overhead & Solar/Fuel</option>
-                    <option value="Staff Commissions">Staff Commissions</option>
-                  </select>
-                </div>
-
-                <MuiTextField
-                  label="Amount (USD)"
-                  type="number"
-                  value={expenseForm.amountUSD}
-                  onChange={(e) =>
-                    setExpenseForm({
-                      ...expenseForm,
-                      amountUSD: Number(e.target.value),
-                    })
-                  }
-                  startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
-                />
-
-                <MuiTextField
-                  label="Description & Receipt Note"
-                  type="text"
-                  value={expenseForm.description}
-                  onChange={(e) =>
-                    setExpenseForm({ ...expenseForm, description: e.target.value })
-                  }
-                  placeholder="e.g. Islam Qala border clearance fee"
-                />
-
-                <MuiButton
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  size="medium"
-                >
-                  Book Expense Voucher
-                </MuiButton>
-              </form>
-            </MuiCard>
-
-            <MuiCard elevation={1} className="lg:col-span-7">
-              <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm">
-                  Recorded Operational & Import Outlays
-                </h3>
-              </div>
-              <div className="overflow-x-auto">
-                <MuiTable dense>
-                  <MuiTableHead>
-                    <MuiTableRow hover={false}>
-                      <MuiTableCell header>Category</MuiTableCell>
-                      <MuiTableCell header>Description</MuiTableCell>
-                      <MuiTableCell header>Date</MuiTableCell>
-                      <MuiTableCell header align="right">Amount (USD)</MuiTableCell>
-                    </MuiTableRow>
-                  </MuiTableHead>
-                  <MuiTableBody>
-                    {expenses.map((exp) => (
-                      <MuiTableRow key={exp.id}>
-                        <MuiTableCell className="font-medium text-slate-800 dark:text-slate-200">
-                          {exp.category}
-                        </MuiTableCell>
-                        <MuiTableCell className="text-slate-600 dark:text-slate-300">
-                          {exp.description}
-                        </MuiTableCell>
-                        <MuiTableCell className="text-slate-400 font-mono text-xs">
-                          {exp.date}
-                        </MuiTableCell>
-                        <MuiTableCell align="right" className="font-mono font-semibold text-rose-600 dark:text-rose-400">
-                          -${exp.amountUSD.toLocaleString()}
-                        </MuiTableCell>
-                      </MuiTableRow>
-                    ))}
-                  </MuiTableBody>
-                </MuiTable>
-              </div>
-            </MuiCard>
-          </div>
-        </div>
+      {/* TAB 4: COMMERCIAL INVOICING */}
+      {activeTab === "invoices" && (
+        <InvoicesTab onSelectInvoice={(inv) => setSelectedInvoice(inv)} />
       )}
+
+      {/* TAB 5: SUPPLIER LEDGER (ACCOUNTS PAYABLE) */}
+      {activeTab === "suppliers" && (
+        <SuppliersTab onSelectSupplier={(sup) => setSelectedSupplier(sup)} />
+      )}
+
+      {/* TAB 6: VEHICLE EXPENSES & DIRECT LANDED COST */}
+      {activeTab === "expenses" && <ExpensesTab />}
+
+      {/* TAB 7: PAYMENT VOUCHERS & CASHFLOW */}
+      {activeTab === "payments" && (
+        <PaymentsTab onSelectVoucher={(vch) => setSelectedVoucher(vch)} />
+      )}
+
+      {/* TAB 8: FULL GENERAL LEDGER ACCOUNTING */}
+      {activeTab === "accounting" && <AccountingTab />}
 
       {/* Vehicle Stock Intake Modal */}
       <VehicleIntakeModal
@@ -801,6 +697,33 @@ export default function AdminDashboardPage() {
           vehicle={selectedDeedVehicle}
           isOpen={!!selectedDeedVehicle}
           onClose={() => setSelectedDeedVehicle(null)}
+        />
+      )}
+
+      {/* Commercial Invoice Modal */}
+      {selectedInvoice && (
+        <CommercialInvoiceModal
+          invoice={selectedInvoice}
+          isOpen={!!selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
+
+      {/* Payment Voucher Modal */}
+      {selectedVoucher && (
+        <PaymentVoucherModal
+          voucher={selectedVoucher}
+          isOpen={!!selectedVoucher}
+          onClose={() => setSelectedVoucher(null)}
+        />
+      )}
+
+      {/* Supplier Statement Ledger Modal */}
+      {selectedSupplier && (
+        <SupplierLedgerModal
+          supplier={selectedSupplier}
+          isOpen={!!selectedSupplier}
+          onClose={() => setSelectedSupplier(null)}
         />
       )}
     </div>

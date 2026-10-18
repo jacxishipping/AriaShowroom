@@ -92,7 +92,111 @@ export interface ExpenseRecord {
   vehicleStock?: string;
   amountUSD: number;
   description: string;
+  payee?: string;
+  receiptNumber?: string;
   date: string;
+}
+
+export interface SupplierBillRecord {
+  id: string;
+  billNumber: string;
+  supplierId: string;
+  stockNumber?: string;
+  vehicleDescription?: string;
+  amountUSD: number;
+  status: "Paid" | "Partial" | "Unpaid";
+  issueDate: string;
+  dueDate?: string;
+  notes?: string;
+}
+
+export interface SupplierRecord {
+  id: string;
+  companyName: string;
+  contactName: string;
+  country: string;
+  city?: string;
+  phone: string;
+  whatsapp?: string;
+  email?: string;
+  bankOrSarrafiAccount?: string;
+  totalPurchasedUSD: number;
+  totalPaidUSD: number;
+  balanceUSD: number; // Payable balance (Purchased - Paid)
+  notes?: string;
+  bills: SupplierBillRecord[];
+}
+
+export interface InvoiceItem {
+  description: string;
+  descriptionDari: string;
+  amountUSD: number;
+}
+
+export interface InvoiceRecord {
+  id: string;
+  invoiceNumber: string;
+  saleId?: string;
+  customerName: string;
+  customerPhone: string;
+  customerTazkira?: string;
+  customerAddress?: string;
+  vehicleStock?: string;
+  vehicleDesc?: string;
+  vin?: string;
+  items: InvoiceItem[];
+  subtotalUSD: number;
+  customsFeeUSD: number;
+  registrationFeeUSD: number;
+  discountUSD: number;
+  totalUSD: number;
+  totalAFN: number;
+  exchangeRate: number;
+  status: "Paid" | "Partially Paid" | "Draft" | "Overdue";
+  paymentMethod: string;
+  issueDate: string;
+  dueDate?: string;
+  notes?: string;
+}
+
+export interface PaymentVoucherRecord {
+  id: string;
+  voucherNumber: string;
+  voucherType: "CUSTOMER_PAYMENT" | "SUPPLIER_PAYMENT" | "EXPENSE_PAYMENT";
+  date: string;
+  partyName: string;
+  partyPhone?: string;
+  partyTazkira?: string;
+  amountUSD: number;
+  amountAFN: number;
+  exchangeRate: number;
+  paymentMethod: "Cash (صندوق)" | "Sarrafi Hawala (حواله صرافی)" | "Bank Transfer (حساب بانکی)";
+  sarrafiAccount?: string;
+  referenceNumber?: string;
+  vehicleStock?: string;
+  supplierId?: string;
+  purpose: string;
+  recordedBy: string;
+}
+
+export interface AccountRecord {
+  code: string;
+  name: string;
+  nameDari: string;
+  type: "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE";
+  balanceUSD: number;
+}
+
+export interface JournalEntryRecord {
+  id: string;
+  entryNumber: string;
+  date: string;
+  description: string;
+  reference?: string;
+  debitAccount: string;
+  creditAccount: string;
+  amountUSD: number;
+  amountAFN: number;
 }
 
 export const INITIAL_VEHICLES: VehicleItem[] = [
@@ -591,6 +695,287 @@ export const INITIAL_EXPENSES: ExpenseRecord[] = [
     vehicleStock: "SM-HRT-105",
     amountUSD: 600,
     description: "Ceramic polish, AC system servicing, and fresh synthetic oil change (Camry)",
+    payee: "Al-Shurooq Detailing Herat",
+    receiptNumber: "DET-2026-991",
     date: "2026-10-14",
+  },
+];
+
+export const INITIAL_SUPPLIERS: SupplierRecord[] = [
+  {
+    id: "sup-001",
+    companyName: "Al-Baraka Global Motors FZE",
+    contactName: "Tariq Mansoor Al-Fahim",
+    country: "UAE (Ras Al Khor Auto Market, Dubai)",
+    city: "Dubai",
+    phone: "+971 4 333 8920",
+    whatsapp: "+971 50 123 4567",
+    email: "tariq@albaraka-motors.ae",
+    bankOrSarrafiAccount: "Emirates NBD / Sarrafi Haji Qayoum Khorasan Account #8812",
+    totalPurchasedUSD: 245000,
+    totalPaidUSD: 215000,
+    balanceUSD: 30000,
+    notes: "Primary supplier for Toyota Land Cruiser 300 and Prado GCC specs.",
+    bills: [
+      {
+        id: "bill-001",
+        billNumber: "BILL-DXB-9102",
+        supplierId: "sup-001",
+        stockNumber: "SM-HRT-101",
+        vehicleDescription: "2023 Toyota Land Cruiser 300 VXR",
+        amountUSD: 98000,
+        status: "Paid",
+        issueDate: "2026-09-15",
+      },
+      {
+        id: "bill-002",
+        billNumber: "BILL-DXB-9244",
+        supplierId: "sup-001",
+        stockNumber: "SM-HRT-104",
+        vehicleDescription: "2023 Toyota Land Cruiser Prado TXL",
+        amountUSD: 62000,
+        status: "Partial",
+        issueDate: "2026-10-01",
+      },
+    ],
+  },
+  {
+    id: "sup-002",
+    companyName: "Tokyo Trans Auto Corporation",
+    contactName: "Kenji Sato / Mirwais Alokozai",
+    country: "Japan (Yokohama Port)",
+    city: "Yokohama",
+    phone: "+81 45 671 2290",
+    whatsapp: "+81 90 9812 3341",
+    email: "sato@tokyo-trans-auto.jp",
+    bankOrSarrafiAccount: "MUFG Bank Tokyo / Hawala Khorasan Market Herat",
+    totalPurchasedUSD: 180000,
+    totalPaidUSD: 165000,
+    balanceUSD: 15000,
+    notes: "Specializes in high-grade low mileage Lexus LX600 & Hilux pickups.",
+    bills: [
+      {
+        id: "bill-003",
+        billNumber: "BILL-TYO-4410",
+        supplierId: "sup-002",
+        stockNumber: "SM-HRT-106",
+        vehicleDescription: "2022 Lexus LX600 Ultra Luxury",
+        amountUSD: 120000,
+        status: "Paid",
+        issueDate: "2026-09-20",
+      },
+    ],
+  },
+  {
+    id: "sup-003",
+    companyName: "Khorasan Transit & Customs Agency",
+    contactName: "Haji Mohammad Sarwar",
+    country: "Afghanistan / Iran (Islam Qala & Bandar Abbas)",
+    city: "Herat",
+    phone: "+93 79 988 1234",
+    whatsapp: "+93 79 988 1234",
+    email: "sarwar.transit@gmail.com",
+    bankOrSarrafiAccount: "Azizi Bank Herat / Sarrafi Kabul Bank Safe",
+    totalPurchasedUSD: 42000,
+    totalPaidUSD: 37500,
+    balanceUSD: 4500,
+    notes: "Overland freight logistics from Bandar Abbas port and Islam Qala customs tariffs clearance.",
+    bills: [
+      {
+        id: "bill-004",
+        billNumber: "BILL-HRT-8821",
+        supplierId: "sup-003",
+        stockNumber: "SM-HRT-103",
+        vehicleDescription: "Islam Qala Overland Carrier Freight (Hilux Adventure)",
+        amountUSD: 4500,
+        status: "Unpaid",
+        issueDate: "2026-10-12",
+      },
+    ],
+  },
+];
+
+export const INITIAL_INVOICES: InvoiceRecord[] = [
+  {
+    id: "inv-001",
+    invoiceNumber: "INV-HRT-2026-0089",
+    saleId: "sale-001",
+    customerName: "Haji Abdul Qadir Alokozai",
+    customerPhone: "+93 79 912 3456",
+    customerTazkira: "1401-0402-99812",
+    customerAddress: "Darwaza-e-Kandahar, Herat City",
+    vehicleStock: "SM-HRT-101",
+    vehicleDesc: "2023 Toyota Land Cruiser 300 VXR (Pearl White)",
+    vin: "JTMCY7AJ8N4098231",
+    items: [
+      {
+        description: "2023 Toyota Land Cruiser 300 VXR Direct GCC Import",
+        descriptionDari: "موتر لندکروزر مدل ۲۰۲۳ وی اکس ار وارداتی خلیج",
+        amountUSD: 118000,
+      },
+      {
+        description: "Official Islam Qala Port Customs Clearance Title & Maktoub Fee",
+        descriptionDari: "محصول قطعی گمرک اسلام قلعه و صدور مکتوب رسمی",
+        amountUSD: 3500,
+      },
+      {
+        description: "Herat Traffic Directorate Number Plate & Transfer Registration",
+        descriptionDari: "ثبت ترافیک و انتقال سند قانونی ولایت هرات",
+        amountUSD: 500,
+      },
+    ],
+    subtotalUSD: 122000,
+    customsFeeUSD: 0,
+    registrationFeeUSD: 0,
+    discountUSD: 0,
+    totalUSD: 122000,
+    totalAFN: 8601000,
+    exchangeRate: 70.5,
+    status: "Paid",
+    paymentMethod: "Cash (نقدی)",
+    issueDate: "2026-09-28",
+    notes: "Full transaction settled. Official deed and title transferred.",
+  },
+  {
+    id: "inv-002",
+    invoiceNumber: "INV-HRT-2026-0090",
+    customerName: "Mohammad Ishaq Noorzai",
+    customerPhone: "+93 70 045 6789",
+    customerTazkira: "1399-0112-77112",
+    customerAddress: "Shahr-e-Naw, Herat",
+    vehicleStock: "SM-HRT-103",
+    vehicleDesc: "2022 Toyota Hilux Adventure 4x4",
+    vin: "MR0HA3CD9N0128941",
+    items: [
+      {
+        description: "2022 Toyota Hilux Adventure 4.0L V6 4WD",
+        descriptionDari: "موتر تویوتا هایلوکس ادونچر مدل ۲۰۲۲ شش سیلندر",
+        amountUSD: 44000,
+      },
+      {
+        description: "Customs Clearance & Documentation",
+        descriptionDari: "هزینه ترخیص و سند گمرکی",
+        amountUSD: 1000,
+      },
+    ],
+    subtotalUSD: 45000,
+    customsFeeUSD: 0,
+    registrationFeeUSD: 0,
+    discountUSD: 500,
+    totalUSD: 44500,
+    totalAFN: 3137250,
+    exchangeRate: 70.5,
+    status: "Partially Paid",
+    paymentMethod: "Sarrafi Hawala (حواله صرافی)",
+    issueDate: "2026-10-10",
+    notes: "$30,000 Hawala received. Remaining $14,500 due on vehicle handover.",
+  },
+];
+
+export const INITIAL_PAYMENTS: PaymentVoucherRecord[] = [
+  {
+    id: "pv-001",
+    voucherNumber: "PV-REC-2026-001",
+    voucherType: "CUSTOMER_PAYMENT",
+    date: "2026-09-28",
+    partyName: "Haji Abdul Qadir Alokozai",
+    partyPhone: "+93 79 912 3456",
+    partyTazkira: "1401-0402-99812",
+    amountUSD: 122000,
+    amountAFN: 8601000,
+    exchangeRate: 70.5,
+    paymentMethod: "Cash (صندوق)",
+    sarrafiAccount: "Showroom Central Vault (صندوق مرکزی)",
+    referenceNumber: "CASH-SETTLE-001",
+    vehicleStock: "SM-HRT-101",
+    purpose: "Full settlement for Land Cruiser 300 purchase under contract SM-CNTR-2026-089",
+    recordedBy: "Mirwais Saljuqi (Accountant)",
+  },
+  {
+    id: "pv-002",
+    voucherNumber: "PV-PAY-2026-002",
+    voucherType: "SUPPLIER_PAYMENT",
+    date: "2026-10-02",
+    partyName: "Al-Baraka Global Motors FZE",
+    partyPhone: "+971 50 123 4567",
+    amountUSD: 45000,
+    amountAFN: 3172500,
+    exchangeRate: 70.5,
+    paymentMethod: "Sarrafi Hawala (حواله صرافی)",
+    sarrafiAccount: "Sarrafi Haji Qayoum Khorasan Market",
+    referenceNumber: "HWL-DXB-99201",
+    supplierId: "sup-001",
+    purpose: "Partial balance settlement for Dubai consignment vehicles (Prado & LC300)",
+    recordedBy: "Mirwais Saljuqi (Accountant)",
+  },
+  {
+    id: "pv-003",
+    voucherNumber: "PV-EXP-2026-003",
+    voucherType: "EXPENSE_PAYMENT",
+    date: "2026-10-04",
+    partyName: "Gomrok Herat / Islam Qala Port Directorate",
+    amountUSD: 6800,
+    amountAFN: 479400,
+    exchangeRate: 70.5,
+    paymentMethod: "Cash (صندوق)",
+    referenceNumber: "MKT-HRT-88124",
+    vehicleStock: "SM-HRT-101",
+    purpose: "Official customs tariff duty paid for Land Cruiser 300 clearance",
+    recordedBy: "Mirwais Saljuqi (Accountant)",
+  },
+];
+
+export const INITIAL_ACCOUNTS: AccountRecord[] = [
+  { code: "1010", name: "Showroom Central Cash Safe", nameDari: "صندوق مرکزی نندارتون (نقدی)", type: "ASSET", balanceUSD: 85400 },
+  { code: "1020", name: "Sarrafi Khorasan Holding Account", nameDari: "حساب صرافی مارکیت خراسان هرات", type: "ASSET", balanceUSD: 142000 },
+  { code: "1030", name: "Azizi Bank Commercial USD Account", nameDari: "حساب بانکی ارزی عزیزی بانک", type: "ASSET", balanceUSD: 95000 },
+  { code: "1040", name: "Vehicle Inventory Asset (Lot & Port)", nameDari: "دارایی موجودی موترها (نندارتون و گمرک)", type: "ASSET", balanceUSD: 375500 },
+  { code: "1050", name: "Accounts Receivable (Customer Installments)", nameDari: "حساب‌های دریافتنی (طلبکاری از مشتریان)", type: "ASSET", balanceUSD: 14500 },
+  { code: "2010", name: "Accounts Payable (Auto Suppliers UAE/Japan)", nameDari: "حساب‌های پرداختنی (بدهکاری به تأمین‌کنندگان)", type: "LIABILITY", balanceUSD: 49500 },
+  { code: "2020", name: "Customs Duty Payable (Gomrok Islam Qala)", nameDari: "عوارض گمرکی پرداختنی اسلام قلعه", type: "LIABILITY", balanceUSD: 4500 },
+  { code: "2030", name: "Customer Advance Deposits", nameDari: "پیش‌پرداخت و بیعانه موترها", type: "LIABILITY", balanceUSD: 8000 },
+  { code: "3010", name: "Owner Capital & Equity", nameDari: "سرمایه مالک نندارتون (حاجی احمد شاه)", type: "EQUITY", balanceUSD: 450000 },
+  { code: "4010", name: "Vehicle Sales Revenue", nameDari: "عواید حاصل از فروش موترها", type: "REVENUE", balanceUSD: 236800 },
+  { code: "4020", name: "Documentation & Transfer Fee Income", nameDari: "عواید کمیشن و ترخیص اسناد رسمی", type: "REVENUE", balanceUSD: 4800 },
+  { code: "5010", name: "COGS - Vehicle Purchase Cost", nameDari: "بهای تمام‌شده خرید موتر (دبی/جاپان)", type: "EXPENSE", balanceUSD: 182000 },
+  { code: "5020", name: "COGS - Freight & Port Clearance", nameDari: "بهای تمام‌شده ترانزیت و محصول گمرک", type: "EXPENSE", balanceUSD: 24500 },
+  { code: "6010", name: "Operating Expense - Detailing & Detailing", nameDari: "هزینه رنگ، ترمیم و سرویس تخنیکی", type: "EXPENSE", balanceUSD: 3400 },
+  { code: "6020", name: "Operating Expense - Solar, Fuel & Generator", nameDari: "هزینه برق، سولر و دیزل ژنراتور نندارتون", type: "EXPENSE", balanceUSD: 2600 },
+  { code: "6030", name: "Operating Expense - Staff Salaries & Bonus", nameDari: "معاشات و کمیشن ماهوار پرسونل", type: "EXPENSE", balanceUSD: 5200 },
+];
+
+export const INITIAL_JOURNAL_ENTRIES: JournalEntryRecord[] = [
+  {
+    id: "je-001",
+    entryNumber: "JE-2026-001",
+    date: "2026-09-28",
+    description: "Sale of Land Cruiser 300 VXR (SM-HRT-101) full cash settlement",
+    reference: "INV-HRT-2026-0089",
+    debitAccount: "1010 - Showroom Central Cash Safe",
+    creditAccount: "4010 - Vehicle Sales Revenue",
+    amountUSD: 122000,
+    amountAFN: 8601000,
+  },
+  {
+    id: "je-002",
+    entryNumber: "JE-2026-002",
+    date: "2026-10-02",
+    description: "Hawala payment to Al-Baraka Motors Dubai via Sarrafi Khorasan",
+    reference: "PV-PAY-2026-002",
+    debitAccount: "2010 - Accounts Payable (Auto Suppliers)",
+    creditAccount: "1020 - Sarrafi Khorasan Holding Account",
+    amountUSD: 45000,
+    amountAFN: 3172500,
+  },
+  {
+    id: "je-003",
+    entryNumber: "JE-2026-003",
+    date: "2026-10-04",
+    description: "Islam Qala port customs duty payment for Land Cruiser 300",
+    reference: "PV-EXP-2026-003",
+    debitAccount: "5020 - COGS - Freight & Port Clearance",
+    creditAccount: "1010 - Showroom Central Cash Safe",
+    amountUSD: 6800,
+    amountAFN: 479400,
   },
 ];
