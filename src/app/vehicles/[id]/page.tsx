@@ -559,39 +559,52 @@ Please schedule a viewing or share more photos.`
 
             {/* CTAs */}
             <div className="mt-6 space-y-2.5">
-              <a
+              <MuiButton
+                component="a"
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-colors"
+                variant="contained"
+                color="success"
+                fullWidth
+                size="large"
+                startIcon={<Send className="h-4 w-4" />}
               >
-                <Send className="h-4 w-4" />
-                <span>Inquire directly on WhatsApp (واتساپ)</span>
-              </a>
+                Inquire directly on WhatsApp (واتساپ)
+              </MuiButton>
 
-              <button
+              <MuiButton
                 onClick={() => setIsDeedModalOpen(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                variant="contained"
+                color="primary"
+                fullWidth
+                size="large"
+                startIcon={<FileText className="h-4 w-4" />}
               >
-                <FileText className="h-4 w-4" />
-                <span>{t.generateDeed} (قباله رسمی با QR کد)</span>
-              </button>
+                {t.generateDeed} (قباله رسمی با QR کد)
+              </MuiButton>
 
-              <button
+              <MuiButton
                 onClick={() => setIsSarrafiModalOpen(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                variant="outlined"
+                color="inherit"
+                fullWidth
+                size="large"
+                startIcon={<Banknote className="h-4 w-4 text-warning" />}
               >
-                <Banknote className="h-4 w-4 text-amber-500" />
-                <span>Sarrafi & Milestone Installment Ledger (تسویه حساب صرافی)</span>
-              </button>
+                Sarrafi & Milestone Installment Ledger (تسویه حساب صرافی)
+              </MuiButton>
 
-              <button
+              <MuiButton
                 onClick={handlePrintSpecs}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
+                variant="text"
+                color="inherit"
+                fullWidth
+                size="medium"
+                startIcon={<Printer className="h-4 w-4" />}
               >
-                <Printer className="h-4 w-4" />
-                <span>{t.printSpecSheet}</span>
-              </button>
+                {t.printSpecSheet}
+              </MuiButton>
             </div>
           </div>
 
@@ -599,7 +612,7 @@ Please schedule a viewing or share more photos.`
           <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <Calculator className="h-4 w-4 text-blue-600" />
+                <Calculator className="h-4 w-4 text-primary" />
                 <span>Showroom Financing & Installment Estimator</span>
               </h3>
               <span className="text-[10px] font-mono text-emerald-600 font-bold">
@@ -622,7 +635,7 @@ Please schedule a viewing or share more photos.`
                 step="5"
                 value={downPaymentPercent}
                 onChange={(e) => setDownPaymentPercent(parseInt(e.target.value))}
-                className="w-full accent-blue-600 cursor-pointer"
+                className="w-full accent-primary cursor-pointer"
               />
             </div>
 
@@ -631,17 +644,15 @@ Please schedule a viewing or share more photos.`
               <span className="text-xs text-slate-500 block">Payment Term:</span>
               <div className="grid grid-cols-3 gap-2">
                 {[12, 24, 36].map((months) => (
-                  <button
+                  <MuiButton
                     key={months}
                     onClick={() => setLoanTermMonths(months)}
-                    className={`py-1.5 text-xs font-bold rounded-xl border transition-colors cursor-pointer ${
-                      loanTermMonths === months
-                        ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                        : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                    }`}
+                    variant={loanTermMonths === months ? "contained" : "outlined"}
+                    color={loanTermMonths === months ? "primary" : "inherit"}
+                    size="small"
                   >
                     {months} Months
-                  </button>
+                  </MuiButton>
                 ))}
               </div>
             </div>

@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import { getMuiTheme } from "@/theme/muiTheme";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { ErpSidebar } from "@/components/ErpSidebar";
 import { ErpHeader } from "@/components/ErpHeader";
@@ -36,27 +38,32 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
     }
   }, [darkMode, language]);
 
+  const muiTheme = useMemo(() => getMuiTheme(darkMode ? "dark" : "light"), [darkMode]);
+
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors selection:bg-blue-600 selection:text-white">
-      {/* Enterprise ERP Sidebar */}
-      <ErpSidebar onOpenIntake={() => setIsIntakeModalOpen(true)} />
+    <ThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      <div className="flex min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors selection:bg-blue-600 selection:text-white">
+        {/* Enterprise ERP Sidebar */}
+        <ErpSidebar onOpenIntake={() => setIsIntakeModalOpen(true)} />
 
-      {/* Main ERP Cockpit Area */}
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
-        <ErpHeader onOpenIntake={() => setIsIntakeModalOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
+        {/* Main ERP Cockpit Area */}
+        <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+          <ErpHeader onOpenIntake={() => setIsIntakeModalOpen(true)} />
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            {children}
+          </main>
+        </div>
+
+        {/* Global Vehicle Intake Modal */}
+        <VehicleIntakeModal
+          isOpen={isIntakeModalOpen}
+          onClose={() => setIsIntakeModalOpen(false)}
+        />
+
+        {/* Global Floating Toast Notifications */}
+        <ToastContainer />
       </div>
-
-      {/* Global Vehicle Intake Modal */}
-      <VehicleIntakeModal
-        isOpen={isIntakeModalOpen}
-        onClose={() => setIsIntakeModalOpen(false)}
-      />
-
-      {/* Global Floating Toast Notifications */}
-      <ToastContainer />
-    </div>
+    </ThemeProvider>
   );
 }

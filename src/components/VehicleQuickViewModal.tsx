@@ -5,26 +5,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { VehicleItem } from "@/lib/mock-data";
 import { useShowroomStore } from "@/store/useShowroomStore";
-import { formatCurrency, formatMileage } from "@/lib/utils";
+import { formatMileage } from "@/lib/utils";
 import { translations } from "@/lib/translations";
 import {
   X,
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
-  Fuel,
-  Gauge,
-  Compass,
-  FileCheck,
   Send,
   Eye,
-  CheckCircle2,
-  Calendar,
-  Layers,
   FileText,
-  Printer,
-  Sparkles,
+  Heart,
 } from "lucide-react";
+import { MuiButton, MuiChip, IconButton } from "@/components/mui";
 
 interface VehicleQuickViewModalProps {
   vehicle: VehicleItem | null;
@@ -39,7 +32,7 @@ export function VehicleQuickViewModal({
   onClose,
   onOpenDeed,
 }: VehicleQuickViewModalProps) {
-  const { currency, exchangeRate, language, favoriteIds, toggleFavorite } = useShowroomStore();
+  const { exchangeRate, language, favoriteIds, toggleFavorite } = useShowroomStore();
   const [activePhoto, setActivePhoto] = useState(0);
 
   if (!isOpen || !vehicle) return null;
@@ -66,7 +59,7 @@ Please schedule a viewing or share more photos.`
         {/* Header Bar */}
         <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111827]/95 px-5 py-3.5 backdrop-blur-md">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+            <span className="font-mono text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
               {vehicle.stockNumber}
             </span>
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
@@ -79,23 +72,17 @@ Please schedule a viewing or share more photos.`
           </div>
 
           <div className="flex items-center gap-1.5">
-            <button
+            <IconButton
+              size="small"
               onClick={() => toggleFavorite(vehicle.id)}
-              className={`p-1.5 rounded-lg border transition-colors ${
-                isFav
-                  ? "border-red-300 bg-red-50 text-red-600 dark:bg-red-950/50 dark:border-red-900"
-                  : "border-slate-200 text-slate-400 hover:text-slate-600 dark:border-slate-700"
-              }`}
+              color={isFav ? "error" : "default"}
               title="Save to favorites"
             >
-              ♥
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
+              <Heart className={`h-4 w-4 ${isFav ? "fill-current" : ""}`} />
+            </IconButton>
+            <IconButton size="small" onClick={onClose}>
               <X className="h-5 w-5" />
-            </button>
+            </IconButton>
           </div>
         </div>
 
@@ -111,9 +98,11 @@ Please schedule a viewing or share more photos.`
                 className="object-cover"
               />
               <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-                <span className="rounded-md bg-emerald-600/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow-xs backdrop-blur-xs">
-                  {vehicle.status}
-                </span>
+                <MuiChip
+                  label={vehicle.status}
+                  color={vehicle.status === "Available on Lot" ? "success" : "default"}
+                  size="small"
+                />
                 <span className="rounded-md bg-slate-900/80 px-2 py-0.5 text-[11px] font-semibold text-white shadow-xs backdrop-blur-xs">
                   {vehicle.originCountry} Direct Import
                 </span>
@@ -158,7 +147,7 @@ Please schedule a viewing or share more photos.`
                     onClick={() => setActivePhoto(idx)}
                     className={`relative aspect-[16/10] w-14 shrink-0 overflow-hidden rounded-md border transition-all cursor-pointer ${
                       activePhoto === idx
-                        ? "border-blue-600 ring-2 ring-blue-500/30"
+                        ? "border-primary ring-2 ring-primary/30"
                         : "border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100"
                     }`}
                   >
@@ -196,7 +185,7 @@ Please schedule a viewing or share more photos.`
                   </span>
                   <span className="text-xs font-mono text-slate-500 uppercase">USD</span>
                 </div>
-                <div className="mt-1 font-mono text-xs font-semibold text-gold dark:text-gold-light">
+                <div className="mt-1 font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">
                   ؋ {(vehicle.sellingPrice * exchangeRate).toLocaleString()} AFN
                 </div>
                 <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-200/80 dark:border-slate-800 pt-2 flex items-center justify-between">
@@ -244,38 +233,47 @@ Please schedule a viewing or share more photos.`
 
             {/* Action Buttons */}
             <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-              <Link
+              <MuiButton
+                component={Link}
                 href={`/vehicles/${vehicle.id}`}
                 onClick={onClose}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors shadow-xs"
+                variant="contained"
+                color="primary"
+                fullWidth
+                size="medium"
+                startIcon={<Eye className="h-4 w-4" />}
               >
-                <Eye className="h-4 w-4" />
-                <span>View Full Inspection & Album</span>
-              </Link>
+                View Full Inspection & Album
+              </MuiButton>
 
               <div className="grid grid-cols-2 gap-2">
                 {onOpenDeed && (
-                  <button
+                  <MuiButton
                     onClick={() => {
                       onClose();
                       onOpenDeed(vehicle);
                     }}
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold text-xs transition-colors"
+                    variant="outlined"
+                    color="inherit"
+                    size="small"
+                    startIcon={<FileText className="h-3.5 w-3.5 text-warning" />}
                   >
-                    <FileText className="h-3.5 w-3.5 text-amber-500" />
-                    <span>Print Deed</span>
-                  </button>
+                    Print Deed
+                  </MuiButton>
                 )}
 
-                <a
+                <MuiButton
+                  component="a"
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 font-semibold text-xs transition-colors"
+                  variant="outlined"
+                  color="success"
+                  size="small"
+                  startIcon={<Send className="h-3.5 w-3.5" />}
                 >
-                  <Send className="h-3.5 w-3.5" />
-                  <span>WhatsApp</span>
-                </a>
+                  WhatsApp
+                </MuiButton>
               </div>
             </div>
           </div>

@@ -14,6 +14,20 @@ import { CompareBar } from "@/components/CompareBar";
 import { VehicleItem } from "@/lib/mock-data";
 import { exportInventoryToCSV } from "@/lib/export-utils";
 import {
+  MuiButton,
+  MuiCard,
+  MuiChip,
+  MuiTableContainer,
+  MuiTable,
+  MuiTableHead,
+  MuiTableBody,
+  MuiTableRow,
+  MuiTableCell,
+  MuiTextField,
+  MenuItem,
+  IconButton,
+} from "@/components/mui";
+import {
   Car,
   TrendingUp,
   DollarSign,
@@ -185,33 +199,38 @@ export default function ErpOperationsCockpit() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button
+          <MuiButton
+            variant="outlined"
+            color="inherit"
+            size="small"
             onClick={() => {
               exportInventoryToCSV(vehicles);
               addToast("Exported fleet inventory to CSV", "success");
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer"
+            startIcon={<Download className="h-3.5 w-3.5" />}
           >
-            <Download className="h-3.5 w-3.5 text-slate-400" />
-            <span>Export CSV</span>
-          </button>
+            Export CSV
+          </MuiButton>
 
-          <button
+          <MuiButton
+            variant="contained"
+            color="primary"
+            size="small"
             onClick={() => setIsIntakeOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            startIcon={<Plus className="h-4 w-4" />}
           >
-            <Plus className="h-4 w-4" />
-            <span>{t.addNewVehicle}</span>
-          </button>
+            {t.addNewVehicle}
+          </MuiButton>
         </div>
       </div>
 
       {/* 4 Interactive Executive Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Active Lot Valuation */}
-        <div
+        <MuiCard
+          elevation={1}
           onClick={() => setStatusTab("Available on Lot")}
-          className="group rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] p-5 shadow-xs hover:shadow-md hover:border-blue-500/40 transition-all cursor-pointer relative overflow-hidden"
+          className="p-5 cursor-pointer hover:shadow-md transition-all relative overflow-hidden"
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">
@@ -241,12 +260,13 @@ export default function ErpOperationsCockpit() {
               }}
             />
           </div>
-        </div>
+        </MuiCard>
 
         {/* Card 2: Executed Sales */}
-        <div
+        <MuiCard
+          elevation={1}
           onClick={() => setStatusTab("Sold")}
-          className="group rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] p-5 shadow-xs hover:shadow-md hover:border-emerald-500/40 transition-all cursor-pointer"
+          className="p-5 cursor-pointer hover:shadow-md transition-all"
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">
@@ -273,12 +293,13 @@ export default function ErpOperationsCockpit() {
               }}
             />
           </div>
-        </div>
+        </MuiCard>
 
         {/* Card 3: Total Fleet Size */}
-        <div
+        <MuiCard
+          elevation={1}
           onClick={() => setStatusTab("ALL")}
-          className="group rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] p-5 shadow-xs hover:shadow-md hover:border-amber-500/40 transition-all cursor-pointer"
+          className="p-5 cursor-pointer hover:shadow-md transition-all"
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">
@@ -322,10 +343,10 @@ export default function ErpOperationsCockpit() {
               style={{ width: `${(soldCount / vehicles.length) * 100}%` }}
             />
           </div>
-        </div>
+        </MuiCard>
 
         {/* Card 4: Customs Port Status */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] p-5 shadow-xs">
+        <MuiCard elevation={1} className="p-5">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">
               Customs Status
@@ -344,7 +365,7 @@ export default function ErpOperationsCockpit() {
           <div className="mt-3 text-[11px] font-mono text-slate-400">
             Tariffs & Maktoubs current
           </div>
-        </div>
+        </MuiCard>
       </div>
 
       {/* Main Stock Registry Container */}
@@ -352,7 +373,7 @@ export default function ErpOperationsCockpit() {
         {/* Table Toolbar: Status Filter Tabs + Search */}
         <div className="p-4 border-b border-slate-200/90 dark:border-slate-800/90 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/60 dark:bg-slate-900/40">
           {/* Segmented Status Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
             {[
               { id: "ALL", label: `All (${vehicles.length})` },
               { id: "Available on Lot", label: `Available (${availableCount})` },
@@ -360,39 +381,26 @@ export default function ErpOperationsCockpit() {
               { id: "Reserved/Deposit Paid", label: `Reserved (${reservedCount})` },
               { id: "Sold", label: `Sold (${soldCount})` },
             ].map((tab) => (
-              <button
+              <MuiChip
                 key={tab.id}
+                label={tab.label}
+                clickable
+                color={statusTab === tab.id ? "primary" : "default"}
+                variant={statusTab === tab.id ? "filled" : "outlined"}
                 onClick={() => setStatusTab(tab.id as any)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-                  statusTab === tab.id
-                    ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs border border-slate-200 dark:border-slate-700"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                {tab.label}
-              </button>
+              />
             ))}
           </div>
 
           {/* Search Box */}
-          <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search stock #, VIN, make, model..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
+          <MuiTextField
+            size="small"
+            placeholder="Search stock #, VIN, make, model..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            startAdornment={<Search className="h-3.5 w-3.5 text-slate-400" />}
+            className="w-full md:w-72"
+          />
         </div>
 
         {/* Bulk Actions Sticky Bar (when rows are selected) */}
@@ -443,11 +451,11 @@ export default function ErpOperationsCockpit() {
         )}
 
         {/* Clean Enterprise Data Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                <th className="py-3 px-4 w-10">
+        <MuiTableContainer className="overflow-x-auto">
+          <MuiTable dense>
+            <MuiTableHead>
+              <MuiTableRow hover={false}>
+                <MuiTableCell header className="w-10">
                   <input
                     type="checkbox"
                     checked={
@@ -457,10 +465,11 @@ export default function ErpOperationsCockpit() {
                     onChange={handleSelectAll}
                     className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
-                </th>
-                <th
+                </MuiTableCell>
+                <MuiTableCell
+                  header
                   onClick={() => handleSort("stockNumber")}
-                  className="py-3 px-4 cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
+                  className="cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Vehicle & Stock</span>
@@ -474,13 +483,15 @@ export default function ErpOperationsCockpit() {
                       <ArrowUpDown className="h-3 w-3 text-slate-400" />
                     )}
                   </div>
-                </th>
-                <th className="py-3 px-4">VIN / Chassis</th>
-                <th className="py-3 px-4">Status & Quick Change</th>
-                <th className="py-3 px-4">Customs Clearance</th>
-                <th
+                </MuiTableCell>
+                <MuiTableCell header>VIN / Chassis</MuiTableCell>
+                <MuiTableCell header>Status & Quick Change</MuiTableCell>
+                <MuiTableCell header>Customs Clearance</MuiTableCell>
+                <MuiTableCell
+                  header
+                  align="right"
                   onClick={() => handleSort("landedCost")}
-                  className="py-3 px-4 text-right cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
+                  className="cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
                 >
                   <div className="flex items-center justify-end gap-1.5">
                     <span>Landed Cost</span>
@@ -494,10 +505,12 @@ export default function ErpOperationsCockpit() {
                       <ArrowUpDown className="h-3 w-3 text-slate-400" />
                     )}
                   </div>
-                </th>
-                <th
+                </MuiTableCell>
+                <MuiTableCell
+                  header
+                  align="right"
                   onClick={() => handleSort("sellingPrice")}
-                  className="py-3 px-4 text-right cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
+                  className="cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
                 >
                   <div className="flex items-center justify-end gap-1.5">
                     <span>Selling Price</span>
@@ -511,18 +524,18 @@ export default function ErpOperationsCockpit() {
                       <ArrowUpDown className="h-3 w-3 text-slate-400" />
                     )}
                   </div>
-                </th>
-                <th className="py-3 px-4 text-right">Target Margin</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                </MuiTableCell>
+                <MuiTableCell header align="right">Target Margin</MuiTableCell>
+                <MuiTableCell header align="right">Actions</MuiTableCell>
+              </MuiTableRow>
+            </MuiTableHead>
+            <MuiTableBody>
               {processedVehicles.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
+                <MuiTableRow>
+                  <MuiTableCell colSpan={9} align="center" className="py-12 text-slate-400">
                     No vehicles found matching current criteria.
-                  </td>
-                </tr>
+                  </MuiTableCell>
+                </MuiTableRow>
               ) : (
                 processedVehicles.map((veh) => {
                   const isSelected = selectedVehicleIds.includes(veh.id);
@@ -533,26 +546,24 @@ export default function ErpOperationsCockpit() {
                       : "0";
 
                   return (
-                    <tr
+                    <MuiTableRow
                       key={veh.id}
-                      className={`transition-colors ${
-                        isSelected
-                          ? "bg-blue-50/60 dark:bg-blue-950/30"
-                          : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
-                      }`}
+                      className={
+                        isSelected ? "bg-blue-50/60 dark:bg-blue-950/30" : undefined
+                      }
                     >
                       {/* Checkbox */}
-                      <td className="py-3 px-4">
+                      <MuiTableCell>
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSelect(veh.id)}
                           className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         />
-                      </td>
+                      </MuiTableCell>
 
                       {/* Vehicle & Stock with Thumbnail */}
-                      <td className="py-3 px-4">
+                      <MuiTableCell>
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => setQuickViewVehicle(veh)}
@@ -588,47 +599,49 @@ export default function ErpOperationsCockpit() {
                             </div>
                           </div>
                         </div>
-                      </td>
+                      </MuiTableCell>
 
                       {/* VIN */}
-                      <td className="py-3 px-4 font-mono text-slate-600 dark:text-slate-400 text-[11px] select-all">
+                      <MuiTableCell className="font-mono text-slate-600 dark:text-slate-400 text-[11px] select-all">
                         {veh.vin}
-                      </td>
+                      </MuiTableCell>
 
                       {/* Inline Status Changer Dropdown */}
-                      <td className="py-3 px-4">
-                        <select
+                      <MuiTableCell>
+                        <MuiTextField
+                          select
+                          size="small"
                           value={veh.status}
                           onChange={(e) =>
                             setVehicleStatus(veh.id, e.target.value as VehicleItem["status"])
                           }
-                          className="px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none cursor-pointer hover:border-slate-400 transition-colors"
+                          sx={{ minWidth: 150 }}
                         >
-                          <option value="Available on Lot">Available on Lot</option>
-                          <option value="In Transit">In Transit</option>
-                          <option value="Reserved/Deposit Paid">Reserved / Deposit</option>
-                          <option value="Under Prep/Maintenance">Under Prep</option>
-                          <option value="Sold">Sold</option>
-                        </select>
-                      </td>
+                          <MenuItem value="Available on Lot">Available on Lot</MenuItem>
+                          <MenuItem value="In Transit">In Transit</MenuItem>
+                          <MenuItem value="Reserved/Deposit Paid">Reserved / Deposit</MenuItem>
+                          <MenuItem value="Under Prep/Maintenance">Under Prep</MenuItem>
+                          <MenuItem value="Sold">Sold</MenuItem>
+                        </MuiTextField>
+                      </MuiTableCell>
 
                       {/* Customs */}
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
+                      <MuiTableCell className="text-slate-600 dark:text-slate-400">
                         <div className="flex items-center gap-1.5">
                           <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                           <span className="truncate max-w-[140px] text-[11px]">
                             {veh.customsClearance.split("-")[0].trim()}
                           </span>
                         </div>
-                      </td>
+                      </MuiTableCell>
 
                       {/* Landed Cost */}
-                      <td className="py-3 px-4 text-right font-mono text-slate-600 dark:text-slate-400">
+                      <MuiTableCell align="right" className="font-mono text-slate-600 dark:text-slate-400">
                         ${veh.landedCost.toLocaleString()}
-                      </td>
+                      </MuiTableCell>
 
                       {/* Selling Price */}
-                      <td className="py-3 px-4 text-right">
+                      <MuiTableCell align="right">
                         <div className="font-bold font-mono text-slate-900 dark:text-white">
                           ${veh.sellingPrice.toLocaleString()}
                         </div>
@@ -637,55 +650,58 @@ export default function ErpOperationsCockpit() {
                             ؋ {(veh.sellingPrice * exchangeRate).toLocaleString()}
                           </div>
                         )}
-                      </td>
+                      </MuiTableCell>
 
                       {/* Target Margin */}
-                      <td className="py-3 px-4 text-right font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                      <MuiTableCell align="right" className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
                         +${marginAmount.toLocaleString()} ({marginPercent}%)
-                      </td>
+                      </MuiTableCell>
 
                       {/* Actions */}
-                      <td className="py-3 px-4 text-right">
+                      <MuiTableCell align="right">
                         <div className="flex items-center justify-end gap-1">
-                          <button
+                          <IconButton
+                            size="small"
+                            color="primary"
                             onClick={() => setQuickViewVehicle(veh)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Quick Inspect"
                           >
-                            <Eye className="h-3.5 w-3.5" />
-                          </button>
+                            <Eye className="h-4 w-4" />
+                          </IconButton>
 
-                          <button
+                          <IconButton
+                            size="small"
+                            color="warning"
                             onClick={() => setSelectedDeedVehicle(veh)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Generate Official Bilingual Deed"
                           >
-                            <FileText className="h-3.5 w-3.5" />
-                          </button>
+                            <FileText className="h-4 w-4" />
+                          </IconButton>
 
                           {currentRole === "SuperAdmin" && (
-                            <button
+                            <IconButton
+                              size="small"
+                              color="error"
                               onClick={() => {
                                 if (confirm(`Delete vehicle ${veh.stockNumber}?`)) {
                                   deleteVehicle(veh.id);
                                   addToast(`Deleted vehicle ${veh.stockNumber}`, "info");
                                 }
                               }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                               title="Delete vehicle"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                              <Trash2 className="h-4 w-4" />
+                            </IconButton>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </MuiTableCell>
+                    </MuiTableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
-        </div>
+            </MuiTableBody>
+          </MuiTable>
+        </MuiTableContainer>
 
         {/* Clean Footer / Counter */}
         <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">

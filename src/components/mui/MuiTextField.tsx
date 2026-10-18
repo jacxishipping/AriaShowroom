@@ -1,78 +1,61 @@
 "use client";
 
 import React from "react";
+import TextField, { TextFieldProps } from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
 
-export interface MuiTextFieldProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  helperText?: string;
-  error?: boolean;
+export type MuiTextFieldProps = TextFieldProps & {
   startAdornment?: React.ReactNode;
   endAdornment?: React.ReactNode;
   sizeVariant?: "small" | "medium";
-}
+};
 
-export function MuiTextField({
-  label,
-  helperText,
-  error = false,
-  startAdornment,
-  endAdornment,
-  sizeVariant = "small",
-  className = "",
-  id,
-  ...props
-}: MuiTextFieldProps) {
-  const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
+export const MuiTextField = React.forwardRef<HTMLDivElement, MuiTextFieldProps>(
+  function MuiTextField(
+    {
+      startAdornment,
+      endAdornment,
+      sizeVariant = "small",
+      size,
+      variant = "outlined",
+      slotProps,
+      fullWidth = true,
+      ...props
+    },
+    ref
+  ) {
+    const existingInputSlotProps =
+      typeof slotProps?.input === "function" ? {} : (slotProps?.input as Record<string, any>) || {};
 
-  return (
-    <div className={`flex flex-col gap-1 w-full ${className}`}>
-      {label && (
-        <label
-          htmlFor={inputId}
-          className={`text-[11px] font-semibold uppercase tracking-wider ${
-            error
-              ? "text-[#D32F2F]"
-              : "text-slate-600 dark:text-slate-300"
-          }`}
-        >
-          {label}
-        </label>
-      )}
+    const mergedSlotProps = {
+      ...slotProps,
+      input: {
+        ...existingInputSlotProps,
+        ...(startAdornment && {
+          startAdornment: (
+            <InputAdornment position="start">{startAdornment}</InputAdornment>
+          ),
+        }),
+        ...(endAdornment && {
+          endAdornment: (
+            <InputAdornment position="end">{endAdornment}</InputAdornment>
+          ),
+        }),
+      },
+    };
 
-      <div
-        className={`relative flex items-center rounded-md border transition-colors ${
-          error
-            ? "border-[#D32F2F] focus-within:border-[#D32F2F] focus-within:ring-1 focus-within:ring-[#D32F2F]"
-            : "border-slate-300 dark:border-slate-700 focus-within:border-[#1976D2] focus-within:ring-1 focus-within:ring-[#1976D2]"
-        } bg-white dark:bg-[#121824]`}
-      >
-        {startAdornment && (
-          <span className="pl-3 text-slate-400 shrink-0">{startAdornment}</span>
-        )}
+    return (
+      <TextField
+        ref={ref}
+        variant={variant as any}
+        size={size || sizeVariant}
+        fullWidth={fullWidth}
+        slotProps={mergedSlotProps as any}
+        {...props}
+      />
+    );
+  }
+);
 
-        <input
-          id={inputId}
-          className={`w-full bg-transparent text-slate-900 dark:text-white placeholder-slate-400 outline-none ${
-            sizeVariant === "small" ? "py-1.5 px-3 text-xs" : "py-2.5 px-3.5 text-sm"
-          }`}
-          {...props}
-        />
-
-        {endAdornment && (
-          <span className="pr-3 text-slate-400 shrink-0">{endAdornment}</span>
-        )}
-      </div>
-
-      {helperText && (
-        <span
-          className={`text-[10px] ${
-            error ? "text-[#D32F2F]" : "text-slate-400"
-          }`}
-        >
-          {helperText}
-        </span>
-      )}
-    </div>
-  );
-}
+export { TextField, InputAdornment };
+export default MuiTextField;

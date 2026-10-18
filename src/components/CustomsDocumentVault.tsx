@@ -2,22 +2,24 @@
 
 import React, { useState } from "react";
 import { VehicleItem } from "@/lib/mock-data";
-import { useShowroomStore } from "@/store/useShowroomStore";
 import {
   FileText,
   UploadCloud,
   CheckCircle2,
-  ExternalLink,
   ShieldCheck,
   FileCheck2,
   Download,
   Eye,
   X,
-  AlertCircle,
-  Clock,
-  Stamp,
 } from "lucide-react";
-import { MuiCard, MuiChip, MuiButton } from "@/components/mui";
+import {
+  MuiCard,
+  MuiChip,
+  MuiButton,
+  MuiTextField,
+  MenuItem,
+  IconButton,
+} from "@/components/mui";
 
 interface CustomsDoc {
   id: string;
@@ -35,8 +37,6 @@ interface CustomsDocumentVaultProps {
 }
 
 export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
-  const { language } = useShowroomStore();
-
   const [docs, setDocs] = useState<CustomsDoc[]>([
     {
       id: "doc-1",
@@ -127,7 +127,7 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1976D2]/10 text-[#1976D2]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
@@ -155,7 +155,7 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
         {docs.map((doc) => (
           <div
             key={doc.id}
-            className="group relative flex flex-col justify-between rounded-xl border border-slate-200/80 bg-slate-50/60 p-4 transition-all hover:border-[#1976D2]/40 hover:shadow-mui-2 dark:border-slate-800 dark:bg-[#121824]"
+            className="group relative flex flex-col justify-between rounded-xl border border-slate-200/80 bg-slate-50/60 p-4 transition-all hover:border-primary/40 hover:shadow-mui-2 dark:border-slate-800 dark:bg-[#121824]"
           >
             <div>
               <div className="flex items-start justify-between gap-2 mb-2">
@@ -185,23 +185,28 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
               </span>
 
               <div className="flex items-center gap-2">
-                <button
+                <MuiButton
+                  variant="outlined"
+                  color="inherit"
+                  size="small"
                   onClick={() => setSelectedDoc(doc)}
-                  className="flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-2xs hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+                  startIcon={<Eye className="h-3.5 w-3.5 text-primary" />}
                 >
-                  <Eye className="h-3 w-3 text-[#1976D2]" />
-                  <span>Preview</span>
-                </button>
+                  Preview
+                </MuiButton>
 
-                <a
+                <MuiButton
+                  component="a"
                   href={doc.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
+                  variant="outlined"
+                  color="inherit"
+                  size="small"
+                  startIcon={<Download className="h-3.5 w-3.5" />}
                 >
-                  <Download className="h-3 w-3" />
-                  <span>Download</span>
-                </a>
+                  Download
+                </MuiButton>
               </div>
             </div>
           </div>
@@ -226,35 +231,37 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <select
+            <MuiTextField
+              select
+              sizeVariant="small"
               value={newDocType}
               onChange={(e) => setNewDocType(e.target.value as any)}
-              className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-[#121824] dark:text-slate-200 outline-none focus:border-[#1976D2]"
+              className="min-w-[190px]"
             >
-              <option value="MAKTOUB">Islam Qala Maktoub</option>
-              <option value="BILL_OF_LADING">Bill of Lading (B/L)</option>
-              <option value="TRAFFIC_CERT">Traffic Inspection Sheet</option>
-              <option value="EXPORT_TITLE">Export Certificate</option>
-              <option value="HAWALA_SLIP">Sarrafi Voucher</option>
-            </select>
+              <MenuItem value="MAKTOUB">Islam Qala Maktoub</MenuItem>
+              <MenuItem value="BILL_OF_LADING">Bill of Lading (B/L)</MenuItem>
+              <MenuItem value="TRAFFIC_CERT">Traffic Inspection Sheet</MenuItem>
+              <MenuItem value="EXPORT_TITLE">Export Certificate</MenuItem>
+              <MenuItem value="HAWALA_SLIP">Sarrafi Voucher</MenuItem>
+            </MuiTextField>
 
-            <label className="relative flex items-center justify-center gap-1.5 rounded-lg bg-[#1976D2] hover:bg-[#1565C0] px-3 py-1.5 text-xs font-medium text-white transition-colors cursor-pointer shrink-0">
-              {isUploading ? (
-                <span>Uploading...</span>
-              ) : (
-                <>
-                  <UploadCloud className="h-3.5 w-3.5" />
-                  <span>Upload File</span>
-                </>
-              )}
+            <MuiButton
+              component="label"
+              variant="contained"
+              color="primary"
+              size="medium"
+              startIcon={<UploadCloud className="h-4 w-4" />}
+              disabled={isUploading}
+            >
+              {isUploading ? "Uploading..." : "Upload File"}
               <input
                 type="file"
                 accept="image/*,application/pdf"
                 onChange={handleFileUpload}
                 disabled={isUploading}
-                className="sr-only"
+                hidden
               />
-            </label>
+            </MuiButton>
           </div>
         </div>
       </div>
@@ -275,12 +282,9 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedDoc(null)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 cursor-pointer"
-              >
+              <IconButton size="small" onClick={() => setSelectedDoc(null)}>
                 <X className="h-5 w-5" />
-              </button>
+              </IconButton>
             </div>
 
             <div className="mt-4 flex items-center justify-center overflow-hidden rounded-lg bg-slate-950 max-h-[65vh]">
@@ -295,15 +299,18 @@ export function CustomsDocumentVault({ vehicle }: CustomsDocumentVaultProps) {
               <span className="font-dari text-slate-600 dark:text-slate-300">
                 {selectedDoc.titleDari}
               </span>
-              <a
+              <MuiButton
+                component="a"
                 href={selectedDoc.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg bg-[#1976D2] hover:bg-[#1565C0] px-3 py-1.5 font-medium text-white transition-colors"
+                variant="contained"
+                color="primary"
+                size="small"
+                startIcon={<Download className="h-3.5 w-3.5" />}
               >
-                <Download className="h-3.5 w-3.5" />
-                <span>Download Original</span>
-              </a>
+                Download Original
+              </MuiButton>
             </div>
           </div>
         </div>

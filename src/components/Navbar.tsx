@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
+import { MuiButton, IconButton } from "@/components/mui";
 import {
   Car,
   PhoneCall,
@@ -190,32 +191,32 @@ export function Navbar() {
           </div>
 
           {/* Dark Mode Toggle */}
-          <button
+          <IconButton
+            size="small"
             onClick={toggleDarkMode}
-            className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
             aria-label="Toggle theme"
+            className="!border !border-slate-200 dark:!border-slate-800"
           >
             {darkMode ? (
-              <Sun className="h-4 w-4 text-gold-light" />
+              <Sun className="h-4 w-4 text-warning" />
             ) : (
               <Moon className="h-4 w-4" />
             )}
-          </button>
+          </IconButton>
 
           {/* ERP Portal CTA */}
-          <Link
+          <MuiButton
+            component={Link}
             href="/admin"
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-              isErp
-                ? "bg-gold text-slate-950 font-bold shadow-md"
-                : "bg-navy text-white hover:bg-navy-800 dark:bg-gold dark:text-slate-950 dark:hover:bg-gold-light shadow-sm"
-            }`}
+            variant="contained"
+            color="primary"
+            size="small"
+            startIcon={<LayoutDashboard className="h-3.5 w-3.5" />}
           >
-            <LayoutDashboard className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">
               {isErp ? "ERP Active" : t.navErpPortal}
             </span>
-          </Link>
+          </MuiButton>
         </div>
       </div>
     </header>

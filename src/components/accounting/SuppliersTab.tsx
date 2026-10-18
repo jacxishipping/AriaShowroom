@@ -13,6 +13,7 @@ import {
   MuiTableRow,
   MuiTableCell,
   MuiTextField,
+  MenuItem,
 } from "@/components/mui";
 import {
   Building2,
@@ -167,28 +168,29 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
       {/* Control Bar: Search, Country Filter, and Add Supplier */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex flex-1 items-center gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search supplier, contact, city..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-4 py-2 text-xs text-slate-900 outline-none focus:border-[#1976D2] dark:border-slate-700 dark:bg-[#121824] dark:text-white"
-            />
-          </div>
+          <MuiTextField
+            size="small"
+            placeholder="Search supplier, contact, city..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            startAdornment={<Search className="h-4 w-4 text-slate-400" />}
+            sx={{ minWidth: 220, maxWidth: 360 }}
+          />
 
-          <select
+          <MuiTextField
+            select
+            size="small"
+            label="Origin Country"
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#1976D2] dark:border-slate-700 dark:bg-[#121824] dark:text-white"
+            sx={{ minWidth: 160 }}
           >
-            <option value="all">All Origins</option>
-            <option value="uae">UAE (Dubai)</option>
-            <option value="japan">Japan</option>
-            <option value="iran">Iran</option>
-            <option value="afghanistan">Transit / Local</option>
-          </select>
+            <MenuItem value="all">All Origins</MenuItem>
+            <MenuItem value="uae">UAE (Dubai)</MenuItem>
+            <MenuItem value="japan">Japan</MenuItem>
+            <MenuItem value="iran">Iran</MenuItem>
+            <MenuItem value="afghanistan">Transit / Local</MenuItem>
+          </MuiTextField>
         </div>
 
         <MuiButton
@@ -229,21 +231,17 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                 onChange={(e) => setContactName(e.target.value)}
               />
 
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Country & Hub
-                </label>
-                <select
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-                >
-                  <option value="UAE (Ras Al Khor, Dubai)">UAE (Ras Al Khor, Dubai)</option>
-                  <option value="Japan (Yokohama & Kobe Auctions)">Japan (Yokohama & Kobe Auctions)</option>
-                  <option value="Iran (Bandar Abbas / Tehran Transit)">Iran (Bandar Abbas / Tehran Transit)</option>
-                  <option value="Afghanistan (Islam Qala / Herat Freight)">Afghanistan (Islam Qala / Herat Freight)</option>
-                </select>
-              </div>
+              <MuiTextField
+                select
+                label="Country & Hub"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              >
+                <MenuItem value="UAE (Ras Al Khor, Dubai)">UAE (Ras Al Khor, Dubai)</MenuItem>
+                <MenuItem value="Japan (Yokohama & Kobe Auctions)">Japan (Yokohama & Kobe Auctions)</MenuItem>
+                <MenuItem value="Iran (Bandar Abbas / Tehran Transit)">Iran (Bandar Abbas / Tehran Transit)</MenuItem>
+                <MenuItem value="Afghanistan (Islam Qala / Herat Freight)">Afghanistan (Islam Qala / Herat Freight)</MenuItem>
+              </MuiTextField>
 
               <MuiTextField
                 label="City / Port"

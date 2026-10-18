@@ -3,14 +3,21 @@
 import React from "react";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
-import { Search, RotateCcw, Filter, X, Check, SlidersHorizontal } from "lucide-react";
+import { Search, RotateCcw, X } from "lucide-react";
+import {
+  MuiTextField,
+  MenuItem,
+  MuiChip,
+  MuiButton,
+  IconButton,
+} from "@/components/mui";
 
 export function VehicleFilters() {
   const { filters, setFilter, resetFilters, language } = useShowroomStore();
   const t = translations[language];
 
   const hasActiveFilters =
-    filters.search ||
+    Boolean(filters.search) ||
     filters.make !== "ALL" ||
     filters.bodyType !== "ALL" ||
     filters.status !== "ALL" ||
@@ -35,85 +42,98 @@ export function VehicleFilters() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-          <input
-            type="text"
+          <MuiTextField
+            sizeVariant="small"
             value={filters.search}
             onChange={(e) => setFilter("search", e.target.value)}
             placeholder={t.searchPlaceholder}
-            className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all"
+            fullWidth
+            startAdornment={<Search className="h-4 w-4 text-slate-400" />}
+            endAdornment={
+              filters.search ? (
+                <IconButton
+                  size="small"
+                  onClick={() => setFilter("search", "")}
+                  sx={{ p: 0.5 }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </IconButton>
+              ) : undefined
+            }
           />
-          {filters.search && (
-            <button
-              onClick={() => setFilter("search", "")}
-              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
         </div>
 
         {/* Compact Dropdown Selectors */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {/* Make Filter */}
-          <select
+          <MuiTextField
+            select
+            sizeVariant="small"
             value={filters.make}
             onChange={(e) => setFilter("make", e.target.value)}
-            className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none text-xs font-semibold cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-2xs"
+            className="min-w-[150px]"
           >
-            <option value="ALL">All Makes (Toyota, Lexus)</option>
-            <option value="Toyota">Toyota</option>
-            <option value="Lexus">Lexus</option>
-          </select>
+            <MenuItem value="ALL">All Makes (Toyota, Lexus)</MenuItem>
+            <MenuItem value="Toyota">Toyota</MenuItem>
+            <MenuItem value="Lexus">Lexus</MenuItem>
+          </MuiTextField>
 
           {/* Body Type */}
-          <select
+          <MuiTextField
+            select
+            sizeVariant="small"
             value={filters.bodyType}
             onChange={(e) => setFilter("bodyType", e.target.value)}
-            className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none text-xs font-semibold cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-2xs"
+            className="min-w-[150px]"
           >
-            <option value="ALL">All Body Types</option>
-            <option value="SUV">SUV (Land Cruiser / LX)</option>
-            <option value="Sedan">Sedan (Corolla / Camry)</option>
-            <option value="Pickup">Pickup (Hilux Revo)</option>
-            <option value="Crossover">Crossover (RAV4)</option>
-          </select>
+            <MenuItem value="ALL">All Body Types</MenuItem>
+            <MenuItem value="SUV">SUV (Land Cruiser / LX)</MenuItem>
+            <MenuItem value="Sedan">Sedan (Corolla / Camry)</MenuItem>
+            <MenuItem value="Pickup">Pickup (Hilux Revo)</MenuItem>
+            <MenuItem value="Crossover">Crossover (RAV4)</MenuItem>
+          </MuiTextField>
 
           {/* Origin */}
-          <select
+          <MuiTextField
+            select
+            sizeVariant="small"
             value={filters.originCountry}
             onChange={(e) => setFilter("originCountry", e.target.value)}
-            className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none text-xs font-semibold cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-2xs"
+            className="min-w-[140px]"
           >
-            <option value="ALL">All Import Origins</option>
-            <option value="UAE">UAE (Dubai GCC)</option>
-            <option value="USA">USA Import</option>
-            <option value="Canada">Canada Import</option>
-            <option value="Japan">Japan Import</option>
-          </select>
+            <MenuItem value="ALL">All Import Origins</MenuItem>
+            <MenuItem value="UAE">UAE (Dubai GCC)</MenuItem>
+            <MenuItem value="USA">USA Import</MenuItem>
+            <MenuItem value="Canada">Canada Import</MenuItem>
+            <MenuItem value="Japan">Japan Import</MenuItem>
+          </MuiTextField>
 
           {/* Status */}
-          <select
+          <MuiTextField
+            select
+            sizeVariant="small"
             value={filters.status}
             onChange={(e) => setFilter("status", e.target.value)}
-            className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none text-xs font-semibold cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-2xs"
+            className="min-w-[130px]"
           >
-            <option value="ALL">All Statuses</option>
-            <option value="Available on Lot">{t.availableTag}</option>
-            <option value="In Transit">{t.inTransitTag}</option>
-            <option value="Reserved/Deposit Paid">{t.reservedTag}</option>
-            <option value="Sold">{t.soldTag}</option>
-          </select>
+            <MenuItem value="ALL">All Statuses</MenuItem>
+            <MenuItem value="Available on Lot">{t.availableTag}</MenuItem>
+            <MenuItem value="In Transit">{t.inTransitTag}</MenuItem>
+            <MenuItem value="Reserved/Deposit Paid">{t.reservedTag}</MenuItem>
+            <MenuItem value="Sold">{t.soldTag}</MenuItem>
+          </MuiTextField>
 
           {/* Reset Filters */}
           {hasActiveFilters && (
-            <button
+            <MuiButton
+              variant="text"
+              color="error"
+              size="small"
               onClick={resetFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+              startIcon={<RotateCcw className="h-3.5 w-3.5" />}
             >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>Reset</span>
-            </button>
+              Reset
+            </MuiButton>
           )}
         </div>
       </div>
@@ -126,20 +146,17 @@ export function VehicleFilters() {
         {pricePresets.map((preset) => {
           const isSelected = isCurrentPricePreset(preset);
           return (
-            <button
+            <MuiChip
               key={preset.label}
+              label={preset.label}
+              clickable
+              color={isSelected ? "primary" : "default"}
+              size="small"
               onClick={() => {
                 setFilter("minPrice", preset.min);
                 setFilter("maxPrice", preset.max);
               }}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors shrink-0 ${
-                isSelected
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300"
-              }`}
-            >
-              {preset.label}
-            </button>
+            />
           );
         })}
       </div>

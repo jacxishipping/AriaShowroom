@@ -13,6 +13,7 @@ import {
   MuiTableRow,
   MuiTableCell,
   MuiTextField,
+  MenuItem,
 } from "@/components/mui";
 import {
   Banknote,
@@ -199,38 +200,42 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
       {/* Control Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex flex-1 flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search voucher #, party, hawala ref..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-4 py-2 text-xs text-slate-900 outline-none focus:border-[#1976D2] dark:border-slate-700 dark:bg-[#121824] dark:text-white"
-            />
-          </div>
+          <MuiTextField
+            size="small"
+            placeholder="Search voucher #, party, hawala ref..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            startAdornment={<Search className="h-4 w-4 text-slate-400" />}
+            sx={{ minWidth: 200, maxWidth: 320 }}
+          />
 
-          <select
+          <MuiTextField
+            select
+            size="small"
+            label="Voucher Type"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#1976D2] dark:border-slate-700 dark:bg-[#121824] dark:text-white"
+            sx={{ minWidth: 170 }}
           >
-            <option value="all">All Voucher Types</option>
-            <option value="CUSTOMER_PAYMENT">Customer Receipts (دریافتی)</option>
-            <option value="SUPPLIER_PAYMENT">Supplier Hawala (تامین‌کننده)</option>
-            <option value="EXPENSE_PAYMENT">Expense Outlays (مصارف)</option>
-          </select>
+            <MenuItem value="all">All Voucher Types</MenuItem>
+            <MenuItem value="CUSTOMER_PAYMENT">Customer Receipts (دریافتی)</MenuItem>
+            <MenuItem value="SUPPLIER_PAYMENT">Supplier Hawala (تامین‌کننده)</MenuItem>
+            <MenuItem value="EXPENSE_PAYMENT">Expense Outlays (مصارف)</MenuItem>
+          </MuiTextField>
 
-          <select
+          <MuiTextField
+            select
+            size="small"
+            label="Payment Channel"
             value={methodFilter}
             onChange={(e) => setMethodFilter(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#1976D2] dark:border-slate-700 dark:bg-[#121824] dark:text-white"
+            sx={{ minWidth: 170 }}
           >
-            <option value="all">All Channels</option>
-            <option value="cash">Cash Safe (نقدی صندوق)</option>
-            <option value="hawala">Sarrafi Hawala (حواله صرافی)</option>
-            <option value="bank">Bank Transfer (بانک)</option>
-          </select>
+            <MenuItem value="all">All Channels</MenuItem>
+            <MenuItem value="cash">Cash Safe (نقدی صندوق)</MenuItem>
+            <MenuItem value="hawala">Sarrafi Hawala (حواله صرافی)</MenuItem>
+            <MenuItem value="bank">Bank Transfer (بانک)</MenuItem>
+          </MuiTextField>
         </div>
 
         <MuiButton
@@ -256,26 +261,22 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
 
           <form onSubmit={handleCreateVoucher} className="space-y-4 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Voucher Nature (نوع سند)
-                </label>
-                <select
-                  value={voucherType}
-                  onChange={(e) => {
-                    const vt = e.target.value as any;
-                    setVoucherType(vt);
-                    if (vt === "CUSTOMER_PAYMENT") setPurpose("Customer vehicle down payment receipt");
-                    if (vt === "SUPPLIER_PAYMENT") setPurpose("Sarrafi Hawala supplier vehicle settlement");
-                    if (vt === "EXPENSE_PAYMENT") setPurpose("Customs / Freight clearance disbursement");
-                  }}
-                  className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-                >
-                  <option value="CUSTOMER_PAYMENT">Customer Receipt / Inward (سند دریافت مشتری)</option>
-                  <option value="SUPPLIER_PAYMENT">Supplier Hawala / Outward (حواله پرداخت تامین‌کننده)</option>
-                  <option value="EXPENSE_PAYMENT">Expense Outlay / Outward (سند مصارف گمرکی و حمل)</option>
-                </select>
-              </div>
+              <MuiTextField
+                select
+                label="Voucher Nature (نوع سند)"
+                value={voucherType}
+                onChange={(e) => {
+                  const vt = e.target.value as any;
+                  setVoucherType(vt);
+                  if (vt === "CUSTOMER_PAYMENT") setPurpose("Customer vehicle down payment receipt");
+                  if (vt === "SUPPLIER_PAYMENT") setPurpose("Sarrafi Hawala supplier vehicle settlement");
+                  if (vt === "EXPENSE_PAYMENT") setPurpose("Customs / Freight clearance disbursement");
+                }}
+              >
+                <MenuItem value="CUSTOMER_PAYMENT">Customer Receipt / Inward (سند دریافت مشتری)</MenuItem>
+                <MenuItem value="SUPPLIER_PAYMENT">Supplier Hawala / Outward (حواله پرداخت تامین‌کننده)</MenuItem>
+                <MenuItem value="EXPENSE_PAYMENT">Expense Outlay / Outward (سند مصارف گمرکی و حمل)</MenuItem>
+              </MuiTextField>
 
               <MuiTextField
                 label="Party / Recipient / Payer Name"
@@ -309,20 +310,16 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
                 helperText={`Equivalent: ؋ ${(amountUSD * exchangeRate).toLocaleString()} AFN (@ ${exchangeRate})`}
               />
 
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Settlement Method
-                </label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as any)}
-                  className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-                >
-                  <option value="Cash (صندوق)">Cash Safe (صندوق نقدی صرافی)</option>
-                  <option value="Sarrafi Hawala (حواله صرافی)">Sarrafi Hawala (حواله صرافی مارکت خراسان)</option>
-                  <option value="Bank Transfer (حساب بانکی)">Bank Transfer (انتقال بانکی AIB / Ghazanfar)</option>
-                </select>
-              </div>
+              <MuiTextField
+                select
+                label="Settlement Method"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value as any)}
+              >
+                <MenuItem value="Cash (صندوق)">Cash Safe (صندوق نقدی صرافی)</MenuItem>
+                <MenuItem value="Sarrafi Hawala (حواله صرافی)">Sarrafi Hawala (حواله صرافی مارکت خراسان)</MenuItem>
+                <MenuItem value="Bank Transfer (حساب بانکی)">Bank Transfer (انتقال بانکی AIB / Ghazanfar)</MenuItem>
+              </MuiTextField>
 
               <MuiTextField
                 label="Sarrafi Safe / Bank Account"
@@ -338,23 +335,19 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
                 onChange={(e) => setReferenceNumber(e.target.value)}
               />
 
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Related Vehicle Stock # (اختصاصی)
-                </label>
-                <select
-                  value={vehicleStock}
-                  onChange={(e) => setVehicleStock(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs font-mono dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-                >
-                  <option value="">General Transaction (None)</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.stockNumber}>
-                      {v.stockNumber} - {v.year} {v.make} {v.model}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <MuiTextField
+                select
+                label="Related Vehicle Stock # (اختصاصی)"
+                value={vehicleStock}
+                onChange={(e) => setVehicleStock(e.target.value)}
+              >
+                <MenuItem value="">General Transaction (None)</MenuItem>
+                {vehicles.map((v) => (
+                  <MenuItem key={v.id} value={v.stockNumber}>
+                    {v.stockNumber} - {v.year} {v.make} {v.model}
+                  </MenuItem>
+                ))}
+              </MuiTextField>
             </div>
 
             <MuiTextField

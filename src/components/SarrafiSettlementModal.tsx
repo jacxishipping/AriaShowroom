@@ -20,7 +20,7 @@ import {
   ShieldCheck,
   ArrowRight,
 } from "lucide-react";
-import { MuiButton, MuiChip, MuiTextField } from "@/components/mui";
+import { MuiButton, MuiChip, MuiTextField, MenuItem, IconButton } from "@/components/mui";
 
 interface InstallmentMilestone {
   id: string;
@@ -150,19 +150,16 @@ export function SarrafiSettlementModal({
           <div className="flex items-center gap-3">
             <MuiButton
               variant="contained"
-              color="gold"
+              color="primary"
               size="small"
               onClick={handlePrint}
               startIcon={<Printer className="h-4 w-4" />}
             >
               Print Settlement Slip (چاپ رسید)
             </MuiButton>
-            <button
-              onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 cursor-pointer"
-            >
+            <IconButton size="small" onClick={onClose}>
               <X className="h-5 w-5" />
-            </button>
+            </IconButton>
           </div>
         </div>
 
@@ -212,45 +209,32 @@ export function SarrafiSettlementModal({
 
           {/* Form Configuration Strip (Hidden in Print) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 print:hidden">
-            <div>
-              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Settlement Channel (کانال تسویه مالی)
-              </label>
-              <select
-                value={paymentChannel}
-                onChange={(e) => setPaymentChannel(e.target.value as any)}
-                className="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-medium dark:bg-navy-900 dark:border-slate-700 dark:text-white"
-              >
-                <option value="SARRAFI">Khorasan Market Sarrafi (حواله صرافی خراسان)</option>
-                <option value="CASH_SHOWROOM">Cash at Showroom Desk (نقد در نمایشگاه)</option>
-                <option value="BANK_TRANSFER">Bank Wire (انتقال بانکی AIB / افغانستان بانک)</option>
-                <option value="INSTALLMENT_PLAN">Milestone Installments (اقساط ماهوار)</option>
-              </select>
-            </div>
+            <MuiTextField
+              select
+              label="Settlement Channel (کانال تسویه مالی)"
+              sizeVariant="small"
+              value={paymentChannel}
+              onChange={(e) => setPaymentChannel(e.target.value as any)}
+            >
+              <MenuItem value="SARRAFI">Khorasan Market Sarrafi (حواله صرافی خراسان)</MenuItem>
+              <MenuItem value="CASH_SHOWROOM">Cash at Showroom Desk (نقد در نمایشگاه)</MenuItem>
+              <MenuItem value="BANK_TRANSFER">Bank Wire (انتقال بانکی AIB / افغانستان بانک)</MenuItem>
+              <MenuItem value="INSTALLMENT_PLAN">Milestone Installments (اقساط ماهوار)</MenuItem>
+            </MuiTextField>
 
-            <div>
-              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Sarraf / Exchange Office (نام صرافی)
-              </label>
-              <input
-                type="text"
-                value={sarrafName}
-                onChange={(e) => setSarrafName(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs dark:bg-navy-900 dark:border-slate-700 dark:text-white"
-              />
-            </div>
+            <MuiTextField
+              label="Sarraf / Exchange Office (نام صرافی)"
+              sizeVariant="small"
+              value={sarrafName}
+              onChange={(e) => setSarrafName(e.target.value)}
+            />
 
-            <div>
-              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Hawala Voucher Number (نمبر سند حواله)
-              </label>
-              <input
-                type="text"
-                value={hawalaVoucherNumber}
-                onChange={(e) => setHawalaVoucherNumber(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-mono dark:bg-navy-900 dark:border-slate-700 dark:text-white"
-              />
-            </div>
+            <MuiTextField
+              label="Hawala Voucher Number (نمبر سند حواله)"
+              sizeVariant="small"
+              value={hawalaVoucherNumber}
+              onChange={(e) => setHawalaVoucherNumber(e.target.value)}
+            />
           </div>
 
           {/* Buyer Particulars Card */}

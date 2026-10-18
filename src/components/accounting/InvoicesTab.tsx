@@ -13,6 +13,8 @@ import {
   MuiTableRow,
   MuiTableCell,
   MuiTextField,
+  MenuItem,
+  IconButton,
 } from "@/components/mui";
 import {
   FileCheck2,
@@ -157,16 +159,14 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
 
       {/* Toolbar & Search */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search invoice #, buyer, stock..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-md border border-slate-300 bg-white py-1.5 pl-9 pr-4 text-xs dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-          />
-        </div>
+        <MuiTextField
+          size="small"
+          placeholder="Search invoice #, buyer, stock..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          startAdornment={<Search className="h-4 w-4 text-slate-400" />}
+          className="w-full sm:w-72"
+        />
 
         <MuiButton
           variant="contained"
@@ -211,26 +211,22 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
               onChange={(e) => setCustomerTazkira(e.target.value)}
             />
 
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Select Stock Vehicle
-              </label>
-              <select
-                value={selectedStock}
-                onChange={(e) => {
-                  setSelectedStock(e.target.value);
-                  const sel = vehicles.find((v) => v.stockNumber === e.target.value);
-                  if (sel) setBasePriceUSD(sel.sellingPrice);
-                }}
-                className="w-full rounded-md border border-slate-300 bg-white p-2 font-mono dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-              >
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.stockNumber}>
-                    {v.stockNumber} - {v.year} {v.make} {v.model} (${v.sellingPrice.toLocaleString()})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <MuiTextField
+              select
+              label="Select Stock Vehicle"
+              value={selectedStock}
+              onChange={(e) => {
+                setSelectedStock(e.target.value);
+                const sel = vehicles.find((v) => v.stockNumber === e.target.value);
+                if (sel) setBasePriceUSD(sel.sellingPrice);
+              }}
+            >
+              {vehicles.map((v) => (
+                <MenuItem key={v.id} value={v.stockNumber}>
+                  {v.stockNumber} - {v.year} {v.make} {v.model} (${v.sellingPrice.toLocaleString()})
+                </MenuItem>
+              ))}
+            </MuiTextField>
 
             <MuiTextField
               label="Base Vehicle Price (USD)"
@@ -265,20 +261,16 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
               startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
             />
 
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Payment Channel
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full rounded-md border border-slate-300 bg-white p-2 dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-              >
-                <option value="Cash (نقدی)">Cash Safe (نقدی - صندوق)</option>
-                <option value="Sarrafi Hawala (حواله صرافی)">Sarrafi Hawala (حواله صرافی)</option>
-                <option value="Bank Transfer (حساب بانکی)">Bank Transfer (حساب بانکی)</option>
-              </select>
-            </div>
+            <MuiTextField
+              select
+              label="Payment Channel"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            >
+              <MenuItem value="Cash (نقدی)">Cash Safe (نقدی - صندوق)</MenuItem>
+              <MenuItem value="Sarrafi Hawala (حواله صرافی)">Sarrafi Hawala (حواله صرافی)</MenuItem>
+              <MenuItem value="Bank Transfer (حساب بانکی)">Bank Transfer (حساب بانکی)</MenuItem>
+            </MuiTextField>
 
             <div className="sm:col-span-3 flex justify-end">
               <MuiButton type="submit" variant="contained" color="primary" size="medium">
@@ -341,13 +333,14 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                     />
                   </MuiTableCell>
                   <MuiTableCell align="right">
-                    <button
+                    <IconButton
+                      size="small"
+                      color="primary"
                       onClick={() => onSelectInvoice(inv)}
-                      className="rounded p-1 text-[#1976D2] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer"
                       title="View & Print Official Invoice"
                     >
                       <Eye className="h-4 w-4" />
-                    </button>
+                    </IconButton>
                   </MuiTableCell>
                 </MuiTableRow>
               ))}

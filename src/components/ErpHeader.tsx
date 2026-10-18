@@ -8,6 +8,7 @@ import { useShowroomStore, RoleType } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import { LotBarcodeScannerModal } from "@/components/LotBarcodeScannerModal";
 import { formatCurrency } from "@/lib/utils";
+import { MuiButton, IconButton } from "@/components/mui";
 import {
   Search,
   Sun,
@@ -385,13 +386,17 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
       <div className="flex items-center gap-1.5 sm:gap-2.5">
         {/* Quick Add Vehicle Intake Button */}
         {onOpenIntake && (
-          <button
-            onClick={onOpenIntake}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>New Intake</span>
-          </button>
+          <div className="hidden sm:block">
+            <MuiButton
+              onClick={onOpenIntake}
+              variant="contained"
+              color="primary"
+              size="small"
+              startIcon={<Plus className="h-3.5 w-3.5" />}
+            >
+              New Intake
+            </MuiButton>
+          </div>
         )}
 
         {/* Sarrafi Exchange Rate Pill */}
@@ -563,13 +568,13 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
         </div>
 
         {/* Theme Toggle Button */}
-        <button
+        <IconButton
+          size="small"
           onClick={toggleDarkMode}
-          className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           title="Toggle Dark / Light Theme"
         >
-          {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
+          {darkMode ? <Sun className="h-4 w-4 text-warning" /> : <Moon className="h-4 w-4" />}
+        </IconButton>
 
         {/* Role & Staff Profile Pill */}
         <div ref={roleMenuRef} className="relative">

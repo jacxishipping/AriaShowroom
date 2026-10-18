@@ -1,181 +1,116 @@
 "use client";
 
 import React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import Table, { TableProps } from "@mui/material/Table";
+import TableContainer, { TableContainerProps } from "@mui/material/TableContainer";
+import TableHead, { TableHeadProps } from "@mui/material/TableHead";
+import TableBody, { TableBodyProps } from "@mui/material/TableBody";
+import TableRow, { TableRowProps } from "@mui/material/TableRow";
+import TableCell, { TableCellProps } from "@mui/material/TableCell";
+import TablePagination, { TablePaginationProps } from "@mui/material/TablePagination";
+import Paper from "@mui/material/Paper";
 
-export function MuiTableContainer({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`w-full overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#121824] shadow-mui-1 ${className}`}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function MuiTable({
-  children,
-  dense = true,
-  className = "",
-}: {
-  children: React.ReactNode;
+export interface MuiTableProps extends Omit<TableProps, "size"> {
   dense?: boolean;
-  className?: string;
-}) {
-  return (
-    <table
-      className={`w-full border-collapse text-left ${
-        dense ? "text-xs" : "text-sm"
-      } ${className}`}
-    >
-      {children}
-    </table>
-  );
+  size?: "small" | "medium";
 }
 
-export function MuiTableHead({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <thead
-      className={`bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 font-semibold text-slate-600 dark:text-slate-300 ${className}`}
-    >
-      {children}
-    </thead>
-  );
+export interface MuiTableContainerProps extends TableContainerProps {
+  elevation?: number;
 }
 
-export function MuiTableBody({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <tbody
-      className={`divide-y divide-slate-100 dark:divide-slate-800/80 font-normal ${className}`}
-    >
-      {children}
-    </tbody>
-  );
-}
+export const MuiTableContainer = React.forwardRef<HTMLDivElement, MuiTableContainerProps>(
+  function MuiTableContainer({ children, className = "", elevation = 1, ...props }, ref) {
+    return (
+      <TableContainer
+        ref={ref}
+        component={Paper}
+        elevation={elevation}
+        className={className}
+        sx={{ overflowX: "auto" }}
+        {...props}
+      >
+        {children}
+      </TableContainer>
+    );
+  }
+);
 
-export function MuiTableRow({
-  children,
-  hover = true,
-  selected = false,
-  className = "",
-  ...props
-}: React.HTMLAttributes<HTMLTableRowElement> & {
-  hover?: boolean;
-  selected?: boolean;
-}) {
-  return (
-    <tr
-      className={`transition-colors ${
-        selected
-          ? "bg-[#1976D2]/8 dark:bg-[#1976D2]/15"
-          : hover
-          ? "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
-          : ""
-      } ${className}`}
-      {...props}
-    >
-      {children}
-    </tr>
-  );
-}
+export const MuiTable = React.forwardRef<HTMLTableElement, MuiTableProps>(
+  function MuiTable({ children, dense = true, size, className = "", ...props }, ref) {
+    return (
+      <Table
+        ref={ref}
+        size={size || (dense ? "small" : "medium")}
+        className={className}
+        {...props}
+      >
+        {children}
+      </Table>
+    );
+  }
+);
 
-export function MuiTableCell({
-  children,
-  align = "left",
-  header = false,
-  className = "",
-  ...props
-}: React.TdHTMLAttributes<HTMLTableCellElement> & {
-  align?: "left" | "center" | "right";
+export const MuiTableHead = React.forwardRef<HTMLTableSectionElement, TableHeadProps>(
+  function MuiTableHead({ children, className = "", ...props }, ref) {
+    return (
+      <TableHead ref={ref} className={className} {...props}>
+        {children}
+      </TableHead>
+    );
+  }
+);
+
+export const MuiTableBody = React.forwardRef<HTMLTableSectionElement, TableBodyProps>(
+  function MuiTableBody({ children, className = "", ...props }, ref) {
+    return (
+      <TableBody ref={ref} className={className} {...props}>
+        {children}
+      </TableBody>
+    );
+  }
+);
+
+export const MuiTableRow = React.forwardRef<HTMLTableRowElement, TableRowProps>(
+  function MuiTableRow({ children, hover = true, className = "", ...props }, ref) {
+    return (
+      <TableRow ref={ref} hover={hover} className={className} {...props}>
+        {children}
+      </TableRow>
+    );
+  }
+);
+
+export interface MuiTableCellProps extends TableCellProps {
   header?: boolean;
-}) {
-  const alignClasses = {
-    left: "text-left",
-    center: "text-center",
-    right: "text-right",
-  };
-
-  const Component = header ? "th" : "td";
-
-  return (
-    <Component
-      className={`p-3.5 ${alignClasses[align]} ${
-        header
-          ? "text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-          : "text-slate-800 dark:text-slate-200"
-      } ${className}`}
-      {...props}
-    >
-      {children}
-    </Component>
-  );
 }
 
-export function MuiTablePagination({
-  count,
-  page,
-  rowsPerPage,
-  onPageChange,
-  className = "",
-}: {
-  count: number;
-  page: number;
-  rowsPerPage: number;
-  onPageChange: (newPage: number) => void;
-  className?: string;
-}) {
-  const start = count === 0 ? 0 : page * rowsPerPage + 1;
-  const end = Math.min((page + 1) * rowsPerPage, count);
-  const totalPages = Math.ceil(count / rowsPerPage);
+export const MuiTableCell = React.forwardRef<HTMLTableCellElement, MuiTableCellProps>(
+  function MuiTableCell({ children, header, align = "left", className = "", ...props }, ref) {
+    return (
+      <TableCell
+        ref={ref}
+        variant={header ? "head" : undefined}
+        component={header ? "th" : undefined}
+        align={align}
+        className={className}
+        {...props}
+      >
+        {children}
+      </TableCell>
+    );
+  }
+);
 
-  return (
-    <div
-      className={`flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-[#121824] ${className}`}
-    >
-      <div className="flex items-center gap-2">
-        <span>Rows per page: {rowsPerPage}</span>
-      </div>
+export const MuiTablePagination = TablePagination;
 
-      <div className="flex items-center gap-4">
-        <span>
-          {start}–{end} of {count}
-        </span>
-
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => onPageChange(page - 1)}
-            disabled={page === 0}
-            className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages - 1}
-            className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+export {
+  Table,
+  TableContainer,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TablePagination,
+};
+export default MuiTable;

@@ -9,13 +9,16 @@ import {
   X,
   Search,
   CheckCircle2,
-  AlertCircle,
   Car,
   MapPin,
-  Sparkles,
-  Zap,
 } from "lucide-react";
-import { MuiButton, MuiChip, MuiTextField } from "@/components/mui";
+import {
+  MuiButton,
+  MuiChip,
+  MuiTextField,
+  MenuItem,
+  IconButton,
+} from "@/components/mui";
 
 interface LotBarcodeScannerModalProps {
   isOpen: boolean;
@@ -46,7 +49,6 @@ export function LotBarcodeScannerModal({
       return;
     }
 
-    // Try starting camera stream
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices
         .getUserMedia({ video: { facingMode: "environment" } })
@@ -104,11 +106,11 @@ export function LotBarcodeScannerModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
-      <div className="relative w-full max-w-xl rounded-2xl bg-white p-6 shadow-mui-24 dark:bg-[#121824] sm:p-7 border border-slate-200 dark:border-slate-800">
+      <div className="relative w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-[#121824] sm:p-7 border border-slate-200 dark:border-slate-800">
         {/* Header */}
         <div className="flex items-center justify-between border-b pb-4 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#D97706]/15 text-[#D97706]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/15 text-warning">
               <ScanLine className="h-5 w-5" />
             </div>
             <div>
@@ -120,29 +122,26 @@ export function LotBarcodeScannerModal({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 cursor-pointer"
-          >
+          <IconButton size="small" onClick={onClose}>
             <X className="h-5 w-5" />
-          </button>
+          </IconButton>
         </div>
 
         {/* Yard Location Picker */}
-        <div className="mt-4 flex items-center justify-between rounded-lg bg-slate-50 p-2.5 dark:bg-[#1A202C] border border-slate-200 dark:border-slate-800 text-xs">
-          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-            <MapPin className="h-4 w-4 text-[#D97706] shrink-0" />
-            <span className="font-semibold">Current Yard:</span>
-          </div>
-          <select
+        <div className="mt-4">
+          <MuiTextField
+            select
+            label="Current Yard"
+            sizeVariant="small"
             value={selectedYard}
             onChange={(e) => setSelectedYard(e.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
+            fullWidth
+            startAdornment={<MapPin className="h-4 w-4 text-warning" />}
           >
-            <option value="Main Showroom - Bagh-e-Azadi">Main Showroom (باغ آزادی)</option>
-            <option value="Yard 2 - Islam Qala Highway">Yard 2 (سرک اسلام قلعه)</option>
-            <option value="Islam Qala Customs Bonded Yard">Customs Bonded Port (گمرک اسلام قلعه)</option>
-          </select>
+            <MenuItem value="Main Showroom - Bagh-e-Azadi">Main Showroom (باغ آزادی)</MenuItem>
+            <MenuItem value="Yard 2 - Islam Qala Highway">Yard 2 (سرک اسلام قلعه)</MenuItem>
+            <MenuItem value="Islam Qala Customs Bonded Yard">Customs Bonded Port (گمرک اسلام قلعه)</MenuItem>
+          </MuiTextField>
         </div>
 
         {/* Camera Viewport or Fallback Graphic */}
@@ -162,14 +161,14 @@ export function LotBarcodeScannerModal({
               </p>
               <MuiChip
                 label="Select from verified yard stock below"
-                color="gold"
+                color="warning"
                 size="small"
               />
             </div>
           )}
 
           {/* Scanner Target Box with Pulsing Laser */}
-          <div className="pointer-events-none absolute inset-x-12 inset-y-8 rounded-xl border-2 border-[#D97706]/70">
+          <div className="pointer-events-none absolute inset-x-12 inset-y-8 rounded-xl border-2 border-warning/70">
             <div className={`absolute inset-x-0 top-1/2 h-0.5 ${scanningSuccess ? "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,1)]" : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"} animate-pulse`} />
           </div>
 
@@ -193,14 +192,15 @@ export function LotBarcodeScannerModal({
               onChange={(e) => setScannedVin(e.target.value)}
               startAdornment={<Search className="h-4 w-4 text-slate-400" />}
               sizeVariant="small"
+              fullWidth
             />
           </div>
           <MuiButton
             type="submit"
             variant="contained"
-            color="gold"
-            size="small"
-            className="shrink-0 h-[34px]"
+            color="primary"
+            size="medium"
+            className="shrink-0"
           >
             Locate Car
           </MuiButton>
@@ -216,10 +216,10 @@ export function LotBarcodeScannerModal({
               <button
                 key={v.id}
                 onClick={() => handleSelectVehicle(v.id)}
-                className="w-full flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/50 p-2.5 text-left text-xs transition-colors hover:border-[#1976D2] hover:bg-[#1976D2]/5 dark:border-slate-800 dark:bg-[#1A202C]/60 cursor-pointer"
+                className="w-full flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/50 p-2.5 text-left text-xs transition-colors hover:border-primary hover:bg-primary/5 dark:border-slate-800 dark:bg-[#1A202C]/60 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <Car className="h-4 w-4 text-[#D97706] shrink-0" />
+                  <Car className="h-4 w-4 text-primary shrink-0" />
                   <div>
                     <span className="font-bold text-slate-900 dark:text-white block">
                       {v.year} {v.make} {v.model}

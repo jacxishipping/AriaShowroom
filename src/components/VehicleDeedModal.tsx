@@ -6,7 +6,7 @@ import { VehicleItem } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/utils";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { Printer, X, ShieldCheck, FileCheck, Stamp, CheckCircle2, QrCode } from "lucide-react";
-import { MuiButton, MuiTextField, MuiChip } from "@/components/mui";
+import { MuiButton, MuiTextField, MuiChip, IconButton } from "@/components/mui";
 
 interface VehicleDeedModalProps {
   vehicle: VehicleItem;
@@ -83,19 +83,16 @@ export function VehicleDeedModal({ vehicle, isOpen, onClose }: VehicleDeedModalP
           <div className="flex items-center gap-3">
             <MuiButton
               variant="contained"
-              color="gold"
+              color="primary"
               size="small"
               onClick={handlePrint}
               startIcon={<Printer className="h-4 w-4" />}
             >
               Print / Save PDF (چاپ قباله)
             </MuiButton>
-            <button
-              onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
+            <IconButton size="small" onClick={onClose}>
               <X className="h-5 w-5" />
-            </button>
+            </IconButton>
           </div>
         </div>
 

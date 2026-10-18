@@ -36,6 +36,8 @@ import {
   MuiTableRow,
   MuiTableCell,
   MuiTextField,
+  MenuItem,
+  IconButton,
 } from "@/components/mui";
 import {
   LayoutDashboard,
@@ -194,15 +196,17 @@ export default function AdminDashboardPage() {
               {currentRole === "Accountant" && "Accountant (Mirwais Saljuqi)"}
             </span>
           </div>
-          <select
+          <MuiTextField
+            select
+            size="small"
             value={currentRole}
             onChange={(e) => setCurrentRole(e.target.value as RoleType)}
-            className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-800 dark:border-slate-700 dark:bg-[#1a2234] dark:text-slate-200 outline-none focus:border-[#1976D2]"
+            sx={{ minWidth: 150 }}
           >
-            <option value="SuperAdmin">SuperAdmin</option>
-            <option value="SalesAgent">Sales Agent</option>
-            <option value="Accountant">Accountant</option>
-          </select>
+            <MenuItem value="SuperAdmin">SuperAdmin</MenuItem>
+            <MenuItem value="SalesAgent">Sales Agent</MenuItem>
+            <MenuItem value="Accountant">Accountant</MenuItem>
+          </MuiTextField>
         </div>
       </div>
 
@@ -290,16 +294,14 @@ export default function AdminDashboardPage() {
         <div className="space-y-6">
           {/* Actions Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search stock #, VIN, make..."
-                value={inventorySearch}
-                onChange={(e) => setInventorySearch(e.target.value)}
-                className="w-full rounded-md border border-slate-300 bg-white py-1.5 pl-9 pr-4 text-xs font-normal dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-              />
-            </div>
+            <MuiTextField
+              size="small"
+              placeholder="Search stock #, VIN, make..."
+              value={inventorySearch}
+              onChange={(e) => setInventorySearch(e.target.value)}
+              startAdornment={<Search className="h-4 w-4 text-slate-400" />}
+              className="w-full sm:w-72"
+            />
 
             {currentRole !== "Accountant" && (
               <MuiButton
@@ -366,34 +368,37 @@ export default function AdminDashboardPage() {
                       </MuiTableCell>
                       <MuiTableCell align="right">
                         <div className="flex items-center justify-end gap-1">
-                          <a
+                          <IconButton
+                            size="small"
+                            color="primary"
                             href={`/vehicles/${veh.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded p-1 text-slate-400 hover:text-[#1976D2] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                             title="View Photo Gallery & Specs"
                           >
                             <Eye className="h-4 w-4" />
-                          </a>
-                          <button
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="primary"
                             onClick={() => setSelectedDeedVehicle(veh)}
-                            className="rounded p-1 text-slate-400 hover:text-[#1976D2] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Print Legal Deed"
                           >
                             <FileText className="h-4 w-4" />
-                          </button>
+                          </IconButton>
                           {currentRole === "SuperAdmin" && (
-                            <button
+                            <IconButton
+                              size="small"
+                              color="error"
                               onClick={() => {
                                 if (confirm(`Delete stock ${veh.stockNumber}?`)) {
                                   deleteVehicle(veh.id);
                                 }
                               }}
-                              className="rounded p-1 text-slate-400 hover:text-[#D32F2F] hover:bg-red-500/10 transition-colors cursor-pointer"
                               title="Delete vehicle"
                             >
                               <Trash2 className="h-4 w-4" />
-                            </button>
+                            </IconButton>
                           )}
                         </div>
                       </MuiTableCell>
@@ -475,20 +480,23 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Stage Mover Dropdown */}
-                <select
+                <MuiTextField
+                  select
+                  size="small"
+                  label="Lead Stage"
                   value={cust.leadStage}
                   onChange={(e) =>
                     updateCustomerStage(cust.id, e.target.value as any)
                   }
-                  className="w-full rounded-md border border-slate-300 bg-white p-1.5 text-xs font-medium dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
+                  fullWidth
                 >
-                  <option value="New Inquiry">New Inquiry</option>
-                  <option value="Follow-Up">Follow-Up</option>
-                  <option value="Test Drive">Test Drive</option>
-                  <option value="Negotiation">Negotiation</option>
-                  <option value="Closed/Won">Closed / Won</option>
-                  <option value="Lost">Lost</option>
-                </select>
+                  <MenuItem value="New Inquiry">New Inquiry</MenuItem>
+                  <MenuItem value="Follow-Up">Follow-Up</MenuItem>
+                  <MenuItem value="Test Drive">Test Drive</MenuItem>
+                  <MenuItem value="Negotiation">Negotiation</MenuItem>
+                  <MenuItem value="Closed/Won">Closed / Won</MenuItem>
+                  <MenuItem value="Lost">Lost</MenuItem>
+                </MuiTextField>
               </MuiCard>
             ))}
           </div>
@@ -501,37 +509,33 @@ export default function AdminDashboardPage() {
           {/* Sale Initiation Form */}
           <MuiCard elevation={1} className="lg:col-span-5 p-6 space-y-4">
             <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
-              <BadgeDollarSign className="h-4 w-4 text-[#1976D2]" />
+              <BadgeDollarSign className="h-4 w-4 text-primary" />
               Execute Showroom Sale & Issue Contract
             </h3>
 
             <form onSubmit={handleCreateSale} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Select Stock Vehicle
-                </label>
-                <select
-                  value={saleForm.stockNumber}
-                  onChange={(e) => {
-                    const sel = vehicles.find((v) => v.stockNumber === e.target.value);
-                    setSaleForm({
-                      ...saleForm,
-                      stockNumber: e.target.value,
-                      salePriceUSD: sel?.sellingPrice || 35000,
-                      downPaymentUSD: sel?.sellingPrice || 35000,
-                    });
-                  }}
-                  className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs font-mono dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-                >
-                  {vehicles
-                    .filter((v) => v.status !== "Sold")
-                    .map((v) => (
-                      <option key={v.id} value={v.stockNumber}>
-                        {v.stockNumber} - {v.year} {v.make} {v.model} (${v.sellingPrice.toLocaleString()})
-                      </option>
-                    ))}
-                </select>
-              </div>
+              <MuiTextField
+                select
+                label="Select Stock Vehicle"
+                value={saleForm.stockNumber}
+                onChange={(e) => {
+                  const sel = vehicles.find((v) => v.stockNumber === e.target.value);
+                  setSaleForm({
+                    ...saleForm,
+                    stockNumber: e.target.value,
+                    salePriceUSD: sel?.sellingPrice || 35000,
+                    downPaymentUSD: sel?.sellingPrice || 35000,
+                  });
+                }}
+              >
+                {vehicles
+                  .filter((v) => v.status !== "Sold")
+                  .map((v) => (
+                    <MenuItem key={v.id} value={v.stockNumber}>
+                      {v.stockNumber} - {v.year} {v.make} {v.model} (${v.sellingPrice.toLocaleString()})
+                    </MenuItem>
+                  ))}
+              </MuiTextField>
 
               <MuiTextField
                 label="Buyer Full Name (نام خریدار)"
@@ -578,22 +582,18 @@ export default function AdminDashboardPage() {
                   startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
                 />
 
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                    Payment Structure
-                  </label>
-                  <select
-                    value={saleForm.paymentType}
-                    onChange={(e) =>
-                      setSaleForm({ ...saleForm, paymentType: e.target.value as any })
-                    }
-                    className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-                  >
-                    <option value="Full Cash">Full Cash</option>
-                    <option value="Installment Plan">Installment Plan</option>
-                    <option value="Hawala / Bank Transfer">Hawala / Sarrafi</option>
-                  </select>
-                </div>
+                <MuiTextField
+                  select
+                  label="Payment Structure"
+                  value={saleForm.paymentType}
+                  onChange={(e) =>
+                    setSaleForm({ ...saleForm, paymentType: e.target.value as any })
+                  }
+                >
+                  <MenuItem value="Full Cash">Full Cash</MenuItem>
+                  <MenuItem value="Installment Plan">Installment Plan</MenuItem>
+                  <MenuItem value="Hawala / Bank Transfer">Hawala / Sarrafi</MenuItem>
+                </MuiTextField>
               </div>
 
               <MuiButton
@@ -629,7 +629,7 @@ export default function AdminDashboardPage() {
                 <MuiTableBody>
                   {sales.map((s) => (
                     <MuiTableRow key={s.id}>
-                      <MuiTableCell className="font-mono font-semibold text-[#1976D2] dark:text-[#42A5F5]">
+                      <MuiTableCell className="font-mono font-semibold text-primary">
                         {s.contractNumber}
                       </MuiTableCell>
                       <MuiTableCell>

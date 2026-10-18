@@ -159,47 +159,39 @@ export function AccountingTab() {
 
       {/* Sub-navigation Segmented Control */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div className="flex items-center gap-2">
-          <button
+        <div className="flex flex-wrap items-center gap-2">
+          <MuiButton
             onClick={() => setSubView("pnl")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              subView === "pnl"
-                ? "bg-[#1976D2] text-white shadow-xs"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-[#1a2234] dark:text-slate-300 dark:hover:bg-[#232f48]"
-            }`}
+            variant={subView === "pnl" ? "contained" : "outlined"}
+            color="primary"
+            size="small"
           >
             Income Statement (P&L سود و زیان)
-          </button>
-          <button
+          </MuiButton>
+          <MuiButton
             onClick={() => setSubView("coa")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              subView === "coa"
-                ? "bg-[#1976D2] text-white shadow-xs"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-[#1a2234] dark:text-slate-300 dark:hover:bg-[#232f48]"
-            }`}
+            variant={subView === "coa" ? "contained" : "outlined"}
+            color="primary"
+            size="small"
           >
             Chart of Accounts (جدول حسابات)
-          </button>
-          <button
+          </MuiButton>
+          <MuiButton
             onClick={() => setSubView("trial")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              subView === "trial"
-                ? "bg-[#1976D2] text-white shadow-xs"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-[#1a2234] dark:text-slate-300 dark:hover:bg-[#232f48]"
-            }`}
+            variant={subView === "trial" ? "contained" : "outlined"}
+            color="primary"
+            size="small"
           >
             Trial Balance (تراز آزمایشی)
-          </button>
-          <button
+          </MuiButton>
+          <MuiButton
             onClick={() => setSubView("journal")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              subView === "journal"
-                ? "bg-[#1976D2] text-white shadow-xs"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-[#1a2234] dark:text-slate-300 dark:hover:bg-[#232f48]"
-            }`}
+            variant={subView === "journal" ? "contained" : "outlined"}
+            color="primary"
+            size="small"
           >
             General Ledger Entries (دفتر روزنامه)
-          </button>
+          </MuiButton>
         </div>
 
         {/* Trial Balance Audit Indicator */}
@@ -338,7 +330,7 @@ export function AccountingTab() {
                     <span className="font-bold text-slate-900 dark:text-white font-mono">{grossMarginPercent}%</span>
                   </div>
                   <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#1976D2] h-full" style={{ width: `${Math.min(Number(grossMarginPercent) * 2, 100)}%` }} />
+                    <div className="bg-primary h-full" style={{ width: `${Math.min(Number(grossMarginPercent) * 2, 100)}%` }} />
                   </div>
                 </div>
 
@@ -400,7 +392,7 @@ export function AccountingTab() {
                   const isDebit = acc.type === "ASSET" || acc.type === "EXPENSE";
                   return (
                     <MuiTableRow key={acc.code}>
-                      <MuiTableCell className="font-mono font-bold text-xs text-[#1976D2] dark:text-[#42A5F5]">
+                      <MuiTableCell className="font-mono font-bold text-xs text-primary">
                         {acc.code}
                       </MuiTableCell>
 
@@ -491,7 +483,7 @@ export function AccountingTab() {
                   const isDebit = acc.type === "ASSET" || acc.type === "EXPENSE";
                   return (
                     <MuiTableRow key={acc.code}>
-                      <MuiTableCell className="font-mono font-bold text-xs text-[#1976D2] dark:text-[#42A5F5]">
+                      <MuiTableCell className="font-mono font-bold text-xs text-primary">
                         {acc.code}
                       </MuiTableCell>
                       <MuiTableCell className="font-medium text-xs text-slate-900 dark:text-white">
@@ -515,10 +507,10 @@ export function AccountingTab() {
                   <MuiTableCell colSpan={3} className="text-xs uppercase tracking-wider text-slate-900 dark:text-white">
                     Total Trial Balance Verification
                   </MuiTableCell>
-                  <MuiTableCell align="right" className="font-mono text-sm text-[#1976D2] dark:text-[#42A5F5]">
+                  <MuiTableCell align="right" className="font-mono text-sm text-primary">
                     ${totalDebits.toLocaleString()}
                   </MuiTableCell>
-                  <MuiTableCell align="right" className="font-mono text-sm text-[#1976D2] dark:text-[#42A5F5]">
+                  <MuiTableCell align="right" className="font-mono text-sm text-primary">
                     ${totalCredits.toLocaleString()}
                   </MuiTableCell>
                 </MuiTableRow>
@@ -562,7 +554,7 @@ export function AccountingTab() {
                   <React.Fragment key={je.id}>
                     {/* Debit Line */}
                     <MuiTableRow>
-                      <MuiTableCell className="font-mono font-bold text-xs text-[#1976D2] dark:text-[#42A5F5]">
+                      <MuiTableCell className="font-mono font-bold text-xs text-primary">
                         {je.entryNumber}
                       </MuiTableCell>
                       <MuiTableCell className="font-mono text-xs text-slate-500">

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import QRCode from "qrcode";
 import { PaymentVoucherRecord } from "@/lib/mock-data";
-import { MuiButton } from "@/components/mui";
+import { MuiButton, IconButton } from "@/components/mui";
 import {
   X,
   Printer,
@@ -63,7 +63,7 @@ export function PaymentVoucherModal({
         {/* Top Action Bar */}
         <div className="flex items-center justify-between border-b pb-4 dark:border-slate-800 print:hidden">
           <div className="flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-[#1976D2]" />
+            <Receipt className="h-5 w-5 text-primary" />
             <span className="font-bold text-sm text-slate-900 dark:text-white">
               {voucherTitle}
             </span>
@@ -79,12 +79,9 @@ export function PaymentVoucherModal({
             >
               Print Voucher (چاپ سند)
             </MuiButton>
-            <button
-              onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 cursor-pointer"
-            >
+            <IconButton size="small" onClick={onClose}>
               <X className="h-5 w-5" />
-            </button>
+            </IconButton>
           </div>
         </div>
 
@@ -177,7 +174,7 @@ export function PaymentVoucherModal({
                 <span className="text-slate-400 block text-[10px] font-bold uppercase">
                   Linked Vehicle Stock ID:
                 </span>
-                <span className="font-mono font-bold text-[#1976D2]">
+                <span className="font-mono font-bold text-primary">
                   {voucher.vehicleStock}
                 </span>
               </div>

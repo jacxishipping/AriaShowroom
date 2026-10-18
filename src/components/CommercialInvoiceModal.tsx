@@ -5,7 +5,7 @@ import QRCode from "qrcode";
 import { InvoiceRecord } from "@/lib/mock-data";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { formatCurrency } from "@/lib/utils";
-import { MuiButton, MuiChip } from "@/components/mui";
+import { MuiButton, MuiChip, IconButton } from "@/components/mui";
 import {
   X,
   Printer,
@@ -62,7 +62,7 @@ export function CommercialInvoiceModal({
         {/* Top Action Bar (hidden when printing) */}
         <div className="flex items-center justify-between border-b pb-4 dark:border-slate-800 print:hidden">
           <div className="flex items-center gap-2">
-            <FileCheck2 className="h-5 w-5 text-[#1976D2]" />
+            <FileCheck2 className="h-5 w-5 text-primary" />
             <span className="font-bold text-sm text-slate-900 dark:text-white">
               Official Commercial Tax Invoice • فاکتور رسمی تجارتی
             </span>
@@ -78,12 +78,9 @@ export function CommercialInvoiceModal({
             >
               Print Invoice (چاپ فاکتور)
             </MuiButton>
-            <button
-              onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 cursor-pointer"
-            >
+            <IconButton size="small" onClick={onClose}>
               <X className="h-5 w-5" />
-            </button>
+            </IconButton>
           </div>
         </div>
 
@@ -94,7 +91,7 @@ export function CommercialInvoiceModal({
             <div>
               <div className="flex items-center gap-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white font-bold">
-                  <Car className="h-5 w-5 text-[#1976D2]" />
+                  <Car className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <h1 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">

@@ -12,6 +12,7 @@ import {
   MuiTableRow,
   MuiTableCell,
   MuiTextField,
+  MenuItem,
 } from "@/components/mui";
 import {
   Receipt,
@@ -197,43 +198,47 @@ export function ExpensesTab() {
       {/* Control Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex flex-1 flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search description, payee, receipt..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-4 py-2 text-xs text-slate-900 outline-none focus:border-[#1976D2] dark:border-slate-700 dark:bg-[#121824] dark:text-white"
-            />
-          </div>
+          <MuiTextField
+            size="small"
+            placeholder="Search description, payee, receipt..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            startAdornment={<Search className="h-4 w-4 text-slate-400" />}
+            sx={{ minWidth: 200, maxWidth: 320 }}
+          />
 
-          <select
+          <MuiTextField
+            select
+            size="small"
+            label="Category"
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#1976D2] dark:border-slate-700 dark:bg-[#121824] dark:text-white"
+            sx={{ minWidth: 170 }}
           >
-            <option value="all">All Categories</option>
-            <option value="Gomrok & Port Tariffs">Gomrok & Port Tariffs</option>
-            <option value="Transit & Ocean Freight">Transit & Ocean Freight</option>
-            <option value="Vehicle Maintenance/Detailing">Maintenance & Detailing</option>
-            <option value="Showroom Overhead & Fuel">Showroom Overhead & Fuel</option>
-            <option value="Staff Commissions">Staff Commissions</option>
-          </select>
+            <MenuItem value="all">All Categories</MenuItem>
+            <MenuItem value="Gomrok & Port Tariffs">Gomrok & Port Tariffs</MenuItem>
+            <MenuItem value="Transit & Ocean Freight">Transit & Ocean Freight</MenuItem>
+            <MenuItem value="Vehicle Maintenance/Detailing">Maintenance & Detailing</MenuItem>
+            <MenuItem value="Showroom Overhead & Fuel">Showroom Overhead & Fuel</MenuItem>
+            <MenuItem value="Staff Commissions">Staff Commissions</MenuItem>
+          </MuiTextField>
 
-          <select
+          <MuiTextField
+            select
+            size="small"
+            label="Vehicle Allocation"
             value={vehicleFilter}
             onChange={(e) => setVehicleFilter(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#1976D2] dark:border-slate-700 dark:bg-[#121824] dark:text-white"
+            sx={{ minWidth: 220 }}
           >
-            <option value="all">All Vehicle Cost Allocations</option>
-            <option value="overhead">Showroom General Overhead (Unallocated)</option>
+            <MenuItem value="all">All Vehicle Cost Allocations</MenuItem>
+            <MenuItem value="overhead">Showroom General Overhead (Unallocated)</MenuItem>
             {vehicles.map((v) => (
-              <option key={v.id} value={v.stockNumber}>
+              <MenuItem key={v.id} value={v.stockNumber}>
                 {v.stockNumber} - {v.year} {v.make} {v.model}
-              </option>
+              </MenuItem>
             ))}
-          </select>
+          </MuiTextField>
         </div>
 
         <MuiButton
@@ -269,40 +274,32 @@ export function ExpensesTab() {
 
           <form onSubmit={handleCreateExpense} className="space-y-4 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Expense Category
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as any)}
-                  className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-                >
-                  <option value="Gomrok & Port Tariffs">Gomrok & Port Tariffs (Herat Islam Qala)</option>
-                  <option value="Transit & Ocean Freight">Transit & Ocean Freight (Bandar Abbas / Islam Qala)</option>
-                  <option value="Vehicle Maintenance/Detailing">Maintenance, Tuning & Detailing Polish</option>
-                  <option value="Showroom Overhead & Fuel">Showroom Overhead & Solar/Fuel Generator</option>
-                  <option value="Staff Commissions">Staff Sales Agent Commissions</option>
-                </select>
-              </div>
+              <MuiTextField
+                select
+                label="Expense Category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value as any)}
+              >
+                <MenuItem value="Gomrok & Port Tariffs">Gomrok & Port Tariffs (Herat Islam Qala)</MenuItem>
+                <MenuItem value="Transit & Ocean Freight">Transit & Ocean Freight (Bandar Abbas / Islam Qala)</MenuItem>
+                <MenuItem value="Vehicle Maintenance/Detailing">Maintenance, Tuning & Detailing Polish</MenuItem>
+                <MenuItem value="Showroom Overhead & Fuel">Showroom Overhead & Solar/Fuel Generator</MenuItem>
+                <MenuItem value="Staff Commissions">Staff Sales Agent Commissions</MenuItem>
+              </MuiTextField>
 
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Allocate to Vehicle Stock # (اختصاص به موتر)
-                </label>
-                <select
-                  value={vehicleStock}
-                  onChange={(e) => setVehicleStock(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs font-mono dark:border-slate-700 dark:bg-[#121824] dark:text-white outline-none focus:border-[#1976D2]"
-                >
-                  <option value="">General Showroom Overhead (Unallocated)</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.stockNumber}>
-                      {v.stockNumber} - {v.year} {v.make} {v.model} ({v.vin.slice(0, 8)}...)
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <MuiTextField
+                select
+                label="Allocate to Vehicle Stock # (اختصاص به موتر)"
+                value={vehicleStock}
+                onChange={(e) => setVehicleStock(e.target.value)}
+              >
+                <MenuItem value="">General Showroom Overhead (Unallocated)</MenuItem>
+                {vehicles.map((v) => (
+                  <MenuItem key={v.id} value={v.stockNumber}>
+                    {v.stockNumber} - {v.year} {v.make} {v.model} ({v.vin.slice(0, 8)}...)
+                  </MenuItem>
+                ))}
+              </MuiTextField>
 
               <MuiTextField
                 label="Amount (USD)"
