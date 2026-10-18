@@ -11,6 +11,7 @@ import { VehicleIntakeModal } from "@/components/VehicleIntakeModal";
 import { translations } from "@/lib/translations";
 import { formatCurrency, formatMileage } from "@/lib/utils";
 import { VehicleItem } from "@/lib/mock-data";
+import { exportInventoryToCSV } from "@/lib/export-utils";
 import {
   Car,
   SearchX,
@@ -22,6 +23,7 @@ import {
   Trash2,
   ShieldCheck,
   Layers,
+  FileSpreadsheet,
 } from "lucide-react";
 
 export default function InventoryPage() {
@@ -126,8 +128,17 @@ export default function InventoryPage() {
           </div>
 
           <button
+            onClick={() => exportInventoryToCSV(filteredVehicles)}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-900 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
+            title="Export filtered lot stock to Excel / CSV"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+            <span>Export CSV</span>
+          </button>
+
+          <button
             onClick={() => setIsIntakeOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-gold px-4 py-2 text-xs font-extrabold text-slate-950 shadow-md hover:bg-gold-light transition-colors"
+            className="flex items-center gap-1.5 rounded-xl bg-gold px-4 py-2 text-xs font-extrabold text-slate-950 shadow-md hover:bg-gold-light transition-colors cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>{t.addNewVehicle}</span>

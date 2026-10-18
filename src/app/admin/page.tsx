@@ -7,6 +7,7 @@ import { VehicleDeedModal } from "@/components/VehicleDeedModal";
 import { formatCurrency } from "@/lib/utils";
 import { translations } from "@/lib/translations";
 import { VehicleItem, CustomerRecord } from "@/lib/mock-data";
+import { exportInventoryToCSV, exportSalesLedgerToCSV } from "@/lib/export-utils";
 import {
   LayoutDashboard,
   Car,
@@ -30,6 +31,7 @@ import {
   AlertTriangle,
   Receipt,
   FileCheck2,
+  FileSpreadsheet,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -180,55 +182,78 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-2 overflow-x-auto">
-        <button
-          onClick={() => setActiveTab("inventory")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
-            activeTab === "inventory"
-              ? "border-gold text-gold"
-              : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-          }`}
-        >
-          <Car className="h-4 w-4" />
-          <span>{t.tabInventory} ({vehicles.length})</span>
-        </button>
+      {/* Navigation Tabs & Exports Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-slate-800 gap-3">
+        <div className="flex gap-2 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab("inventory")}
+            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
+              activeTab === "inventory"
+                ? "border-gold text-gold"
+                : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            }`}
+          >
+            <Car className="h-4 w-4" />
+            <span>{t.tabInventory} ({vehicles.length})</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab("crm")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
-            activeTab === "crm"
-              ? "border-gold text-gold"
-              : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-          }`}
-        >
-          <Users className="h-4 w-4" />
-          <span>{t.tabCrm} ({customers.length})</span>
-        </button>
+          <button
+            onClick={() => setActiveTab("crm")}
+            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
+              activeTab === "crm"
+                ? "border-gold text-gold"
+                : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            <span>{t.tabCrm} ({customers.length})</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab("sales")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
-            activeTab === "sales"
-              ? "border-gold text-gold"
-              : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-          }`}
-        >
-          <BadgeDollarSign className="h-4 w-4" />
-          <span>{t.tabSales} ({sales.length})</span>
-        </button>
+          <button
+            onClick={() => setActiveTab("sales")}
+            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
+              activeTab === "sales"
+                ? "border-gold text-gold"
+                : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            }`}
+          >
+            <BadgeDollarSign className="h-4 w-4" />
+            <span>{t.tabSales} ({sales.length})</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab("financials")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
-            activeTab === "financials"
-              ? "border-gold text-gold"
-              : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-          }`}
-        >
-          <TrendingUp className="h-4 w-4" />
-          <span>{t.tabFinancials}</span>
-        </button>
+          <button
+            onClick={() => setActiveTab("financials")}
+            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
+              activeTab === "financials"
+                ? "border-gold text-gold"
+                : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            }`}
+          >
+            <TrendingUp className="h-4 w-4" />
+            <span>{t.tabFinancials}</span>
+          </button>
+        </div>
+
+        {/* Quick CSV / Excel Ledger Exports */}
+        <div className="flex items-center gap-2 pb-2 sm:pb-0 shrink-0">
+          <button
+            onClick={() => exportInventoryToCSV(vehicles)}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-900 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
+            title="Download full lot inventory spreadsheet with landed costs and margins"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+            <span>Lot CSV</span>
+          </button>
+
+          <button
+            onClick={() => exportSalesLedgerToCSV(sales)}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-900 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
+            title="Download sales transactions ledger"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 text-gold" />
+            <span>Sales CSV</span>
+          </button>
+        </div>
       </div>
 
       {/* TAB 1: INVENTORY MANAGEMENT */}

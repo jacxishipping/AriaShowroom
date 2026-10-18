@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { VehicleItem } from "@/lib/mock-data";
 import { SAMPLE_VEHICLE_PHOTOS_40 } from "@/lib/sample-photos";
+import { processAndWatermarkImage } from "@/lib/watermark-utils";
 import {
   X,
   Plus,
@@ -18,6 +19,8 @@ import {
   Sparkles,
   Link as LinkIcon,
   Layers,
+  MapPin,
+  ShieldCheck,
 } from "lucide-react";
 
 interface VehicleIntakeModalProps {
@@ -47,6 +50,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
     driveType: "4WD" as const,
     color: "Pearl White",
     status: "Available on Lot" as const,
+    yardLocation: "Main Showroom - Bagh-e-Azadi",
     purchasePrice: 42000,
     freightCost: 1500,
     customsDuty: 4500,
@@ -65,6 +69,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
   const [bulkUrlInput, setBulkUrlInput] = useState("");
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [applyWatermark, setApplyWatermark] = useState(true);
 
   if (!isOpen) return null;
 
@@ -85,34 +90,37 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
   const [uploadNotice, setUploadNotice] = useState<string | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const rawFiles = e.target.files;
+    if (!rawFiles || rawFiles.length === 0) return;
 
     setIsUploading(true);
-    setUploadNotice(`Uploading ${files.length} photos to Vercel Blob...`);
+    setUploadNotice(`Watermarking & Optimizing ${rawFiles.length} photos for Vercel Blob...`);
 
-    // 1. Read local previews immediately
-    const localPreviews: string[] = [];
-    let readCount = 0;
-
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          localPreviews.push(event.target.result as string);
-        }
-        readCount++;
-        if (readCount === files.length) {
-          setImages((prev) => [...prev, ...localPreviews]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // 2. Upload to Vercel Blob via /api/upload
     try {
+      // 1. Process with watermark & WebP compression
+      const processedFiles: File[] = [];
+      for (const file of Array.from(rawFiles)) {
+        if (applyWatermark) {
+          const stamped = await processAndWatermarkImage(file, {
+            stockNumber: formData.stockNumber,
+            applyWatermark: true,
+          });
+          processedFiles.push(stamped);
+        } else {
+          processedFiles.push(file);
+        }
+      }
+
+      // 2. Read previews
+      const localPreviews: string[] = [];
+      processedFiles.forEach((file) => {
+        localPreviews.push(URL.createObjectURL(file));
+      });
+      setImages((prev) => [...prev, ...localPreviews]);
+
+      // 3. Upload to Vercel Blob via /api/upload
       const formDataUpload = new FormData();
-      Array.from(files).forEach((file) => formDataUpload.append("files", file));
+      processedFiles.forEach((file) => formDataUpload.append("files", file));
 
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -123,7 +131,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
         const data = await response.json();
         if (data.urls && data.urls.length > 0) {
           if (!data.isSimulated) {
-            setUploadNotice(`✓ Stored ${data.urls.length} photos on Vercel Blob CDN`);
+            setUploadNotice(`✓ Stored ${data.urls.length} watermarked photos on Vercel Blob CDN`);
           } else {
             setUploadNotice(`✓ ${data.urls.length} photos ready (Vercel Blob ready)`);
           }
@@ -335,6 +343,24 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-700 dark:bg-navy-800 dark:text-white"
                 />
               </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                  Yard Location (موقعیت موتر)
+                </label>
+                <select
+                  value={formData.yardLocation}
+                  onChange={(e) =>
+                    setFormData({ ...formData, yardLocation: e.target.value })
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-700 dark:bg-navy-800 dark:text-white"
+                >
+                  <option value="Main Showroom - Bagh-e-Azadi">Main Showroom (باغ آزادی)</option>
+                  <option value="Yard 2 - Islam Qala Highway">Yard 2 (سرک اسلام قلعه)</option>
+                  <option value="Islam Qala Customs Bonded Yard">Customs Bonded Port (گمرک اسلام قلعه)</option>
+                  <option value="In Transit from Dubai/Iran">In Transit (در مسیر بندر عباس/دبی)</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -504,6 +530,25 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                   {uploadNotice}
                 </p>
               )}
+            </div>
+
+            {/* Auto-Watermark & WebP Compression Toggle */}
+            <div className="flex items-center justify-between rounded-xl bg-slate-100 p-2.5 dark:bg-navy-900 border border-slate-200 dark:border-slate-800 text-xs">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={applyWatermark}
+                  onChange={(e) => setApplyWatermark(e.target.checked)}
+                  className="rounded border-slate-300 text-gold focus:ring-gold"
+                />
+                <ShieldCheck className="h-4 w-4 text-gold shrink-0" />
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  Auto-stamp "Sadozai Motors Herat • Verified Lot" Watermark & Optimize to WebP
+                </span>
+              </label>
+              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+                Reduces 4K files from ~12MB to ~700KB for fast CDN streaming
+              </span>
             </div>
 
             {/* Bulk URL Import Toggle */}

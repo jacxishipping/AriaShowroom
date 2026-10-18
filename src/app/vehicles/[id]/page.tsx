@@ -8,6 +8,8 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { formatCurrency, formatMileage } from "@/lib/utils";
 import { translations } from "@/lib/translations";
 import { VehicleDeedModal } from "@/components/VehicleDeedModal";
+import { CustomsDocumentVault } from "@/components/CustomsDocumentVault";
+import { SarrafiSettlementModal } from "@/components/SarrafiSettlementModal";
 import {
   ShieldCheck,
   FileCheck,
@@ -31,6 +33,7 @@ import {
   Grid,
   X,
   Camera,
+  Banknote,
 } from "lucide-react";
 
 export default function VehicleDetailsPage() {
@@ -45,6 +48,7 @@ export default function VehicleDetailsPage() {
   const [isDeedModalOpen, setIsDeedModalOpen] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isAllPhotosModalOpen, setIsAllPhotosModalOpen] = useState(false);
+  const [isSarrafiModalOpen, setIsSarrafiModalOpen] = useState(false);
 
   // Keyboard navigation for Lightbox
   useEffect(() => {
@@ -398,15 +402,23 @@ Please schedule a viewing or share more photos.`
 
               <button
                 onClick={() => setIsDeedModalOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold py-3 text-xs font-bold text-slate-950 shadow-md hover:bg-gold-light transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold py-3 text-xs font-bold text-slate-950 shadow-md hover:bg-gold-light transition-colors cursor-pointer"
               >
                 <FileText className="h-4 w-4" />
-                <span>{t.generateDeed}</span>
+                <span>{t.generateDeed} (قباله رسمی با QR کد)</span>
+              </button>
+
+              <button
+                onClick={() => setIsSarrafiModalOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-navy py-3 text-xs font-bold text-white shadow-md hover:bg-navy-800 dark:bg-slate-800 dark:text-gold dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                <Banknote className="h-4 w-4" />
+                <span>Sarrafi & Milestone Installment Ledger (تسویه حساب صرافی)</span>
               </button>
 
               <button
                 onClick={handlePrintSpecs}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 <Printer className="h-4 w-4" />
                 <span>{t.printSpecSheet}</span>
@@ -457,11 +469,21 @@ Please schedule a viewing or share more photos.`
         </div>
       </div>
 
+      {/* Official Customs Maktoub & Title Document Vault */}
+      <CustomsDocumentVault vehicle={vehicle} />
+
       {/* Bilingual Sales Deed & Contract Modal */}
       <VehicleDeedModal
         vehicle={vehicle}
         isOpen={isDeedModalOpen}
         onClose={() => setIsDeedModalOpen(false)}
+      />
+
+      {/* Sarrafi Settlement & Installment Modal */}
+      <SarrafiSettlementModal
+        vehicle={vehicle}
+        isOpen={isSarrafiModalOpen}
+        onClose={() => setIsSarrafiModalOpen(false)}
       />
 
       {/* Fullscreen Lightbox Modal with 40+ Navigation */}

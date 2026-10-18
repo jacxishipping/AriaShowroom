@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useShowroomStore, RoleType } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
+import { LotBarcodeScannerModal } from "@/components/LotBarcodeScannerModal";
 import {
   Search,
   DollarSign,
@@ -16,6 +17,7 @@ import {
   AlertTriangle,
   FileText,
   UserCheck,
+  ScanLine,
 } from "lucide-react";
 
 interface ErpHeaderProps {
@@ -41,6 +43,7 @@ export function ErpHeader({ onSearch }: ErpHeaderProps) {
   const [isRateEditOpen, setIsRateEditOpen] = useState(false);
   const [tempRate, setTempRate] = useState(exchangeRate.toString());
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const t = translations[language];
 
@@ -55,8 +58,8 @@ export function ErpHeader({ onSearch }: ErpHeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 dark:border-slate-800 dark:bg-navy-900 transition-colors">
-      {/* Left: Global Omni-Search Bar */}
-      <div className="flex items-center gap-3 w-full max-w-md">
+      {/* Left: Global Omni-Search Bar & Camera Scanner Trigger */}
+      <div className="flex items-center gap-2 w-full max-w-md">
         <div className="relative w-full">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <input
@@ -70,8 +73,15 @@ export function ErpHeader({ onSearch }: ErpHeaderProps) {
             }
             value={filters.search}
             onChange={(e) => setFilter("search", e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-xs font-medium text-slate-800 placeholder-slate-400 outline-none transition-colors focus:border-gold focus:bg-white dark:border-slate-800 dark:bg-navy-950 dark:text-slate-100 dark:focus:border-gold"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-9 text-xs font-medium text-slate-800 placeholder-slate-400 outline-none transition-colors focus:border-gold focus:bg-white dark:border-slate-800 dark:bg-navy-950 dark:text-slate-100 dark:focus:border-gold"
           />
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className="absolute right-2 top-2 p-1 text-slate-400 hover:text-gold dark:hover:text-gold transition-colors cursor-pointer"
+            title="Scan VIN Barcode or Windshield Sticker (اسکن بارکد)"
+          >
+            <ScanLine className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
@@ -239,6 +249,12 @@ export function ErpHeader({ onSearch }: ErpHeaderProps) {
           </select>
         </div>
       </div>
+
+      {/* Lot Walk VIN / Barcode Scanner Modal */}
+      <LotBarcodeScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+      />
     </header>
   );
 }

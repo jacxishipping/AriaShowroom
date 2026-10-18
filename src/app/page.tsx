@@ -9,6 +9,7 @@ import { formatCurrency, formatMileage } from "@/lib/utils";
 import { VehicleDeedModal } from "@/components/VehicleDeedModal";
 import { VehicleIntakeModal } from "@/components/VehicleIntakeModal";
 import { VehicleItem } from "@/lib/mock-data";
+import { exportInventoryToCSV, exportSalesLedgerToCSV } from "@/lib/export-utils";
 import {
   Car,
   TrendingUp,
@@ -31,6 +32,8 @@ import {
   Printer,
   Sparkles,
   Search,
+  FileSpreadsheet,
+  Download,
 } from "lucide-react";
 
 export default function ErpOperationsCockpit() {
@@ -109,7 +112,17 @@ export default function ErpOperationsCockpit() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => exportInventoryToCSV(vehicles)}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-900 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
+            title="Download full lot stock spreadsheet with margins and customs data"
+          >
+            <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
+            <span className="hidden sm:inline">Export Excel / CSV</span>
+            <span className="sm:hidden">Export</span>
+          </button>
+
           <Link
             href="/admin"
             className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-navy-900 dark:text-slate-200 transition-colors shadow-xs"
@@ -120,7 +133,7 @@ export default function ErpOperationsCockpit() {
 
           <button
             onClick={() => setIsIntakeOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-gold to-gold-light px-4 py-2 text-xs font-extrabold text-slate-950 shadow-md hover:brightness-110 transition-all"
+            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-gold to-gold-light px-4 py-2 text-xs font-extrabold text-slate-950 shadow-md hover:brightness-110 transition-all cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>{t.addNewVehicle}</span>
