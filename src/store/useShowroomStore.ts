@@ -42,6 +42,20 @@ export interface FilterState {
   status: string;
 }
 
+export interface PinnedView {
+  id: string;
+  name: string;
+  nameFa?: string;
+  namePs?: string;
+  isSystem?: boolean;
+  filters: Partial<FilterState>;
+}
+
+export interface ChartFilterState {
+  dimension: "originCountry" | "fuelType" | "bodyType" | "make" | "status";
+  value: string;
+}
+
 interface ShowroomStore {
   // Global App Settings
   currency: CurrencyType;
@@ -51,6 +65,20 @@ interface ShowroomStore {
   darkMode: boolean;
   mobileDrawerOpen: boolean;
   clientPresentationMode: boolean;
+  activeBranch: string;
+
+  // Google Platform Workspace State
+  inspectedVehicleId: string | null;
+  setInspectedVehicleId: (id: string | null) => void;
+  isShortcutsModalOpen: boolean;
+  setIsShortcutsModalOpen: (open: boolean) => void;
+  chartFilter: ChartFilterState | null;
+  setChartFilter: (filter: ChartFilterState | null) => void;
+  pinnedViews: PinnedView[];
+  activePinnedViewId: string;
+  applyPinnedView: (viewId: string) => void;
+  savePinnedView: (name: string) => void;
+  deletePinnedView: (viewId: string) => void;
 
   // Actions for App Settings
   setCurrency: (currency: CurrencyType) => void;
@@ -61,6 +89,7 @@ interface ShowroomStore {
   setMobileDrawerOpen: (open: boolean) => void;
   toggleMobileDrawer: () => void;
   toggleClientPresentationMode: () => void;
+  setActiveBranch: (branch: string) => void;
 
   // Vehicles
   vehicles: VehicleItem[];
@@ -111,9 +140,10 @@ interface ShowroomStore {
   toggleCompare: (id: string) => void;
   clearCompare: () => void;
 
-  // Quick Status Actions
+  // Quick Status & Batch Actions
   setVehicleStatus: (id: string, status: VehicleItem["status"]) => Promise<void>;
   batchUpdateVehicleStatus: (ids: string[], status: VehicleItem["status"]) => Promise<void>;
+  batchAdjustVehiclePrice: (ids: string[], percentDelta: number) => Promise<void>;
 
   // Toast Notification System
   toasts: Array<{ id: string; type: "success" | "info" | "warning" | "error"; message: string }>;
@@ -151,6 +181,57 @@ const initialFilters: FilterState = {
   originCountry: "ALL",
   status: "ALL",
 };
+
+export const DEFAULT_PINNED_VIEWS: PinnedView[] = [
+  {
+    id: "all-fleet",
+    name: "All Fleet Registry",
+    nameFa: "تمام موجودی موترها",
+    namePs: "ټول موټرونه",
+    isSystem: true,
+    filters: {},
+  },
+  {
+    id: "showroom-ready",
+    name: "Showroom Ready (On Lot)",
+    nameFa: "موجود در نمایشگاه",
+    namePs: "په نندارتون کې موجود",
+    isSystem: true,
+    filters: { status: "Available on Lot" },
+  },
+  {
+    id: "islam-qala-transit",
+    name: "Islam Qala In-Transit",
+    nameFa: "در مسیر گمرک اسلام قلعه",
+    namePs: "د اسلام قلعه په لاره کې",
+    isSystem: true,
+    filters: { status: "In Transit" },
+  },
+  {
+    id: "hybrid-fleet",
+    name: "Hybrid & Eco Fleet",
+    nameFa: "موترهای هیبرید و کم‌مصرف",
+    namePs: "هایبرډ موټرونه",
+    isSystem: true,
+    filters: { fuelType: "Hybrid" },
+  },
+  {
+    id: "gcc-dubai",
+    name: "GCC / Dubai Imports",
+    nameFa: "واردات دبی و خلیج",
+    namePs: "د دوبۍ واردات",
+    isSystem: true,
+    filters: { originCountry: "UAE" },
+  },
+  {
+    id: "exec-suvs",
+    name: "Executive SUVs (<$85k)",
+    nameFa: "شاسی‌بلندهای ویژه",
+    namePs: "لوړ شاسي موټرونه",
+    isSystem: true,
+    filters: { bodyType: "SUV", maxPrice: 85000 },
+  },
+];
 
 async function writeRecord(path: string, data: unknown, method = "POST") {
   try {
@@ -211,6 +292,58 @@ export const useShowroomStore = create<ShowroomStore>()(
       darkMode: false,
       mobileDrawerOpen: false,
       clientPresentationMode: false,
+      activeBranch: "Herat HQ · Bagh-e-Azadi",
+
+      inspectedVehicleId: null,
+      setInspectedVehicleId: (id) => set({ inspectedVehicleId: id }),
+      isShortcutsModalOpen: false,
+      setIsShortcutsModalOpen: (open) => set({ isShortcutsModalOpen: open }),
+      chartFilter: null,
+      setChartFilter: (chartFilter) => set({ chartFilter }),
+      pinnedViews: DEFAULT_PINNED_VIEWS,
+      activePinnedViewId: "all-fleet",
+
+      applyPinnedView: (viewId) => {
+        const target = get().pinnedViews.find((v) => v.id === viewId);
+        if (!target) return;
+        set({
+          activePinnedViewId: viewId,
+          chartFilter: null,
+          filters: {
+            ...initialFilters,
+            ...target.filters,
+          },
+        });
+      },
+
+      savePinnedView: (name) => {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        const currentFilters = get().filters;
+        const newView: PinnedView = {
+          id: `view-${Date.now()}`,
+          name: trimmed,
+          isSystem: false,
+          filters: { ...currentFilters },
+        };
+        set((state) => ({
+          pinnedViews: [...state.pinnedViews, newView],
+          activePinnedViewId: newView.id,
+        }));
+        get().addToast(`Pinned custom view "${trimmed}" to workspace`, "success");
+      },
+
+      deletePinnedView: (viewId) => {
+        set((state) => {
+          const next = state.pinnedViews.filter((v) => v.id !== viewId || v.isSystem);
+          return {
+            pinnedViews: next,
+            activePinnedViewId:
+              state.activePinnedViewId === viewId ? "all-fleet" : state.activePinnedViewId,
+          };
+        });
+        get().addToast("Removed custom pinned view", "info");
+      },
 
       setCurrency: (currency) => set({ currency }),
       setExchangeRate: (exchangeRate) => set({ exchangeRate }),
@@ -221,16 +354,23 @@ export const useShowroomStore = create<ShowroomStore>()(
       toggleMobileDrawer: () => set((state) => ({ mobileDrawerOpen: !state.mobileDrawerOpen })),
       toggleClientPresentationMode: () =>
         set((state) => ({ clientPresentationMode: !state.clientPresentationMode })),
+      setActiveBranch: (activeBranch) => set({ activeBranch }),
 
       vehicles: INITIAL_VEHICLES,
       filters: initialFilters,
 
       setFilter: (key, value) =>
         set((state) => ({
+          activePinnedViewId: "custom",
           filters: { ...state.filters, [key]: value },
         })),
 
-      resetFilters: () => set({ filters: initialFilters }),
+      resetFilters: () =>
+        set({
+          activePinnedViewId: "all-fleet",
+          chartFilter: null,
+          filters: initialFilters,
+        }),
 
       addVehicle: async (vehicleData) => {
         const newVehicle: VehicleItem = {
@@ -553,6 +693,22 @@ export const useShowroomStore = create<ShowroomStore>()(
         get().addToast(`Updated status for ${ids.length} vehicle(s) to "${status}"`, "success");
       },
 
+      batchAdjustVehiclePrice: async (ids, percentDelta) => {
+        const factor = 1 + percentDelta / 100;
+        set((state) => ({
+          vehicles: state.vehicles.map((v) => {
+            if (!ids.includes(v.id)) return v;
+            const nextPrice = Math.round((v.sellingPrice * factor) / 100) * 100;
+            return { ...v, sellingPrice: Math.max(1000, nextPrice) };
+          }),
+        }));
+        const sign = percentDelta > 0 ? `+${percentDelta}%` : `${percentDelta}%`;
+        get().addToast(
+          `Adjusted selling price by ${sign} across ${ids.length} selected unit(s)`,
+          "success"
+        );
+      },
+
       // Toast Notification System
       toasts: [],
       addToast: (message, type = "info") =>
@@ -860,9 +1016,12 @@ export const useShowroomStore = create<ShowroomStore>()(
         language: state.language,
         darkMode: state.darkMode,
         clientPresentationMode: state.clientPresentationMode,
+        activeBranch: state.activeBranch,
         filters: state.filters,
         favoriteIds: state.favoriteIds,
         compareIds: state.compareIds,
+        pinnedViews: state.pinnedViews,
+        activePinnedViewId: state.activePinnedViewId,
       }),
       migrate: (persistedState) => {
         const state = persistedState as Partial<ShowroomStore> | undefined;
@@ -872,9 +1031,12 @@ export const useShowroomStore = create<ShowroomStore>()(
           language: state?.language || "en",
           darkMode: Boolean(state?.darkMode),
           clientPresentationMode: Boolean(state?.clientPresentationMode),
+          activeBranch: state?.activeBranch || "Herat HQ · Bagh-e-Azadi",
           filters: state?.filters || initialFilters,
           favoriteIds: state?.favoriteIds || [],
           compareIds: state?.compareIds || [],
+          pinnedViews: state?.pinnedViews?.length ? state.pinnedViews : DEFAULT_PINNED_VIEWS,
+          activePinnedViewId: state?.activePinnedViewId || "all-fleet",
         } as ShowroomStore;
       },
     }

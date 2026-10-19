@@ -481,17 +481,19 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-      {/* Top Header: CRM & Sales Desk Overview */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-[#121824]">
+    <div className="mx-auto max-w-7xl space-y-6 pb-12">
+      {/* Google Cloud Console CRM & Sales Desk Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-[#E2E8F0] dark:border-[#262F40]">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-            CRM Pipeline & Dealership Sales Desk
-          </span>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#475569] dark:text-[#94A3B8]">
+            <span>Google Cloud Workspace</span>
+            <span>/</span>
+            <span className="text-[#1A73E8] dark:text-[#8AB4F8]">CRM Pipeline & Dealership Sales Desk</span>
+          </div>
+          <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC] mt-1">
             Customer Leads, Negotiations & Contract Execution
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-[#475569] dark:text-[#94A3B8] mt-0.5">
             Track walk-in buyers, test drives, Sarrafi price negotiations, and execute bilingual sales contracts
           </p>
         </div>
@@ -503,7 +505,7 @@ export default function AdminDashboardPage() {
             variant="outlined"
             color="inherit"
             size="small"
-            startIcon={<Landmark className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
+            startIcon={<Landmark className="h-4 w-4 text-[#1A73E8] dark:text-[#8AB4F8]" />}
           >
             Accounting & Sarrafi Hub
           </MuiButton>
@@ -717,7 +719,15 @@ export default function AdminDashboardPage() {
                         ${veh.sellingPrice.toLocaleString()} USD
                       </MuiTableCell>
                       <MuiTableCell align="right" className="py-1.5 whitespace-nowrap !pe-3">
-                        <div className="flex items-center justify-end gap-0.5">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setInspectedVehicle(veh.id)}
+                            className="px-2 py-0.5 rounded text-[11px] font-semibold border border-[#E2E8F0] dark:border-[#262F40] text-[#1A73E8] dark:text-[#8AB4F8] hover:bg-[#1A73E8]/10 transition-colors cursor-pointer"
+                            title="Open Slide-Over Inspector"
+                          >
+                            Inspect
+                          </button>
                           <IconButton
                             component={Link}
                             size="small"

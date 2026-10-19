@@ -7,47 +7,35 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import { formatCurrency } from "@/lib/utils";
 import { CompareBar } from "@/components/CompareBar";
+import { PinnedViewsBar } from "@/components/PinnedViewsBar";
+import { LookerAnalyticsStrip } from "@/components/LookerAnalyticsStrip";
 import { VehicleItem } from "@/lib/mock-data";
 import { exportInventoryToCSV } from "@/lib/export-utils";
 import {
   MuiButton,
-  MuiCard,
-  MuiChip,
   MuiTableContainer,
   MuiTable,
   MuiTableHead,
   MuiTableBody,
   MuiTableRow,
   MuiTableCell,
-  MuiTextField,
-  MenuItem,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
 } from "@/components/mui";
 import {
-  Car,
-  TrendingUp,
-  DollarSign,
-  ShieldCheck,
   Plus,
-  Eye,
   Trash2,
   FileText,
-  Search,
   Download,
-  CheckCircle2,
-  Clock,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Layers,
   ChevronDown,
-  Check,
-  X,
-  Sparkles,
+  PanelRightOpen,
+  BarChart3,
+  Keyboard,
 } from "lucide-react";
 
 export default function ErpOperationsCockpit() {
@@ -61,11 +49,17 @@ export default function ErpOperationsCockpit() {
     clientPresentationMode,
     filters,
     setFilter,
+    resetFilters,
+    chartFilter,
+    setChartFilter,
+    inspectedVehicleId,
+    setInspectedVehicleId,
+    setIsShortcutsModalOpen,
     deleteVehicle,
     setVehicleStatus,
     batchUpdateVehicleStatus,
+    batchAdjustVehiclePrice,
     addToast,
-    compareIds,
   } = useShowroomStore();
 
   const t = translations[language];
@@ -75,11 +69,8 @@ export default function ErpOperationsCockpit() {
 
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
   const [vehicleToDelete, setVehicleToDelete] = useState<VehicleItem | null>(null);
+  const [showLookerAnalytics, setShowLookerAnalytics] = useState(true);
 
-  const [makeFilter, setMakeFilter] = useState("ALL");
-  const [statusTab, setStatusTab] = useState<
-    "ALL" | "Available on Lot" | "In Transit" | "Reserved/Deposit Paid" | "Sold"
-  >("ALL");
   const [sortField, setSortField] = useState<
     "sellingPrice" | "landedCost" | "year" | "stockNumber"
   >("year");
@@ -123,26 +114,38 @@ export default function ErpOperationsCockpit() {
     }
   };
 
-  // Filter & sort
+  // Filter & sort (integrating global filters, PinnedViews, and Looker Studio chartFilter)
   const processedVehicles = useMemo(() => {
-    let list = vehicles.filter((v) => {
-      if (statusTab !== "ALL" && v.status !== statusTab) return false;
-      if (makeFilter !== "ALL" && v.make !== makeFilter) return false;
+    const list = vehicles.filter((v) => {
+      if (filters.status !== "ALL" && v.status !== filters.status) return false;
+      if (filters.make !== "ALL" && v.make !== filters.make) return false;
+      if (filters.bodyType !== "ALL" && v.bodyType !== filters.bodyType) return false;
+      if (filters.fuelType !== "ALL" && v.fuelType !== filters.fuelType) return false;
+      if (filters.originCountry !== "ALL" && v.originCountry !== filters.originCountry)
+        return false;
+      if (filters.maxPrice && v.sellingPrice > filters.maxPrice) return false;
+      if (filters.minPrice && v.sellingPrice < filters.minPrice) return false;
+
+      if (chartFilter) {
+        if (v[chartFilter.dimension] !== chartFilter.value) return false;
+      }
+
       if (filters.search.trim()) {
         const q = filters.search.toLowerCase();
         return (
           v.make.toLowerCase().includes(q) ||
           v.model.toLowerCase().includes(q) ||
           v.stockNumber.toLowerCase().includes(q) ||
-          v.vin.toLowerCase().includes(q)
+          v.vin.toLowerCase().includes(q) ||
+          v.originCountry.toLowerCase().includes(q)
         );
       }
       return true;
     });
 
     list.sort((a, b) => {
-      let valA: any = a[sortField];
-      let valB: any = b[sortField];
+      const valA: any = a[sortField];
+      const valB: any = b[sortField];
       if (typeof valA === "string") {
         return sortDir === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
       }
@@ -150,7 +153,7 @@ export default function ErpOperationsCockpit() {
     });
 
     return list;
-  }, [vehicles, statusTab, makeFilter, filters.search, sortField, sortDir]);
+  }, [vehicles, filters, chartFilter, sortField, sortDir]);
 
   // Bulk selection handlers
   const handleSelectAll = () => {
@@ -172,47 +175,87 @@ export default function ErpOperationsCockpit() {
     try {
       await batchUpdateVehicleStatus(selectedVehicleIds, newStatus);
     } catch (error) {
-      addToast(error instanceof Error ? error.message : "Unable to update vehicle statuses", "error");
+      addToast(
+        error instanceof Error ? error.message : "Unable to update vehicle statuses",
+        "error"
+      );
       return;
     }
     setSelectedVehicleIds([]);
   };
 
+  const handleBatchPriceAdjust = async (deltaPct: number) => {
+    if (selectedVehicleIds.length === 0) return;
+    await batchAdjustVehiclePrice(selectedVehicleIds, deltaPct);
+  };
+
   const handleBatchExport = () => {
     const selected = vehicles.filter((v) => selectedVehicleIds.includes(v.id));
-    exportInventoryToCSV(selected.length > 0 ? selected : vehicles);
-    addToast(`Exported ${selected.length || vehicles.length} vehicle records to CSV`, "success");
+    exportInventoryToCSV(selected.length > 0 ? selected : processedVehicles);
+    addToast(
+      `Exported ${selected.length || processedVehicles.length} vehicle records to CSV`,
+      "success"
+    );
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Architectural Terminal Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-3 border-b border-[#D8D5CD] dark:border-[#242A38]">
+    <div className="space-y-5 max-w-7xl mx-auto">
+      {/* Google Cloud Console Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-3 border-b border-slate-200 dark:border-[#262F40]">
         <div>
-          <div className="font-mono text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-400">
-            SADOZAI MOTORS HERAT // BAGH-E-AZADI SHOWROOM LEDGER
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span>Sadozai Motors Herat</span>
+            <span>·</span>
+            <span>Bagh-e-Azadi Showroom</span>
+            <span>·</span>
+            <span className="font-mono text-[#1A73E8] dark:text-[#8AB4F8] font-semibold">
+              License #49912
+            </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#111318] dark:text-white tracking-tight mt-0.5">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
             {language === "ps"
               ? "د نندارتون عملیاتي مرکز"
               : language === "fa"
               ? "مرکز عملیاتی نمایشگاه"
-              : "Operations Cockpit & Fleet Ledger"}
+              : "Operations Cockpit & Fleet Console"}
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowLookerAnalytics(!showLookerAnalytics)}
+            className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-md border text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
+              showLookerAnalytics
+                ? "border-[#1A73E8] bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8]"
+                : "border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-slate-700 dark:text-slate-300"
+            }`}
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            <span>Looker Cohorts</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsShortcutsModalOpen(true)}
+            className="hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-xs font-semibold text-slate-600 dark:text-slate-300 hover:border-[#1A73E8]"
+            title="View Keyboard Shortcuts (?)"
+          >
+            <Keyboard className="h-3.5 w-3.5" />
+            <span>Shortcuts</span>
+          </button>
+
           <MuiButton
             variant="outlined"
             color="inherit"
             size="small"
             onClick={() => {
-              exportInventoryToCSV(vehicles);
+              exportInventoryToCSV(processedVehicles);
               addToast("Exported fleet inventory to CSV", "success");
             }}
             startIcon={<Download className="h-3.5 w-3.5" />}
           >
-            Export Ledger CSV
+            Export CSV
           </MuiButton>
 
           <MuiButton
@@ -228,35 +271,38 @@ export default function ErpOperationsCockpit() {
         </div>
       </div>
 
-      {/* Architectural 1px Hairline Ledger Strip (No Pastel Icon Boxes or Floating Orbs) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#D8D5CD] dark:bg-[#242A38] border border-[#D8D5CD] dark:border-[#242A38] rounded-md overflow-hidden">
+      {/* Customizable Pinned Views & Saved Filter Presets */}
+      <PinnedViewsBar />
+
+      {/* Google Cloud 1px Hairline KPI Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-200 dark:bg-[#262F40] border border-slate-200 dark:border-[#262F40] rounded-lg overflow-hidden">
         {/* Cell 01: Active Lot Valuation */}
         <button
           type="button"
-          onClick={() => setStatusTab("Available on Lot")}
-          className="p-4 sm:p-5 bg-white dark:bg-[#11141B] hover:bg-stone-50/80 dark:hover:bg-white/[0.02] transition-colors text-start flex flex-col justify-between"
+          onClick={() => setFilter("status", "Available on Lot")}
+          className="p-4 sm:p-5 bg-white dark:bg-[#161B26] hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors text-start flex flex-col justify-between cursor-pointer"
         >
-          <div className="flex items-center justify-between w-full font-mono text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <span>01 / {t.totalActiveValue}</span>
-            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
-              {activeLotVehicles.length} UNITS
+          <div className="flex items-center justify-between w-full text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span>01. {t.totalActiveValue}</span>
+            <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
+              {activeLotVehicles.length} units
             </span>
           </div>
-          <div className="my-2.5 text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-[#111318] dark:text-white tracking-tight leading-none">
+          <div className="my-2.5 text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight leading-none">
             {formatCurrency(totalActiveValue, currency, exchangeRate)}
           </div>
-          <div className="pt-2 border-t border-[#EAE8E1] dark:border-[#1B202B] w-full flex items-center justify-between text-[11px] font-mono tabular-nums">
+          <div className="pt-2 border-t border-slate-100 dark:border-[#262F40] w-full flex items-center justify-between text-[11px] font-mono tabular-nums">
             <span className="text-slate-500">
               {currency === "USD"
                 ? `؋ ${(totalActiveValue * exchangeRate).toLocaleString()}`
                 : `$${totalActiveValue.toLocaleString()} USD`}
             </span>
             {showFinancialMargins ? (
-              <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
-                +${totalProjectedProfit.toLocaleString()} NET
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                +${totalProjectedProfit.toLocaleString()} net
               </span>
             ) : (
-              <span className="text-slate-400">LOT VALUATION</span>
+              <span className="text-slate-400">Lot valuation</span>
             )}
           </div>
         </button>
@@ -264,80 +310,85 @@ export default function ErpOperationsCockpit() {
         {/* Cell 02: Executed Sales & Deeds */}
         <button
           type="button"
-          onClick={() => setStatusTab("Sold")}
-          className="p-4 sm:p-5 bg-white dark:bg-[#11141B] hover:bg-stone-50/80 dark:hover:bg-white/[0.02] transition-colors text-start flex flex-col justify-between"
+          onClick={() => setFilter("status", "Sold")}
+          className="p-4 sm:p-5 bg-white dark:bg-[#161B26] hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors text-start flex flex-col justify-between cursor-pointer"
         >
-          <div className="flex items-center justify-between w-full font-mono text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <span>02 / EXECUTED CONTRACTS</span>
-            <span className="text-amber-700 dark:text-amber-400 font-semibold">
-              {sales.length} DEEDS
+          <div className="flex items-center justify-between w-full text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span>02. Executed Contracts</span>
+            <span className="font-mono text-[11px] text-[#1A73E8] dark:text-[#8AB4F8]">
+              {sales.length} deeds
             </span>
           </div>
-          <div className="my-2.5 text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-[#111318] dark:text-white tracking-tight leading-none">
+          <div className="my-2.5 text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight leading-none">
             {formatCurrency(totalMonthlySales, currency, exchangeRate)}
           </div>
-          <div className="pt-2 border-t border-[#EAE8E1] dark:border-[#1B202B] w-full flex items-center justify-between text-[11px] font-mono tabular-nums text-slate-500">
+          <div className="pt-2 border-t border-slate-100 dark:border-[#262F40] w-full flex items-center justify-between text-[11px] font-mono tabular-nums text-slate-500">
             <span>{soldCount} units transferred</span>
-            <span>SARRAFI SETTLED</span>
+            <span>Sarrafi settled</span>
           </div>
         </button>
 
         {/* Cell 03: Fleet Composition */}
         <button
           type="button"
-          onClick={() => setStatusTab("ALL")}
-          className="p-4 sm:p-5 bg-white dark:bg-[#11141B] hover:bg-stone-50/80 dark:hover:bg-white/[0.02] transition-colors text-start flex flex-col justify-between"
+          onClick={() => resetFilters()}
+          className="p-4 sm:p-5 bg-white dark:bg-[#161B26] hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors text-start flex flex-col justify-between cursor-pointer"
         >
-          <div className="flex items-center justify-between w-full font-mono text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <span>03 / FLEET ALLOCATION</span>
-            <span>GCC · JPN · US</span>
+          <div className="flex items-center justify-between w-full text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span>03. Fleet Allocation</span>
+            <span className="font-mono text-[11px]">UAE · JPN · USA</span>
           </div>
           <div className="my-2.5 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-[#111318] dark:text-white tracking-tight leading-none">
+            <span className="text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight leading-none">
               {vehicles.length}
             </span>
-            <span className="font-mono text-xs uppercase text-slate-500">Registered Units</span>
+            <span className="text-xs text-slate-500">registered units</span>
           </div>
-          <div className="pt-2 border-t border-[#EAE8E1] dark:border-[#1B202B] w-full flex items-center justify-between text-[11px] font-mono tabular-nums">
-            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
-              {availableCount} LOT
+          <div className="pt-2 border-t border-slate-100 dark:border-[#262F40] w-full flex items-center justify-between text-[11px] font-mono tabular-nums">
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+              {availableCount} Lot
             </span>
-            <span className="text-slate-400">·</span>
-            <span className="text-amber-700 dark:text-amber-400 font-semibold">
-              {inTransitCount} TRANSIT
+            <span className="text-slate-300">·</span>
+            <span className="text-amber-600 dark:text-amber-400 font-semibold">
+              {inTransitCount} Transit
             </span>
-            <span className="text-slate-400">·</span>
+            <span className="text-slate-300">·</span>
             <span className="text-slate-600 dark:text-slate-300">
-              {reservedCount} RSVD
+              {reservedCount} Reserved
             </span>
           </div>
         </button>
 
         {/* Cell 04: Islam Qala Dry Port Clearance */}
-        <div className="p-4 sm:p-5 bg-white dark:bg-[#11141B] flex flex-col justify-between">
-          <div className="flex items-center justify-between w-full font-mono text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <span>04 / GOMROK CLEARANCE</span>
-            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">VERIFIED</span>
+        <div className="p-4 sm:p-5 bg-white dark:bg-[#161B26] flex flex-col justify-between">
+          <div className="flex items-center justify-between w-full text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span>04. Gomrok Clearance</span>
+            <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
+              Verified
+            </span>
           </div>
-          <div className="my-2.5 text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-[#111318] dark:text-white tracking-tight leading-none">
+          <div className="my-2.5 text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight leading-none">
             100% ACD
           </div>
-          <div className="pt-2 border-t border-[#EAE8E1] dark:border-[#1B202B] w-full flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <span>ISLAM QALA PORT</span>
+          <div className="pt-2 border-t border-slate-100 dark:border-[#262F40] w-full flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>Islam Qala Port</span>
             <Link
               href="/logistics"
-              className="text-[#111318] dark:text-amber-400 font-semibold hover:underline"
+              className="text-[#1A73E8] dark:text-[#8AB4F8] font-semibold hover:underline"
             >
-              PORT VAULT →
+              Port Vault →
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Main Stock Registry Ledger Table */}
-      <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
-        {/* Architectural Underlined Tab Bar + Make Filter */}
-        <div className="px-4 border-b border-[#D8D5CD] dark:border-[#242A38] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FAF9F6] dark:bg-[#0D1017]">
+      {/* Looker Studio Interactive Cross-Filtering Analytics Strip */}
+      {showLookerAnalytics && <LookerAnalyticsStrip />}
+
+      {/* Main Google Cloud Resource Table */}
+      <div className="rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] overflow-hidden">
+        {/* Underlined Tab Bar + Make Filter */}
+        <div className="px-4 border-b border-slate-200 dark:border-[#262F40] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70 dark:bg-[#121722]">
           <div className="flex items-center gap-5 overflow-x-auto scrollbar-none -mb-px">
             {[
               { id: "ALL", name: "All Fleet", count: vehicles.length },
@@ -346,26 +397,20 @@ export default function ErpOperationsCockpit() {
               { id: "Reserved/Deposit Paid", name: "Reserved", count: reservedCount },
               { id: "Sold", name: "Sold", count: soldCount },
             ].map((tab) => {
-              const isActive = statusTab === tab.id;
+              const isActive = filters.status === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setStatusTab(tab.id as any)}
-                  className={`py-3 border-b-2 text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-2 shrink-0 ${
+                  onClick={() => setFilter("status", tab.id)}
+                  className={`py-3 border-b-2 text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
                     isActive
-                      ? "border-[#111318] dark:border-amber-500 text-[#111318] dark:text-white"
-                      : "border-transparent text-slate-500 hover:text-[#111318] dark:hover:text-slate-200"
+                      ? "border-[#1A73E8] dark:border-[#8AB4F8] text-[#1A73E8] dark:text-[#8AB4F8]"
+                      : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
                   <span>{tab.name}</span>
-                  <span
-                    className={`font-mono tabular-nums text-[11px] ${
-                      isActive
-                        ? "text-amber-700 dark:text-amber-400 font-bold"
-                        : "text-slate-400"
-                    }`}
-                  >
-                    [{tab.count}]
+                  <span className="font-mono tabular-nums text-[11px] opacity-80">
+                    ({tab.count})
                   </span>
                 </button>
               );
@@ -375,82 +420,105 @@ export default function ErpOperationsCockpit() {
           {/* Table Make Filter & Counter */}
           <div className="flex flex-wrap items-center gap-2.5 py-2 sm:py-0 shrink-0">
             <select
-              value={makeFilter}
-              onChange={(e) => setMakeFilter(e.target.value)}
-              className="h-7 ps-2.5 pe-6 text-xs rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] text-[#111318] dark:text-slate-200 font-medium outline-none focus:border-[#111318] dark:focus:border-amber-500 cursor-pointer"
+              value={filters.make}
+              onChange={(e) => setFilter("make", e.target.value)}
+              className="h-7 ps-2.5 pe-6 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[#1A73E8] cursor-pointer"
             >
               <option value="ALL">{t.allMakes}</option>
               <option value="Toyota">Toyota</option>
               <option value="Lexus">Lexus</option>
             </select>
 
-            {(filters.search || makeFilter !== "ALL" || statusTab !== "ALL") && (
+            {(filters.search ||
+              filters.make !== "ALL" ||
+              filters.status !== "ALL" ||
+              chartFilter) && (
               <button
                 onClick={() => {
-                  setFilter("search", "");
-                  setMakeFilter("ALL");
-                  setStatusTab("ALL");
+                  resetFilters();
+                  setChartFilter(null);
                 }}
-                className="text-xs font-mono font-semibold text-rose-700 dark:text-rose-400 hover:underline px-1 cursor-pointer"
+                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline px-1 cursor-pointer"
               >
-                RESET
+                Reset filters
               </button>
             )}
 
             <span className="text-[11px] font-mono tabular-nums text-slate-400">
-              {processedVehicles.length}/{vehicles.length} RECORDS
+              {processedVehicles.length} / {vehicles.length} resources
             </span>
           </div>
         </div>
 
-        {/* Bulk Actions Sticky Bar (when rows are selected) */}
+        {/* Google Workspace / Cloud Console Multi-Select Batch Action Bar */}
         {selectedVehicleIds.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-2 bg-[#111318] text-white border-b border-white/10 text-xs">
-            <div className="flex items-center gap-3 font-mono">
-              <span className="font-bold text-amber-400">
-                {selectedVehicleIds.length} SELECTED
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-[#1A73E8] text-white text-xs">
+            <div className="flex items-center gap-3">
+              <span className="font-mono font-bold">
+                {selectedVehicleIds.length} selected
               </span>
               <button
                 onClick={() => setSelectedVehicleIds([])}
-                className="text-[11px] text-slate-300 underline hover:text-white"
+                className="text-[11px] text-white/80 underline hover:text-white"
               >
-                Clear
+                Deselect all
               </button>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-mono text-slate-400 hidden sm:inline me-1">
-                BATCH STATUS:
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-white/80 hidden md:inline me-1">
+                Status:
               </span>
               <button
                 onClick={() => handleBatchStatus("Available on Lot")}
-                className="px-2.5 py-1 rounded bg-emerald-700 text-white font-mono font-semibold text-[11px] hover:bg-emerald-600"
+                className="px-2.5 py-1 rounded bg-white/15 hover:bg-white/25 font-semibold text-[11px] whitespace-nowrap"
               >
-                ON LOT
+                Set On Lot
               </button>
               <button
                 onClick={() => handleBatchStatus("In Transit")}
-                className="px-2.5 py-1 rounded bg-amber-700 text-white font-mono font-semibold text-[11px] hover:bg-amber-600"
+                className="px-2.5 py-1 rounded bg-white/15 hover:bg-white/25 font-semibold text-[11px] whitespace-nowrap"
               >
-                TRANSIT
+                Set In Transit
               </button>
               <button
                 onClick={() => handleBatchStatus("Reserved/Deposit Paid")}
-                className="px-2.5 py-1 rounded bg-slate-700 text-white font-mono font-semibold text-[11px] hover:bg-slate-600"
+                className="px-2.5 py-1 rounded bg-white/15 hover:bg-white/25 font-semibold text-[11px] whitespace-nowrap"
               >
-                RESERVED
+                Set Reserved
+              </button>
+
+              <span className="mx-1 text-white/40">|</span>
+              <span className="text-[11px] text-white/80 hidden md:inline">
+                Price repricing:
+              </span>
+              <button
+                onClick={() => handleBatchPriceAdjust(-2)}
+                className="px-2 py-1 rounded bg-white/15 hover:bg-white/25 font-mono font-semibold text-[11px]"
+                title="Reduce selling price by 2%"
+              >
+                -2%
               </button>
               <button
-                onClick={handleBatchExport}
-                className="px-2.5 py-1 rounded border border-white/20 bg-white/10 text-white font-mono font-semibold text-[11px] hover:bg-white/20"
+                onClick={() => handleBatchPriceAdjust(2)}
+                className="px-2 py-1 rounded bg-white/15 hover:bg-white/25 font-mono font-semibold text-[11px]"
+                title="Increase selling price by 2%"
               >
-                CSV
+                +2%
+              </button>
+
+              <span className="mx-1 text-white/40">|</span>
+              <button
+                onClick={handleBatchExport}
+                className="px-2.5 py-1 rounded bg-white text-[#1A73E8] font-semibold text-[11px] hover:bg-slate-100 whitespace-nowrap"
+              >
+                Export Selected CSV
               </button>
             </div>
           </div>
         )}
 
-        {/* Dense Institutional Data Table */}
+        {/* High-Density Resource Table */}
         <MuiTableContainer className="overflow-x-auto !border-0 !rounded-none">
           <MuiTable dense size="small" className="w-full">
             <MuiTableHead>
@@ -463,43 +531,43 @@ export default function ErpOperationsCockpit() {
                       selectedVehicleIds.length === processedVehicles.length
                     }
                     onChange={handleSelectAll}
-                    className="h-3.5 w-3.5 rounded border-stone-300 accent-[#111318] dark:accent-amber-500 cursor-pointer"
+                    className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
                   />
                 </MuiTableCell>
                 <MuiTableCell
                   header
                   onClick={() => handleSort("stockNumber")}
-                  className="cursor-pointer select-none hover:text-[#111318] dark:hover:text-white"
+                  className="cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span>LOT #, VEHICLE & CHASSIS VIN</span>
+                    <span>Resource / Stock & VIN</span>
                     {sortField === "stockNumber" ? (
                       sortDir === "asc" ? (
-                        <ArrowUp className="h-3 w-3 text-amber-600" />
+                        <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
                       ) : (
-                        <ArrowDown className="h-3 w-3 text-amber-600" />
+                        <ArrowDown className="h-3 w-3 text-[#1A73E8]" />
                       )
                     ) : (
                       <ArrowUpDown className="h-3 w-3 text-slate-400" />
                     )}
                   </div>
                 </MuiTableCell>
-                <MuiTableCell header>STATUS</MuiTableCell>
-                <MuiTableCell header>GOMROK / PORT</MuiTableCell>
+                <MuiTableCell header>Status</MuiTableCell>
+                <MuiTableCell header>Customs & Origin</MuiTableCell>
                 {showFinancialMargins && (
                   <MuiTableCell
                     header
                     align="right"
                     onClick={() => handleSort("landedCost")}
-                    className="cursor-pointer select-none hover:text-[#111318] dark:hover:text-white"
+                    className="cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
                   >
                     <div className="flex items-center justify-end gap-1.5">
                       <span>{t.totalLanded}</span>
                       {sortField === "landedCost" ? (
                         sortDir === "asc" ? (
-                          <ArrowUp className="h-3 w-3 text-amber-600" />
+                          <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
                         ) : (
-                          <ArrowDown className="h-3 w-3 text-amber-600" />
+                          <ArrowDown className="h-3 w-3 text-[#1A73E8]" />
                         )
                       ) : (
                         <ArrowUpDown className="h-3 w-3 text-slate-400" />
@@ -511,15 +579,15 @@ export default function ErpOperationsCockpit() {
                   header
                   align="right"
                   onClick={() => handleSort("sellingPrice")}
-                  className="cursor-pointer select-none hover:text-[#111318] dark:hover:text-white"
+                  className="cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
                 >
                   <div className="flex items-center justify-end gap-1.5">
                     <span>{t.sellingPrice}</span>
                     {sortField === "sellingPrice" ? (
                       sortDir === "asc" ? (
-                        <ArrowUp className="h-3 w-3 text-amber-600" />
+                        <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
                       ) : (
-                        <ArrowDown className="h-3 w-3 text-amber-600" />
+                        <ArrowDown className="h-3 w-3 text-[#1A73E8]" />
                       )
                     ) : (
                       <ArrowUpDown className="h-3 w-3 text-slate-400" />
@@ -527,21 +595,30 @@ export default function ErpOperationsCockpit() {
                   </div>
                 </MuiTableCell>
                 {showFinancialMargins && (
-                  <MuiTableCell header align="right">{t.targetMargin}</MuiTableCell>
+                  <MuiTableCell header align="right">
+                    {t.targetMargin}
+                  </MuiTableCell>
                 )}
-                <MuiTableCell header align="right" className="!pe-3">DOSSIER</MuiTableCell>
+                <MuiTableCell header align="right" className="!pe-3">
+                  Actions
+                </MuiTableCell>
               </MuiTableRow>
             </MuiTableHead>
             <MuiTableBody>
               {processedVehicles.length === 0 ? (
                 <MuiTableRow>
-                  <MuiTableCell colSpan={showFinancialMargins ? 8 : 6} align="center" className="py-10 text-slate-400 font-mono text-xs">
+                  <MuiTableCell
+                    colSpan={showFinancialMargins ? 8 : 6}
+                    align="center"
+                    className="py-10 text-slate-400 text-xs"
+                  >
                     {t.noVehiclesFound}
                   </MuiTableCell>
                 </MuiTableRow>
               ) : (
                 processedVehicles.map((veh) => {
                   const isSelected = selectedVehicleIds.includes(veh.id);
+                  const isInspected = inspectedVehicleId === veh.id;
                   const marginAmount = veh.sellingPrice - veh.landedCost;
                   const marginPercent =
                     veh.landedCost > 0
@@ -552,7 +629,9 @@ export default function ErpOperationsCockpit() {
                     <MuiTableRow
                       key={veh.id}
                       className={
-                        isSelected ? "bg-amber-500/[0.06]" : undefined
+                        isSelected || isInspected
+                          ? "bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.08]"
+                          : undefined
                       }
                     >
                       {/* Checkbox */}
@@ -561,50 +640,53 @@ export default function ErpOperationsCockpit() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSelect(veh.id)}
-                          className="h-3.5 w-3.5 rounded border-stone-300 accent-[#111318] dark:accent-amber-500 cursor-pointer"
+                          className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
                         />
                       </MuiTableCell>
 
                       {/* Vehicle, Stock & VIN */}
                       <MuiTableCell className="py-2">
                         <div className="flex items-center gap-3">
-                          <Link
-                            href={`/vehicles/${veh.id}`}
-                            className="relative h-8 w-12 shrink-0 rounded overflow-hidden bg-stone-100 dark:bg-slate-800 border border-[#D8D5CD] dark:border-[#242A38] block group/thumb"
-                            title="Inspect vehicle dossier"
+                          <button
+                            type="button"
+                            onClick={() => setInspectedVehicleId(veh.id)}
+                            className="relative h-8 w-12 shrink-0 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-[#262F40] block group/thumb cursor-pointer"
+                            title="Quick inspect in right-hand drawer"
                           >
                             <Image
                               src={veh.images[0]}
                               alt={veh.model}
                               fill
+                              referrerPolicy="no-referrer"
                               className="object-cover group-hover/thumb:scale-105 transition-transform"
                             />
-                          </Link>
+                          </button>
 
                           <div className="min-w-0">
-                            <Link
-                              href={`/vehicles/${veh.id}`}
-                              className="font-bold text-xs text-[#111318] dark:text-white hover:text-amber-700 dark:hover:text-amber-400 transition-colors block truncate leading-tight"
+                            <button
+                              type="button"
+                              onClick={() => setInspectedVehicleId(veh.id)}
+                              className="font-bold text-xs text-slate-900 dark:text-white hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] transition-colors block truncate leading-tight text-start cursor-pointer"
                             >
                               {veh.year} {veh.make} {veh.model}{" "}
                               <span className="font-normal text-slate-500">{veh.trim}</span>
-                            </Link>
+                            </button>
                             <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5 truncate">
-                              <span className="font-semibold text-[#111318] dark:text-amber-400">
+                              <span className="font-semibold text-[#1A73E8] dark:text-[#8AB4F8]">
                                 {veh.stockNumber}
                               </span>
-                              <span className="text-slate-300 dark:text-slate-700">|</span>
+                              <span>·</span>
                               <span className="select-all text-slate-500 font-mono tracking-tight">
                                 {veh.vin}
                               </span>
-                              <span className="text-slate-300 dark:text-slate-700">|</span>
-                              <span>{veh.originCountry}</span>
+                              <span>·</span>
+                              <span>{veh.fuelType}</span>
                             </div>
                           </div>
                         </div>
                       </MuiTableCell>
 
-                      {/* Architectural Rectangular Status Select */}
+                      {/* Status Select */}
                       <MuiTableCell className="py-2 whitespace-nowrap">
                         <div className="relative inline-block">
                           <select
@@ -617,11 +699,11 @@ export default function ErpOperationsCockpit() {
                             }
                             className={`text-[11px] font-mono font-semibold rounded px-2 py-0.5 border transition-all cursor-pointer outline-none appearance-none pe-5 leading-tight ${
                               veh.status === "Available on Lot"
-                                ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
+                                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
                                 : veh.status === "In Transit"
-                                ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30"
+                                ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30"
                                 : veh.status === "Reserved/Deposit Paid"
-                                ? "bg-stone-200/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-stone-300 dark:border-slate-700"
+                                ? "bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8] border-[#1A73E8]/30"
                                 : "bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                             }`}
                           >
@@ -635,23 +717,26 @@ export default function ErpOperationsCockpit() {
                         </div>
                       </MuiTableCell>
 
-                      {/* Customs */}
+                      {/* Customs & Origin */}
                       <MuiTableCell className="py-2 whitespace-nowrap">
-                        <span className="text-[11px] font-mono text-slate-700 dark:text-slate-300">
-                          {veh.customsClearance.split("-")[0].trim()}
-                        </span>
+                        <div className="text-xs text-slate-700 dark:text-slate-300">
+                          {veh.originCountry} · {veh.customsClearance.split("-")[0].trim()}
+                        </div>
                       </MuiTableCell>
 
                       {/* Landed Cost */}
                       {showFinancialMargins && (
-                        <MuiTableCell align="right" className="py-2 font-mono tabular-nums text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        <MuiTableCell
+                          align="right"
+                          className="py-2 font-mono tabular-nums text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap"
+                        >
                           ${veh.landedCost.toLocaleString()}
                         </MuiTableCell>
                       )}
 
                       {/* Selling Price */}
                       <MuiTableCell align="right" className="py-2 whitespace-nowrap">
-                        <div className="font-bold font-mono tabular-nums text-xs text-[#111318] dark:text-white">
+                        <div className="font-bold font-mono tabular-nums text-xs text-slate-900 dark:text-white">
                           ${veh.sellingPrice.toLocaleString()}
                         </div>
                         <div className="text-[10px] font-mono tabular-nums text-slate-400 leading-none mt-0.5">
@@ -662,7 +747,7 @@ export default function ErpOperationsCockpit() {
                       {/* Target Margin */}
                       {showFinancialMargins && (
                         <MuiTableCell align="right" className="py-2 whitespace-nowrap">
-                          <span className="font-mono tabular-nums font-bold text-xs text-emerald-700 dark:text-emerald-400">
+                          <span className="font-mono tabular-nums font-bold text-xs text-emerald-600 dark:text-emerald-400">
                             +${marginAmount.toLocaleString()}
                           </span>
                           <span className="text-[10px] text-slate-400 font-mono tabular-nums ms-1">
@@ -674,17 +759,23 @@ export default function ErpOperationsCockpit() {
                       {/* Actions */}
                       <MuiTableCell align="right" className="py-2 whitespace-nowrap !pe-3">
                         <div className="flex items-center justify-end gap-1">
-                          <Link
-                            href={`/vehicles/${veh.id}`}
-                            className="px-2 py-1 rounded border border-[#D8D5CD] dark:border-[#242A38] hover:border-[#111318] dark:hover:border-amber-500 text-[11px] font-mono font-semibold text-[#111318] dark:text-slate-200 transition-colors"
-                            title="Inspect vehicle dossier"
+                          <button
+                            type="button"
+                            onClick={() => setInspectedVehicleId(veh.id)}
+                            className={`px-2 py-1 rounded border text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer ${
+                              isInspected
+                                ? "border-[#1A73E8] bg-[#1A73E8] text-white"
+                                : "border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-slate-700 dark:text-slate-200"
+                            }`}
+                            title="Open Contextual Inspector Drawer"
                           >
-                            INSPECT
-                          </Link>
+                            <PanelRightOpen className="h-3 w-3" />
+                            <span>Inspect</span>
+                          </button>
 
                           <Link
                             href={`/vehicles/${veh.id}/deed`}
-                            className="p-1 rounded border border-[#D8D5CD] dark:border-[#242A38] hover:border-amber-600 text-slate-600 dark:text-slate-300 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+                            className="p-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-slate-600 dark:text-slate-300 hover:text-[#1A73E8] transition-colors"
                             title="Generate Official Bilingual Deed"
                           >
                             <FileText className="h-3.5 w-3.5" />
@@ -709,16 +800,24 @@ export default function ErpOperationsCockpit() {
           </MuiTable>
         </MuiTableContainer>
 
-        {/* Ledger Footer */}
-        <div className="px-4 py-2.5 border-t border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-[11px] font-mono text-slate-500 flex items-center justify-between">
+        {/* Table Footer */}
+        <div className="px-4 py-2.5 border-t border-slate-200 dark:border-[#262F40] bg-slate-50/70 dark:bg-[#121722] text-[11px] font-mono text-slate-500 flex flex-wrap items-center justify-between gap-2">
           <span>
-            SHOWING {processedVehicles.length} OF {vehicles.length} REGISTERED UNITS
+            Showing {processedVehicles.length} of {vehicles.length} registered resources · Press{" "}
+            <kbd className="px-1 py-0.2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
+              j
+            </kbd>{" "}
+            /{" "}
+            <kbd className="px-1 py-0.2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
+              k
+            </kbd>{" "}
+            to cycle inspector
           </span>
-          <span>EXCHANGE RATE: 1 USD = {exchangeRate} AFN</span>
+          <span>Sarrafi Spot: 1 USD = {exchangeRate} AFN</span>
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog (Replaces native window.confirm) */}
+      {/* Delete Confirmation Dialog */}
       <Dialog
         open={Boolean(vehicleToDelete)}
         onClose={() => setVehicleToDelete(null)}

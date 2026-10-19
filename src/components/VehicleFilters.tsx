@@ -4,16 +4,10 @@ import React, { useState } from "react";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import {
-  Search,
   RotateCcw,
   X,
-  Filter,
   ChevronDown,
   SlidersHorizontal,
-  DollarSign,
-  Car,
-  Globe2,
-  Layers,
 } from "lucide-react";
 
 export function VehicleFilters() {
@@ -46,55 +40,54 @@ export function VehicleFilters() {
   const isCurrentPricePreset = (preset: (typeof pricePresets)[0]) =>
     filters.minPrice === preset.min && filters.maxPrice === preset.max;
 
-  // Active filter count
   const activeFiltersList: Array<{ key: string; label: string; clear: () => void }> = [];
 
   if (filters.search) {
     activeFiltersList.push({
       key: "search",
-      label: `"${filters.search}"`,
+      label: `Search: "${filters.search}"`,
       clear: () => setFilter("search", ""),
     });
   }
   if (filters.status !== "ALL") {
     activeFiltersList.push({
       key: "status",
-      label: filters.status,
+      label: `Status: ${filters.status}`,
       clear: () => setFilter("status", "ALL"),
     });
   }
   if (filters.make !== "ALL") {
     activeFiltersList.push({
       key: "make",
-      label: filters.make,
+      label: `Make: ${filters.make}`,
       clear: () => setFilter("make", "ALL"),
     });
   }
   if (filters.bodyType !== "ALL") {
     activeFiltersList.push({
       key: "bodyType",
-      label: filters.bodyType,
+      label: `Body: ${filters.bodyType}`,
       clear: () => setFilter("bodyType", "ALL"),
     });
   }
   if (filters.originCountry !== "ALL") {
     activeFiltersList.push({
       key: "originCountry",
-      label: filters.originCountry,
+      label: `Origin: ${filters.originCountry}`,
       clear: () => setFilter("originCountry", "ALL"),
     });
   }
   if (filters.fuelType !== "ALL") {
     activeFiltersList.push({
       key: "fuelType",
-      label: filters.fuelType,
+      label: `Fuel: ${filters.fuelType}`,
       clear: () => setFilter("fuelType", "ALL"),
     });
   }
   if (filters.transmission !== "ALL") {
     activeFiltersList.push({
       key: "transmission",
-      label: filters.transmission,
+      label: `Transmission: ${filters.transmission}`,
       clear: () => setFilter("transmission", "ALL"),
     });
   }
@@ -102,7 +95,9 @@ export function VehicleFilters() {
     const matchedPreset = pricePresets.find(isCurrentPricePreset);
     activeFiltersList.push({
       key: "price",
-      label: matchedPreset ? matchedPreset.label : `$${filters.minPrice || 0} - $${filters.maxPrice || "Max"}`,
+      label: matchedPreset
+        ? matchedPreset.label
+        : `$${filters.minPrice || 0} - $${filters.maxPrice || "Max"}`,
       clear: () => {
         setFilter("minPrice", null);
         setFilter("maxPrice", null);
@@ -113,31 +108,25 @@ export function VehicleFilters() {
   const hasActiveFilters = activeFiltersList.length > 0;
 
   return (
-    <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-3 sm:p-3.5 space-y-3">
-      {/* 1. Status Segmented Navigation Strip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-[#E2E0D8] dark:border-[#1F2430]">
-        <div className="inline-flex items-center divide-x divide-[#D8D5CD] dark:divide-[#242A38] rtl:divide-x-reverse rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] overflow-x-auto scrollbar-none max-w-full">
+    <div className="rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-3 sm:p-3.5 space-y-3">
+      {/* 1. Status Segmented Filter Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100 dark:border-[#262F40]">
+        <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-[#0F141C] overflow-x-auto scrollbar-none max-w-full">
           {statusOptions.map((opt) => {
             const isActive = filters.status === opt.id;
             return (
               <button
                 key={opt.id}
                 onClick={() => setFilter("status", opt.id)}
-                className={`px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
                   isActive
-                    ? "bg-[#111318] text-white dark:bg-amber-600 dark:text-white"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-stone-200/50 dark:hover:bg-slate-800/60 hover:text-[#111318] dark:hover:text-white"
+                    ? "bg-white dark:bg-[#161B26] text-[#1A73E8] dark:text-[#8AB4F8] font-semibold shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 <span>{opt.label}</span>
-                <span
-                  className={`px-1 py-0.2 rounded text-[10px] font-mono tabular-nums ${
-                    isActive
-                      ? "bg-white/20 text-white font-bold"
-                      : "bg-stone-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                  }`}
-                >
-                  {opt.count}
+                <span className="font-mono tabular-nums text-[10px] opacity-75">
+                  ({opt.count})
                 </span>
               </button>
             );
@@ -148,25 +137,27 @@ export function VehicleFilters() {
         <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded border transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md border transition-colors cursor-pointer whitespace-nowrap ${
               showAdvanced || filters.fuelType !== "ALL" || filters.transmission !== "ALL"
-                ? "bg-[#111318] text-white border-[#111318] dark:bg-amber-600 dark:border-amber-600"
-                : "border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-slate-600 dark:text-slate-400 hover:text-[#111318] dark:hover:text-white"
+                ? "bg-[#1A73E8] text-white border-[#1A73E8]"
+                : "border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             <SlidersHorizontal className="h-3 w-3" />
             <span>More Specs</span>
-            <ChevronDown className={`h-3 w-3 transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`h-3 w-3 transition-transform ${showAdvanced ? "rotate-180" : ""}`}
+            />
           </button>
 
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono font-semibold text-rose-700 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/10 rounded transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/10 rounded-md transition-colors cursor-pointer whitespace-nowrap"
               title="Reset all filters"
             >
               <RotateCcw className="h-3 w-3" />
-              <span>CLEAR</span>
+              <span>Clear</span>
             </button>
           )}
         </div>
@@ -180,7 +171,7 @@ export function VehicleFilters() {
             <select
               value={filters.make}
               onChange={(e) => setFilter("make", e.target.value)}
-              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-[#111318] dark:text-slate-200 font-medium outline-none focus:border-[#111318] dark:focus:border-amber-500 cursor-pointer appearance-none"
+              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[#1A73E8] cursor-pointer appearance-none"
             >
               <option value="ALL">{t.allMakes} (Toyota, Lexus)</option>
               <option value="Toyota">Toyota</option>
@@ -194,7 +185,7 @@ export function VehicleFilters() {
             <select
               value={filters.bodyType}
               onChange={(e) => setFilter("bodyType", e.target.value)}
-              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-[#111318] dark:text-slate-200 font-medium outline-none focus:border-[#111318] dark:focus:border-amber-500 cursor-pointer appearance-none"
+              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[#1A73E8] cursor-pointer appearance-none"
             >
               <option value="ALL">{t.body}: All</option>
               <option value="SUV">SUV (Land Cruiser / LX)</option>
@@ -210,7 +201,7 @@ export function VehicleFilters() {
             <select
               value={filters.originCountry}
               onChange={(e) => setFilter("originCountry", e.target.value)}
-              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-[#111318] dark:text-slate-200 font-medium outline-none focus:border-[#111318] dark:focus:border-amber-500 cursor-pointer appearance-none"
+              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[#1A73E8] cursor-pointer appearance-none"
             >
               <option value="ALL">{t.allOrigins}</option>
               <option value="UAE">UAE (Dubai GCC)</option>
@@ -224,7 +215,7 @@ export function VehicleFilters() {
 
         {/* Price Presets */}
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 font-mono">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 me-1">
+          <span className="text-[11px] font-medium text-slate-400 shrink-0 me-1">
             {t.priceRange}:
           </span>
           {pricePresets.map((preset) => {
@@ -236,10 +227,10 @@ export function VehicleFilters() {
                   setFilter("minPrice", preset.min);
                   setFilter("maxPrice", preset.max);
                 }}
-                className={`px-2 py-1 rounded text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer border ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer border ${
                   isSelected
-                    ? "bg-[#111318] text-white border-[#111318] dark:bg-amber-600 dark:border-amber-600 font-semibold"
-                    : "border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-slate-600 dark:text-slate-400 hover:text-[#111318] dark:hover:text-white"
+                    ? "bg-[#1A73E8] text-white border-[#1A73E8] font-semibold"
+                    : "border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 {preset.label}
@@ -249,19 +240,16 @@ export function VehicleFilters() {
         </div>
       </div>
 
-      {/* 3. Advanced Filters Collapsible Row (Fuel, Transmission) */}
+      {/* 3. Advanced Filters Collapsible Row */}
       {showAdvanced && (
-        <div className="p-2.5 rounded bg-[#FAF9F6] dark:bg-[#0D1017] border border-[#E2E0D8] dark:border-[#1F2430] flex flex-wrap items-center gap-3 text-xs">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-            POWERTRAIN:
-          </span>
+        <div className="p-2.5 rounded-md bg-slate-50 dark:bg-[#121722] border border-slate-200 dark:border-[#262F40] flex flex-wrap items-center gap-3 text-xs">
+          <span className="text-[11px] font-semibold text-slate-500">Powertrain:</span>
 
-          {/* Fuel Type */}
           <div className="relative">
             <select
               value={filters.fuelType}
               onChange={(e) => setFilter("fuelType", e.target.value)}
-              className="h-7 ps-2 pe-6 text-[11px] rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] text-[#111318] dark:text-slate-300 outline-none cursor-pointer appearance-none"
+              className="h-7 ps-2 pe-6 text-[11px] rounded border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-slate-800 dark:text-slate-200 outline-none cursor-pointer appearance-none"
             >
               <option value="ALL">All Fuel Types</option>
               <option value="Petrol">Petrol</option>
@@ -271,12 +259,11 @@ export function VehicleFilters() {
             <ChevronDown className="absolute end-1.5 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-slate-400 pointer-events-none" />
           </div>
 
-          {/* Transmission */}
           <div className="relative">
             <select
               value={filters.transmission}
               onChange={(e) => setFilter("transmission", e.target.value)}
-              className="h-7 ps-2 pe-6 text-[11px] rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] text-[#111318] dark:text-slate-300 outline-none cursor-pointer appearance-none"
+              className="h-7 ps-2 pe-6 text-[11px] rounded border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-slate-800 dark:text-slate-200 outline-none cursor-pointer appearance-none"
             >
               <option value="ALL">All Transmissions</option>
               <option value="Automatic">Automatic</option>
@@ -287,26 +274,21 @@ export function VehicleFilters() {
         </div>
       )}
 
-      {/* 4. Active Filter Badges Row */}
+      {/* 4. Active Filter Tokens Row */}
       {hasActiveFilters && (
-        <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] font-mono">
-          <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-            ACTIVE FILTERS:
-          </span>
+        <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-100 dark:border-[#262F40] font-mono">
+          <span className="text-[11px] text-slate-400 font-semibold">Active filters:</span>
           {activeFiltersList.map((item) => (
-            <span
+            <button
               key={item.key}
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FAF9F6] dark:bg-[#0D1017] text-[#111318] dark:text-amber-400 border border-[#D8D5CD] dark:border-[#242A38]"
+              type="button"
+              onClick={item.clear}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8] border border-[#1A73E8]/20 hover:bg-[#1A73E8]/20 cursor-pointer"
+              title="Click to remove filter"
             >
               <span>{item.label}</span>
-              <button
-                onClick={item.clear}
-                className="hover:text-rose-500 rounded p-0.5 cursor-pointer"
-                title="Remove filter"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
+              <X className="h-3 w-3" />
+            </button>
           ))}
         </div>
       )}

@@ -8,19 +8,13 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { formatCurrency, formatMileage } from "@/lib/utils";
 import { translations } from "@/lib/translations";
 import {
-  ShieldCheck,
-  Fuel,
-  Gauge,
-  Compass,
   Send,
-  Eye,
-  Car,
   ChevronLeft,
   ChevronRight,
   Heart,
   Layers,
+  PanelRightOpen,
 } from "lucide-react";
-import { MuiCard, MuiChip, MuiButton, IconButton } from "@/components/mui";
 
 interface VehicleCardProps {
   vehicle: VehicleItem;
@@ -38,6 +32,7 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
     toggleFavorite,
     compareIds,
     toggleCompare,
+    setInspectedVehicleId,
     addToast,
   } = useShowroomStore();
   const t = translations[language];
@@ -52,19 +47,6 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
   const showDealerMargin =
     !clientPresentationMode &&
     (currentRole === "SuperAdmin" || currentRole === "Accountant");
-
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "Available on Lot":
-        return "bg-emerald-950/80 text-emerald-300 border-emerald-500/30";
-      case "Reserved/Deposit Paid":
-        return "bg-amber-950/80 text-amber-300 border-amber-500/30";
-      case "In Transit":
-        return "bg-blue-950/80 text-blue-300 border-blue-500/30";
-      default:
-        return "bg-slate-900/80 text-slate-200 border-white/15";
-    }
-  };
 
   const handlePrevPhoto = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -88,8 +70,8 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
     toggleFavorite(vehicle.id);
     addToast(
       isFavorite
-        ? `Removed ${vehicle.model} from favorites`
-        : `Saved ${vehicle.model} to favorites`,
+        ? `Removed ${vehicle.model} from saved`
+        : `Saved ${vehicle.model} to bookmarks`,
       "info"
     );
   };
@@ -123,48 +105,43 @@ Details: ${originUrl}`
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group relative flex flex-col rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden transition-colors hover:border-[#111318] dark:hover:border-amber-500/70"
+      className="group relative flex flex-col rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] overflow-hidden transition-colors hover:border-[#1A73E8] dark:hover:border-[#8AB4F8]"
     >
-      {/* Top Architectural Lot & Status Header Bar (Keeps Photo 100% Unobstructed) */}
-      <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] font-mono text-[11px]">
-        <div className="flex items-center gap-2 truncate">
-          <span className="font-bold text-[#111318] dark:text-amber-400">
+      {/* Top Unboxed Metadata Strip (Zero-Pill Compliance) */}
+      <div className="flex items-center justify-between px-3.5 py-2 border-b border-slate-100 dark:border-[#262F40] bg-slate-50/70 dark:bg-[#121722] text-[11px]">
+        <div className="flex items-center gap-1.5 font-mono text-slate-500 dark:text-slate-400 truncate">
+          <span className="font-bold text-[#1A73E8] dark:text-[#8AB4F8]">
             {vehicle.stockNumber}
           </span>
-          <span className="text-slate-300 dark:text-slate-700">|</span>
-          <span className="text-slate-500 dark:text-slate-400 uppercase">
-            {vehicle.originCountry}
+          <span>·</span>
+          <span>{vehicle.originCountry}</span>
+          <span>·</span>
+          <span
+            className={
+              vehicle.status === "Available on Lot"
+                ? "text-emerald-600 dark:text-emerald-400 font-semibold"
+                : vehicle.status === "In Transit"
+                ? "text-amber-600 dark:text-amber-400 font-semibold"
+                : "text-slate-600 dark:text-slate-300 font-semibold"
+            }
+          >
+            {vehicle.status === "Available on Lot"
+              ? "On Lot"
+              : vehicle.status === "Reserved/Deposit Paid"
+              ? "Reserved"
+              : vehicle.status}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span
-            className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-              vehicle.status === "Available on Lot"
-                ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
-                : vehicle.status === "Reserved/Deposit Paid"
-                ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30"
-                : vehicle.status === "In Transit"
-                ? "bg-stone-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-stone-300 dark:border-slate-700"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700"
-            }`}
-          >
-            {vehicle.status === "Available on Lot"
-              ? "ON LOT"
-              : vehicle.status === "Reserved/Deposit Paid"
-              ? "RESERVED"
-              : vehicle.status.toUpperCase()}
-          </span>
-
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={handleToggleCompare}
             className={`h-6 w-6 rounded flex items-center justify-center border transition-colors ${
               isCompared
-                ? "bg-[#111318] text-white border-[#111318] dark:bg-amber-500 dark:text-black dark:border-amber-500"
-                : "border-[#D8D5CD] dark:border-[#242A38] text-slate-500 hover:text-[#111318] dark:hover:text-white"
+                ? "bg-[#1A73E8] text-white border-[#1A73E8]"
+                : "border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
             title={isCompared ? "Remove from comparison" : "Add to comparison"}
-            aria-label={isCompared ? "Remove from comparison" : "Add to comparison"}
           >
             <Layers className="h-3 w-3" />
           </button>
@@ -174,18 +151,17 @@ Details: ${originUrl}`
             className={`h-6 w-6 rounded flex items-center justify-center border transition-colors ${
               isFavorite
                 ? "bg-rose-600 text-white border-rose-600"
-                : "border-[#D8D5CD] dark:border-[#242A38] text-slate-500 hover:text-rose-600"
+                : "border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-rose-600"
             }`}
             title={isFavorite ? "Remove from saved" : "Save vehicle"}
-            aria-label={isFavorite ? "Remove from saved" : "Save vehicle"}
           >
             <Heart className={`h-3 w-3 ${isFavorite ? "fill-white" : ""}`} />
           </button>
         </div>
       </div>
 
-      {/* Unobstructed 16:10 Vehicle Photography Viewport */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-stone-100 dark:bg-slate-900">
+      {/* 16:10 Vehicle Photography Viewport */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
         <Link href={`/vehicles/${vehicle.id}`} className="block w-full h-full">
           <Image
             src={currentImage}
@@ -193,7 +169,7 @@ Details: ${originUrl}`
             fill
             referrerPolicy="no-referrer"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-103"
+            className="object-cover transition-transform duration-300 group-hover:scale-103"
           />
         </Link>
 
@@ -221,74 +197,41 @@ Details: ${originUrl}`
           </div>
         )}
 
-        {/* Quick View Trigger */}
-        {onQuickView && isHovered && (
-          <button
-            onClick={(e: React.MouseEvent) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onQuickView(vehicle);
-            }}
-            className="absolute bottom-2.5 start-2.5 z-10 px-2.5 py-1 rounded bg-black/80 hover:bg-black text-white font-mono text-[10px] font-semibold uppercase tracking-wider backdrop-blur-xs transition-colors"
-          >
-            QUICK INSPECT
-          </button>
-        )}
-
         {/* Discreet Monospace Frame Counter */}
         <div className="absolute bottom-2.5 end-2.5 px-1.5 py-0.5 rounded bg-black/75 font-mono tabular-nums text-[10px] text-white/90 pointer-events-none">
           {activePhotoIndex + 1}/{vehicle.images.length}
         </div>
       </div>
 
-      {/* Title & Chassis Block */}
-      <div className="p-4 pb-3">
+      {/* Title & Clean Unboxed Spec Line */}
+      <div className="p-4 pb-3 space-y-1">
         <Link href={`/vehicles/${vehicle.id}`} className="block">
-          <h3 className="text-base font-bold text-[#111318] group-hover:text-amber-700 dark:text-white dark:group-hover:text-amber-400 transition-colors truncate tracking-tight">
+          <h3 className="text-base font-bold text-slate-900 group-hover:text-[#1A73E8] dark:text-white dark:group-hover:text-[#8AB4F8] transition-colors truncate tracking-tight">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h3>
         </Link>
-        <div className="mt-0.5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <span className="truncate">{vehicle.trim}</span>
           <span className="font-mono text-[10px] text-slate-400 shrink-0 ms-2">
             VIN: {vehicle.vin.slice(-8)}
           </span>
         </div>
-      </div>
-
-      {/* 1px Hairline 2x2 Technical Spec Grid */}
-      <div className="grid grid-cols-2 gap-px bg-[#E2E0D8] dark:bg-[#1F2430] border-y border-[#E2E0D8] dark:border-[#1F2430] font-mono text-[11px]">
-        <div className="bg-[#FAF9F6] dark:bg-[#0D1017] px-3.5 py-2 flex items-center justify-between">
-          <span className="text-[10px] text-slate-400 uppercase">ODO</span>
-          <span className="font-semibold text-[#111318] dark:text-slate-200 tabular-nums">
-            {formatMileage(vehicle.mileage)}
-          </span>
-        </div>
-        <div className="bg-[#FAF9F6] dark:bg-[#0D1017] px-3.5 py-2 flex items-center justify-between">
-          <span className="text-[10px] text-slate-400 uppercase">FUEL</span>
-          <span className="font-semibold text-[#111318] dark:text-slate-200 truncate ms-1">
-            {vehicle.fuelType}
-          </span>
-        </div>
-        <div className="bg-[#FAF9F6] dark:bg-[#0D1017] px-3.5 py-2 flex items-center justify-between">
-          <span className="text-[10px] text-slate-400 uppercase">DRIVE</span>
-          <span className="font-semibold text-[#111318] dark:text-slate-200">
-            {vehicle.driveType} · {vehicle.steering.includes("Left") ? "LHD" : "RHD"}
-          </span>
-        </div>
-        <div className="bg-[#FAF9F6] dark:bg-[#0D1017] px-3.5 py-2 flex items-center justify-between">
-          <span className="text-[10px] text-slate-400 uppercase">PORT</span>
-          <span className="font-semibold text-emerald-700 dark:text-emerald-400 truncate ms-1">
-            CLEARED
-          </span>
+        <div className="pt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums truncate">
+          <span>{formatMileage(vehicle.mileage)}</span>
+          <span>·</span>
+          <span>{vehicle.fuelType}</span>
+          <span>·</span>
+          <span>{vehicle.driveType}</span>
+          <span>·</span>
+          <span className="text-emerald-600 dark:text-emerald-400">Cleared</span>
         </div>
       </div>
 
-      {/* Valuation & Settlement Actions Footer */}
-      <div className="mt-auto p-4 pt-3 flex flex-col gap-3 bg-white dark:bg-[#11141B]">
+      {/* Valuation & Google Workspace Actions Footer */}
+      <div className="mt-auto p-4 pt-3 border-t border-slate-100 dark:border-[#262F40] flex flex-col gap-3 bg-white dark:bg-[#161B26]">
         <div className="flex items-baseline justify-between gap-2">
           <div>
-            <div className="text-lg font-bold font-mono tabular-nums text-[#111318] dark:text-white leading-tight">
+            <div className="text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white leading-tight">
               {formatCurrency(vehicle.sellingPrice, currency, exchangeRate)}
             </div>
             <div className="text-[11px] font-mono tabular-nums text-slate-500">
@@ -300,29 +243,40 @@ Details: ${originUrl}`
 
           {showDealerMargin && marginAmount > 0 && (
             <div className="text-end font-mono">
-              <span className="text-xs tabular-nums font-bold text-emerald-700 dark:text-emerald-400 block">
+              <span className="text-xs tabular-nums font-bold text-emerald-600 dark:text-emerald-400 block">
                 +${marginAmount.toLocaleString()}
               </span>
-              <span className="text-[10px] uppercase text-slate-400 block">
-                NET MARGIN
-              </span>
+              <span className="text-[10px] text-slate-400 block">Net margin</span>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              if (onQuickView) onQuickView(vehicle);
+              else setInspectedVehicleId(vehicle.id);
+            }}
+            className="inline-flex items-center justify-center gap-1 h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] hover:border-[#1A73E8] text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors whitespace-nowrap cursor-pointer"
+            title="Open in right-hand Inspector Drawer"
+          >
+            <PanelRightOpen className="h-3 w-3 text-[#1A73E8] dark:text-[#8AB4F8]" />
+            <span>Inspect</span>
+          </button>
+
           <Link
             href={`/vehicles/${vehicle.id}`}
-            className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#161A23] hover:border-[#111318] dark:hover:border-amber-500 text-xs font-semibold text-[#111318] dark:text-white transition-colors"
+            className="inline-flex items-center justify-center h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors whitespace-nowrap"
           >
-            <span>{t.viewDetails}</span>
+            <span>Dossier</span>
           </Link>
 
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-[#111318] hover:bg-slate-800 dark:bg-amber-600 dark:hover:bg-amber-500 text-xs font-semibold text-white transition-colors"
+            className="inline-flex items-center justify-center gap-1 h-8 px-2.5 rounded-md bg-[#1A73E8] hover:bg-[#1557B0] text-xs font-semibold text-white transition-colors whitespace-nowrap"
           >
             <Send className="h-3 w-3" />
             <span>WhatsApp</span>

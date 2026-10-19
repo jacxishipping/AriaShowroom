@@ -2,31 +2,23 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
-import { MuiChip, MuiButton, Avatar, IconButton } from "@/components/mui";
 import {
   LayoutDashboard,
   Car,
   Users,
-  BadgeDollarSign,
-  TrendingUp,
-  FileText,
-  ShieldCheck,
   Receipt,
-  Settings,
   ChevronLeft,
   ChevronRight,
-  PlusCircle,
+  Plus,
   Truck,
-  Compass,
-  Boxes,
-  HelpCircle,
-  Sparkles,
   Layers,
   ScanLine,
   X,
+  Bookmark,
+  Keyboard,
 } from "lucide-react";
 
 interface ErpSidebarProps {
@@ -35,6 +27,7 @@ interface ErpSidebarProps {
 
 export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const {
     vehicles,
     customers,
@@ -45,74 +38,140 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
     compareIds,
     mobileDrawerOpen,
     setMobileDrawerOpen,
+    pinnedViews,
+    activePinnedViewId,
+    applyPinnedView,
+    setIsShortcutsModalOpen,
   } = useShowroomStore();
   const [collapsed, setCollapsed] = useState(false);
 
   const t = translations[language];
-
   const inTransitCount = vehicles.filter((v) => v.status === "In Transit").length;
 
   const navSections = [
     {
-      label: language === "ps" ? "۰۱ / سټاک او موټرونه" : language === "fa" ? "۰۱ / گدام و موجودی" : "01 / FLEET & LOT",
+      label:
+        language === "ps"
+          ? "سټاک او موټرونه"
+          : language === "fa"
+          ? "گدام و موجودی"
+          : "Fleet & Inventory",
       items: [
         {
-          title: language === "ps" ? "د نندارتون ډشبورډ" : language === "fa" ? "داشبورد عملیاتی" : "Operations Cockpit",
+          title:
+            language === "ps"
+              ? "د نندارتون ډشبورډ"
+              : language === "fa"
+              ? "داشبورد عملیاتی"
+              : "Operations Cockpit",
           href: "/",
           icon: LayoutDashboard,
           count: null,
+          shortcut: "g d",
         },
         {
-          title: language === "ps" ? "د موټرونو ګودام او سټاک" : language === "fa" ? "گدام و موجودی موترها" : "Vehicle Inventory",
+          title:
+            language === "ps"
+              ? "د موټرونو ګودام او سټاک"
+              : language === "fa"
+              ? "گدام و موجودی موترها"
+              : "Vehicle Inventory",
           href: "/inventory",
           icon: Car,
           count: vehicles.length,
+          shortcut: "g i",
         },
         {
-          title: language === "ps" ? "د موټر ثبت او عکاسي" : language === "fa" ? "ثبت موتر و عکاسی" : "Vehicle Intake",
+          title:
+            language === "ps"
+              ? "د موټر ثبت او عکاسي"
+              : language === "fa"
+              ? "ثبت موتر و عکاسی"
+              : "Vehicle Intake",
           href: "/intake",
-          icon: PlusCircle,
+          icon: Plus,
           count: null,
+          shortcut: "g n",
         },
         {
-          title: language === "ps" ? "د موټرونو مقایسه" : language === "fa" ? "مقایسه موترها" : "Fleet Comparison",
+          title:
+            language === "ps"
+              ? "د موټرونو مقایسه"
+              : language === "fa"
+              ? "مقایسه موترها"
+              : "Fleet Comparison",
           href: "/compare",
           icon: Layers,
           count: compareIds.length > 0 ? compareIds.length : null,
+          shortcut: null,
         },
         {
-          title: language === "ps" ? "د بارکوډ او شاسي سکنر" : language === "fa" ? "اسکنر بارکد و شاسی" : "Lot VIN Scanner",
+          title:
+            language === "ps"
+              ? "د بارکوډ او شاسي سکنر"
+              : language === "fa"
+              ? "اسکنر بارکد و شاسی"
+              : "Lot VIN Scanner",
           href: "/scanner",
           icon: ScanLine,
           count: null,
+          shortcut: null,
         },
       ],
     },
     {
-      label: language === "ps" ? "۰۲ / پلور او مراجعین" : language === "fa" ? "۰۲ / فروشات و قرارداد" : "02 / COMMERCIAL DESK",
+      label:
+        language === "ps"
+          ? "پلور او مراجعین"
+          : language === "fa"
+          ? "فروشات و قرارداد"
+          : "Commercial Desk",
       items: [
         {
-          title: language === "ps" ? "د مراجعینو او پلور مرکز (CRM)" : language === "fa" ? "مشتریان، لیدها و قراردادها" : "CRM & Sales Desk",
+          title:
+            language === "ps"
+              ? "د مراجعینو او پلور مرکز"
+              : language === "fa"
+              ? "مشتریان و قراردادها"
+              : "CRM & Sales Desk",
           href: "/admin",
           icon: Users,
           count: customers.length,
+          shortcut: "g c",
         },
       ],
     },
     {
-      label: language === "ps" ? "۰۳ / مالي او ګمرک" : language === "fa" ? "۰۳ / خزانه، صرافی و گمرک" : "03 / TREASURY & PORT",
+      label:
+        language === "ps"
+          ? "مالي او ګمرک"
+          : language === "fa"
+          ? "خزانه، صرافی و گمرک"
+          : "Treasury & Port",
       items: [
         {
-          title: language === "ps" ? "د محاسبې او صرافۍ مرکز" : language === "fa" ? "حسابداری، صرافی و فاکتور" : "Accounting & Sarrafi",
+          title:
+            language === "ps"
+              ? "د محاسبې او صرافۍ مرکز"
+              : language === "fa"
+              ? "حسابداری، صرافی و فاکتور"
+              : "Accounting & Sarrafi",
           href: "/accounting",
           icon: Receipt,
           count: invoices.length,
+          shortcut: "g a",
         },
         {
-          title: language === "ps" ? "د اسلام قلعه او ترانزیت لوژستیک" : language === "fa" ? "لوجستیک و گمرک اسلام قلعه" : "Customs & Port Logistics",
+          title:
+            language === "ps"
+              ? "د اسلام قلعه او ترانزیت لوژستیک"
+              : language === "fa"
+              ? "لوجستیک و گمرک اسلام قلعه"
+              : "Customs & Port Logistics",
           href: "/logistics",
           icon: Truck,
           count: inTransitCount > 0 ? inTransitCount : null,
+          shortcut: "g l",
         },
       ],
     },
@@ -120,19 +179,19 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
 
   const renderSidebarContent = (isMobile = false) => (
     <>
-      {/* Brand Authority Header */}
-      <div className="flex h-14 items-center justify-between border-b border-white/[0.08] px-4">
+      {/* Google Cloud Console Brand Header */}
+      <div className="flex h-14 items-center justify-between border-b border-slate-200 dark:border-[#262F40] px-4">
         {(!collapsed || isMobile) && (
           <Link href="/" className="flex items-center gap-2.5 overflow-hidden group">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-amber-600/15 border border-amber-500/40 text-amber-400 font-mono text-xs font-bold tracking-tighter">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#1A73E8] text-white font-display text-xs font-bold tracking-tight">
               SM
             </div>
             <div className="truncate">
-              <div className="text-xs font-bold uppercase tracking-wider text-white whitespace-nowrap">
+              <div className="text-sm font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
                 Sadozai Motors
               </div>
-              <div className="font-mono text-[10px] text-slate-400 tracking-tight">
-                HERAT · LIC #49912
+              <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                Cloud Console · Herat
               </div>
             </div>
           </Link>
@@ -141,7 +200,7 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
         {collapsed && !isMobile && (
           <Link
             href="/"
-            className="mx-auto flex h-8 w-8 items-center justify-center rounded bg-amber-600/15 border border-amber-500/40 text-amber-400 font-mono text-xs font-bold"
+            className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-[#1A73E8] text-white font-display text-xs font-bold"
           >
             SM
           </Link>
@@ -150,7 +209,7 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
         {isMobile ? (
           <button
             onClick={() => setMobileDrawerOpen(false)}
-            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/5"
+            className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
             title="Close Drawer"
           >
             <X className="h-4 w-4" />
@@ -158,8 +217,8 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
         ) : (
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/5"
-            title={collapsed ? "Expand Rail" : "Collapse Rail"}
+            className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
+            title={collapsed ? "Expand Navigation Rail" : "Collapse Navigation Rail"}
           >
             {collapsed ? (
               <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
@@ -170,17 +229,17 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
         )}
       </div>
 
-      {/* Primary Action Strip */}
-      <div className="px-3 pt-3 pb-2">
+      {/* Google Workspace Primary Action Button (+ New Vehicle) */}
+      <div className="px-3 pt-3 pb-1">
         <Link
           href="/intake"
           onClick={() => isMobile && setMobileDrawerOpen(false)}
-          className={`flex items-center justify-center gap-2 rounded bg-amber-600 hover:bg-amber-500 px-3 py-2 text-xs font-semibold text-white transition whitespace-nowrap ${
+          className={`flex items-center justify-center gap-2 rounded-lg bg-[#1A73E8] hover:bg-[#1557B0] px-3 py-2 text-xs font-semibold text-white transition whitespace-nowrap shadow-2xs ${
             collapsed && !isMobile ? "h-9 w-9 p-0 mx-auto" : "w-full"
           }`}
           title={t.addNewVehicle}
         >
-          <PlusCircle className="h-3.5 w-3.5 shrink-0" />
+          <Plus className="h-4 w-4 shrink-0" />
           {(!collapsed || isMobile) && <span>{t.addNewVehicle}</span>}
         </Link>
       </div>
@@ -188,9 +247,9 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
       {/* Sectioned Navigation Rail */}
       <nav className="flex-1 space-y-5 overflow-y-auto px-2.5 py-3">
         {navSections.map((section, sIdx) => (
-          <div key={sIdx} className="space-y-1">
+          <div key={sIdx} className="space-y-0.5">
             {(!collapsed || isMobile) && (
-              <div className="px-2.5 pb-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+              <div className="px-2.5 pb-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
                 {section.label}
               </div>
             )}
@@ -203,16 +262,18 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
                   key={item.href}
                   href={item.href}
                   onClick={() => isMobile && setMobileDrawerOpen(false)}
-                  className={`group flex items-center gap-2.5 rounded px-2.5 py-2 text-xs transition ${
+                  className={`group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-xs transition ${
                     isActive
-                      ? "border-s-2 border-amber-500 bg-white/[0.07] font-semibold text-white"
-                      : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+                      ? "bg-[#1A73E8]/10 dark:bg-[#8AB4F8]/15 font-semibold text-[#1A73E8] dark:text-[#8AB4F8]"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-slate-200"
                   } ${collapsed && !isMobile ? "justify-center px-0" : ""}`}
                   title={collapsed && !isMobile ? item.title : undefined}
                 >
                   <span
                     className={`shrink-0 ${
-                      isActive ? "text-amber-400" : "text-slate-500 group-hover:text-slate-300"
+                      isActive
+                        ? "text-[#1A73E8] dark:text-[#8AB4F8]"
+                        : "text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300"
                     }`}
                   >
                     <IconComponent className="h-4 w-4" />
@@ -225,8 +286,8 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
                         <span
                           className={`font-mono tabular-nums text-[11px] px-1.5 py-0.2 rounded ${
                             isActive
-                              ? "bg-amber-500/20 text-amber-300 font-bold"
-                              : "text-slate-500 group-hover:text-slate-400"
+                              ? "text-[#1A73E8] dark:text-[#8AB4F8] font-bold"
+                              : "text-slate-400 dark:text-slate-500"
                           }`}
                         >
                           {item.count}
@@ -239,51 +300,103 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
             })}
           </div>
         ))}
+
+        {/* Pinned Workspace Views Section */}
+        {(!collapsed || isMobile) && (
+          <div className="space-y-0.5 pt-2 border-t border-slate-200 dark:border-[#262F40]">
+            <div className="px-2.5 pb-1 flex items-center justify-between text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+              <span>Pinned Views</span>
+              <Bookmark className="h-3 w-3 text-[#1A73E8] dark:text-[#8AB4F8]" />
+            </div>
+            {pinnedViews.slice(0, 5).map((view) => {
+              const isSelected = activePinnedViewId === view.id && pathname === "/inventory";
+              return (
+                <button
+                  key={view.id}
+                  type="button"
+                  onClick={() => {
+                    applyPinnedView(view.id);
+                    if (pathname !== "/inventory" && pathname !== "/") {
+                      router.push("/inventory");
+                    }
+                    if (isMobile) setMobileDrawerOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs text-start transition cursor-pointer ${
+                    isSelected
+                      ? "bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8] font-semibold"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+                  }`}
+                >
+                  <span className="truncate">
+                    {language === "fa" && view.nameFa
+                      ? view.nameFa
+                      : language === "ps" && view.namePs
+                      ? view.namePs
+                      : view.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
-      {/* Khorasan Sarrafi Desk & Operator Footer */}
-      <div className="border-t border-white/[0.08] p-3 space-y-2.5 bg-[#080A0E]">
+      {/* Sarrafi FX Telemetry & Keyboard Shortcut Footer */}
+      <div className="border-t border-slate-200 dark:border-[#262F40] p-3 space-y-2.5 bg-slate-50/70 dark:bg-[#0F141C]">
         {(!collapsed || isMobile) && (
-          <div className="rounded border border-white/[0.07] bg-white/[0.02] px-2.5 py-2 font-mono text-[11px]">
-            <div className="flex items-center justify-between text-slate-400">
-              <span>SARRAFI FX</span>
-              <span className="text-amber-400 font-bold tabular-nums">
+          <div className="rounded-md border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] px-2.5 py-2 font-mono text-[11px]">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+              <span>Sarrafi FX</span>
+              <span className="text-[#1A73E8] dark:text-[#8AB4F8] font-bold tabular-nums">
                 1 USD = {exchangeRate} AFN
               </span>
             </div>
-            <div className="mt-1 flex items-center justify-between text-[10px] text-slate-500">
-              <span>ISLAM QALA PORT</span>
-              <span className="text-emerald-400">ACTIVE</span>
+            <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+              <span>Islam Qala Port</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Cleared</span>
             </div>
           </div>
         )}
 
         <div
-          className={`flex items-center gap-2.5 px-1 ${
+          className={`flex items-center justify-between gap-2 px-1 ${
             collapsed && !isMobile ? "justify-center" : ""
           }`}
         >
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-slate-800 border border-white/10 font-mono text-[11px] font-bold text-amber-400">
-            {currentRole === "SuperAdmin"
-              ? "HA"
-              : currentRole === "SalesAgent"
-              ? "FT"
-              : "MS"}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8] font-mono text-[11px] font-bold">
+              {currentRole === "SuperAdmin"
+                ? "HA"
+                : currentRole === "SalesAgent"
+                ? "FT"
+                : "MS"}
+            </div>
+
+            {(!collapsed || isMobile) && (
+              <div className="min-w-0 truncate">
+                <div className="truncate text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {currentRole === "SuperAdmin"
+                    ? "Haji Ahmad Shah"
+                    : currentRole === "SalesAgent"
+                    ? "Farhad Timori"
+                    : "Mirwais Saljuqi"}
+                </div>
+                <div className="truncate font-mono text-[10px] text-slate-400">
+                  {currentRole}
+                </div>
+              </div>
+            )}
           </div>
 
           {(!collapsed || isMobile) && (
-            <div className="min-w-0 truncate">
-              <div className="truncate text-xs font-semibold text-slate-200">
-                {currentRole === "SuperAdmin"
-                  ? "Haji Ahmad Shah"
-                  : currentRole === "SalesAgent"
-                  ? "Farhad Timori"
-                  : "Mirwais Saljuqi"}
-              </div>
-              <div className="truncate font-mono text-[10px] text-slate-500 uppercase">
-                {currentRole}
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsShortcutsModalOpen(true)}
+              className="p-1.5 rounded-md border border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] bg-white dark:bg-[#161B26]"
+              title="Keyboard Shortcuts (?)"
+            >
+              <Keyboard className="h-3.5 w-3.5" />
+            </button>
           )}
         </div>
       </div>
@@ -292,9 +405,9 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
 
   return (
     <>
-      {/* Desktop Persistent Obsidian Rail */}
+      {/* Desktop Persistent Google Cloud Navigation Rail */}
       <aside
-        className={`sticky top-0 z-40 hidden md:flex h-screen flex-col border-r rtl:border-r-0 rtl:border-l border-white/[0.08] bg-[#0B0D12] text-slate-300 transition-all duration-200 ${
+        className={`sticky top-0 z-40 hidden md:flex h-screen flex-col border-r rtl:border-r-0 rtl:border-l border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#121722] text-slate-700 dark:text-slate-300 transition-all duration-200 ${
           collapsed ? "w-16" : "w-60"
         }`}
       >
@@ -305,10 +418,10 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
       {mobileDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity animate-in fade-in"
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileDrawerOpen(false)}
           />
-          <aside className="relative z-50 flex h-full w-64 max-w-[85vw] flex-col border-r rtl:border-r-0 rtl:border-l border-white/[0.08] bg-[#0B0D12] text-slate-300 shadow-2xl animate-in slide-in-from-left rtl:slide-in-from-right duration-200">
+          <aside className="relative z-50 flex h-full w-64 max-w-[85vw] flex-col border-r rtl:border-r-0 rtl:border-l border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#121722] text-slate-700 dark:text-slate-300 shadow-2xl">
             {renderSidebarContent(true)}
           </aside>
         </div>

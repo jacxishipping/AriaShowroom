@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono, Vazirmatn } from "next/font/google";
+import { Plus_Jakarta_Sans, Public_Sans, JetBrains_Mono, Vazirmatn } from "next/font/google";
 import "./globals.css";
 import { ClientLayoutWrapper } from "@/components/ClientLayoutWrapper";
 import { NextAuthProvider } from "@/components/NextAuthProvider";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["500", "600", "700", "800"],
+});
+
+const publicSans = Public_Sans({
+  subsets: ["latin"],
   variable: "--font-inter",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -23,9 +29,9 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: "Sadozai Motors Herat | Luxury Car Showroom & Direct Imports",
+  title: "Sadozai Motors Platform | Cloud Fleet & Dealership Console",
   description:
-    "Premier automotive dealership in Herat, Afghanistan. Exclusive Land Cruisers, Lexus SUVs, and verified clean-title vehicles imported via Islam Qala Port with authentic customs clearance.",
+    "Enterprise automotive dealership and customs ERP platform in Herat, Afghanistan. Real-time fleet inventory, Islam Qala customs clearance, and Sarrafi treasury management.",
   keywords: [
     "Car Showroom Herat",
     "Sadozai Motors",
@@ -45,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${jakarta.variable} ${jetbrainsMono.variable} ${vazirmatn.variable}`}
+      className={`${jakarta.variable} ${publicSans.variable} ${jetbrainsMono.variable} ${vazirmatn.variable}`}
     >
       <body className="antialiased font-sans">
         <NextAuthProvider>

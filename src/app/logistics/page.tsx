@@ -327,18 +327,18 @@ export default function LogisticsAndCustomsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Architectural Corridor Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-[#D8D5CD] dark:border-[#242A38]">
+    <div className="space-y-5 max-w-7xl mx-auto pb-12">
+      {/* Google Cloud Console Corridor Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-[#E2E8F0] dark:border-[#262F40]">
         <div>
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-1">
-            <span>DOGHAROUN ➔ ISLAM QALA BORDER CORRIDOR</span>
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-0.5">
+            <span>Dogharoun → Islam Qala Border Corridor</span>
             <span>·</span>
-            <span className="text-[#111318] dark:text-amber-400 font-bold">
-              TIR CARNET & GOMROK MANIFEST
+            <span className="font-semibold text-[#1A73E8] dark:text-[#8AB4F8]">
+              TIR Carnet & Gomrok Manifest
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111318] dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A] dark:text-white">
             {language === "ps"
               ? "د اسلام قلعه او ترانزیت لوژستیکي مدیریت"
               : language === "fa"
@@ -376,91 +376,91 @@ export default function LogisticsAndCustomsPage() {
       </div>
 
       {/* 1px Hairline Corridor Ledger Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#D8D5CD] dark:bg-[#242A38] border border-[#D8D5CD] dark:border-[#242A38] rounded-md overflow-hidden">
-        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-            <span>01 / IN-TRANSIT FLEET</span>
-            <span className="text-amber-700 dark:text-amber-400 font-bold">TRANSIT</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#E2E8F0] dark:bg-[#262F40] border border-[#E2E8F0] dark:border-[#262F40] rounded-lg overflow-hidden">
+        <div className="bg-white dark:bg-[#161B26] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+            <span>In-Transit Fleet</span>
+            <span className="font-mono text-[11px] text-amber-600 dark:text-amber-400 font-bold">TRANSIT</span>
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#111318] dark:text-white">
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#0F172A] dark:text-white">
             {inTransitVehicles.length} Units
           </div>
-          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <span>FOB VALUE</span>
-            <span className="font-bold text-[#111318] dark:text-slate-200 tabular-nums">
+          <div className="mt-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E2636] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>FOB Value</span>
+            <span className="font-bold text-[#0F172A] dark:text-slate-200 tabular-nums">
               ${totalInTransitValueUSD.toLocaleString()}
             </span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-            <span>02 / ISLAM QALA GOMROK</span>
-            <span className="text-emerald-700 dark:text-emerald-400 font-bold">BORDER</span>
+        <div className="bg-white dark:bg-[#161B26] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+            <span>Islam Qala Gomrok</span>
+            <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">BORDER</span>
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#111318] dark:text-white">
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#0F172A] dark:text-white">
             {vehiclesAtGomrokCount} Units
           </div>
-          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <span>CLEARANCE</span>
-            <span className="font-bold text-emerald-700 dark:text-emerald-400">
-              APPRAISAL ACTIVE
+          <div className="mt-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E2636] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>Clearance</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400">
+              Appraisal Active
             </span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-            <span>03 / PROJECTED TARIFFS</span>
-            <span className="text-[#111318] dark:text-amber-400 font-bold">DUTY</span>
+        <div className="bg-white dark:bg-[#161B26] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+            <span>Projected Tariffs</span>
+            <span className="font-mono text-[11px] text-[#1A73E8] dark:text-[#8AB4F8] font-bold">DUTY</span>
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#111318] dark:text-white">
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#0F172A] dark:text-white">
             ${totalCustomsDuesUSD.toLocaleString()}
           </div>
-          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <span>AFN EQUIV</span>
-            <span className="tabular-nums text-[#111318] dark:text-slate-300">
+          <div className="mt-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E2636] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>AFN Equiv</span>
+            <span className="tabular-nums text-[#0F172A] dark:text-slate-300">
               ؋ {(totalCustomsDuesUSD * exchangeRate).toLocaleString()}
             </span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
-            <span>04 / CORRIDOR LEAD TIME</span>
-            <span className="text-slate-500 font-bold">SLA</span>
+        <div className="bg-white dark:bg-[#161B26] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+            <span>Corridor Lead Time</span>
+            <span className="font-mono text-[11px] text-slate-500 font-bold">SLA</span>
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#111318] dark:text-white">
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#0F172A] dark:text-white">
             12–16 Days
           </div>
-          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <span>ROUTE</span>
-            <span className="text-[#111318] dark:text-slate-300">JEBEL ALI ➔ HERAT</span>
+          <div className="mt-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E2636] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>Route</span>
+            <span className="text-[#0F172A] dark:text-slate-300">Jebel Ali → Herat</span>
           </div>
         </div>
       </div>
 
       {/* Connected 1px Hairline 5-Stage Supply Chain Matrix */}
-      <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
-        <div className="px-4 py-2.5 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] flex items-center justify-between flex-wrap gap-2">
+      <div className="rounded-lg border border-[#E2E8F0] dark:border-[#262F40] bg-white dark:bg-[#161B26] overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-[#E2E8F0] dark:border-[#1E2636] bg-[#F8FAFC] dark:bg-[#121722] flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-[#111318] dark:text-amber-400">
-              SUPPLY CHAIN CHECKPOINTS
+            <span className="text-xs font-bold text-[#0F172A] dark:text-white">
+              Supply Chain Checkpoints
             </span>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span className="text-slate-300 dark:text-slate-700">·</span>
             <span className="text-xs text-slate-500 dark:text-slate-400">
               Click any stage to filter manifest
             </span>
           </div>
           <button
             onClick={() => setActiveStageFilter("ALL")}
-            className="text-[10px] font-mono uppercase tracking-wider text-slate-500 hover:text-[#111318] dark:hover:text-white cursor-pointer"
+            className="text-xs font-semibold text-[#1A73E8] dark:text-[#8AB4F8] hover:underline cursor-pointer"
           >
-            SHOW ALL ({vehicles.length})
+            Show All ({vehicles.length})
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-px bg-[#E2E0D8] dark:bg-[#1F2430]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-px bg-[#E2E8F0] dark:bg-[#1E2636]">
           {PIPELINE_MILESTONES.map((m) => {
             const inStageCount = vehicles.filter(
               (v) => (vehicleMilestones[v.id] || (v.status === "In Transit" ? 3 : 5)) === m.id
@@ -483,25 +483,25 @@ export default function LogisticsAndCustomsPage() {
                 }}
                 className={`p-3.5 transition-colors cursor-pointer relative ${
                   isSelectedStage
-                    ? "bg-[#FAF9F6] dark:bg-[#181C26] border-t-2 border-t-[#111318] dark:border-t-amber-500"
-                    : "bg-white dark:bg-[#11141B] hover:bg-[#FAF9F6] dark:hover:bg-[#151922]"
+                    ? "bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.1] border-t-2 border-t-[#1A73E8] dark:border-t-[#8AB4F8]"
+                    : "bg-white dark:bg-[#161B26] hover:bg-slate-50 dark:hover:bg-white/[0.03]"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2 font-mono">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    STAGE 0{m.id}
+                  <span className="text-[11px] font-semibold text-slate-400">
+                    Stage 0{m.id}
                   </span>
                   <span
                     className={`px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums ${
                       inStageCount > 0
-                        ? "bg-[#111318] text-white dark:bg-amber-500 dark:text-black"
-                        : "bg-stone-100 dark:bg-slate-800 text-slate-400"
+                        ? "bg-[#1A73E8] text-white"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                     }`}
                   >
-                    {inStageCount} UNITS
+                    {inStageCount} Units
                   </span>
                 </div>
-                <h4 className="text-xs font-bold text-[#111318] dark:text-white leading-snug">
+                <h4 className="text-xs font-bold text-[#0F172A] dark:text-white leading-snug">
                   {language === "fa" || language === "ps" ? m.titleDari : m.title}
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
