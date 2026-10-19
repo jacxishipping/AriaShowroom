@@ -262,9 +262,9 @@ export default function VehicleIntakePage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 space-y-5 pb-16">
       {/* Top Header & Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200/90 dark:border-slate-800/90">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
             <Link href="/" className="hover:text-primary transition-colors">
@@ -279,11 +279,11 @@ export default function VehicleIntakePage() {
               New Vehicle Intake
             </span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <Car className="h-6 w-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <Car className="h-5 w-5 text-primary" />
             Vehicle Stock Intake & 40+ Photo Vault
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Register new arrival, calculate landed cost & customs tariffs, and attach watermarked showroom photography.
           </p>
         </div>
@@ -303,7 +303,7 @@ export default function VehicleIntakePage() {
             onClick={handleSubmit}
             variant="contained"
             color="primary"
-            size="medium"
+            size="small"
             startIcon={<Save className="h-4 w-4" />}
           >
             Save Vehicle to Lot
@@ -311,11 +311,11 @@ export default function VehicleIntakePage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column: Form Details (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-5">
           {/* Card 1: Core Identification */}
-          <MuiCard elevation={1} className="p-5 space-y-4">
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-primary" />
@@ -483,10 +483,10 @@ export default function VehicleIntakePage() {
                 <MenuItem value="Reserved/Deposit Paid">Reserved / Deposit Paid</MenuItem>
               </MuiTextField>
             </div>
-          </MuiCard>
+          </div>
 
           {/* Card 2: Technical Specifications & Customs */}
-          <MuiCard elevation={1} className="p-5 space-y-4">
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-5 shadow-xs space-y-4">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
               <Truck className="h-4 w-4 text-emerald-600" />
               2. Technical Specifications & Customs Maktoub
@@ -593,10 +593,10 @@ export default function VehicleIntakePage() {
               }
               helperText="E.g. Cool Box, Sunroof, Leather Seats, 360 Camera, 4WD Diff-Lock"
             />
-          </MuiCard>
+          </div>
 
           {/* Card 3: Bilingual Afghan Descriptions */}
-          <MuiCard elevation={1} className="p-5 space-y-4">
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-5 shadow-xs space-y-4">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 pb-2 border-b border-slate-100 dark:border-slate-800">
               3. Bilingual Showroom Descriptions (دری / پښتو / English)
             </h3>
@@ -629,13 +629,13 @@ export default function VehicleIntakePage() {
                 }
               />
             </div>
-          </MuiCard>
+          </div>
         </div>
 
         {/* Right Column: Landed Cost & Photo Vault (4 cols) */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-5">
           {/* Landed Cost Financial Engine */}
-          <MuiCard elevation={2} className="p-5 border-t-4 border-t-primary space-y-4">
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-primary" />
@@ -735,10 +735,10 @@ export default function VehicleIntakePage() {
                 </span>
               </div>
             </div>
-          </MuiCard>
+          </div>
 
           {/* 40+ Photo Vault & Watermarking Card */}
-          <MuiCard elevation={1} className="p-5 space-y-4">
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ImageIcon className="h-5 w-5 text-primary" />
@@ -879,7 +879,7 @@ export default function VehicleIntakePage() {
             <p className="text-[10px] text-slate-400 text-center">
               Photo 1 is the primary showroom cover photo. Hover to change order or delete.
             </p>
-          </MuiCard>
+          </div>
 
           {/* Submit Action */}
           <MuiButton

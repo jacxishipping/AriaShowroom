@@ -146,11 +146,11 @@ export default function SarrafiSettlementPage() {
   const totalRemainingUSD = totalAmount - totalPaidUSD;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+    <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 space-y-4">
       {/* Top Navigation & Breadcrumbs (Hidden in Print) */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 print:hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800 print:hidden">
         <div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mb-0.5">
             <Link href="/" className="hover:text-primary transition-colors">
               Cockpit
             </Link>
@@ -167,47 +167,49 @@ export default function SarrafiSettlementPage() {
               Sarrafi Settlement
             </span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <Banknote className="h-6 w-6 text-emerald-600" />
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <Banknote className="h-5 w-5 text-emerald-600" />
             Sarrafi Settlement & Installment Ledger
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
             ثبت و مدیریت اسناد تسویه حساب صرافی مارکیت خراسان، قفل نرخ اسعار و جدول سررسید اقساط
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <MuiButton
             component={Link}
             href={`/vehicles/${vehicle.id}`}
             variant="outlined"
             color="inherit"
             size="small"
-            startIcon={<ArrowLeft className="h-4 w-4" />}
+            startIcon={<ArrowLeft className="h-3.5 w-3.5" />}
+            sx={{ fontSize: "11px", py: "3px" }}
           >
             Back to Vehicle
           </MuiButton>
           <MuiButton
             variant="contained"
             color="primary"
-            size="medium"
+            size="small"
             onClick={handlePrint}
-            startIcon={<Printer className="h-4 w-4" />}
+            startIcon={<Printer className="h-3.5 w-3.5" />}
+            sx={{ fontSize: "11px", py: "3px" }}
           >
-            Print Settlement Slip (چاپ رسید)
+            Print Settlement Slip
           </MuiButton>
         </div>
       </div>
 
       {/* Main Ledger Sheet */}
-      <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-lg border border-slate-200 dark:border-slate-800 dark:bg-[#111827] text-slate-900 dark:text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0 space-y-6">
+      <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-xs border border-slate-200/90 dark:border-slate-800/90 dark:bg-[#111827] text-slate-900 dark:text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0 space-y-4">
         {/* Deal Summary KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 text-center">
           <div>
             <span className="text-[10px] uppercase font-bold text-slate-400">
               Total Agreed Deal
             </span>
-            <p className="mt-1 text-xl font-black text-slate-900 dark:text-white print:text-black font-mono">
+            <p className="mt-1 text-lg font-extrabold text-slate-900 dark:text-white print:text-black font-mono">
               ${totalAmount.toLocaleString()} USD
             </p>
             <span className="text-[10px] text-slate-500">قیمت نهایی موتر</span>
@@ -217,7 +219,7 @@ export default function SarrafiSettlementPage() {
             <span className="text-[10px] uppercase font-bold text-slate-400">
               Locked Sarrafi Rate
             </span>
-            <p className="mt-1 text-xl font-black text-slate-900 dark:text-white print:text-black font-mono">
+            <p className="mt-1 text-lg font-extrabold text-slate-900 dark:text-white print:text-black font-mono">
               1 USD = {lockedRate} AFN
             </p>
             <span className="text-[10px] text-slate-500">نرخ توافق شده صرافی</span>
@@ -227,7 +229,7 @@ export default function SarrafiSettlementPage() {
             <span className="text-[10px] uppercase font-bold text-slate-400">
               Paid to Date
             </span>
-            <p className="mt-1 text-xl font-black text-emerald-600 font-mono">
+            <p className="mt-1 text-lg font-extrabold text-emerald-600 font-mono">
               ${totalPaidUSD.toLocaleString()} USD
             </p>
             <span className="text-[10px] text-slate-500">مجموع دریافتی تاکنون</span>
@@ -237,7 +239,7 @@ export default function SarrafiSettlementPage() {
             <span className="text-[10px] uppercase font-bold text-slate-400">
               Remaining Balance
             </span>
-            <p className="mt-1 text-xl font-black text-primary font-mono">
+            <p className="mt-1 text-lg font-extrabold text-primary font-mono">
               ${totalRemainingUSD.toLocaleString()} USD
             </p>
             <span className="text-[10px] text-slate-500">
@@ -247,7 +249,7 @@ export default function SarrafiSettlementPage() {
         </div>
 
         {/* Configuration Strip (Hidden in Print) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 print:hidden p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 print:hidden p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
           <MuiTextField
             select
             label="Payment Channel (کانال تسویه مالی)"
@@ -277,16 +279,16 @@ export default function SarrafiSettlementPage() {
         </div>
 
         {/* Buyer Particulars Card */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold">
-              <User className="h-5 w-5" />
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold">
+              <User className="h-4 w-4" />
             </div>
             <div>
               <span className="text-[10px] text-slate-400 block uppercase font-mono">
                 Buyer Dossier & National ID
               </span>
-              <span className="font-bold text-slate-900 dark:text-white text-sm">
+              <span className="font-bold text-slate-900 dark:text-white text-xs">
                 {customerName} • {customerTazkira}
               </span>
             </div>
@@ -303,41 +305,41 @@ export default function SarrafiSettlementPage() {
         </div>
 
         {/* Milestone Schedule Table */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-slate-900 dark:text-white text-sm uppercase tracking-wider flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span>Milestone Payment Schedule & Due Dates (جدول اقساط و موعدها)</span>
+            <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-primary" />
+              <span>Milestone Payment Schedule (جدول اقساط و موعدها)</span>
             </h3>
-            <span className="text-xs text-slate-400 print:hidden">
+            <span className="text-[10px] text-slate-400 print:hidden">
               Click status tag to toggle PAID / PENDING
             </span>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 print:border-gray-400">
+          <div className="overflow-x-auto rounded-xl border border-slate-200/90 dark:border-slate-800/90 print:border-gray-400">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100 dark:bg-slate-800 font-bold print:bg-gray-100">
+              <thead className="bg-slate-50 dark:bg-slate-900/60 font-bold print:bg-gray-100 border-b border-slate-200/90 dark:border-slate-800">
                 <tr>
-                  <th className="p-3.5">Milestone Description (شرح قسط)</th>
-                  <th className="p-3.5">Due Date (موعد پرداخت)</th>
-                  <th className="p-3.5">Amount (USD)</th>
-                  <th className="p-3.5">Amount (AFN)</th>
-                  <th className="p-3.5 text-center">Status</th>
-                  <th className="p-3.5 text-right print:hidden">WhatsApp Notice</th>
+                  <th className="px-3 py-2 text-[11px]">Milestone Description</th>
+                  <th className="px-3 py-2 text-[11px]">Due Date</th>
+                  <th className="px-3 py-2 text-[11px]">Amount (USD)</th>
+                  <th className="px-3 py-2 text-[11px]">Amount (AFN)</th>
+                  <th className="px-3 py-2 text-center text-[11px]">Status</th>
+                  <th className="px-3 py-2 text-right print:hidden text-[11px]">WhatsApp Notice</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800 print:divide-gray-300">
+              <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800/80 print:divide-gray-300">
                 {milestones.map((m) => (
                   <tr
                     key={m.id}
                     className={
                       m.status === "PAID"
-                        ? "bg-emerald-50/40 dark:bg-emerald-950/20"
+                        ? "bg-emerald-50/30 dark:bg-emerald-950/20"
                         : ""
                     }
                   >
-                    <td className="p-3.5">
-                      <span className="font-bold text-slate-900 dark:text-white block">
+                    <td className="px-3 py-2">
+                      <span className="font-bold text-slate-900 dark:text-white block text-xs">
                         {m.milestoneName}
                       </span>
                       <span className="text-[10px] font-dari text-slate-500">
@@ -345,22 +347,22 @@ export default function SarrafiSettlementPage() {
                       </span>
                     </td>
 
-                    <td className="p-3.5 font-mono text-slate-700 dark:text-slate-300">
+                    <td className="px-3 py-2 font-mono text-xs text-slate-700 dark:text-slate-300">
                       {m.dueDate}
                     </td>
 
-                    <td className="p-3.5 font-mono font-bold text-slate-900 dark:text-white">
+                    <td className="px-3 py-2 font-mono font-bold text-slate-900 dark:text-white text-xs">
                       ${m.amountUsd.toLocaleString()}
                     </td>
 
-                    <td className="p-3.5 font-mono text-slate-700 dark:text-slate-300">
+                    <td className="px-3 py-2 font-mono text-slate-700 dark:text-slate-300 text-xs">
                       {Math.round(m.amountUsd * lockedRate).toLocaleString()} AFN
                     </td>
 
-                    <td className="p-3.5 text-center">
+                    <td className="px-3 py-2 text-center">
                       <button
                         onClick={() => handleToggleMilestone(m.id)}
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold cursor-pointer transition-colors ${
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold cursor-pointer transition-colors ${
                           m.status === "PAID"
                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
                             : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30"
@@ -369,30 +371,30 @@ export default function SarrafiSettlementPage() {
                         {m.status === "PAID" ? (
                           <>
                             <CheckCircle2 className="h-3 w-3" />
-                            <span>PAID (پرداخت شد)</span>
+                            <span>PAID</span>
                           </>
                         ) : (
                           <>
                             <Clock className="h-3 w-3" />
-                            <span>PENDING (باقی‌مانده)</span>
+                            <span>PENDING</span>
                           </>
                         )}
                       </button>
                     </td>
 
-                    <td className="p-3.5 text-right print:hidden">
+                    <td className="px-3 py-2 text-right print:hidden">
                       {m.status !== "PAID" ? (
                         <a
                           href={generateWhatsAppReminder(m)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1 text-xs font-bold text-white hover:bg-emerald-500 transition-colors shadow-2xs"
+                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-emerald-500 transition-colors shadow-2xs"
                         >
                           <Send className="h-3 w-3" />
-                          <span>WhatsApp Reminder</span>
+                          <span>WhatsApp</span>
                         </a>
                       ) : (
-                        <span className="text-[11px] text-emerald-600 font-semibold">
+                        <span className="text-[10px] text-emerald-600 font-semibold font-mono">
                           Settled ✓
                         </span>
                       )}

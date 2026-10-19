@@ -64,16 +64,16 @@ function VerifyContent() {
   const isVerified = Boolean(matchedSale || matchedInvoice || matchedVehicle);
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-[#0B0F19] py-10 px-4 sm:px-6 lg:px-8 print:p-0 print:bg-white text-slate-900 dark:text-slate-100">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-100 dark:bg-[#0B0F19] py-6 px-4 sm:px-6 lg:px-8 print:p-0 print:bg-white text-slate-900 dark:text-slate-100">
+      <div className="max-w-3xl mx-auto space-y-5">
         {/* Public Portal Top Header (Hidden in Print) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 print:hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200/90 dark:border-slate-800/90 print:hidden">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md">
-              <ShieldCheck className="h-6 w-6" />
+            <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
+              <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
+              <h1 className="text-lg font-bold text-slate-900 dark:text-white">
                 Official Vehicle Verification Portal
               </h1>
               <p className="text-xs text-slate-500">
@@ -100,7 +100,7 @@ function VerifyContent() {
         </div>
 
         {/* Verification Query Search Box (Hidden in Print) */}
-        <MuiCard elevation={1} className="p-4 print:hidden border border-slate-200 dark:border-slate-800">
+        <div className="p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs print:hidden">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -121,24 +121,24 @@ function VerifyContent() {
               type="submit"
               variant="contained"
               color="primary"
-              size="medium"
+              size="small"
               startIcon={<Search className="h-4 w-4" />}
             >
               Verify Certificate
             </MuiButton>
           </form>
-        </MuiCard>
+        </div>
 
         {/* Official Verification Certificate Document */}
-        <div className="bg-white dark:bg-[#121824] rounded-2xl border-2 border-slate-300 dark:border-slate-700 shadow-xl p-6 sm:p-10 relative overflow-hidden print:border-none print:shadow-none print:p-0">
+        <div className="bg-white dark:bg-[#121824] rounded-2xl border border-slate-200/90 dark:border-slate-800/90 shadow-sm p-6 sm:p-8 relative overflow-hidden print:border-none print:shadow-none print:p-0">
           {/* Official Chamber Watermark Background */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] dark:opacity-[0.05]">
             <Building2 className="w-96 h-96" />
           </div>
 
           {/* Certificate Header */}
-          <div className="text-center pb-6 border-b-2 border-slate-200 dark:border-slate-700 space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+          <div className="text-center pb-5 border-b border-slate-200/90 dark:border-slate-800/90 space-y-1.5">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
               Islamic Emirate of Afghanistan • Herat Chamber of Commerce
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
@@ -150,16 +150,16 @@ function VerifyContent() {
           </div>
 
           {/* Status Badge Ribbon */}
-          <div className="my-6 p-4 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-between">
+          <div className="my-4 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md">
-                <CheckCircle2 className="h-6 w-6" />
+              <div className="h-8 w-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                <CheckCircle2 className="h-5 w-5" />
               </div>
               <div>
                 <span className="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">
                   LEGAL STATUS: AUTHENTIC & VERIFIED
                 </span>
-                <span className="text-xs text-slate-600 dark:text-slate-300">
+                <span className="text-[11px] text-slate-600 dark:text-slate-300">
                   Registered in Herat Showroom Digital Registry with clean title.
                 </span>
               </div>
@@ -168,12 +168,12 @@ function VerifyContent() {
           </div>
 
           {/* Verification Details Table */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 pb-1 border-b border-slate-100 dark:border-slate-800">
               Vehicle Dossier & Legal Parameters
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Vehicle Specification</span>
                 <span className="text-sm font-bold text-slate-900 dark:text-white mt-0.5 block">

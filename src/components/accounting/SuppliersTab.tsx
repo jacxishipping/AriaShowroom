@@ -94,97 +94,96 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Top AP Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MuiCard elevation={1} className="p-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Payables (باقیداری تامین‌کنندگان)
+              Total Payables (باقیداری)
             </span>
-            <span className="rounded-full bg-rose-50 dark:bg-rose-950/40 p-1.5 text-rose-600 dark:text-rose-400">
-              <DollarSign className="h-4 w-4" />
+            <span className="p-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40">
+              <DollarSign className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">
+          <p className="mt-1.5 text-xl font-extrabold font-mono text-rose-600 dark:text-rose-400 tracking-tight">
             ${totalPayablesUSD.toLocaleString()}
           </p>
-          <p className="mt-1 text-xs text-slate-500 font-mono">
-            ؋ {totalPayablesAFN.toLocaleString()} AFN (@ {exchangeRate})
+          <p className="mt-0.5 text-[11px] text-slate-500 font-mono">
+            ؋ {totalPayablesAFN.toLocaleString()} AFN
           </p>
-        </MuiCard>
+        </div>
 
-        <MuiCard elevation={1} className="p-5">
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Active Suppliers (همکاران تجاری)
+              Active Suppliers (همکاران)
             </span>
-            <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 p-1.5 text-blue-600 dark:text-blue-400">
-              <Building2 className="h-4 w-4" />
+            <span className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
+              <Building2 className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono text-slate-900 dark:text-white">
+          <p className="mt-1.5 text-xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
             {suppliers.length}
           </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Dubai, Japan, Iran & Overland transit routes
+          <p className="mt-0.5 text-[11px] text-slate-500">
+            Dubai, Japan, Iran & Overland
           </p>
-        </MuiCard>
+        </div>
 
-        <MuiCard elevation={1} className="p-5">
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Balances Pending Settlement
+              Pending Settlement
             </span>
-            <span className="rounded-full bg-amber-50 dark:bg-amber-950/40 p-1.5 text-amber-600 dark:text-amber-400">
-              <Clock className="h-4 w-4" />
+            <span className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40">
+              <Clock className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
+          <p className="mt-1.5 text-xl font-extrabold font-mono text-amber-600 dark:text-amber-400 tracking-tight">
             {activeOwingCount} Accounts
           </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Awaiting Hawala exchange clearance
+          <p className="mt-0.5 text-[11px] text-slate-500">
+            Awaiting Hawala exchange
           </p>
-        </MuiCard>
+        </div>
 
-        <MuiCard elevation={1} className="p-5">
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Cleared / In Good Standing
+              Cleared Standing
             </span>
-            <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 p-1.5 text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="h-4 w-4" />
+            <span className="p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
+              <CheckCircle2 className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
+          <p className="mt-1.5 text-xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
             {settledCount} Accounts
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-0.5 text-[11px] text-slate-500">
             Zero outstanding balance
           </p>
-        </MuiCard>
+        </div>
       </div>
 
       {/* Control Bar: Search, Country Filter, and Add Supplier */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex flex-1 items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+        <div className="flex flex-1 items-center gap-2">
           <MuiTextField
             size="small"
             placeholder="Search supplier, contact, city..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            startAdornment={<Search className="h-4 w-4 text-slate-400" />}
-            sx={{ minWidth: 220, maxWidth: 360 }}
+            startAdornment={<Search className="h-3.5 w-3.5 text-slate-400" />}
+            sx={{ minWidth: 200, maxWidth: 300 }}
           />
 
           <MuiTextField
             select
             size="small"
-            label="Origin Country"
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
-            sx={{ minWidth: 160 }}
+            sx={{ minWidth: 140 }}
           >
             <MenuItem value="all">All Origins</MenuItem>
             <MenuItem value="uae">UAE (Dubai)</MenuItem>
@@ -314,63 +313,63 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
       )}
 
       {/* Suppliers Table */}
-      <MuiCard elevation={1} className="overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] shadow-xs overflow-hidden">
+        <div className="px-3.5 py-2.5 border-b border-slate-200/90 dark:border-slate-800/90 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/30">
           <div>
-            <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+            <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
               Supplier Accounts & Running Ledger (دفتر حسابات تامین‌کنندگان)
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Click &quot;View Statement&quot; to review purchase bills, Hawala settlements, or issue a payment voucher.
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Review purchase bills, Hawala settlements, or issue a payment voucher.
             </p>
           </div>
-          <span className="text-xs font-mono text-slate-400">
+          <span className="text-[11px] font-mono text-slate-400">
             {filteredSuppliers.length} records
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <MuiTable dense>
+          <MuiTable dense size="small" className="w-full">
             <MuiTableHead>
               <MuiTableRow hover={false}>
                 <MuiTableCell header>Supplier / Company</MuiTableCell>
                 <MuiTableCell header>Country & Port</MuiTableCell>
-                <MuiTableCell header>Contact & Communication</MuiTableCell>
-                <MuiTableCell header>Settlement Safe / Sarrafi</MuiTableCell>
-                <MuiTableCell header align="right">Outstanding Balance</MuiTableCell>
-                <MuiTableCell header align="center">Actions</MuiTableCell>
+                <MuiTableCell header>Contact & Details</MuiTableCell>
+                <MuiTableCell header>Settlement Safe</MuiTableCell>
+                <MuiTableCell header align="right">Balance</MuiTableCell>
+                <MuiTableCell header align="center">Action</MuiTableCell>
               </MuiTableRow>
             </MuiTableHead>
             <MuiTableBody>
               {filteredSuppliers.map((sup) => (
                 <MuiTableRow key={sup.id}>
                   <MuiTableCell>
-                    <div className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
+                    <div className="font-bold text-slate-900 dark:text-white text-xs">
                       {sup.companyName}
                     </div>
-                    <div className="text-[11px] text-slate-400">
-                      Representative: {sup.contactName}
+                    <div className="text-[10px] text-slate-400">
+                      Rep: {sup.contactName}
                     </div>
                   </MuiTableCell>
 
                   <MuiTableCell>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300">
                       <Globe className="h-3 w-3 text-slate-400" />
-                      <span>{sup.country}</span>
+                      <span className="truncate max-w-[120px]">{sup.country}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                    <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5">
                       <MapPin className="h-2.5 w-2.5" />
                       <span>{sup.city}</span>
                     </div>
                   </MuiTableCell>
 
                   <MuiTableCell>
-                    <div className="flex items-center gap-1.5 font-mono text-xs text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center gap-1 font-mono text-xs text-slate-700 dark:text-slate-300">
                       <Phone className="h-3 w-3 text-slate-400" />
                       <span>{sup.phone || "—"}</span>
                     </div>
                     {sup.whatsapp && (
-                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono">
+                      <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono">
                         <MessageCircle className="h-2.5 w-2.5" />
                         <span>{sup.whatsapp}</span>
                       </div>
@@ -380,7 +379,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                   <MuiTableCell>
                     <div className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
                       <Landmark className="h-3 w-3 text-slate-400 shrink-0" />
-                      <span className="truncate max-w-[200px]" title={sup.bankOrSarrafiAccount}>
+                      <span className="truncate max-w-[160px]" title={sup.bankOrSarrafiAccount}>
                         {sup.bankOrSarrafiAccount || "Cash Safe"}
                       </span>
                     </div>
@@ -388,7 +387,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
 
                   <MuiTableCell align="right">
                     <div
-                      className={`font-mono font-bold text-sm ${
+                      className={`font-mono font-bold text-xs ${
                         sup.balanceUSD > 0
                           ? "text-rose-600 dark:text-rose-400"
                           : "text-emerald-600 dark:text-emerald-400"
@@ -396,31 +395,30 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                     >
                       ${sup.balanceUSD.toLocaleString()} USD
                     </div>
-                    <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                    <div className="text-[10px] font-mono text-slate-400">
                       ؋ {Math.round(sup.balanceUSD * exchangeRate).toLocaleString()} AFN
                     </div>
                   </MuiTableCell>
 
                   <MuiTableCell align="center">
-                    <div className="flex items-center justify-center gap-2">
-                      <MuiButton
-                        component={Link}
-                        href={`/accounting/suppliers/${sup.id}`}
-                        variant="outlined"
-                        size="small"
-                        color="primary"
-                        startIcon={<Eye className="h-3 w-3" />}
-                      >
-                        Ledger Statement
-                      </MuiButton>
-                    </div>
+                    <MuiButton
+                      component={Link}
+                      href={`/accounting/suppliers/${sup.id}`}
+                      variant="outlined"
+                      size="small"
+                      color="primary"
+                      sx={{ fontSize: "10px", py: "2px", px: "6px" }}
+                      startIcon={<Eye className="h-3 w-3" />}
+                    >
+                      Statement
+                    </MuiButton>
                   </MuiTableCell>
                 </MuiTableRow>
               ))}
             </MuiTableBody>
           </MuiTable>
         </div>
-      </MuiCard>
+      </div>
     </div>
   );
 }

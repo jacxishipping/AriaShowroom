@@ -105,9 +105,9 @@ export default function VehicleDeedPage() {
   const remainingBalanceUSD = vehicle.sellingPrice - downPaymentUSD;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+    <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 lg:px-8 space-y-4">
       {/* Top Navigation & Action Toolbar (Hidden in Print) */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 print:hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200/90 dark:border-slate-800/90 print:hidden">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
             <Link href="/" className="hover:text-primary transition-colors">
@@ -126,16 +126,16 @@ export default function VehicleDeedPage() {
               Sales Deed
             </span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
             Official Bilingual Sales Deed & Title Contract
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             قباله رسمی و خط بیعانه معامله موتر نندارتون موتر سدوزی هرات (مطابق اصول شرعی و مکتوب رسمی گمرک اسلام قلعه)
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <MuiButton
             component={Link}
             href={`/vehicles/${vehicle.id}`}
@@ -158,7 +158,7 @@ export default function VehicleDeedPage() {
           <MuiButton
             variant="contained"
             color="primary"
-            size="medium"
+            size="small"
             onClick={handlePrint}
             startIcon={<Printer className="h-4 w-4" />}
           >
@@ -168,7 +168,7 @@ export default function VehicleDeedPage() {
       </div>
 
       {/* Live Buyer Data Entry Strip (Hidden in Print) */}
-      <MuiCard elevation={1} className="p-4 bg-slate-50/80 dark:bg-slate-900/60 print:hidden space-y-3">
+      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-4 shadow-xs print:hidden space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
             Live Contract Data Entry (مشخصات خریدار و بیعانه جهت درج در قباله):
@@ -204,10 +204,10 @@ export default function VehicleDeedPage() {
             sizeVariant="small"
           />
         </div>
-      </MuiCard>
+      </div>
 
       {/* Printable Deed Certificate (Clean white background for physical printing) */}
-      <div className="rounded-2xl bg-white p-6 sm:p-10 shadow-lg border border-slate-200 dark:border-slate-800 dark:bg-[#111827] text-slate-900 dark:text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0">
+      <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-200/90 dark:border-slate-800/90 dark:bg-[#111827] text-slate-900 dark:text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0">
         <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-center justify-between border-b-2 border-slate-900 dark:border-slate-100 pb-5 gap-4 print:border-black">

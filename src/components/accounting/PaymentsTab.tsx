@@ -126,99 +126,98 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Top Cashflow Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MuiCard elevation={1} className="p-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Inflows (مجموع عواید دریافتی)
+              Total Inflows (عواید)
             </span>
-            <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 p-1.5 text-emerald-600 dark:text-emerald-400">
-              <ArrowDownLeft className="h-4 w-4" />
+            <span className="p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
+              <ArrowDownLeft className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
+          <p className="mt-1.5 text-xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
             +${totalInflowsUSD.toLocaleString()}
           </p>
-          <p className="mt-1 text-xs text-slate-500 font-mono">
+          <p className="mt-0.5 text-[11px] text-slate-500 font-mono">
             ؋ {(totalInflowsUSD * exchangeRate).toLocaleString()} AFN
           </p>
-        </MuiCard>
+        </div>
 
-        <MuiCard elevation={1} className="p-5">
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Outflows (مجموع پرداختی‌ها)
+              Total Outflows (پرداختی‌ها)
             </span>
-            <span className="rounded-full bg-rose-50 dark:bg-rose-950/40 p-1.5 text-rose-600 dark:text-rose-400">
-              <ArrowUpRight className="h-4 w-4" />
+            <span className="p-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40">
+              <ArrowUpRight className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">
+          <p className="mt-1.5 text-xl font-extrabold font-mono text-rose-600 dark:text-rose-400 tracking-tight">
             -${totalOutflowsUSD.toLocaleString()}
           </p>
-          <p className="mt-1 text-xs text-slate-500 font-mono">
+          <p className="mt-0.5 text-[11px] text-slate-500 font-mono">
             ؋ {(totalOutflowsUSD * exchangeRate).toLocaleString()} AFN
           </p>
-        </MuiCard>
+        </div>
 
-        <MuiCard elevation={1} className="p-5">
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Net Showroom Cashflow (خالص نقدی)
+              Net Cashflow (خالص)
             </span>
-            <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 p-1.5 text-blue-600 dark:text-blue-400">
-              <DollarSign className="h-4 w-4" />
+            <span className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
+              <DollarSign className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className={`mt-2 text-2xl font-bold font-mono ${netCashflowUSD >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+          <p className={`mt-1.5 text-xl font-extrabold font-mono tracking-tight ${netCashflowUSD >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
             {netCashflowUSD >= 0 ? "+" : ""}${netCashflowUSD.toLocaleString()}
           </p>
-          <p className="mt-1 text-xs text-slate-500 font-mono">
+          <p className="mt-0.5 text-[11px] text-slate-500 font-mono">
             ؋ {netCashflowAFN.toLocaleString()} AFN
           </p>
-        </MuiCard>
+        </div>
 
-        <MuiCard elevation={1} className="p-5">
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Vouchers Audited
+              Audited Vouchers
             </span>
-            <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 p-1.5 text-purple-600 dark:text-purple-400">
-              <FileCheck2 className="h-4 w-4" />
+            <span className="p-1 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/40">
+              <FileCheck2 className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono text-slate-900 dark:text-white">
+          <p className="mt-1.5 text-xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
             {payments.length}
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-0.5 text-[11px] text-slate-500">
             Cash, Hawala & Sarrafi vouchers
           </p>
-        </MuiCard>
+        </div>
       </div>
 
       {/* Control Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex flex-1 flex-wrap items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+        <div className="flex flex-1 flex-wrap items-center gap-2">
           <MuiTextField
             size="small"
-            placeholder="Search voucher #, party, hawala ref..."
+            placeholder="Search voucher #, party, hawala..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            startAdornment={<Search className="h-4 w-4 text-slate-400" />}
-            sx={{ minWidth: 200, maxWidth: 320 }}
+            startAdornment={<Search className="h-3.5 w-3.5 text-slate-400" />}
+            sx={{ minWidth: 180, maxWidth: 260 }}
           />
 
           <MuiTextField
             select
             size="small"
-            label="Voucher Type"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            sx={{ minWidth: 170 }}
+            sx={{ minWidth: 140 }}
           >
-            <MenuItem value="all">All Voucher Types</MenuItem>
+            <MenuItem value="all">All Types</MenuItem>
             <MenuItem value="CUSTOMER_PAYMENT">Customer Receipts (دریافتی)</MenuItem>
             <MenuItem value="SUPPLIER_PAYMENT">Supplier Hawala (تامین‌کننده)</MenuItem>
             <MenuItem value="EXPENSE_PAYMENT">Expense Outlays (مصارف)</MenuItem>
@@ -227,15 +226,14 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
           <MuiTextField
             select
             size="small"
-            label="Payment Channel"
             value={methodFilter}
             onChange={(e) => setMethodFilter(e.target.value)}
-            sx={{ minWidth: 170 }}
+            sx={{ minWidth: 130 }}
           >
             <MenuItem value="all">All Channels</MenuItem>
-            <MenuItem value="cash">Cash Safe (نقدی صندوق)</MenuItem>
-            <MenuItem value="hawala">Sarrafi Hawala (حواله صرافی)</MenuItem>
-            <MenuItem value="bank">Bank Transfer (بانک)</MenuItem>
+            <MenuItem value="cash">Cash Safe (نقدی)</MenuItem>
+            <MenuItem value="hawala">Sarrafi (حواله)</MenuItem>
+            <MenuItem value="bank">Bank Wire (بانک)</MenuItem>
           </MuiTextField>
         </div>
 
@@ -244,9 +242,10 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
           color="primary"
           size="small"
           onClick={() => setIsCreating(!isCreating)}
-          startIcon={isCreating ? undefined : <Plus className="h-4 w-4" />}
+          startIcon={isCreating ? undefined : <Plus className="h-3.5 w-3.5" />}
+          sx={{ fontSize: "11px", py: "5px" }}
         >
-          {isCreating ? "Cancel" : "Record Payment / Receipt Voucher"}
+          {isCreating ? "Cancel" : "Record Voucher"}
         </MuiButton>
       </div>
 
@@ -383,33 +382,33 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
       )}
 
       {/* Payment Vouchers Table */}
-      <MuiCard elevation={1} className="overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] shadow-xs overflow-hidden">
+        <div className="px-3.5 py-2.5 border-b border-slate-200/90 dark:border-slate-800/90 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/30">
           <div>
-            <h3 className="font-bold text-slate-900 dark:text-white text-sm">
-              Official Payment & Receipt Vouchers (اسناد دریافت و پرداخت صرافی)
+            <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
+              Payment & Receipt Vouchers (اسناد دریافت و پرداخت صرافی)
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Dual-currency accounting audit trail with verified QR codes and Sarrafi Hawala tracking.
             </p>
           </div>
-          <span className="text-xs font-mono text-slate-400">
+          <span className="text-[11px] font-mono text-slate-400">
             {filteredPayments.length} vouchers
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <MuiTable dense>
+          <MuiTable dense size="small" className="w-full">
             <MuiTableHead>
               <MuiTableRow hover={false}>
                 <MuiTableCell header>Voucher #</MuiTableCell>
                 <MuiTableCell header>Type</MuiTableCell>
                 <MuiTableCell header>Party / Recipient</MuiTableCell>
                 <MuiTableCell header>Method & Account</MuiTableCell>
-                <MuiTableCell header>Reference / Purpose</MuiTableCell>
+                <MuiTableCell header>Purpose / Ref</MuiTableCell>
                 <MuiTableCell header>Date</MuiTableCell>
                 <MuiTableCell header align="right">Amount (USD & AFN)</MuiTableCell>
-                <MuiTableCell header align="center">Actions</MuiTableCell>
+                <MuiTableCell header align="center">Action</MuiTableCell>
               </MuiTableRow>
             </MuiTableHead>
             <MuiTableBody>
@@ -417,7 +416,7 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
                 const badge = getTypeBadge(vch.voucherType);
                 return (
                   <MuiTableRow key={vch.id}>
-                    <MuiTableCell className="font-mono font-bold text-xs text-[#1976D2] dark:text-[#42A5F5]">
+                    <MuiTableCell className="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">
                       {vch.voucherNumber}
                     </MuiTableCell>
 
@@ -434,7 +433,7 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
                         {vch.partyName}
                       </div>
                       {vch.partyPhone && (
-                        <div className="text-[11px] font-mono text-slate-400">
+                        <div className="text-[10px] font-mono text-slate-400">
                           {vch.partyPhone}
                         </div>
                       )}
@@ -444,13 +443,13 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
                       <div className="text-xs text-slate-800 dark:text-slate-200">
                         {vch.paymentMethod}
                       </div>
-                      <div className="text-[11px] text-slate-400 truncate max-w-[180px]" title={vch.sarrafiAccount}>
+                      <div className="text-[10px] text-slate-400 truncate max-w-[150px]" title={vch.sarrafiAccount}>
                         {vch.sarrafiAccount || "Central Cash Safe"}
                       </div>
                     </MuiTableCell>
 
                     <MuiTableCell>
-                      <div className="text-xs text-slate-700 dark:text-slate-300">
+                      <div className="text-xs text-slate-700 dark:text-slate-300 truncate max-w-[170px]" title={vch.purpose}>
                         {vch.purpose}
                       </div>
                       {vch.referenceNumber && (
@@ -460,13 +459,13 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
                       )}
                     </MuiTableCell>
 
-                    <MuiTableCell className="font-mono text-xs text-slate-500">
+                    <MuiTableCell className="font-mono text-[11px] text-slate-500">
                       {vch.date}
                     </MuiTableCell>
 
                     <MuiTableCell align="right">
                       <div
-                        className={`font-mono font-bold text-sm ${
+                        className={`font-mono font-bold text-xs ${
                           vch.voucherType === "CUSTOMER_PAYMENT"
                             ? "text-emerald-600 dark:text-emerald-400"
                             : "text-rose-600 dark:text-rose-400"
@@ -474,7 +473,7 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
                       >
                         {vch.voucherType === "CUSTOMER_PAYMENT" ? "+" : "-"}${vch.amountUSD.toLocaleString()} USD
                       </div>
-                      <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                      <div className="text-[10px] font-mono text-slate-400">
                         ؋ {vch.amountAFN.toLocaleString()} AFN
                       </div>
                     </MuiTableCell>
@@ -486,9 +485,10 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
                         variant="outlined"
                         size="small"
                         color="primary"
+                        sx={{ fontSize: "10px", py: "2px", px: "6px" }}
                         startIcon={<Printer className="h-3 w-3" />}
                       >
-                        Print Voucher
+                        Print
                       </MuiButton>
                     </MuiTableCell>
                   </MuiTableRow>
@@ -497,7 +497,7 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
             </MuiTableBody>
           </MuiTable>
         </div>
-      </MuiCard>
+      </div>
     </div>
   );
 }

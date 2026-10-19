@@ -174,51 +174,51 @@ export default function LogisticsAndCustomsPage() {
       </div>
 
       {/* Transit Pipeline Stepper */}
-      <MuiCard elevation={1} className="p-6 border border-slate-200/80 dark:border-slate-800">
-        <div className="mb-4">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+      <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs">
+        <div className="mb-3">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
             Automotive Supply Chain Corridor
           </span>
-          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white">
             {language === "ps"
-              ? "له مبدأ څخه تر هرات نندارتون پورې ۵ میاشتني او لوژستیکي پړاوونه"
+              ? "له مبدأ څخه تر هرات نندارتون پورې ۵ لوژستیکي پړاوونه"
               : language === "fa"
               ? "مراحل ۵ گانه ترانزیت، بارگیری و ترخیص گمرکی موترها"
               : "5-Stage Port-to-Showroom Transit & Clearance Pipeline"}
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 relative">
-          {milestones.map((m, idx) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5">
+          {milestones.map((m) => (
             <div
               key={m.id}
-              className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 relative group hover:border-blue-500/40 transition-all"
+              className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/60 relative group hover:border-blue-500/40 transition-all"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 text-xs font-mono font-bold flex items-center justify-center text-slate-700 dark:text-slate-300">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="h-5 w-5 rounded-full bg-slate-200 dark:bg-slate-800 text-[10px] font-mono font-bold flex items-center justify-center text-slate-700 dark:text-slate-300">
                   {m.id}
                 </span>
-                <span className="p-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                  <m.icon className="h-4 w-4" />
+                <span className="p-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <m.icon className="h-3.5 w-3.5" />
                 </span>
               </div>
               <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
                 {language === "fa" || language === "ps" ? m.titleDari : m.title}
               </h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
                 {m.desc}
               </p>
             </div>
           ))}
         </div>
-      </MuiCard>
+      </div>
 
       {/* Active In-Transit Vehicles & Gomrok Calculator Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column: Active In-Transit Shipments (7 cols) */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+        <div className="lg:col-span-7 space-y-3">
+          <div className="flex items-center justify-between pb-1">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
               <Truck className="h-4 w-4 text-amber-500" />
               {language === "ps"
                 ? `په ترانزیت کې موټرونه (${inTransitVehicles.length})`
@@ -226,32 +226,31 @@ export default function LogisticsAndCustomsPage() {
                 ? `موترهای در حال ترانزیت به هرات (${inTransitVehicles.length})`
                 : `Shipments En Route to Herat (${inTransitVehicles.length})`}
             </h3>
-            <span className="text-xs text-slate-500 font-mono">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
               Via Islam Qala Port Corridor
             </span>
           </div>
 
           {inTransitVehicles.length === 0 ? (
-            <MuiCard elevation={1} className="p-8 text-center border border-dashed border-slate-300 dark:border-slate-800">
-              <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+            <div className="p-8 text-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-[#121824]">
+              <CheckCircle2 className="h-9 w-9 text-emerald-500 mx-auto mb-2" />
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                 All Inventory Units Safely on Showroom Lot
               </h4>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+              <p className="text-[11px] text-slate-500 max-w-sm mx-auto mt-1">
                 There are no open transit shipments. Click "Intake Transit Stock" to record incoming vehicles from Dubai or Korea.
               </p>
-            </MuiCard>
+            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {inTransitVehicles.map((veh) => (
-                <MuiCard
+                <div
                   key={veh.id}
-                  elevation={1}
-                  className="p-4 border border-slate-200 dark:border-slate-800 hover:border-blue-500/40 transition-all"
+                  className="p-3 rounded-xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs hover:border-blue-500/40 transition-all"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative h-16 w-24 shrink-0 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="relative h-14 w-20 shrink-0 rounded-lg overflow-hidden border border-slate-200/90 dark:border-slate-750">
                         <Image
                           src={veh.images[0] || "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=600&q=80"}
                           alt={veh.model}
@@ -259,25 +258,27 @@ export default function LogisticsAndCustomsPage() {
                           className="object-cover"
                         />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
                             {veh.year} {veh.make} {veh.model}
                           </span>
-                          <MuiChip label="In Transit" size="small" color="warning" />
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            In Transit
+                          </span>
                         </div>
-                        <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                        <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                           VIN: {veh.vin} • Origin: {veh.originCountry}
                         </div>
-                        <div className="text-[11px] text-emerald-600 font-bold mt-1 font-mono">
-                          Landed Cost: ${veh.landedCost.toLocaleString()} (incl. Gomrok ${veh.customsDuty.toLocaleString()})
+                        <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 font-mono">
+                          Landed: ${veh.landedCost.toLocaleString()} (Customs: ${veh.customsDuty.toLocaleString()})
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800">
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between gap-1.5 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800/80 shrink-0">
                       <Link href={`/vehicles/${veh.id}`}>
-                        <MuiButton variant="outlined" size="small">
+                        <MuiButton variant="outlined" size="small" sx={{ fontSize: "11px", py: "3px", px: "8px" }}>
                           View Dossier
                         </MuiButton>
                       </Link>
@@ -285,35 +286,36 @@ export default function LogisticsAndCustomsPage() {
                         variant="contained"
                         color="success"
                         size="small"
+                        sx={{ fontSize: "11px", py: "3px", px: "8px" }}
                         onClick={() => handleMarkArrived(veh.id, veh.make, veh.model)}
-                        startIcon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                        startIcon={<CheckCircle2 className="h-3 w-3" />}
                       >
                         Clear Gomrok
                       </MuiButton>
                     </div>
                   </div>
-                </MuiCard>
+                </div>
               ))}
             </div>
           )}
         </div>
 
         {/* Right Column: Afghan Gomrok Customs Duty Estimator (5 cols) */}
-        <div className="lg:col-span-5 space-y-4">
-          <MuiCard elevation={1} className="p-5 border border-slate-200/80 dark:border-slate-800 space-y-4">
-            <div className="pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="lg:col-span-5 space-y-3">
+          <div className="p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs space-y-3">
+            <div className="pb-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Calculator className="h-4 w-4 text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                <Calculator className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                   Herat Gomrok Customs Estimator
                 </h3>
               </div>
               <span className="text-[10px] text-slate-400 font-mono">MoF Tariff Scale</span>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div>
-                <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                   Invoice / Purchase Value (USD)
                 </label>
                 <MuiTextField
@@ -325,10 +327,10 @@ export default function LogisticsAndCustomsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-500 mb-1">
-                    Engine Displacement (CC)
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Displacement (CC)
                   </label>
                   <MuiTextField
                     select
@@ -346,7 +348,7 @@ export default function LogisticsAndCustomsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                     Powertrain Tech
                   </label>
                   <MuiTextField
@@ -364,36 +366,36 @@ export default function LogisticsAndCustomsPage() {
               </div>
 
               {/* Duty Breakdown Result Box */}
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 space-y-1.5">
+                <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-400">
                   <span>Customs Duty ({(tariffRate * 100).toFixed(0)}%):</span>
                   <span className="font-mono font-semibold">${estimatedDutyUSD.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-400">
                   <span>Islam Qala Dry Port Terminal Handling:</span>
                   <span className="font-mono font-semibold">${portHandlingFeeUSD}</span>
                 </div>
-                <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-400">
                   <span>TIR Carnet & Border Escort:</span>
                   <span className="font-mono font-semibold">${transitEscortFeeUSD}</span>
                 </div>
-                <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-400">
                   <span>Herat Municipality Road Maintenance:</span>
                   <span className="font-mono font-semibold">${municipalityRoadTaxUSD}</span>
                 </div>
 
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex justify-between text-sm font-bold text-slate-900 dark:text-white">
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex justify-between text-xs font-bold text-slate-900 dark:text-white">
                   <span>Total Landed Tariffs:</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400">
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
                     ${totalClearanceUSD.toLocaleString()} USD
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-400 block text-right font-mono">
+                <span className="text-[10px] text-slate-400 block text-right font-mono">
                   ≈ {(totalClearanceUSD * exchangeRate).toLocaleString()} AFN
                 </span>
               </div>
             </div>
-          </MuiCard>
+          </div>
         </div>
       </div>
     </div>

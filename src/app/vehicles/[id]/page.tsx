@@ -143,7 +143,7 @@ Please schedule a viewing or share more photos.`
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-8 pb-24">
+    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 space-y-5 pb-20">
       {/* Breadcrumb & Navigation Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/90 dark:border-slate-800/90 pb-3">
         <Link
@@ -430,9 +430,9 @@ Please schedule a viewing or share more photos.`
         </div>
 
         {/* Right Column: Pricing, Financing Calculator & CTAs */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-5">
           {/* Main Info Card */}
-          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-6 sm:p-7 shadow-xs">
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-5 sm:p-6 shadow-xs">
             <span className="text-[11px] font-mono font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
               {vehicle.make} • {vehicle.originCountry} Direct Import
             </span>
@@ -552,7 +552,7 @@ Please schedule a viewing or share more photos.`
             </div>
 
             {/* CTAs */}
-            <div className="mt-6 space-y-2.5">
+            <div className="mt-5 space-y-2">
               <MuiButton
                 component="a"
                 href={whatsappUrl}
@@ -561,7 +561,7 @@ Please schedule a viewing or share more photos.`
                 variant="contained"
                 color="success"
                 fullWidth
-                size="large"
+                size="medium"
                 startIcon={<Send className="h-4 w-4" />}
               >
                 Inquire directly on WhatsApp (واتساپ)
@@ -573,7 +573,7 @@ Please schedule a viewing or share more photos.`
                 variant="contained"
                 color="primary"
                 fullWidth
-                size="large"
+                size="medium"
                 startIcon={<FileText className="h-4 w-4" />}
               >
                 {t.generateDeed} (قباله رسمی با QR کد)
@@ -585,7 +585,7 @@ Please schedule a viewing or share more photos.`
                 variant="outlined"
                 color="inherit"
                 fullWidth
-                size="large"
+                size="medium"
                 startIcon={<Banknote className="h-4 w-4 text-warning" />}
               >
                 Sarrafi & Milestone Installment Ledger (تسویه حساب صرافی)
@@ -596,7 +596,7 @@ Please schedule a viewing or share more photos.`
                 variant="text"
                 color="inherit"
                 fullWidth
-                size="medium"
+                size="small"
                 startIcon={<Printer className="h-4 w-4" />}
               >
                 {t.printSpecSheet}
@@ -605,7 +605,7 @@ Please schedule a viewing or share more photos.`
           </div>
 
           {/* Interactive Installment & Financing Calculator */}
-          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-6 shadow-xs space-y-4">
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-5 shadow-xs space-y-3.5">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <Calculator className="h-4 w-4 text-primary" />
@@ -669,7 +669,7 @@ Please schedule a viewing or share more photos.`
           </div>
 
           {/* Description & Features Box */}
-          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-6 shadow-xs">
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-5 shadow-xs">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3">
               Description & Highlights
             </h3>

@@ -118,55 +118,70 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Top Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <MuiCard elevation={1} className="p-4 sm:p-5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            Total Commercial Invoices
-          </span>
-          <p className="mt-1 text-2xl font-bold font-mono text-slate-900 dark:text-white">
-            ${totalInvoiced.toLocaleString()} <span className="text-xs text-slate-400">USD</span>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Total Invoiced
+            </span>
+            <span className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
+              <DollarSign className="h-3.5 w-3.5" />
+            </span>
+          </div>
+          <p className="mt-1.5 text-xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
+            ${totalInvoiced.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
           </p>
-          <span className="text-xs font-mono text-slate-500">
+          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5">
             ؋{Math.round(totalInvoiced * exchangeRate).toLocaleString()} AFN
           </span>
-        </MuiCard>
+        </div>
 
-        <MuiCard elevation={1} className="p-4 sm:p-5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            Settled / Collected (تسویه‌شده)
-          </span>
-          <p className="mt-1 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
-            ${totalPaid.toLocaleString()} <span className="text-xs text-slate-400">USD</span>
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Settled / Collected (تسویه‌شده)
+            </span>
+            <span className="p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            </span>
+          </div>
+          <p className="mt-1.5 text-xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
+            ${totalPaid.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
           </p>
-          <span className="text-xs font-mono text-slate-500">
+          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5">
             ؋{Math.round(totalPaid * exchangeRate).toLocaleString()} AFN
           </span>
-        </MuiCard>
+        </div>
 
-        <MuiCard elevation={1} className="p-4 sm:p-5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            Outstanding Invoiced Balances
-          </span>
-          <p className="mt-1 text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
-            ${totalPending.toLocaleString()} <span className="text-xs text-slate-400">USD</span>
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Outstanding Balances
+            </span>
+            <span className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40">
+              <FileCheck2 className="h-3.5 w-3.5" />
+            </span>
+          </div>
+          <p className="mt-1.5 text-xl font-extrabold font-mono text-amber-600 dark:text-amber-400 tracking-tight">
+            ${totalPending.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
           </p>
-          <span className="text-xs font-mono text-slate-500">
+          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5">
             ؋{Math.round(totalPending * exchangeRate).toLocaleString()} AFN
           </span>
-        </MuiCard>
+        </div>
       </div>
 
       {/* Toolbar & Search */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
         <MuiTextField
           size="small"
           placeholder="Search invoice #, buyer, stock..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          startAdornment={<Search className="h-4 w-4 text-slate-400" />}
-          className="w-full sm:w-72"
+          startAdornment={<Search className="h-3.5 w-3.5 text-slate-400" />}
+          className="w-full sm:w-64"
         />
 
         <MuiButton
@@ -174,7 +189,8 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
           color="primary"
           size="small"
           onClick={() => setIsCreating(!isCreating)}
-          startIcon={<Plus className="h-4 w-4" />}
+          startIcon={<Plus className="h-3.5 w-3.5" />}
+          sx={{ fontSize: "11px", py: "5px" }}
         >
           {isCreating ? "Close Form" : "Generate Commercial Invoice"}
         </MuiButton>
@@ -182,13 +198,13 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
 
       {/* Invoice Generator Form */}
       {isCreating && (
-        <MuiCard elevation={1} className="p-6 space-y-4">
-          <h3 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
-            <FileCheck2 className="h-4 w-4 text-[#1976D2]" />
+        <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs space-y-3">
+          <h3 className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5 uppercase tracking-wider">
+            <FileCheck2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             Issue Official Commercial Invoice • صدور فاکتور رسمی تجارتی
           </h3>
 
-          <form onSubmit={handleCreateInvoice} className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <form onSubmit={handleCreateInvoice} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <MuiTextField
               label="Buyer Full Name (نام خریدار)"
               required
@@ -274,18 +290,18 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
             </MuiTextField>
 
             <div className="sm:col-span-3 flex justify-end">
-              <MuiButton type="submit" variant="contained" color="primary" size="medium">
+              <MuiButton type="submit" variant="contained" color="primary" size="small" sx={{ fontSize: "11px" }}>
                 Generate & Save Commercial Invoice
               </MuiButton>
             </div>
           </form>
-        </MuiCard>
+        </div>
       )}
 
       {/* Invoices Table */}
-      <MuiCard elevation={1}>
+      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <MuiTable dense>
+          <MuiTable dense size="small" className="w-full">
             <MuiTableHead>
               <MuiTableRow hover={false}>
                 <MuiTableCell header>Invoice #</MuiTableCell>
@@ -301,25 +317,25 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
             <MuiTableBody>
               {filteredInvoices.map((inv) => (
                 <MuiTableRow key={inv.id}>
-                  <MuiTableCell className="font-mono font-semibold text-[#1976D2] dark:text-[#42A5F5]">
+                  <MuiTableCell className="font-mono font-semibold text-blue-600 dark:text-blue-400 text-xs">
                     {inv.invoiceNumber}
                   </MuiTableCell>
-                  <MuiTableCell className="font-mono text-slate-500 text-xs">
+                  <MuiTableCell className="font-mono text-slate-500 text-[11px]">
                     {inv.issueDate}
                   </MuiTableCell>
                   <MuiTableCell>
-                    <div className="font-semibold text-slate-900 dark:text-white">{inv.customerName}</div>
-                    <div className="text-[11px] font-mono text-slate-400">{inv.customerPhone}</div>
+                    <div className="font-semibold text-slate-900 dark:text-white text-xs">{inv.customerName}</div>
+                    <div className="text-[10px] font-mono text-slate-400">{inv.customerPhone}</div>
                   </MuiTableCell>
                   <MuiTableCell>
-                    <div className="font-medium text-slate-800 dark:text-slate-200">{inv.vehicleDesc}</div>
-                    <div className="text-[11px] font-mono text-slate-400">{inv.vehicleStock}</div>
+                    <div className="font-medium text-slate-800 dark:text-slate-200 text-xs">{inv.vehicleDesc}</div>
+                    <div className="text-[10px] font-mono text-slate-400">{inv.vehicleStock}</div>
                   </MuiTableCell>
-                  <MuiTableCell className="font-mono text-slate-600 dark:text-slate-300">
+                  <MuiTableCell className="font-mono text-slate-600 dark:text-slate-300 text-xs">
                     ${inv.subtotalUSD.toLocaleString()}
                   </MuiTableCell>
                   <MuiTableCell>
-                    <div className="font-mono font-semibold text-slate-900 dark:text-white">
+                    <div className="font-mono font-semibold text-slate-900 dark:text-white text-xs">
                       ${inv.totalUSD.toLocaleString()}
                     </div>
                     <div className="text-[10px] font-mono text-slate-400">
@@ -327,11 +343,15 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                     </div>
                   </MuiTableCell>
                   <MuiTableCell>
-                    <MuiChip
-                      label={inv.status}
-                      color={inv.status === "Paid" ? "success" : "default"}
-                      size="small"
-                    />
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                        inv.status === "Paid"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                      }`}
+                    >
+                      {inv.status}
+                    </span>
                   </MuiTableCell>
                   <MuiTableCell align="right">
                     <IconButton
@@ -340,8 +360,9 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                       size="small"
                       color="primary"
                       title="View & Print Official Invoice"
+                      sx={{ p: "3px" }}
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-3.5 w-3.5" />
                     </IconButton>
                   </MuiTableCell>
                 </MuiTableRow>
@@ -349,7 +370,7 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
             </MuiTableBody>
           </MuiTable>
         </div>
-      </MuiCard>
+      </div>
     </div>
   );
 }

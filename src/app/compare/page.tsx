@@ -43,11 +43,11 @@ export default function VehicleComparePage() {
   const unselectedVehicles = vehicles.filter((v) => !compareIds.includes(v.id));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 space-y-4">
       {/* Top Header & Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mb-0.5">
             <Link href="/" className="hover:text-primary transition-colors">
               Cockpit
             </Link>
@@ -60,23 +60,24 @@ export default function VehicleComparePage() {
               Fleet Comparison
             </span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <Layers className="h-6 w-6 text-primary" />
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <Layers className="h-5 w-5 text-primary" />
             Fleet Specification Comparison ({comparedVehicles.length} of 3)
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Side-by-side technical, financial, customs tariff, and equipment audit for high-value buyer presentations.
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Side-by-side technical, financial, customs tariff, and equipment audit.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {comparedVehicles.length > 0 && (
             <MuiButton
               variant="outlined"
               color="error"
               size="small"
               onClick={clearCompare}
-              startIcon={<Trash2 className="h-4 w-4" />}
+              startIcon={<Trash2 className="h-3.5 w-3.5" />}
+              sx={{ fontSize: "11px", py: "3px" }}
             >
               Clear All
             </MuiButton>
@@ -87,7 +88,8 @@ export default function VehicleComparePage() {
             variant="contained"
             color="primary"
             size="small"
-            startIcon={<ArrowLeft className="h-4 w-4" />}
+            startIcon={<ArrowLeft className="h-3.5 w-3.5" />}
+            sx={{ fontSize: "11px", py: "3px" }}
           >
             Back to Inventory
           </MuiButton>
@@ -96,20 +98,20 @@ export default function VehicleComparePage() {
 
       {/* Main Comparison Area */}
       {comparedVehicles.length === 0 ? (
-        <MuiCard elevation={1} className="p-12 text-center space-y-4">
-          <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-            <Layers className="h-8 w-8 text-slate-400" />
+        <div className="p-8 sm:p-12 text-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-[#121824] space-y-3">
+          <div className="mx-auto h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+            <Layers className="h-6 w-6 text-slate-400" />
           </div>
-          <div className="max-w-md mx-auto space-y-2">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <div className="max-w-md mx-auto space-y-1">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
               No vehicles currently selected for comparison
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Select vehicles from the inventory list below or click &apos;Compare&apos; on any vehicle card to analyze their specifications side by side.
+              Select vehicles from inventory or add from quick recommendations below.
             </p>
           </div>
 
-          <div className="pt-4 flex flex-wrap justify-center gap-2">
+          <div className="pt-2 flex flex-wrap justify-center gap-2">
             {vehicles.slice(0, 3).map((v) => (
               <MuiButton
                 key={v.id}
@@ -117,26 +119,27 @@ export default function VehicleComparePage() {
                 color="primary"
                 size="small"
                 onClick={() => toggleCompare(v.id)}
-                startIcon={<Plus className="h-3.5 w-3.5" />}
+                startIcon={<Plus className="h-3 w-3" />}
+                sx={{ fontSize: "11px", py: "3px" }}
               >
                 Add {v.year} {v.make} {v.model}
               </MuiButton>
             ))}
           </div>
-        </MuiCard>
+        </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Quick Picker Bar for remaining slots */}
           {comparedVehicles.length < 3 && unselectedVehicles.length > 0 && (
-            <div className="flex items-center gap-2 overflow-x-auto p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <span className="text-xs font-semibold text-slate-500 whitespace-nowrap pl-1">
-                + Add vehicle to compare:
+            <div className="flex items-center gap-2 overflow-x-auto p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80">
+              <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap pl-1">
+                + Add vehicle:
               </span>
               {unselectedVehicles.slice(0, 6).map((v) => (
                 <button
                   key={v.id}
                   onClick={() => toggleCompare(v.id)}
-                  className="flex items-center gap-2 px-2.5 py-1 text-xs font-medium rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-primary transition-colors shrink-0 cursor-pointer shadow-2xs"
+                  className="flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-primary transition-colors shrink-0 cursor-pointer shadow-2xs"
                 >
                   <Plus className="h-3 w-3 text-primary" />
                   <span>
@@ -151,84 +154,85 @@ export default function VehicleComparePage() {
           )}
 
           {/* Side-by-Side Comparison Matrix */}
-          <MuiTableContainer component={MuiPaper} elevation={1} className="overflow-x-auto">
-            <MuiTable size="medium">
-              <MuiTableHead>
-                <MuiTableRow className="bg-slate-50 dark:bg-slate-900/60">
-                  <MuiTableCell className="w-52 font-bold text-slate-500 uppercase text-[11px] tracking-wider">
-                    Specification / Metric
-                  </MuiTableCell>
-                  {comparedVehicles.map((v) => (
-                    <MuiTableCell key={v.id} className="min-w-[260px] pb-4">
-                      <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden mb-3 border border-slate-200 dark:border-slate-800 shadow-xs">
-                        <Image
-                          src={v.images[0]}
-                          alt={v.model}
-                          fill
-                          className="object-cover"
-                        />
-                        <IconButton
-                          size="small"
-                          onClick={() => toggleCompare(v.id)}
-                          className="!absolute !top-2 !right-2 !bg-black/60 !text-white hover:!bg-black/80"
-                          title="Remove from comparison"
-                        >
-                          <X className="h-4 w-4" />
-                        </IconButton>
-                        <div className="absolute bottom-2 left-2">
-                          <MuiChip
-                            label={v.status}
-                            size="small"
-                            color={v.status === "Available on Lot" ? "success" : "default"}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-                          {v.year} {v.make} {v.model}
-                        </h4>
-                        <div className="text-xs text-slate-500">{v.trim}</div>
-                        <div className="font-mono text-[10px] text-slate-400">
-                          Stock: {v.stockNumber}
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex gap-2">
-                        <MuiButton
-                          component={Link}
-                          href={`/vehicles/${v.id}`}
-                          variant="contained"
-                          color="primary"
-                          size="small"
-                          fullWidth
-                          startIcon={<Eye className="h-3.5 w-3.5" />}
-                        >
-                          Dossier
-                        </MuiButton>
-                        <MuiButton
-                          component={Link}
-                          href={`/vehicles/${v.id}/deed`}
-                          variant="outlined"
-                          color="inherit"
-                          size="small"
-                          title="Official Deed"
-                        >
-                          <FileCheck className="h-3.5 w-3.5" />
-                        </MuiButton>
-                      </div>
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <MuiTable dense size="small" className="w-full">
+                <MuiTableHead>
+                  <MuiTableRow className="bg-slate-50/70 dark:bg-slate-900/60">
+                    <MuiTableCell className="w-48 font-bold text-slate-500 uppercase text-[10px] tracking-wider">
+                      Specification
                     </MuiTableCell>
-                  ))}
-                </MuiTableRow>
-              </MuiTableHead>
+                    {comparedVehicles.map((v) => (
+                      <MuiTableCell key={v.id} className="min-w-[220px] pb-3">
+                        <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden mb-2 border border-slate-200 dark:border-slate-800 shadow-xs">
+                          <Image
+                            src={v.images[0]}
+                            alt={v.model}
+                            fill
+                            className="object-cover"
+                          />
+                          <IconButton
+                            size="small"
+                            onClick={() => toggleCompare(v.id)}
+                            className="!absolute !top-1.5 !right-1.5 !bg-black/60 !text-white hover:!bg-black/80 !p-1"
+                            title="Remove from comparison"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </IconButton>
+                          <div className="absolute bottom-1.5 left-1.5">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-600 text-white">
+                              {v.status}
+                            </span>
+                          </div>
+                        </div>
 
-              <MuiTableBody>
-                {/* Section: Pricing */}
-                <MuiTableRow className="bg-slate-100/40 dark:bg-slate-800/20 font-bold">
-                  <MuiTableCell colSpan={comparedVehicles.length + 1} className="py-2 text-xs text-primary uppercase font-bold tracking-wider">
-                    Financial & Pricing Audit
-                  </MuiTableCell>
-                </MuiTableRow>
+                        <div className="space-y-0.5">
+                          <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                            {v.year} {v.make} {v.model}
+                          </h4>
+                          <div className="text-[11px] text-slate-500 truncate">{v.trim}</div>
+                          <div className="font-mono text-[10px] text-slate-400">
+                            Stock: {v.stockNumber}
+                          </div>
+                        </div>
+
+                        <div className="mt-2 flex gap-1.5">
+                          <MuiButton
+                            component={Link}
+                            href={`/vehicles/${v.id}`}
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            fullWidth
+                            sx={{ fontSize: "11px", py: "3px" }}
+                            startIcon={<Eye className="h-3 w-3" />}
+                          >
+                            Dossier
+                          </MuiButton>
+                          <MuiButton
+                            component={Link}
+                            href={`/vehicles/${v.id}/deed`}
+                            variant="outlined"
+                            color="inherit"
+                            size="small"
+                            sx={{ py: "3px", px: "6px" }}
+                            title="Official Deed"
+                          >
+                            <FileCheck className="h-3 w-3" />
+                          </MuiButton>
+                        </div>
+                      </MuiTableCell>
+                    ))}
+                  </MuiTableRow>
+                </MuiTableHead>
+
+                <MuiTableBody>
+                  {/* Section: Pricing */}
+                  <MuiTableRow className="bg-slate-100/40 dark:bg-slate-800/20 font-bold">
+                    <MuiTableCell colSpan={comparedVehicles.length + 1} className="py-1.5 text-[10px] text-blue-600 dark:text-blue-400 uppercase font-bold tracking-wider">
+                      Financial & Pricing Audit
+                    </MuiTableCell>
+                  </MuiTableRow>
 
                 <MuiTableRow>
                   <MuiTableCell className="font-semibold text-xs text-slate-600 dark:text-slate-400">
@@ -402,8 +406,9 @@ export default function VehicleComparePage() {
                 </MuiTableRow>
               </MuiTableBody>
             </MuiTable>
-          </MuiTableContainer>
+          </div>
         </div>
+      </div>
       )}
     </div>
   );
