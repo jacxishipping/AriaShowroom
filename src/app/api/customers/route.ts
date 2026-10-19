@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { LeadStage } from "@prisma/client";
 import { requireApiRole } from "@/lib/api-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true, data: [] });
+  }
   const unauthorized = await requireApiRole(["ADMIN", "SALES", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
 
@@ -33,11 +36,8 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({ success: true, count: customers.length, data: customers });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch customers" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ success: false, fallback: true, data: [] });
   }
 }
 

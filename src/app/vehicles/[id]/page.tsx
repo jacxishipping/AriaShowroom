@@ -8,6 +8,7 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { formatCurrency, formatMileage } from "@/lib/utils";
 import { translations } from "@/lib/translations";
 import { CustomsDocumentVault } from "@/components/CustomsDocumentVault";
+import { PaintInspectionDiagram } from "@/components/PaintInspectionDiagram";
 import { CompareBar } from "@/components/CompareBar";
 import {
   MuiCard,
@@ -67,6 +68,8 @@ export default function VehicleDetailsPage() {
     currency,
     exchangeRate,
     language,
+    currentRole,
+    clientPresentationMode,
     favoriteIds,
     toggleFavorite,
     compareIds,
@@ -74,6 +77,7 @@ export default function VehicleDetailsPage() {
     addToast,
   } = useShowroomStore();
   const t = translations[language];
+  const hideFinancialMargins = clientPresentationMode || currentRole === "SalesAgent";
 
   const vehicle = vehicles.find((v) => v.id === vehicleId) || vehicles[0];
 
@@ -239,89 +243,82 @@ Please schedule a viewing or share more photos.`
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 space-y-5 pb-20">
-      {/* Breadcrumb & Navigation Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/90 dark:border-slate-800/90 pb-3">
+    <div className="mx-auto max-w-7xl space-y-6 pb-20">
+      {/* Architectural Top Dossier Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#D8D5CD] dark:border-[#242A38] pb-3">
         <Link
           href="/inventory"
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-slate-600 hover:text-[#111318] dark:text-slate-400 dark:hover:text-amber-400 transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
-          <span>Back to Showroom Inventory</span>
+          <span>BACK TO FLEET REGISTRY</span>
         </Link>
 
-        <div className="flex items-center gap-2">
-          {/* Favorite Button */}
+        <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
           <button
             onClick={handleToggleFavorite}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-semibold transition-colors cursor-pointer ${
               isFavorite
-                ? "border-red-300 bg-red-50 text-red-600 dark:bg-red-950/40 dark:border-red-900"
-                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
+                ? "border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-300"
+                : "border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] text-slate-600 dark:text-slate-300 hover:border-[#111318]"
             }`}
           >
-            <Heart
-              className={`h-3.5 w-3.5 ${isFavorite ? "fill-red-500" : ""}`}
-            />
-            <span>{isFavorite ? "Saved" : "Save"}</span>
+            <Heart className={`h-3.5 w-3.5 ${isFavorite ? "fill-rose-500" : ""}`} />
+            <span>{isFavorite ? "SAVED" : "SAVE"}</span>
           </button>
 
-          {/* Compare Button */}
           <button
             onClick={handleToggleCompare}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-semibold transition-colors cursor-pointer ${
               isCompared
-                ? "border-blue-300 bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:border-blue-900"
-                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
+                ? "border-[#111318] bg-[#111318] text-white dark:bg-amber-500 dark:text-black dark:border-amber-500"
+                : "border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] text-slate-600 dark:text-slate-300 hover:border-[#111318]"
             }`}
           >
             <Layers className="h-3.5 w-3.5" />
-            <span>{isCompared ? "Compared" : "Compare"}</span>
+            <span>{isCompared ? "COMPARING" : "COMPARE"}</span>
           </button>
 
-          <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
-            Stock #{vehicle.stockNumber}
+          <span className="font-bold px-2.5 py-1 rounded bg-[#111318] text-white dark:bg-amber-500 dark:text-black">
+            LOT #{vehicle.stockNumber}
           </span>
-          <span className="hidden sm:inline font-mono text-xs text-slate-500 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
+          <span className="hidden sm:inline text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017]">
             VIN: {vehicle.vin}
           </span>
         </div>
       </div>
 
       {/* Main Grid: Gallery on Left (7 cols), Overview & CTAs on Right (5 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Gallery Carousel & Condition */}
-        <div className="lg:col-span-7 space-y-4">
+        <div className="lg:col-span-7 space-y-5">
           {/* Gallery View Switcher Tabs: Standard vs 360° Walkaround */}
-          <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div className="inline-flex items-center divide-x divide-[#D8D5CD] dark:divide-[#242A38] rtl:divide-x-reverse rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] overflow-hidden">
             <button
               onClick={() => {
                 setIsSpinMode(false);
                 setIsAutoRotating(false);
               }}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer ${
                 !isSpinMode
-                  ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  ? "bg-[#111318] text-white dark:bg-amber-600 dark:text-white"
+                  : "text-slate-600 dark:text-slate-400 hover:text-[#111318] dark:hover:text-white"
               }`}
             >
               <Camera className="h-3.5 w-3.5" />
-              <span>Standard Gallery ({vehicle.images.length})</span>
+              <span>STILLS ({vehicle.images.length})</span>
             </button>
 
             <button
               onClick={() => setIsSpinMode(true)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer ${
                 isSpinMode
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  ? "bg-[#111318] text-white dark:bg-amber-600 dark:text-white"
+                  : "text-slate-600 dark:text-slate-400 hover:text-[#111318] dark:hover:text-white"
               }`}
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>360° Virtual Spin & Walkaround</span>
-              <span className="rounded bg-white/20 px-1.5 py-0.2 text-[9px] font-mono uppercase tracking-wider">
-                Live
-              </span>
+              <span>360° WALKAROUND SPIN</span>
             </button>
           </div>
 
@@ -550,112 +547,111 @@ Please schedule a viewing or share more photos.`
           )}
 
           {/* Import Logistics & Port Clearance Timeline */}
-          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-5 shadow-xs">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-              <Truck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <span>Import Journey & Port Clearance Pipeline</span>
-            </h3>
+          <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] flex items-center justify-between">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-[0.14em] text-[#111318] dark:text-white flex items-center gap-2">
+                <Truck className="h-3.5 w-3.5 text-amber-600" />
+                <span>IMPORT PROVENANCE & ISLAM QALA CLEARANCE</span>
+              </span>
+              <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 font-bold">
+                TIR CARNET VERIFIED
+              </span>
+            </div>
 
-            <div className="relative pl-6 space-y-4 border-l-2 border-emerald-500/30 text-xs">
-              <div className="relative">
-                <span className="absolute -left-[31px] top-0 h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[9px]">
-                  ✓
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#E2E0D8] dark:bg-[#1F2430] text-xs">
+              <div className="bg-white dark:bg-[#11141B] p-3.5">
+                <span className="text-[10px] font-mono text-slate-400 block">01 / ORIGIN PORT</span>
+                <span className="font-bold text-[#111318] dark:text-white block mt-0.5">
+                  {vehicle.originCountry} Export Terminal
                 </span>
-                <span className="font-bold text-slate-900 dark:text-white block">
-                  1. Origin Acquisition ({vehicle.originCountry})
-                </span>
-                <span className="text-slate-500 dark:text-slate-400 text-[11px]">
-                  Vehicle purchased and containerized from origin hub with clean export title.
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">
+                  Clean export certificate & bill of lading verified.
                 </span>
               </div>
-
-              <div className="relative">
-                <span className="absolute -left-[31px] top-0 h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[9px]">
-                  ✓
+              <div className="bg-white dark:bg-[#11141B] p-3.5">
+                <span className="text-[10px] font-mono text-slate-400 block">02 / CORRIDOR</span>
+                <span className="font-bold text-[#111318] dark:text-white block mt-0.5">
+                  Bandar Abbas / Dogharoun
                 </span>
-                <span className="font-bold text-slate-900 dark:text-white block">
-                  2. Ocean & Transit Freight
-                </span>
-                <span className="text-slate-500 dark:text-slate-400 text-[11px]">
-                  Transited via Bandar Abbas corridor directly into Western Afghanistan dry port.
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">
+                  Bonded transit convoy into Western Afghanistan.
                 </span>
               </div>
-
-              <div className="relative">
-                <span className="absolute -left-[31px] top-0 h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[9px]">
-                  ✓
+              <div className="bg-white dark:bg-[#11141B] p-3.5">
+                <span className="text-[10px] font-mono text-slate-400 block">03 / GOMROK</span>
+                <span className="font-bold text-emerald-700 dark:text-emerald-400 block mt-0.5">
+                  Islam Qala Dry Port
                 </span>
-                <span className="font-bold text-slate-900 dark:text-white block">
-                  3. Islam Qala Dry Port Clearance (گمرک اسلام قلعه)
-                </span>
-                <span className="text-slate-500 dark:text-slate-400 text-[11px]">
-                  Customs tariff paid, Maktoub verified, and technical chassis check approved.
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">
+                  Tariff paid, Maktoub & chassis audit completed.
                 </span>
               </div>
-
-              <div className="relative">
-                <span className="absolute -left-[31px] top-0 h-4 w-4 rounded-full bg-blue-600 flex items-center justify-center text-white text-[9px]">
-                  ●
+              <div className="bg-white dark:bg-[#11141B] p-3.5">
+                <span className="text-[10px] font-mono text-slate-400 block">04 / SHOWROOM LOT</span>
+                <span className="font-bold text-[#111318] dark:text-amber-400 block mt-0.5">
+                  Bagh-e-Azadi, Herat
                 </span>
-                <span className="font-bold text-slate-900 dark:text-white block">
-                  4. Sadozai Showroom Lot (Bagh-e-Azadi Avenue, Herat)
-                </span>
-                <span className="text-slate-500 dark:text-slate-400 text-[11px]">
-                  PDI detailing complete, ready for direct buyer transfer and negative plate registration.
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">
+                  PDI detailed & ready for deed execution.
                 </span>
               </div>
             </div>
           </div>
 
           {/* Condition Breakdown */}
-          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-6 shadow-xs">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Sadozai Certified Condition & Inspection Report</span>
-            </h3>
+          <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] flex items-center justify-between">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-[0.14em] text-[#111318] dark:text-white flex items-center gap-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                <span>PDI MECHANICAL & COSMETIC AUDIT</span>
+              </span>
+              <span className="text-[10px] font-mono text-slate-400">
+                CERTIFIED BY SADOZAI TECHNICAL BAY
+              </span>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/60 p-3.5 border border-slate-200/80 dark:border-slate-800">
-                <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
-                  Exterior & Paint:
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-[#E2E0D8] dark:bg-[#1F2430] text-xs">
+              <div className="bg-white dark:bg-[#11141B] p-3.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-0.5">
+                  EXTERIOR & CLEARCOAT
                 </span>
-                <span className="text-slate-600 dark:text-slate-300">
+                <span className="font-medium text-[#111318] dark:text-slate-200">
                   {vehicle.conditionNotes.exterior}
                 </span>
               </div>
 
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/60 p-3.5 border border-slate-200/80 dark:border-slate-800">
-                <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
-                  Interior & Upholstery:
+              <div className="bg-white dark:bg-[#11141B] p-3.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-0.5">
+                  CABIN & UPHOLSTERY
                 </span>
-                <span className="text-slate-600 dark:text-slate-300">
+                <span className="font-medium text-[#111318] dark:text-slate-200">
                   {vehicle.conditionNotes.interior}
                 </span>
               </div>
 
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/60 p-3.5 border border-slate-200/80 dark:border-slate-800">
-                <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
-                  Engine & Powertrain:
+              <div className="bg-white dark:bg-[#11141B] p-3.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-0.5">
+                  ENGINE & POWERTRAIN
                 </span>
-                <span className="text-slate-600 dark:text-slate-300">
+                <span className="font-medium text-[#111318] dark:text-slate-200">
                   {vehicle.conditionNotes.engine}
                 </span>
               </div>
 
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/60 p-3.5 border border-slate-200/80 dark:border-slate-800">
-                <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
-                  Tires & Suspension:
+              <div className="bg-white dark:bg-[#11141B] p-3.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-0.5">
+                  TIRES & SUSPENSION
                 </span>
-                <span className="text-slate-600 dark:text-slate-300">
+                <span className="font-medium text-[#111318] dark:text-slate-200">
                   {vehicle.conditionNotes.tires}
                 </span>
               </div>
 
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-900/60 p-3.5 border border-slate-200/80 dark:border-slate-800 sm:col-span-2">
-                <span className="font-bold text-slate-900 dark:text-white block mb-0.5">
-                  Accident & Airbag History:
+              <div className="bg-white dark:bg-[#11141B] p-3.5 sm:col-span-2">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-0.5">
+                  STRUCTURAL CHASSIS & SRS AIRBAG HISTORY
                 </span>
-                <span className="text-slate-600 dark:text-slate-300">
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                   {vehicle.conditionNotes.accidentHistory}
                 </span>
               </div>
@@ -665,128 +661,114 @@ Please schedule a viewing or share more photos.`
 
         {/* Right Column: Pricing, Financing Calculator & CTAs */}
         <div className="lg:col-span-5 space-y-5">
-          {/* Main Info Card */}
-          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111827] p-5 sm:p-6 shadow-xs">
-            <span className="text-[11px] font-mono font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-              {vehicle.make} • {vehicle.originCountry} Direct Import
-            </span>
-            <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {vehicle.year} {vehicle.model}
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {vehicle.trim}
-            </p>
+          {/* Main Spec & Valuation Dossier */}
+          <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
+            <div className="p-5 border-b border-[#E2E0D8] dark:border-[#1F2430]">
+              <span className="text-[10px] font-mono font-bold text-amber-700 dark:text-amber-400 uppercase tracking-[0.16em]">
+                {vehicle.make} · {vehicle.originCountry} SPEC · {vehicle.bodyType}
+              </span>
+              <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-[#111318] dark:text-white">
+                {vehicle.year} {vehicle.model}
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
+                {vehicle.trim}
+              </p>
 
-            {/* ERP Pricing & Margin Box */}
-            <div className="mt-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 p-4 border border-slate-200/80 dark:border-slate-800 space-y-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Lot Selling Price
-                </span>
-                <div className="mt-1 flex items-baseline gap-3">
-                  <span className="text-3xl font-extrabold font-mono text-slate-950 dark:text-white">
+              {/* Valuation Strip */}
+              <div className="mt-4 pt-4 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-baseline justify-between gap-2">
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
+                    ASKING VALUATION
+                  </span>
+                  <span className="text-3xl font-bold font-mono tabular-nums text-[#111318] dark:text-white">
                     {formatCurrency(vehicle.sellingPrice, currency, exchangeRate)}
                   </span>
-                  {currency === "AFN" && (
-                    <span className="text-xs font-mono font-medium text-slate-500">
-                      (${vehicle.sellingPrice.toLocaleString()} USD)
+                </div>
+                <div className="text-end font-mono">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 block">
+                    {currency === "USD" ? "AFGHANI EQUIVALENT" : "USD EQUIVALENT"}
+                  </span>
+                  <span className="text-sm font-bold tabular-nums text-amber-700 dark:text-amber-400">
+                    {currency === "USD"
+                      ? `؋ ${(vehicle.sellingPrice * exchangeRate).toLocaleString()} AFN`
+                      : `$${vehicle.sellingPrice.toLocaleString()} USD`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Landed Cost vs Margin Breakdown (Hidden in Client Presentation Mode) */}
+              {!hideFinancialMargins && (
+                <div className="mt-3 grid grid-cols-2 gap-px bg-[#E2E0D8] dark:bg-[#1F2430] border border-[#E2E0D8] dark:border-[#1F2430] rounded overflow-hidden font-mono text-xs">
+                  <div className="bg-[#FAF9F6] dark:bg-[#0D1017] p-2.5">
+                    <span className="text-[9px] text-slate-400 block uppercase">
+                      LANDED COST BASIS
                     </span>
-                  )}
-                </div>
-                {currency === "USD" && (
-                  <div className="text-xs font-mono font-semibold text-gold dark:text-gold-light mt-0.5">
-                    ؋ {(vehicle.sellingPrice * exchangeRate).toLocaleString()} AFN
+                    <span className="font-bold tabular-nums text-[#111318] dark:text-slate-200">
+                      ${vehicle.landedCost.toLocaleString()} USD
+                    </span>
                   </div>
-                )}
-              </div>
-
-              {/* Landed Cost vs Margin Breakdown */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-800 text-xs font-mono">
-                <div className="rounded-xl bg-white dark:bg-[#151D2A] p-2.5 border border-slate-200/80 dark:border-slate-800">
-                  <span className="text-[10px] text-slate-400 block uppercase font-sans font-semibold">
-                    Total Landed Cost
-                  </span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
-                    ${vehicle.landedCost.toLocaleString()} USD
-                  </span>
+                  <div className="bg-[#FAF9F6] dark:bg-[#0D1017] p-2.5">
+                    <span className="text-[9px] text-slate-400 block uppercase">
+                      TARGET NET MARGIN
+                    </span>
+                    <span className="font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+                      +${(vehicle.sellingPrice - vehicle.landedCost).toLocaleString()} (
+                      {vehicle.landedCost > 0
+                        ? (
+                            ((vehicle.sellingPrice - vehicle.landedCost) /
+                              vehicle.landedCost) *
+                            100
+                          ).toFixed(1)
+                        : 0}
+                      %)
+                    </span>
+                  </div>
                 </div>
-                <div className="rounded-xl bg-white dark:bg-[#151D2A] p-2.5 border border-slate-200/80 dark:border-slate-800">
-                  <span className="text-[10px] text-slate-400 block uppercase font-sans font-semibold">
-                    Target Margin
-                  </span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                    +${(vehicle.sellingPrice - vehicle.landedCost).toLocaleString()} (
-                    {vehicle.landedCost > 0
-                      ? (
-                          ((vehicle.sellingPrice - vehicle.landedCost) /
-                            vehicle.landedCost) *
-                          100
-                        ).toFixed(1)
-                      : 0}
-                    %)
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-                <span>Customs duty settled at Herat Islam Qala Dry Port</span>
-              </p>
+              )}
             </div>
 
-            {/* Core Specs Pills */}
-            <div className="mt-5 grid grid-cols-2 gap-2.5 text-xs">
-              <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 p-2.5 border border-slate-200/80 dark:border-slate-800">
-                <Gauge className="h-4 w-4 text-blue-500 shrink-0" />
-                <div>
-                  <span className="text-[10px] text-slate-400 block uppercase font-bold">
-                    Mileage
-                  </span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
-                    {formatMileage(vehicle.mileage)}
-                  </span>
-                </div>
+            {/* 1px Hairline 2x2 Technical Specs Grid */}
+            <div className="grid grid-cols-2 gap-px bg-[#E2E0D8] dark:bg-[#1F2430] border-b border-[#E2E0D8] dark:border-[#1F2430] font-mono text-xs">
+              <div className="bg-[#FAF9F6] dark:bg-[#0D1017] p-3">
+                <span className="text-[10px] text-slate-400 block uppercase">ODOMETER</span>
+                <span className="font-bold text-[#111318] dark:text-slate-200 tabular-nums">
+                  {formatMileage(vehicle.mileage)}
+                </span>
               </div>
-
-              <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 p-2.5 border border-slate-200/80 dark:border-slate-800">
-                <Fuel className="h-4 w-4 text-blue-500 shrink-0" />
-                <div>
-                  <span className="text-[10px] text-slate-400 block uppercase font-bold">
-                    Fuel Type
-                  </span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
-                    {vehicle.fuelType}
-                  </span>
-                </div>
+              <div className="bg-[#FAF9F6] dark:bg-[#0D1017] p-3">
+                <span className="text-[10px] text-slate-400 block uppercase">POWERTRAIN</span>
+                <span className="font-bold text-[#111318] dark:text-slate-200">
+                  {vehicle.fuelType} · {vehicle.transmission}
+                </span>
               </div>
-
-              <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 p-2.5 border border-slate-200/80 dark:border-slate-800">
-                <Compass className="h-4 w-4 text-blue-500 shrink-0" />
-                <div>
-                  <span className="text-[10px] text-slate-400 block uppercase font-bold">
-                    Drivetrain
-                  </span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
-                    {vehicle.driveType} • {vehicle.transmission}
-                  </span>
-                </div>
+              <div className="bg-[#FAF9F6] dark:bg-[#0D1017] p-3">
+                <span className="text-[10px] text-slate-400 block uppercase">DRIVETRAIN</span>
+                <span className="font-bold text-[#111318] dark:text-slate-200">
+                  {vehicle.driveType} · {vehicle.steering.split(" ")[0]}
+                </span>
               </div>
-
-              <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 p-2.5 border border-slate-200/80 dark:border-slate-800">
-                <Car className="h-4 w-4 text-blue-500 shrink-0" />
-                <div>
-                  <span className="text-[10px] text-slate-400 block uppercase font-bold">
-                    Steering
-                  </span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
-                    {vehicle.steering.split(" ")[0]}
-                  </span>
-                </div>
+              <div className="bg-[#FAF9F6] dark:bg-[#0D1017] p-3">
+                <span className="text-[10px] text-slate-400 block uppercase">CUSTOMS STATUS</span>
+                <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                  ISLAM QALA CLEARED
+                </span>
               </div>
             </div>
 
             {/* CTAs */}
-            <div className="mt-5 space-y-2">
+            <div className="p-4 space-y-2 bg-white dark:bg-[#11141B]">
+              <MuiButton
+                component={Link}
+                href={`/vehicles/${vehicle.id}/deed`}
+                variant="contained"
+                color="primary"
+                fullWidth
+                size="medium"
+                startIcon={<FileText className="h-4 w-4" />}
+              >
+                {t.generateDeed} (قباله رسمی با QR کد)
+              </MuiButton>
+
               <MuiButton
                 component="a"
                 href={whatsappUrl}
@@ -801,51 +783,28 @@ Please schedule a viewing or share more photos.`
                 Inquire directly on WhatsApp (واتساپ)
               </MuiButton>
 
-              <MuiButton
-                component={Link}
-                href={`/vehicles/${vehicle.id}/deed`}
-                variant="contained"
-                color="primary"
-                fullWidth
-                size="medium"
-                startIcon={<FileText className="h-4 w-4" />}
-              >
-                {t.generateDeed} (قباله رسمی با QR کد)
-              </MuiButton>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <MuiButton
+                  component={Link}
+                  href={`/vehicles/${vehicle.id}/settlement`}
+                  variant="outlined"
+                  color="inherit"
+                  size="small"
+                  startIcon={<Banknote className="h-3.5 w-3.5 text-amber-600" />}
+                >
+                  Sarrafi Ledger
+                </MuiButton>
 
-              <MuiButton
-                component={Link}
-                href={`/vehicles/${vehicle.id}/settlement`}
-                variant="outlined"
-                color="inherit"
-                fullWidth
-                size="medium"
-                startIcon={<Banknote className="h-4 w-4 text-warning" />}
-              >
-                Sarrafi & Milestone Installment Ledger (تسویه حساب صرافی)
-              </MuiButton>
-
-              <MuiButton
-                onClick={() => setIsFlyerOpen(true)}
-                variant="outlined"
-                color="primary"
-                fullWidth
-                size="medium"
-                startIcon={<Share2 className="h-4 w-4 text-blue-600" />}
-              >
-                Showroom Flyer & Digital Card (بروشور و کارت مشخصات)
-              </MuiButton>
-
-              <MuiButton
-                onClick={handlePrintSpecs}
-                variant="text"
-                color="inherit"
-                fullWidth
-                size="small"
-                startIcon={<Printer className="h-4 w-4" />}
-              >
-                {t.printSpecSheet}
-              </MuiButton>
+                <MuiButton
+                  onClick={() => setIsFlyerOpen(true)}
+                  variant="outlined"
+                  color="inherit"
+                  size="small"
+                  startIcon={<Share2 className="h-3.5 w-3.5" />}
+                >
+                  Spec Flyer
+                </MuiButton>
+              </div>
             </div>
           </div>
 
@@ -1000,6 +959,9 @@ Please schedule a viewing or share more photos.`
           </div>
         </div>
       </div>
+
+      {/* Interactive Ultrasonic Body-Panel Paint & Chassis Inspection Diagram */}
+      <PaintInspectionDiagram vin={vehicle.vin} cleanTitle={vehicle.cleanTitle} />
 
       {/* Official Customs Maktoub & Title Document Vault */}
       <CustomsDocumentVault vehicle={vehicle} />

@@ -54,19 +54,9 @@ export function MuiTabs({
                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
                   <span>{tab.label}</span>
                   {tab.badge !== undefined && tab.badge !== null && (
-                    <Badge
-                      badgeContent={tab.badge}
-                      color="primary"
-                      sx={{
-                        "& .MuiBadge-badge": {
-                          fontSize: "0.68rem",
-                          height: 18,
-                          minWidth: 18,
-                          position: "static",
-                          transform: "none",
-                        },
-                      }}
-                    />
+                    <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono tabular-nums font-semibold rounded bg-stone-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      {tab.badge}
+                    </span>
                   )}
                 </Box>
               );
@@ -81,8 +71,9 @@ export function MuiTabs({
                   sx={{
                     textTransform: "none",
                     fontWeight: 600,
-                    minHeight: 48,
-                    fontSize: "0.8125rem",
+                    minHeight: 44,
+                    fontSize: "0.78rem",
+                    letterSpacing: "0.01em",
                   }}
                 />
               );

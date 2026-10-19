@@ -54,6 +54,9 @@ export default function VehicleDeedPage() {
   const [sellerSignatureUrl, setSellerSignatureUrl] = useState<string | null>(null);
   const [isSigningBuyer, setIsSigningBuyer] = useState(false);
   const [isSigningSeller, setIsSigningSeller] = useState(false);
+  const [deedLayoutMode, setDeedLayoutMode] = useState<"BILINGUAL" | "RTL_QABALA">(
+    language === "fa" || language === "ps" ? "RTL_QABALA" : "BILINGUAL"
+  );
 
   const buyerCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const sellerCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -71,6 +74,7 @@ export default function VehicleDeedPage() {
   useEffect(() => {
     if (!vehicle) return;
 
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://sadozaimotors.af";
     const payload = JSON.stringify({
       issuer: "Sadozai Motors Herat",
       contract: contractNumber,
@@ -82,7 +86,7 @@ export default function VehicleDeedPage() {
       buyerTazkira: buyerTazkira,
       customsMaktoub: vehicle.customsClearance,
       verifiedAt: new Date().toISOString(),
-      validationUrl: `https://ariashowroom.af/verify?contract=${contractNumber}&vin=${vehicle.vin}`,
+      validationUrl: `${origin}/verify/${vehicle.id}?contract=${contractNumber}&vin=${vehicle.vin}`,
     });
 
     QRCode.toDataURL(payload, {
@@ -182,33 +186,58 @@ export default function VehicleDeedPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 lg:px-8 space-y-4 pb-16">
       {/* Top Navigation & Action Toolbar (Hidden in Print) */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200/90 dark:border-slate-800/90 print:hidden">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-3 border-b border-[#D8D5CD] dark:border-[#242A38] print:hidden">
         <div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-            <Link href="/" className="hover:text-blue-600 transition-colors">
-              Cockpit
+          <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-[#9A7515] dark:text-[#D4AF37] mb-1">
+            <Link href="/" className="hover:underline">
+              COCKPIT
             </Link>
             <span>/</span>
-            <Link href="/inventory" className="hover:text-blue-600 transition-colors">
-              Inventory
+            <Link href="/inventory" className="hover:underline">
+              INVENTORY
             </Link>
             <span>/</span>
-            <Link href={`/vehicles/${vehicle.id}`} className="hover:text-blue-600 transition-colors">
-              {vehicle.year} {vehicle.make} {vehicle.model}
+            <Link href={`/vehicles/${vehicle.id}`} className="hover:underline">
+              {vehicle.stockNumber}
             </Link>
             <span>/</span>
-            <span className="text-slate-900 dark:text-white font-medium">Sales Deed</span>
+            <span>SALES DEED (قباله شرعی)</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             Official Bilingual Sales Deed & Title Contract
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-dari">
             قباله رسمی و خط بیعانه معامله موتر نندارتون موتر سدوزی هرات (مطابق اصول شرعی و مکتوب رسمی گمرک اسلام قلعه)
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Print Layout Mode Switcher */}
+          <div className="inline-flex rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#141821] p-0.5">
+            <button
+              type="button"
+              onClick={() => setDeedLayoutMode("BILINGUAL")}
+              className={`px-2.5 py-1 rounded-xs text-[10px] font-mono font-bold uppercase transition-colors cursor-pointer ${
+                deedLayoutMode === "BILINGUAL"
+                  ? "bg-[#111318] text-white dark:bg-[#C59B27] dark:text-[#0A0C10]"
+                  : "text-slate-600 dark:text-slate-400"
+              }`}
+            >
+              Bilingual Split
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeedLayoutMode("RTL_QABALA")}
+              className={`px-2.5 py-1 rounded-xs text-[10px] font-mono font-bold uppercase transition-colors cursor-pointer ${
+                deedLayoutMode === "RTL_QABALA"
+                  ? "bg-[#111318] text-white dark:bg-[#C59B27] dark:text-[#0A0C10]"
+                  : "text-slate-600 dark:text-slate-400"
+              }`}
+            >
+              RTL Qabala (قباله دری/پشتو)
+            </button>
+          </div>
+
           <MuiButton
             component={Link}
             href={`/vehicles/${vehicle.id}`}
@@ -218,7 +247,7 @@ export default function VehicleDeedPage() {
             startIcon={<ArrowLeft className="h-4 w-4" />}
             sx={{ fontSize: "11px", py: "3px" }}
           >
-            Back to Vehicle
+            Back
           </MuiButton>
           <MuiButton
             variant="outlined"
@@ -238,14 +267,14 @@ export default function VehicleDeedPage() {
             startIcon={<Printer className="h-4 w-4" />}
             sx={{ fontSize: "11px", py: "3px" }}
           >
-            Print Deed
+            Print Official Deed
           </MuiButton>
         </div>
       </div>
 
       {/* Contract Configuration Strip (Hidden in Print) */}
-      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-4 shadow-xs print:hidden space-y-3">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+      <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-4 print:hidden space-y-3">
+        <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
           Contract Parties & Settlement Terms:
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -278,9 +307,12 @@ export default function VehicleDeedPage() {
       </div>
 
       {/* Official Deed Printable Document */}
-      <div className="rounded-2xl border-2 border-slate-200/90 bg-white p-6 sm:p-10 shadow-sm dark:border-slate-800/90 dark:bg-[#111827] print:border-none print:shadow-none print:p-0 text-slate-900 dark:text-slate-100 print:text-black print:bg-white space-y-6 relative overflow-hidden">
+      <div
+        dir={deedLayoutMode === "RTL_QABALA" ? "rtl" : "ltr"}
+        className="rounded-md border border-[#D8D5CD] bg-white p-6 sm:p-10 dark:border-[#242A38] dark:bg-[#11141B] print:border-none print:shadow-none print:p-0 text-slate-900 dark:text-slate-100 print:text-black print:bg-white space-y-6 relative overflow-hidden"
+      >
         {/* Background Watermark */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] dark:opacity-[0.05] print:opacity-[0.04]">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] dark:opacity-[0.04] print:opacity-[0.04]">
           <Building2 className="w-96 h-96" />
         </div>
 

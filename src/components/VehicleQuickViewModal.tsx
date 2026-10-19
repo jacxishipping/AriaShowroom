@@ -32,12 +32,20 @@ export function VehicleQuickViewModal({
   onClose,
   onOpenDeed,
 }: VehicleQuickViewModalProps) {
-  const { exchangeRate, language, favoriteIds, toggleFavorite } = useShowroomStore();
+  const {
+    exchangeRate,
+    language,
+    currentRole,
+    clientPresentationMode,
+    favoriteIds,
+    toggleFavorite,
+  } = useShowroomStore();
   const [activePhoto, setActivePhoto] = useState(0);
 
   if (!isOpen || !vehicle) return null;
 
   const t = translations[language];
+  const hideFinancialMargins = clientPresentationMode || currentRole === "SalesAgent";
   const isFav = favoriteIds.includes(vehicle.id);
   const primaryImage = vehicle.images[activePhoto] || vehicle.images[0];
 
@@ -188,10 +196,12 @@ Please schedule a viewing or share more photos.`
                 <div className="mt-1 font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">
                   ؋ {(vehicle.sellingPrice * exchangeRate).toLocaleString()} AFN
                 </div>
-                <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-200/80 dark:border-slate-800 pt-2 flex items-center justify-between">
-                  <span>Landed Cost:</span>
-                  <span className="font-mono font-semibold">${vehicle.landedCost.toLocaleString()}</span>
-                </div>
+                {!hideFinancialMargins && (
+                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200/80 dark:border-slate-800 pt-2 flex items-center justify-between">
+                    <span>Landed Cost:</span>
+                    <span className="font-mono font-semibold">${vehicle.landedCost.toLocaleString()}</span>
+                  </div>
+                )}
               </div>
 
               {/* Quick Spec Pills */}

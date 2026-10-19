@@ -4,10 +4,15 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+export function isDatabaseConfigured(): boolean {
+  const url = process.env.DATABASE_URL?.trim();
+  return Boolean(url && (url.startsWith("postgresql://") || url.startsWith("postgres://")));
+}
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    log: [],
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

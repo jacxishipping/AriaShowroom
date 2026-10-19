@@ -4,22 +4,22 @@
 
 @layer base {
   :root {
-    --background: #f4f7fb;
-    --foreground: #122033;
-    --paper: #ffffff;
-    --muted: #637088;
-    --divider: rgba(15, 23, 42, 0.08);
-    --shadow-soft: 0 12px 28px rgba(15, 23, 42, 0.06);
+    --background: #F4F3EF;
+    --foreground: #111318;
+    --paper: #FFFFFF;
+    --muted: #646872;
+    --divider: #E2E0D8;
+    --shadow-soft: 0 1px 2px rgba(17, 19, 24, 0.04);
     --font-vazirmatn: "Vazirmatn", "Segoe UI Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
   }
 
   .dark {
-    --background: #0b1220;
-    --foreground: #edf2ff;
-    --paper: #111827;
-    --muted: #9aa7ba;
-    --divider: rgba(148, 163, 184, 0.14);
-    --shadow-soft: 0 12px 28px rgba(3, 7, 18, 0.3);
+    --background: #0A0C10;
+    --foreground: #ECEEF2;
+    --paper: #11141B;
+    --muted: #8E95A5;
+    --divider: #1F2430;
+    --shadow-soft: 0 2px 6px rgba(0, 0, 0, 0.45);
   }
 }
 
@@ -28,14 +28,13 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(circle at top, rgba(59, 130, 246, 0.08), transparent 28%),
-    var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Segoe UI Arabic", "Noto Sans Arabic", Tahoma, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Segoe UI Arabic", "Noto Sans Arabic", Tahoma, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 * {
@@ -45,40 +44,29 @@ body {
 button,
 input,
 select {
-  transition: all 180ms ease;
+  transition: all 140ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer components {
   .soft-panel {
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--paper);
     border: 1px solid var(--divider);
     box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(12px);
   }
 
-  .dark .soft-panel {
-    background: rgba(17, 24, 39, 0.88);
-  }
-}
-
-/* Material UI Component Layer Utilities */
-@layer components {
-  /* Material Paper Elevation 1 */
   .mui-paper-1 {
     background-color: var(--paper);
-    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05), 0px 1px 2px rgba(0, 0, 0, 0.03);
-    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    border-radius: 6px;
     border: 1px solid var(--divider);
   }
 
-  /* Material Paper Outlined */
   .mui-paper-outlined {
     background-color: var(--paper);
     border: 1px solid var(--divider);
-    border-radius: 12px;
+    border-radius: 6px;
   }
 
-  /* Material Button Contained */
   .mui-btn-contained {
     display: inline-flex;
     align-items: center;
@@ -86,109 +74,92 @@ select {
     position: relative;
     box-sizing: border-box;
     outline: 0;
-    border: 0;
+    border: 1px solid #111318;
     margin: 0;
     cursor: pointer;
     user-select: none;
     vertical-align: middle;
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.8125rem;
-    line-height: 1.75;
-    letter-spacing: 0.015em;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
     min-width: 64px;
-    padding: 7px 18px;
-    border-radius: 10px;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 6px 14px;
+    border-radius: 6px;
     color: #fff;
-    background-color: #2563EB;
-    box-shadow: 0 1px 2px 0 rgba(37, 99, 235, 0.2);
+    background-color: #111318;
   }
   .mui-btn-contained:hover {
-    background-color: #1D4ED8;
-    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+    background-color: #272B35;
   }
 
-  /* Material Button Contained Secondary / Gold */
   .mui-btn-gold {
-    background-color: #D97706;
+    background-color: #B45309;
+    border-color: #B45309;
     color: #fff;
   }
   .mui-btn-gold:hover {
-    background-color: #B45309;
+    background-color: #92400E;
   }
 
-  /* Material Button Outlined */
   .mui-btn-outlined {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 0.8125rem;
-    line-height: 1.75;
-    letter-spacing: 0.015em;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
     min-width: 64px;
-    padding: 6px 16px;
-    border-radius: 10px;
-    border: 1px solid rgba(37, 99, 235, 0.3);
-    color: #2563EB;
-    background-color: transparent;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--divider);
+    color: var(--foreground);
+    background-color: var(--paper);
   }
   .mui-btn-outlined:hover {
-    border-color: #2563EB;
-    background-color: rgba(37, 99, 235, 0.05);
+    border-color: #111318;
+    background-color: rgba(17, 19, 24, 0.03);
   }
 
-  /* Material Chip */
   .mui-chip {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 24px;
-    color: rgba(0, 0, 0, 0.87);
-    background-color: rgba(0, 0, 0, 0.06);
-    border-radius: 16px;
+    height: 22px;
+    color: var(--foreground);
+    background-color: rgba(17, 19, 24, 0.05);
+    border-radius: 4px;
     white-space: nowrap;
-    transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
     cursor: default;
     outline: 0;
     text-decoration: none;
-    border: 0;
-    padding: 0 10px;
-    font-size: 0.75rem;
+    border: 1px solid var(--divider);
+    padding: 0 8px;
+    font-size: 0.7rem;
     font-weight: 600;
   }
   .dark .mui-chip {
     color: rgba(255, 255, 255, 0.87);
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.06);
   }
 
-  /* Material Outlined Input */
   .mui-input-outlined {
     border: 1px solid var(--divider);
-    border-radius: 10px;
-    padding: 8px 12px;
+    border-radius: 6px;
+    padding: 7px 11px;
     font-size: 0.8125rem;
-    background-color: transparent;
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--paper);
   }
   .mui-input-outlined:focus {
     outline: none;
-    border-color: #2563EB;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    border-color: #111318;
   }
 
-  /* Glass Card */
   .glass-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-  .dark .glass-card {
-    background: rgba(17, 24, 39, 0.85);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--paper);
+    border: 1px solid var(--divider);
   }
 }
 

@@ -9,56 +9,56 @@ export function getMuiTheme(mode: "light" | "dark") {
     palette: {
       mode,
       primary: {
-        main: "#1976d2",
-        light: "#42a5f5",
-        dark: "#1565c0",
+        main: isDark ? "#D97706" : "#111318",
+        light: isDark ? "#F59E0B" : "#272B35",
+        dark: isDark ? "#B45309" : "#000000",
         contrastText: "#ffffff",
       },
       secondary: {
-        main: "#d97706",
-        light: "#f59e0b",
-        dark: "#b45309",
+        main: "#B45309",
+        light: "#D97706",
+        dark: "#92400E",
         contrastText: "#ffffff",
       },
       success: {
-        main: "#2e7d32",
-        light: "#4caf50",
-        dark: "#1b5e20",
+        main: "#047857",
+        light: "#059669",
+        dark: "#065F46",
         contrastText: "#ffffff",
       },
       warning: {
-        main: "#ed6c02",
-        light: "#ff9800",
-        dark: "#e65100",
+        main: "#B45309",
+        light: "#D97706",
+        dark: "#92400E",
         contrastText: "#ffffff",
       },
       error: {
-        main: "#d32f2f",
-        light: "#ef5350",
-        dark: "#c62828",
+        main: "#B91C1C",
+        light: "#DC2626",
+        dark: "#991B1B",
         contrastText: "#ffffff",
       },
       info: {
-        main: "#0288d1",
-        light: "#03a9f4",
-        dark: "#01579b",
+        main: "#334155",
+        light: "#475569",
+        dark: "#1E293B",
         contrastText: "#ffffff",
       },
       background: {
-        default: isDark ? "#0b0f19" : "#f8fafc",
-        paper: isDark ? "#121824" : "#ffffff",
+        default: isDark ? "#0A0C10" : "#F4F3EF",
+        paper: isDark ? "#11141B" : "#FFFFFF",
       },
       text: {
-        primary: isDark ? "#f8fafc" : "#0f172a",
-        secondary: isDark ? "#94a3b8" : "#64748b",
+        primary: isDark ? "#ECEEF2" : "#111318",
+        secondary: isDark ? "#8E95A5" : "#646872",
       },
-      divider: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)",
+      divider: isDark ? "#1F2430" : "#E2E0D8",
     },
     shape: {
-      borderRadius: 8,
+      borderRadius: 6,
     },
     typography: {
-      fontFamily: "var(--font-inter), 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif",
+      fontFamily: "var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif",
       button: {
         textTransform: "none",
         fontWeight: 600,
@@ -67,41 +67,44 @@ export function getMuiTheme(mode: "light" | "dark") {
     components: {
       MuiButton: {
         defaultProps: {
-          disableElevation: false,
+          disableElevation: true,
         },
         styleOverrides: {
           root: {
             borderRadius: 6,
-            fontSize: "0.8125rem",
+            fontSize: "0.78rem",
             padding: "6px 14px",
-            boxShadow: isDark
-              ? "0 1px 3px rgba(0, 0, 0, 0.4)"
-              : "0 1px 2px rgba(0, 0, 0, 0.05)",
+            fontWeight: 600,
+            letterSpacing: "0.01em",
+            boxShadow: "none",
             "&:hover": {
-              boxShadow: isDark
-                ? "0 4px 6px rgba(0, 0, 0, 0.6)"
-                : "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              boxShadow: "none",
+            },
+          },
+          outlined: {
+            borderColor: isDark ? "#2A3040" : "#D6D3C9",
+            "&:hover": {
+              borderColor: isDark ? "#F59E0B" : "#111318",
+              backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(17,19,24,0.03)",
             },
           },
           sizeSmall: {
             padding: "4px 10px",
-            fontSize: "0.75rem",
+            fontSize: "0.74rem",
           },
           sizeLarge: {
-            padding: "8px 20px",
-            fontSize: "0.875rem",
+            padding: "8px 18px",
+            fontSize: "0.85rem",
           },
         },
       },
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 10,
+            borderRadius: 6,
             backgroundImage: "none",
-            border: isDark ? "1px solid rgba(255, 255, 255, 0.07)" : "1px solid rgba(0, 0, 0, 0.07)",
-            boxShadow: isDark
-              ? "0 1px 3px rgba(0, 0, 0, 0.5)"
-              : "0 1px 3px rgba(0, 0, 0, 0.05)",
+            border: isDark ? "1px solid #1F2430" : "1px solid #E2E0D8",
+            boxShadow: "none",
           },
         },
       },
@@ -109,6 +112,8 @@ export function getMuiTheme(mode: "light" | "dark") {
         styleOverrides: {
           root: {
             backgroundImage: "none",
+            boxShadow: "none",
+            border: isDark ? "1px solid #1F2430" : "1px solid #E2E0D8",
           },
         },
       },
@@ -116,22 +121,23 @@ export function getMuiTheme(mode: "light" | "dark") {
         styleOverrides: {
           root: {
             fontSize: "0.75rem",
-            padding: "7px 10px",
-            borderColor: isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.06)",
-            lineHeight: 1.3,
+            padding: "8px 12px",
+            borderColor: isDark ? "#1B202B" : "#EAE8E1",
+            lineHeight: 1.35,
           },
           sizeSmall: {
-            padding: "5px 8px",
+            padding: "6px 10px",
             fontSize: "0.75rem",
           },
           head: {
             fontWeight: 700,
-            fontSize: "0.6875rem",
+            fontSize: "0.66rem",
             textTransform: "uppercase",
-            letterSpacing: "0.04em",
-            padding: "7px 10px",
-            backgroundColor: isDark ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.02)",
-            color: isDark ? "#94a3b8" : "#64748b",
+            letterSpacing: "0.07em",
+            padding: "8px 12px",
+            backgroundColor: isDark ? "#0D1017" : "#FAF9F6",
+            color: isDark ? "#8E95A5" : "#646872",
+            borderBottom: isDark ? "1px solid #242A38" : "1px solid #DCD9D0",
             whiteSpace: "nowrap",
           },
         },
@@ -141,8 +147,8 @@ export function getMuiTheme(mode: "light" | "dark") {
           root: {
             "&:hover": {
               backgroundColor: isDark
-                ? "rgba(255, 255, 255, 0.03) !important"
-                : "rgba(0, 0, 0, 0.02) !important",
+                ? "rgba(255, 255, 255, 0.02) !important"
+                : "rgba(17, 19, 24, 0.018) !important",
             },
           },
         },
@@ -151,11 +157,11 @@ export function getMuiTheme(mode: "light" | "dark") {
         styleOverrides: {
           root: {
             fontWeight: 600,
-            borderRadius: 6,
+            borderRadius: 4,
           },
           sizeSmall: {
-            fontSize: "0.7rem",
-            height: 22,
+            fontSize: "0.68rem",
+            height: 20,
           },
         },
       },

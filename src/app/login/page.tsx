@@ -131,31 +131,34 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-900 via-[#0B0F19] to-slate-950 text-white relative overflow-hidden">
-      {/* Background Glows */}
-      <div className="absolute top-0 -left-40 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 -right-40 w-96 h-96 bg-amber-600/15 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 bg-[#0A0C10] text-white relative">
       {/* Language Quick Selector in Header */}
-      <div className="absolute top-6 right-6 flex items-center gap-2 bg-slate-800/80 backdrop-blur-md border border-slate-700/60 rounded-full px-3 py-1.5 text-xs text-slate-300">
-        <Globe className="h-3.5 w-3.5 text-slate-400" />
+      <div className="absolute top-6 right-6 flex items-center divide-x divide-[#242A38] bg-[#11141B] border border-[#242A38] rounded text-[11px] font-mono text-slate-300 overflow-hidden">
+        <span className="px-2.5 py-1.5 flex items-center gap-1.5 text-slate-400">
+          <Globe className="h-3.5 w-3.5 text-[#C59B27]" />
+          <span>LOCALE</span>
+        </span>
         <button
           onClick={() => setLanguage("en")}
-          className={`px-2 py-0.5 rounded-full transition-colors ${language === "en" ? "bg-primary text-white font-bold" : "hover:text-white"}`}
+          className={`px-2.5 py-1.5 transition-colors cursor-pointer ${
+            language === "en" ? "bg-[#C59B27] text-[#0A0C10] font-bold" : "hover:text-white"
+          }`}
         >
           EN
         </button>
-        <span>•</span>
         <button
           onClick={() => setLanguage("fa")}
-          className={`px-2 py-0.5 rounded-full transition-colors ${language === "fa" ? "bg-primary text-white font-bold" : "hover:text-white"}`}
+          className={`px-2.5 py-1.5 transition-colors cursor-pointer ${
+            language === "fa" ? "bg-[#C59B27] text-[#0A0C10] font-bold" : "hover:text-white"
+          }`}
         >
           دری
         </button>
-        <span>•</span>
         <button
           onClick={() => setLanguage("ps")}
-          className={`px-2 py-0.5 rounded-full transition-colors ${language === "ps" ? "bg-primary text-white font-bold" : "hover:text-white"}`}
+          className={`px-2.5 py-1.5 transition-colors cursor-pointer ${
+            language === "ps" ? "bg-[#C59B27] text-[#0A0C10] font-bold" : "hover:text-white"
+          }`}
         >
           پښتو
         </button>
@@ -163,16 +166,19 @@ function LoginContent() {
 
       <div className="max-w-md w-full space-y-6 z-10">
         {/* Dealership Branding Header */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-800 shadow-xl shadow-blue-900/30 border border-blue-400/30">
-            <Car className="h-8 w-8 text-white" />
+        <div className="text-center space-y-2.5">
+          <div className="inline-flex items-center justify-center h-12 w-12 rounded bg-[#11141B] border border-[#C59B27]/50">
+            <Car className="h-6 w-6 text-[#D4AF37]" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            <div className="text-[10px] font-mono font-bold uppercase tracking-[0.22em] text-[#D4AF37] mb-1">
+              KHORASAN AUTOMOTIVE & SARRAFI TERMINAL
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
               {t.brandName}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1 flex items-center justify-center gap-1.5 font-medium">
-              <Building2 className="h-3.5 w-3.5 text-blue-400" />
+            <p className="text-xs text-slate-400 mt-1 flex items-center justify-center gap-1.5 font-mono">
+              <Building2 className="h-3.5 w-3.5 text-[#C59B27]" />
               {language === "ps"
                 ? "د اسلام قلعه او هرات ګمرک ترانزیتي مدیریت او پلور ERP"
                 : language === "fa"
@@ -182,25 +188,30 @@ function LoginContent() {
           </div>
         </div>
 
-        {/* Login Form Card */}
-        <MuiCard className="border border-slate-700/70 bg-slate-800/90 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden">
-          <MuiCardContent className="p-6 sm:p-8 space-y-6">
-            <div className="border-b border-slate-700/80 pb-4">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                {language === "ps" ? "امن ننوتل او تصدیق" : language === "fa" ? "ورود به پنل کاربری" : "Authorized Staff Sign-In"}
+        {/* Architectural 1px Hairline Login Container */}
+        <div className="rounded-md border border-[#242A38] bg-[#11141B] overflow-hidden">
+          <div className="px-6 py-4 bg-[#141821] border-b border-[#242A38] flex items-center justify-between">
+            <div>
+              <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-[#D4AF37]" />
+                {language === "ps" ? "امن ننوتل او تصدیق" : language === "fa" ? "ورود به پنل کاربری" : "Authorized Desk Sign-In"}
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-400 mt-0.5">
                 {language === "ps"
                   ? "خپل رسمي حساب یا لاندې ډیمو کاروونکي وټاکئ"
                   : language === "fa"
                   ? "ایمیل و رمز عبور یا حساب‌های آزمایشی را انتخاب کنید"
-                  : "Enter your registered credentials or select a demo role below"}
+                  : "Enter registered credentials or select an institutional role below"}
               </p>
             </div>
+            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-[#C59B27]/15 text-[#D4AF37] border border-[#C59B27]/30">
+              TLS 1.3
+            </span>
+          </div>
 
+          <div className="p-6 space-y-5">
             {errorMessage && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center gap-2.5 text-rose-300 text-xs">
+              <div className="p-3 rounded bg-rose-500/10 border border-rose-500/30 flex items-center gap-2.5 text-rose-300 text-xs">
                 <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
                 <span>{errorMessage}</span>
               </div>
@@ -208,7 +219,7 @@ function LoginContent() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-1.5">
                   {language === "ps" ? "برېښنالیک پته" : language === "fa" ? "آدرس ایمیل" : "Email Address"}
                 </label>
                 <MuiTextField
@@ -224,10 +235,10 @@ function LoginContent() {
 
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-xs font-medium text-slate-300">
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-300">
                     {language === "ps" ? "پټ نوم (رمز)" : language === "fa" ? "رمز عبور" : "Password"}
                   </label>
-                  <span className="text-[11px] text-slate-400 font-mono">Demo: password123</span>
+                  <span className="text-[10px] text-slate-400 font-mono">Passkey: password123</span>
                 </div>
                 <MuiTextField
                   fullWidth
@@ -240,43 +251,41 @@ function LoginContent() {
                 />
               </div>
 
-              <MuiButton
+              <button
                 type="submit"
-                variant="contained"
-                fullWidth
                 disabled={loading}
-                className="h-11 font-bold text-sm bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-700/30"
+                className="w-full h-10 rounded bg-[#C59B27] hover:bg-[#D4AF37] text-[#0A0C10] font-mono font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
-                  <span className="flex items-center gap-2">
+                  <>
                     <Sparkles className="h-4 w-4 animate-spin" />
-                    {language === "ps" ? "د تایید په حال کې..." : language === "fa" ? "در حال ورود..." : "Authenticating..."}
-                  </span>
+                    <span>{language === "ps" ? "د تایید په حال کې..." : language === "fa" ? "در حال ورود..." : "Authenticating..."}</span>
+                  </>
                 ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    {language === "ps" ? "سیستم ته ننوتل" : language === "fa" ? "ورود به سیستم" : "Sign In to Cockpit"}
+                  <>
+                    <span>{language === "ps" ? "سیستم ته ننوتل" : language === "fa" ? "ورود به سیستم" : "Authenticate & Open Terminal"}</span>
                     <ArrowRight className="h-4 w-4" />
-                  </span>
+                  </>
                 )}
-              </MuiButton>
+              </button>
             </form>
 
-            {/* Quick Demo Switcher */}
-            <div className="pt-2 border-t border-slate-700/80 space-y-2.5">
-              <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400 block text-center">
-                {language === "ps" ? "یو کلیک آزمایښتي حسابونه" : language === "fa" ? "ورود سریع با حساب‌های نمونه" : "One-Click Quick Access (Demo Roles)"}
+            {/* Quick Demo Switcher in 1px Hairline Matrix */}
+            <div className="pt-4 border-t border-[#242A38] space-y-2.5">
+              <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-slate-400 block">
+                {language === "ps" ? "یو کلیک آزمایښتي حسابونه" : language === "fa" ? "ورود سریع با حساب‌های نمونه" : "One-Click Desk Role Credentials"}
               </span>
 
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-1 gap-px bg-[#242A38] border border-[#242A38] rounded overflow-hidden">
                 {demoAccounts.map((account) => (
                   <button
                     key={account.email}
                     type="button"
                     onClick={() => handleDemoSelect(account)}
-                    className="flex items-center justify-between p-2.5 rounded-xl border border-slate-700/60 bg-slate-900/60 hover:bg-slate-700/50 hover:border-blue-500/40 transition-all text-left group"
+                    className="flex items-center justify-between p-3 bg-[#141821] hover:bg-[#191F2C] transition-colors text-left group cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700 text-slate-300 group-hover:text-blue-400">
+                      <div className="h-8 w-8 rounded bg-[#0A0C10] flex items-center justify-center border border-[#242A38] text-slate-400 group-hover:text-[#D4AF37] group-hover:border-[#C59B27]/50">
                         <User className="h-4 w-4" />
                       </div>
                       <div>
@@ -284,7 +293,7 @@ function LoginContent() {
                           <span className="text-xs font-bold text-slate-200 group-hover:text-white">
                             {account.name}
                           </span>
-                          <span className={`text-[10px] px-1.5 py-0.2 rounded border font-mono ${account.badgeColor}`}>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded border font-mono uppercase ${account.badgeColor}`}>
                             {account.title}
                           </span>
                         </div>
@@ -293,22 +302,19 @@ function LoginContent() {
                         </span>
                       </div>
                     </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+                    <ArrowRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-[#D4AF37] group-hover:translate-x-0.5 transition-all" />
                   </button>
                 ))}
               </div>
             </div>
-          </MuiCardContent>
-        </MuiCard>
+          </div>
+        </div>
 
         {/* Security & Official Chamber Footer */}
         <div className="text-center space-y-1">
-          <p className="text-[11px] text-slate-500 flex items-center justify-center gap-1">
-            <Lock className="h-3 w-3 text-emerald-500" />
-            256-Bit Encrypted Dealership Session • Herat Chamber of Commerce #AF-HRT-88219
-          </p>
-          <p className="text-[10px] text-slate-600">
-            © 2026 Sadozai Motors Afghanistan. All rights reserved.
+          <p className="text-[10px] font-mono text-slate-500 flex items-center justify-center gap-1.5">
+            <Lock className="h-3 w-3 text-[#C59B27]" />
+            256-BIT ENCRYPTED SESSION • HERAT CHAMBER OF COMMERCE #AF-HRT-88219
           </p>
         </div>
       </div>

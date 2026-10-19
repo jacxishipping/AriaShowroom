@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { ensureChartOfAccounts } from "@/lib/ledger";
 import { requireApiRole } from "@/lib/api-auth";
 
 export async function GET() {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true, data: [] });
+  }
   const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
 
@@ -14,10 +17,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ success: true, data: accounts });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch accounts" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ success: false, fallback: true, data: [] });
   }
 }

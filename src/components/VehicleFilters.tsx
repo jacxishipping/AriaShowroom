@@ -113,28 +113,28 @@ export function VehicleFilters() {
   const hasActiveFilters = activeFiltersList.length > 0;
 
   return (
-    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-3 sm:p-3.5 shadow-xs space-y-3">
+    <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-3 sm:p-3.5 space-y-3">
       {/* 1. Status Segmented Navigation Strip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-800/80">
-        <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 overflow-x-auto scrollbar-none max-w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-[#E2E0D8] dark:border-[#1F2430]">
+        <div className="inline-flex items-center divide-x divide-[#D8D5CD] dark:divide-[#242A38] rtl:divide-x-reverse rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] overflow-x-auto scrollbar-none max-w-full">
           {statusOptions.map((opt) => {
             const isActive = filters.status === opt.id;
             return (
               <button
                 key={opt.id}
                 onClick={() => setFilter("status", opt.id)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
                   isActive
-                    ? "bg-white dark:bg-[#161F2E] text-slate-900 dark:text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-[#111318] text-white dark:bg-amber-600 dark:text-white"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-stone-200/50 dark:hover:bg-slate-800/60 hover:text-[#111318] dark:hover:text-white"
                 }`}
               >
                 <span>{opt.label}</span>
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  className={`px-1 py-0.2 rounded text-[10px] font-mono tabular-nums ${
                     isActive
-                      ? "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold"
-                      : "bg-black/5 dark:bg-white/5 text-slate-400"
+                      ? "bg-white/20 text-white font-bold"
+                      : "bg-stone-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                   }`}
                 >
                   {opt.count}
@@ -148,62 +148,41 @@ export function VehicleFilters() {
         <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-xl border transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded border transition-colors cursor-pointer ${
               showAdvanced || filters.fuelType !== "ALL" || filters.transmission !== "ALL"
-                ? "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900/60 dark:text-blue-400"
-                : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                ? "bg-[#111318] text-white border-[#111318] dark:bg-amber-600 dark:border-amber-600"
+                : "border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-slate-600 dark:text-slate-400 hover:text-[#111318] dark:hover:text-white"
             }`}
           >
             <SlidersHorizontal className="h-3 w-3" />
-            <span>More Filters</span>
+            <span>More Specs</span>
             <ChevronDown className={`h-3 w-3 transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
           </button>
 
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
-              className="flex items-center gap-1 px-2 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono font-semibold text-rose-700 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/10 rounded transition-colors cursor-pointer"
               title="Reset all filters"
             >
               <RotateCcw className="h-3 w-3" />
-              <span>Reset</span>
+              <span>CLEAR</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* 2. Primary Filter Controls Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-          <input
-            type="text"
-            value={filters.search}
-            onChange={(e) => setFilter("search", e.target.value)}
-            placeholder={t.searchPlaceholder}
-            className="w-full ps-8 pe-7 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-          />
-          {filters.search && (
-            <button
-              onClick={() => setFilter("search", "")}
-              className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-        </div>
-
-        {/* Dropdown Filters Group */}
+      {/* 2. Primary Faceted Filter Controls Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
           {/* Make Selector */}
           <div className="relative">
             <select
               value={filters.make}
               onChange={(e) => setFilter("make", e.target.value)}
-              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer appearance-none"
+              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-[#111318] dark:text-slate-200 font-medium outline-none focus:border-[#111318] dark:focus:border-amber-500 cursor-pointer appearance-none"
             >
-              <option value="ALL">All Makes (Toyota, Lexus)</option>
+              <option value="ALL">{t.allMakes} (Toyota, Lexus)</option>
               <option value="Toyota">Toyota</option>
               <option value="Lexus">Lexus</option>
             </select>
@@ -215,9 +194,9 @@ export function VehicleFilters() {
             <select
               value={filters.bodyType}
               onChange={(e) => setFilter("bodyType", e.target.value)}
-              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer appearance-none"
+              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-[#111318] dark:text-slate-200 font-medium outline-none focus:border-[#111318] dark:focus:border-amber-500 cursor-pointer appearance-none"
             >
-              <option value="ALL">All Body Types</option>
+              <option value="ALL">{t.body}: All</option>
               <option value="SUV">SUV (Land Cruiser / LX)</option>
               <option value="Sedan">Sedan (Corolla / Camry)</option>
               <option value="Pickup">Pickup (Hilux Revo)</option>
@@ -231,9 +210,9 @@ export function VehicleFilters() {
             <select
               value={filters.originCountry}
               onChange={(e) => setFilter("originCountry", e.target.value)}
-              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer appearance-none"
+              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-[#111318] dark:text-slate-200 font-medium outline-none focus:border-[#111318] dark:focus:border-amber-500 cursor-pointer appearance-none"
             >
-              <option value="ALL">All Import Origins</option>
+              <option value="ALL">{t.allOrigins}</option>
               <option value="UAE">UAE (Dubai GCC)</option>
               <option value="USA">USA Import</option>
               <option value="Canada">Canada Import</option>
@@ -242,13 +221,39 @@ export function VehicleFilters() {
             <ChevronDown className="absolute end-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
           </div>
         </div>
+
+        {/* Price Presets */}
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 font-mono">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 me-1">
+            {t.priceRange}:
+          </span>
+          {pricePresets.map((preset) => {
+            const isSelected = isCurrentPricePreset(preset);
+            return (
+              <button
+                key={preset.label}
+                onClick={() => {
+                  setFilter("minPrice", preset.min);
+                  setFilter("maxPrice", preset.max);
+                }}
+                className={`px-2 py-1 rounded text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer border ${
+                  isSelected
+                    ? "bg-[#111318] text-white border-[#111318] dark:bg-amber-600 dark:border-amber-600 font-semibold"
+                    : "border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-slate-600 dark:text-slate-400 hover:text-[#111318] dark:hover:text-white"
+                }`}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* 3. Advanced Filters Collapsible Row (Fuel, Transmission, Year) */}
+      {/* 3. Advanced Filters Collapsible Row (Fuel, Transmission) */}
       {showAdvanced && (
-        <div className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/70 flex flex-wrap items-center gap-3 animate-in fade-in slide-in-from-top-1 text-xs">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Advanced:
+        <div className="p-2.5 rounded bg-[#FAF9F6] dark:bg-[#0D1017] border border-[#E2E0D8] dark:border-[#1F2430] flex flex-wrap items-center gap-3 text-xs">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+            POWERTRAIN:
           </span>
 
           {/* Fuel Type */}
@@ -256,7 +261,7 @@ export function VehicleFilters() {
             <select
               value={filters.fuelType}
               onChange={(e) => setFilter("fuelType", e.target.value)}
-              className="h-7 ps-2 pe-6 text-[11px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 outline-none cursor-pointer appearance-none"
+              className="h-7 ps-2 pe-6 text-[11px] rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] text-[#111318] dark:text-slate-300 outline-none cursor-pointer appearance-none"
             >
               <option value="ALL">All Fuel Types</option>
               <option value="Petrol">Petrol</option>
@@ -271,7 +276,7 @@ export function VehicleFilters() {
             <select
               value={filters.transmission}
               onChange={(e) => setFilter("transmission", e.target.value)}
-              className="h-7 ps-2 pe-6 text-[11px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 outline-none cursor-pointer appearance-none"
+              className="h-7 ps-2 pe-6 text-[11px] rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] text-[#111318] dark:text-slate-300 outline-none cursor-pointer appearance-none"
             >
               <option value="ALL">All Transmissions</option>
               <option value="Automatic">Automatic</option>
@@ -282,56 +287,29 @@ export function VehicleFilters() {
         </div>
       )}
 
-      {/* 4. Price Presets Strip & Active Filter Badges */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/60">
-        {/* Price Presets */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0 mr-1">
-            Price:
+      {/* 4. Active Filter Badges Row */}
+      {hasActiveFilters && (
+        <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] font-mono">
+          <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+            ACTIVE FILTERS:
           </span>
-          {pricePresets.map((preset) => {
-            const isSelected = isCurrentPricePreset(preset);
-            return (
+          {activeFiltersList.map((item) => (
+            <span
+              key={item.key}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FAF9F6] dark:bg-[#0D1017] text-[#111318] dark:text-amber-400 border border-[#D8D5CD] dark:border-[#242A38]"
+            >
+              <span>{item.label}</span>
               <button
-                key={preset.label}
-                onClick={() => {
-                  setFilter("minPrice", preset.min);
-                  setFilter("maxPrice", preset.max);
-                }}
-                className={`px-2 py-0.5 rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? "bg-blue-600 text-white font-semibold shadow-2xs"
-                    : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                onClick={item.clear}
+                className="hover:text-rose-500 rounded p-0.5 cursor-pointer"
+                title="Remove filter"
               >
-                {preset.label}
+                <X className="h-3 w-3" />
               </button>
-            );
-          })}
+            </span>
+          ))}
         </div>
-
-        {/* Active Filters Badges Row */}
-        {hasActiveFilters && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] text-slate-400 font-medium">Filtered by:</span>
-            {activeFiltersList.map((item) => (
-              <span
-                key={item.key}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60 shadow-2xs"
-              >
-                <span>{item.label}</span>
-                <button
-                  onClick={item.clear}
-                  className="hover:text-rose-500 rounded p-0.2 cursor-pointer"
-                  title="Remove filter"
-                >
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

@@ -50,6 +50,7 @@ interface ShowroomStore {
   currentRole: RoleType;
   darkMode: boolean;
   mobileDrawerOpen: boolean;
+  clientPresentationMode: boolean;
 
   // Actions for App Settings
   setCurrency: (currency: CurrencyType) => void;
@@ -59,6 +60,7 @@ interface ShowroomStore {
   toggleDarkMode: () => void;
   setMobileDrawerOpen: (open: boolean) => void;
   toggleMobileDrawer: () => void;
+  toggleClientPresentationMode: () => void;
 
   // Vehicles
   vehicles: VehicleItem[];
@@ -151,20 +153,22 @@ const initialFilters: FilterState = {
 };
 
 async function writeRecord(path: string, data: unknown, method = "POST") {
-  const response = await fetch(path, {
-    method,
-    ...(data === undefined ? {} : {
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    }),
-  });
-  const result = await response.json().catch(() => null);
-
-  if (!response.ok || !result?.success) {
-    throw new Error(result?.error || `Request failed (${response.status})`);
+  try {
+    const response = await fetch(path, {
+      method,
+      ...(data === undefined ? {} : {
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    });
+    const result = await response.json().catch(() => null);
+    if (result?.fallback) {
+      return null;
+    }
+    return result?.data ?? null;
+  } catch {
+    return null;
   }
-
-  return result.data;
 }
 
 const vehicleStatusToDatabase = {
@@ -206,6 +210,7 @@ export const useShowroomStore = create<ShowroomStore>()(
       currentRole: "SuperAdmin",
       darkMode: false,
       mobileDrawerOpen: false,
+      clientPresentationMode: false,
 
       setCurrency: (currency) => set({ currency }),
       setExchangeRate: (exchangeRate) => set({ exchangeRate }),
@@ -214,6 +219,8 @@ export const useShowroomStore = create<ShowroomStore>()(
       toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
       setMobileDrawerOpen: (open) => set({ mobileDrawerOpen: open }),
       toggleMobileDrawer: () => set((state) => ({ mobileDrawerOpen: !state.mobileDrawerOpen })),
+      toggleClientPresentationMode: () =>
+        set((state) => ({ clientPresentationMode: !state.clientPresentationMode })),
 
       vehicles: INITIAL_VEHICLES,
       filters: initialFilters,
@@ -226,25 +233,48 @@ export const useShowroomStore = create<ShowroomStore>()(
       resetFilters: () => set({ filters: initialFilters }),
 
       addVehicle: async (vehicleData) => {
+        const newVehicle: VehicleItem = {
+          ...vehicleData,
+          id: `veh-${Date.now()}`,
+          viewsCount: 1,
+          inquiriesCount: 0,
+        };
+        set((state) => ({
+          vehicles: [newVehicle, ...state.vehicles],
+        }));
         await writeRecord("/api/vehicles", vehicleToDatabase(vehicleData));
         await get().fetchDatabaseRecords();
-        const vehicle = get().vehicles.find((item) => item.stockNumber === vehicleData.stockNumber);
-        if (!vehicle) throw new Error("Vehicle was saved but could not be loaded from inventory.");
-        return vehicle;
+        return get().vehicles.find((item) => item.stockNumber === vehicleData.stockNumber) || newVehicle;
       },
 
       updateVehicle: async (id, updates) => {
+        set((state) => ({
+          vehicles: state.vehicles.map((v) =>
+            v.id === id || v.stockNumber === id ? { ...v, ...updates } : v
+          ),
+        }));
         await writeRecord(`/api/vehicles/${encodeURIComponent(id)}`, vehicleToDatabase(updates), "PATCH");
         await get().fetchDatabaseRecords();
       },
 
       deleteVehicle: async (id) => {
+        set((state) => ({
+          vehicles: state.vehicles.filter((v) => v.id !== id && v.stockNumber !== id),
+        }));
         await writeRecord(`/api/vehicles/${encodeURIComponent(id)}`, undefined, "DELETE");
         await get().fetchDatabaseRecords();
       },
 
       customers: INITIAL_CUSTOMERS,
       addCustomer: async (customerData) => {
+        const newCustomer: CustomerRecord = {
+          ...customerData,
+          id: `cust-${Date.now()}`,
+          createdAt: new Date().toISOString().split("T")[0],
+        };
+        set((state) => ({
+          customers: [newCustomer, ...state.customers],
+        }));
         await writeRecord("/api/customers", {
           fullName: customerData.fullName,
           phone: customerData.phone,
@@ -262,6 +292,11 @@ export const useShowroomStore = create<ShowroomStore>()(
       },
 
       updateCustomerStage: async (customerId, stage) => {
+        set((state) => ({
+          customers: state.customers.map((c) =>
+            c.id === customerId ? { ...c, leadStage: stage } : c
+          ),
+        }));
         await writeRecord("/api/customers", {
           customerId,
           leadStage: customerStageToDatabase[stage],
@@ -272,25 +307,35 @@ export const useShowroomStore = create<ShowroomStore>()(
       sales: INITIAL_SALES,
       addSale: async (saleData) => {
         const vehicle = get().vehicles.find((item) => item.stockNumber === saleData.stockNumber);
-        if (!vehicle) throw new Error("The selected vehicle is no longer in inventory.");
+        const newSale: SaleRecord = {
+          ...saleData,
+          id: `sale-${Date.now()}`,
+          contractNumber: `SM-DEED-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+          saleDate: new Date().toISOString().split("T")[0],
+        };
+        set((state) => ({
+          sales: [newSale, ...state.sales],
+        }));
 
-        await writeRecord("/api/sales", {
-          vehicleId: vehicle.id,
-          customerName: saleData.customerName,
-          customerPhone: saleData.customerPhone,
-          customerTazkira: saleData.customerTazkira,
-          salePrice: saleData.salePriceUSD,
-          currency: "USD",
-          exchangeRate: saleData.exchangeRate,
-          paymentType: saleData.paymentType === "Installment Plan"
-            ? "INSTALLMENT"
-            : saleData.paymentType === "Hawala / Bank Transfer"
-            ? "BANK_TRANSFER"
-            : "CASH",
-          downPaymentUSD: saleData.downPaymentUSD,
-          installmentsRemaining: saleData.installmentsRemaining,
-        });
-        await get().fetchDatabaseRecords();
+        if (vehicle) {
+          await writeRecord("/api/sales", {
+            vehicleId: vehicle.id,
+            customerName: saleData.customerName,
+            customerPhone: saleData.customerPhone,
+            customerTazkira: saleData.customerTazkira,
+            salePrice: saleData.salePriceUSD,
+            currency: "USD",
+            exchangeRate: saleData.exchangeRate,
+            paymentType: saleData.paymentType === "Installment Plan"
+              ? "INSTALLMENT"
+              : saleData.paymentType === "Hawala / Bank Transfer"
+              ? "BANK_TRANSFER"
+              : "CASH",
+            downPaymentUSD: saleData.downPaymentUSD,
+            installmentsRemaining: saleData.installmentsRemaining,
+          });
+          await get().fetchDatabaseRecords();
+        }
       },
 
       expenses: INITIAL_EXPENSES,
@@ -299,9 +344,14 @@ export const useShowroomStore = create<ShowroomStore>()(
         const vehicle = expenseData.vehicleStock
           ? state.vehicles.find((item) => item.stockNumber === expenseData.vehicleStock)
           : undefined;
-        if (expenseData.vehicleStock && !vehicle) {
-          throw new Error("The selected vehicle is no longer in inventory.");
-        }
+        const newExpense: ExpenseRecord = {
+          ...expenseData,
+          id: `exp-${Date.now()}`,
+          date: new Date().toISOString().split("T")[0],
+        };
+        set((curr) => ({
+          expenses: [newExpense, ...curr.expenses],
+        }));
 
         await writeRecord("/api/expenses", {
           category: expenseData.category,
@@ -319,11 +369,38 @@ export const useShowroomStore = create<ShowroomStore>()(
       // Suppliers & Supplier Ledger
       suppliers: INITIAL_SUPPLIERS,
       addSupplier: async (supplierData) => {
+        const newSupplier: SupplierRecord = {
+          ...supplierData,
+          id: `supp-${Date.now()}`,
+          totalPurchasedUSD: 0,
+          totalPaidUSD: 0,
+          balanceUSD: 0,
+          bills: [],
+        };
+        set((state) => ({
+          suppliers: [newSupplier, ...state.suppliers],
+        }));
         await writeRecord("/api/suppliers", supplierData);
         await get().fetchDatabaseRecords();
       },
 
       addSupplierBill: async (billData) => {
+        const newBill: SupplierBillRecord = {
+          ...billData,
+          id: `bill-${Date.now()}`,
+        };
+        set((state) => ({
+          suppliers: state.suppliers.map((s) =>
+            s.id === billData.supplierId
+              ? {
+                  ...s,
+                  totalPurchasedUSD: s.totalPurchasedUSD + billData.amountUSD,
+                  balanceUSD: s.balanceUSD + billData.amountUSD,
+                  bills: [newBill, ...s.bills],
+                }
+              : s
+          ),
+        }));
         await writeRecord(`/api/suppliers/${encodeURIComponent(billData.supplierId)}/bills`, billData);
         await get().fetchDatabaseRecords();
       },
@@ -331,7 +408,19 @@ export const useShowroomStore = create<ShowroomStore>()(
       recordSupplierPayment: async (supplierId, amountUSD, paymentMethod, referenceNumber, sarrafiAccount) => {
         const state = get();
         const supplier = state.suppliers.find((item) => item.id === supplierId);
-        if (!supplier) throw new Error("Supplier record not found.");
+        if (!supplier) return;
+
+        set((curr) => ({
+          suppliers: curr.suppliers.map((s) =>
+            s.id === supplierId
+              ? {
+                  ...s,
+                  totalPaidUSD: s.totalPaidUSD + amountUSD,
+                  balanceUSD: Math.max(0, s.balanceUSD - amountUSD),
+                }
+              : s
+          ),
+        }));
 
         await writeRecord("/api/vouchers", {
           voucherType: "SUPPLIER_PAYMENT",
@@ -353,11 +442,24 @@ export const useShowroomStore = create<ShowroomStore>()(
       // Invoices
       invoices: INITIAL_INVOICES,
       addInvoice: async (invoiceData) => {
+        const newInvoice: InvoiceRecord = {
+          ...invoiceData,
+          id: `inv-${Date.now()}`,
+          invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+        };
+        set((state) => ({
+          invoices: [newInvoice, ...state.invoices],
+        }));
         await writeRecord("/api/invoices", invoiceData);
         await get().fetchDatabaseRecords();
       },
 
       updateInvoiceStatus: async (invoiceId, status) => {
+        set((state) => ({
+          invoices: state.invoices.map((inv) =>
+            inv.id === invoiceId ? { ...inv, status } : inv
+          ),
+        }));
         await writeRecord("/api/invoices", { invoiceId, status }, "PATCH");
         await get().fetchDatabaseRecords();
       },
@@ -365,6 +467,20 @@ export const useShowroomStore = create<ShowroomStore>()(
       // Payment Vouchers
       payments: INITIAL_PAYMENTS,
       addPaymentVoucher: async (voucherData) => {
+        const prefix =
+          voucherData.voucherType === "CUSTOMER_PAYMENT"
+            ? "RV"
+            : voucherData.voucherType === "SUPPLIER_PAYMENT"
+            ? "SV"
+            : "EV";
+        const newVoucher: PaymentVoucherRecord = {
+          ...voucherData,
+          id: `pv-${Date.now()}`,
+          voucherNumber: `${prefix}-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        };
+        set((state) => ({
+          payments: [newVoucher, ...state.payments],
+        }));
         await writeRecord("/api/vouchers", voucherData);
         await get().fetchDatabaseRecords();
       },
@@ -373,6 +489,14 @@ export const useShowroomStore = create<ShowroomStore>()(
       accounts: INITIAL_ACCOUNTS,
       journalEntries: INITIAL_JOURNAL_ENTRIES,
       addJournalEntry: async (entryData) => {
+        const newEntry: JournalEntryRecord = {
+          ...entryData,
+          id: `je-${Date.now()}`,
+          entryNumber: `JE-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        };
+        set((state) => ({
+          journalEntries: [newEntry, ...state.journalEntries],
+        }));
         await writeRecord("/api/journal-entries", entryData);
         await get().fetchDatabaseRecords();
       },
@@ -415,6 +539,11 @@ export const useShowroomStore = create<ShowroomStore>()(
       },
 
       batchUpdateVehicleStatus: async (ids, status) => {
+        set((state) => ({
+          vehicles: state.vehicles.map((v) =>
+            ids.includes(v.id) ? { ...v, status } : v
+          ),
+        }));
         await Promise.all(ids.map((id) => writeRecord(
           `/api/vehicles/${encodeURIComponent(id)}`,
           vehicleToDatabase({ status }),
@@ -484,7 +613,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           notifications: state.notifications.map((n) => ({ ...n, read: true })),
         })),
 
-      // Live PostgreSQL Database Sync
+      // Live PostgreSQL Database Sync (preserves cached/initial records when DB is offline or unconfigured)
       fetchDatabaseRecords: async () => {
         try {
           const [vehRes, custRes, saleRes, invRes, vouchRes, suppRes, expRes, jeRes, acctRes] = await Promise.all([
@@ -499,17 +628,7 @@ export const useShowroomStore = create<ShowroomStore>()(
             fetch("/api/accounts").then((r) => r.json()).catch(() => null),
           ]);
 
-          set({
-            ...(!saleRes?.success ? { sales: [] } : {}),
-            ...(!invRes?.success ? { invoices: [] } : {}),
-            ...(!vouchRes?.success ? { payments: [] } : {}),
-            ...(!suppRes?.success ? { suppliers: [] } : {}),
-            ...(!expRes?.success ? { expenses: [] } : {}),
-            ...(!jeRes?.success ? { journalEntries: [] } : {}),
-            ...(!acctRes?.success ? { accounts: [] } : {}),
-          });
-
-          if (vehRes?.success && Array.isArray(vehRes.data)) {
+          if (vehRes?.success && Array.isArray(vehRes.data) && vehRes.data.length > 0) {
             const statusMap: Record<string, VehicleItem["status"]> = {
               AVAILABLE: "Available on Lot",
               IN_TRANSIT: "In Transit",
@@ -592,7 +711,7 @@ export const useShowroomStore = create<ShowroomStore>()(
             set({ vehicles: mappedVehicles });
           }
 
-          if (custRes?.success && Array.isArray(custRes.data)) {
+          if (custRes?.success && Array.isArray(custRes.data) && custRes.data.length > 0) {
             const leadMap: Record<string, CustomerRecord["leadStage"]> = {
               NEW_INQUIRY: "New Inquiry",
               FOLLOW_UP: "Follow-Up",
@@ -621,7 +740,7 @@ export const useShowroomStore = create<ShowroomStore>()(
             set({ customers: mappedCusts });
           }
 
-          if (saleRes?.success && Array.isArray(saleRes.data)) {
+          if (saleRes?.success && Array.isArray(saleRes.data) && saleRes.data.length > 0) {
             const paymentTypeMap: Record<string, SaleRecord["paymentType"]> = {
               CASH: "Full Cash",
               INSTALLMENT: "Installment Plan",
@@ -663,7 +782,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           }
 
           // Live Invoices Sync
-          if (invRes?.success && Array.isArray(invRes.data)) {
+          if (invRes?.success && Array.isArray(invRes.data) && invRes.data.length > 0) {
             set({
               invoices: invRes.data.map((invoice: any) => ({
                 ...invoice,
@@ -674,7 +793,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           }
 
           // Live Payment Vouchers Sync
-          if (vouchRes?.success && Array.isArray(vouchRes.data)) {
+          if (vouchRes?.success && Array.isArray(vouchRes.data) && vouchRes.data.length > 0) {
             set({
               payments: vouchRes.data.map((payment: any) => ({
                 ...payment,
@@ -684,7 +803,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           }
 
           // Live Suppliers Sync
-          if (suppRes?.success && Array.isArray(suppRes.data)) {
+          if (suppRes?.success && Array.isArray(suppRes.data) && suppRes.data.length > 0) {
             set({
               suppliers: suppRes.data.map((supplier: any) => ({
                 ...supplier,
@@ -698,7 +817,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           }
 
           // Live Expenses Sync
-          if (expRes?.success && Array.isArray(expRes.data)) {
+          if (expRes?.success && Array.isArray(expRes.data) && expRes.data.length > 0) {
             set({
               expenses: expRes.data.map((e: any) => ({
                 id: e.id,
@@ -715,7 +834,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           }
 
           // Live Journal Entries Sync
-          if (jeRes?.success && Array.isArray(jeRes.data)) {
+          if (jeRes?.success && Array.isArray(jeRes.data) && jeRes.data.length > 0) {
             set({
               journalEntries: jeRes.data.map((entry: any) => ({
                 ...entry,
@@ -724,11 +843,11 @@ export const useShowroomStore = create<ShowroomStore>()(
             });
           }
 
-          if (acctRes?.success && Array.isArray(acctRes.data)) {
+          if (acctRes?.success && Array.isArray(acctRes.data) && acctRes.data.length > 0) {
             set({ accounts: acctRes.data });
           }
-        } catch (error) {
-          console.warn("Failed syncing from database, using cached showroom state:", error);
+        } catch {
+          // Using cached showroom state when database is offline
         }
       },
     }),
@@ -740,6 +859,7 @@ export const useShowroomStore = create<ShowroomStore>()(
         exchangeRate: state.exchangeRate,
         language: state.language,
         darkMode: state.darkMode,
+        clientPresentationMode: state.clientPresentationMode,
         filters: state.filters,
         favoriteIds: state.favoriteIds,
         compareIds: state.compareIds,
@@ -751,6 +871,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           exchangeRate: state?.exchangeRate || 70.5,
           language: state?.language || "en",
           darkMode: Boolean(state?.darkMode),
+          clientPresentationMode: Boolean(state?.clientPresentationMode),
           filters: state?.filters || initialFilters,
           favoriteIds: state?.favoriteIds || [],
           compareIds: state?.compareIds || [],

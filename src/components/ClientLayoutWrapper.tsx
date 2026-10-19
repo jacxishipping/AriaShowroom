@@ -46,19 +46,19 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
     <ThemeProvider theme={muiTheme}>
       <CssBaseline />
       {isAuthOrPublic ? (
-        <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors">
+        <div className="min-h-screen bg-[#F4F3EF] dark:bg-[#0A0C10] text-[#111318] dark:text-[#ECEEF2] transition-colors">
           {children}
           <ToastContainer />
         </div>
       ) : (
-        <div className="flex min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors selection:bg-blue-600 selection:text-white">
+        <div className="flex min-h-screen bg-[#F4F3EF] dark:bg-[#0A0C10] text-[#111318] dark:text-[#ECEEF2] transition-colors selection:bg-amber-600 selection:text-white">
           {/* Enterprise ERP Sidebar */}
           <ErpSidebar />
 
           {/* Main ERP Cockpit Area */}
           <div className="flex flex-1 flex-col overflow-hidden min-w-0">
             <ErpHeader />
-            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
               {children}
             </main>
           </div>

@@ -81,35 +81,34 @@ export default function AccountingHubPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Architectural Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-[#D8D5CD] dark:border-[#242A38]">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <Scale className="h-6 w-6" />
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-1">
+            <span>KHORASAN SARRAFI MARKET · DESK #14</span>
+            <span>·</span>
+            <span className="text-[#111318] dark:text-amber-400 font-bold">
+              BILINGUAL DOUBLE-ENTRY LEDGER
             </span>
-            <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                {language === "ps"
-                  ? "د نندارتون د محاسبې او مالي چارو مرکز"
-                  : language === "fa"
-                  ? "مرکز جامع حسابداری، صرافی و امور مالی"
-                  : "Dealership Accounting & Sarrafi Finance Hub"}
-                <MuiChip label="Bilingual GAAP" size="small" color="primary" />
-              </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {language === "ps"
-                  ? "د هرات صرافۍ مارکېټ حوالې، د اسلام قلعه ګمرکي لګښتونه، او د موټرونو ګټه او تاوان"
-                  : language === "fa"
-                  ? "مدیریت حواله‌های مارکیت صرافی خراسان، گمرکات اسلام قلعه و صورت سود و زیان نمایشگاه"
-                  : "Multi-currency Hawala settlements, Islam Qala customs tariffs & audited vehicle profitability"}
-              </p>
-            </div>
           </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111318] dark:text-white">
+            {language === "ps"
+              ? "د نندارتون د محاسبې او مالي چارو مرکز"
+              : language === "fa"
+              ? "مرکز جامع حسابداری، صرافی و امور مالی"
+              : "Dealership Accounting & Sarrafi Finance Hub"}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {language === "ps"
+              ? "د هرات صرافۍ مارکېټ حوالې، د اسلام قلعه ګمرکي لګښتونه، او د موټرونو ګټه او تاوان"
+              : language === "fa"
+              ? "مدیریت حواله‌های مارکیت صرافی خراسان، گمرکات اسلام قلعه و صورت سود و زیان نمایشگاه"
+              : "Multi-currency Hawala settlements, Islam Qala customs tariffs & audited vehicle profitability"}
+          </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <MuiButton
             variant="outlined"
             size="small"
@@ -130,91 +129,80 @@ export default function AccountingHubPage() {
         </div>
       </div>
 
-      {/* Top 4 Financial KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Gross Revenue */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
-          <div className="absolute top-0 end-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {language === "ps" ? "مجموعي عواید" : language === "fa" ? "مجموع عواید فروش" : "Gross Revenue"}
-            </span>
-            <span className="p-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
-              <ArrowUpRight className="h-4 w-4" />
-            </span>
+      {/* Architectural 1px Hairline Financial Ledger Strip (Replaces Generic Blurred-Orb KPI Cards) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#D8D5CD] dark:bg-[#242A38] border border-[#D8D5CD] dark:border-[#242A38] rounded-md overflow-hidden">
+        {/* Cell 1: Gross Revenue */}
+        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            <span>{language === "ps" ? "مجموعي عواید" : language === "fa" ? "مجموع عواید فروش" : "01 / GROSS REVENUE"}</span>
+            <span className="text-[#111318] dark:text-amber-400 font-bold">REV</span>
           </div>
-          <div className="mt-2 text-2xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#111318] dark:text-white tracking-tight">
             {formatCurrency(totalRevenueUSD, currency, exchangeRate)}
           </div>
-          <div className="mt-1 text-[11px] text-emerald-600 font-medium flex items-center gap-1 font-mono">
-            <TrendingUp className="h-3 w-3" />
-            <span>{sales.length} {language === "ps" ? "پلورل شوي موټرونه" : language === "fa" ? "موتر فروخته شده" : "units liquidated"}</span>
+          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>LIQUIDATED UNITS</span>
+            <span className="font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
+              {sales.length} SOLD
+            </span>
           </div>
         </div>
 
-        {/* Card 2: Net Profit */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
-          <div className="absolute top-0 end-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {language === "ps" ? "خالصه ګټه" : language === "fa" ? "سود خالص عملیاتی" : "Net Showroom Profit"}
-            </span>
-            <span className="p-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
-              <Scale className="h-4 w-4" />
-            </span>
+        {/* Cell 2: Net Profit */}
+        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            <span>{language === "ps" ? "خالصه ګټه" : language === "fa" ? "سود خالص عملیاتی" : "02 / NET OPERATING PROFIT"}</span>
+            <span className="text-emerald-700 dark:text-emerald-400 font-bold">EBITDA</span>
           </div>
-          <div className="mt-2 text-2xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400 tracking-tight">
             {formatCurrency(netProfitUSD, currency, exchangeRate)}
           </div>
-          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-            {totalRevenueUSD > 0 ? ((netProfitUSD / totalRevenueUSD) * 100).toFixed(1) : 0}% net showroom margin
+          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>NET MARGIN RATIO</span>
+            <span className="font-bold text-[#111318] dark:text-white tabular-nums">
+              {totalRevenueUSD > 0 ? ((netProfitUSD / totalRevenueUSD) * 100).toFixed(1) : 0}%
+            </span>
           </div>
         </div>
 
-        {/* Card 3: Sarrafi Cash */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
-          <div className="absolute top-0 end-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {language === "ps" ? "د صرافۍ او نغدو موجودي" : language === "fa" ? "موجودی صرافی و صندوق" : "Sarrafi & Liquid Cash"}
-            </span>
-            <span className="p-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40">
-              <Wallet className="h-4 w-4" />
-            </span>
+        {/* Cell 3: Sarrafi Cash */}
+        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            <span>{language === "ps" ? "د صرافۍ او نغدو موجودي" : language === "fa" ? "موجودی صرافی و صندوق" : "03 / SARRAFI & VAULT LIQUIDITY"}</span>
+            <span className="text-amber-700 dark:text-amber-400 font-bold">CASH</span>
           </div>
-          <div className="mt-2 text-2xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#111318] dark:text-white tracking-tight">
             {formatCurrency(totalCashUSD, currency, exchangeRate)}
           </div>
-          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-            Khorasan Sarrafi + Vault Safe
+          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>DESK SETTLEMENT</span>
+            <span className="text-[#111318] dark:text-slate-300">KHORASAN + SAFE</span>
           </div>
         </div>
 
-        {/* Card 4: Customs & Expenses */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
-          <div className="absolute top-0 end-0 w-24 h-24 bg-rose-500/5 rounded-full blur-2xl pointer-events-none" />
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {language === "ps" ? "د ګمرک او اداري لګښتونه" : language === "fa" ? "مجموع مصارف و گمرکات" : "Customs & Overheads"}
-            </span>
-            <span className="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40">
-              <ArrowDownLeft className="h-4 w-4" />
-            </span>
+        {/* Cell 4: Customs & Overheads */}
+        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            <span>{language === "ps" ? "د ګمرک او اداري لګښتونه" : language === "fa" ? "مجموع مصارف و گمرکات" : "04 / CUSTOMS & OVERHEADS"}</span>
+            <span className="text-rose-700 dark:text-rose-400 font-bold">OPEX</span>
           </div>
-          <div className="mt-2 text-2xl font-extrabold font-mono text-rose-600 dark:text-rose-400 tracking-tight">
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400 tracking-tight">
             {formatCurrency(totalExpensesUSD, currency, exchangeRate)}
           </div>
-          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-            {expenses.length} audited expense vouchers
+          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>AUDITED VOUCHERS</span>
+            <span className="font-bold text-[#111318] dark:text-white tabular-nums">
+              {expenses.length} ENTRIES
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Tabs Container */}
-      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] shadow-sm overflow-hidden">
-        {/* Dense Segmented Tab Strip */}
-        <div className="p-2 sm:p-3 border-b border-slate-200/90 dark:border-slate-800/90 bg-slate-50/60 dark:bg-slate-900/40 overflow-x-auto scrollbar-none">
-          <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/60 shrink-0">
+      {/* Institutional Ledger Container */}
+      <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
+        {/* Underlined Architectural Tab Strip */}
+        <div className="px-3 sm:px-5 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-5 shrink-0">
             {tabsConfig.map((t, idx) => {
               const isActive = activeTab === String(idx);
               const Icon = t.icon;
@@ -223,10 +211,10 @@ export default function AccountingHubPage() {
                   key={idx}
                   type="button"
                   onClick={() => setActiveTab(String(idx))}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                  className={`py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
                     isActive
-                      ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      ? "border-[#111318] dark:border-amber-500 text-[#111318] dark:text-white"
+                      : "border-transparent text-slate-500 hover:text-[#111318] dark:hover:text-slate-200"
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />

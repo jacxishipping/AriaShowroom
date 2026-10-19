@@ -9,6 +9,7 @@ import { SAMPLE_VEHICLE_PHOTOS_40 } from "@/lib/sample-photos";
 import { processAndWatermarkImage } from "@/lib/watermark-utils";
 import { translations } from "@/lib/translations";
 import { decodeVin } from "@/lib/vin-decoder";
+import { PaintInspectionDiagram } from "@/components/PaintInspectionDiagram";
 import {
   MuiButton,
   MuiTextField,
@@ -491,119 +492,115 @@ export default function VehicleIntakePage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 space-y-5 pb-16">
-      {/* Top Header & Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-200/90 dark:border-slate-800/90">
+      {/* Architectural Header & Breadcrumbs */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-3 border-b border-[#D8D5CD] dark:border-[#242A38]">
         <div>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mb-0.5">
-            <Link href="/" className="hover:text-blue-600 transition-colors">
-              Cockpit
+          <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-[#9A7515] dark:text-[#D4AF37] mb-1">
+            <Link href="/" className="hover:underline">
+              COCKPIT
             </Link>
             <span>/</span>
-            <Link href="/inventory" className="hover:text-blue-600 transition-colors">
-              Inventory
+            <Link href="/inventory" className="hover:underline">
+              INVENTORY
             </Link>
             <span>/</span>
-            <span className="text-slate-900 dark:text-white font-medium">Vehicle Intake</span>
+            <span>NEW CHASSIS INTAKE</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <Car className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             Vehicle Stock Intake & 4-Step Dossier Studio
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Register new arrivals, calculate landed cost & customs tariffs, and attach watermarked showroom photography.
+            Register new arrivals, run ultrasonic paint & chassis diagnostics, calculate landed Gomrok tariffs, and attach watermarked showroom photography.
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <MuiButton
+          <button
             type="button"
-            variant="outlined"
-            size="small"
             onClick={handleQuickPopulateSample}
-            startIcon={<Sparkles className="h-3.5 w-3.5 text-amber-500" />}
-            sx={{ fontSize: "11px", py: "4px" }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#C59B27]/50 bg-[#C59B27]/10 hover:bg-[#C59B27]/20 text-[11px] font-mono font-bold uppercase tracking-wider text-[#9A7515] dark:text-[#D4AF37] transition-colors cursor-pointer"
           >
-            Load Sample LC300
-          </MuiButton>
+            <Sparkles className="h-3.5 w-3.5" />
+            Load Sample LC300 VXR
+          </button>
 
-          <MuiButton
-            component={Link}
+          <Link
             href="/inventory"
-            variant="outlined"
-            color="inherit"
-            size="small"
-            startIcon={<ArrowLeft className="h-3.5 w-3.5" />}
-            sx={{ fontSize: "11px", py: "4px" }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#141821] text-[11px] font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:border-slate-400 transition-colors"
           >
+            <ArrowLeft className="h-3.5 w-3.5" />
             Cancel
-          </MuiButton>
+          </Link>
         </div>
       </div>
 
-      {/* Modern Multi-Step MUI Stepper Card */}
-      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-4 sm:p-5 shadow-xs">
-        <Stepper activeStep={activeStep} alternativeLabel className="w-full">
-          {steps.map((step, index) => {
-            const isCompleted = index < activeStep;
-            const isCurrent = index === activeStep;
+      {/* Architectural 1px Hairline 4-Step Progress Matrix */}
+      <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-[#D8D5CD] dark:bg-[#242A38] grid grid-cols-1 sm:grid-cols-4 gap-px overflow-hidden">
+        {steps.map((step, index) => {
+          const isCompleted = index < activeStep;
+          const isCurrent = index === activeStep;
 
-            return (
-              <Step key={step.title} completed={isCompleted}>
-                <StepButton onClick={() => handleStepClick(index)}>
-                  <StepLabel
-                    icon={
-                      <div
-                        className={`h-9 w-9 rounded-xl flex items-center justify-center font-bold text-xs transition-all shadow-xs ${
-                          isCompleted
-                            ? "bg-emerald-600 text-white shadow-emerald-500/20"
-                            : isCurrent
-                            ? "bg-blue-600 text-white ring-4 ring-blue-500/20 shadow-blue-500/30"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
-                        }`}
-                      >
-                        {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
-                      </div>
-                    }
+          return (
+            <button
+              key={step.title}
+              type="button"
+              onClick={() => handleStepClick(index)}
+              className={`p-3.5 text-left transition-colors flex items-center justify-between cursor-pointer ${
+                isCurrent
+                  ? "bg-[#111318] text-white dark:bg-[#181D28]"
+                  : isCompleted
+                  ? "bg-[#FAF9F6] dark:bg-[#141821] text-slate-900 dark:text-white hover:bg-white"
+                  : "bg-white dark:bg-[#11141B] text-slate-400 hover:bg-[#FAF9F6] dark:hover:bg-[#141821]"
+              }`}
+            >
+              <div className="min-w-0 pr-2">
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`text-[10px] font-mono font-bold uppercase tracking-widest ${
+                      isCurrent
+                        ? "text-[#D4AF37]"
+                        : isCompleted
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-slate-400"
+                    }`}
                   >
-                    <div className="text-center mt-1.5">
-                      <div
-                        className={`text-xs font-bold ${
-                          isCurrent
-                            ? "text-blue-600 dark:text-blue-400"
-                            : isCompleted
-                            ? "text-slate-900 dark:text-white"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        {step.title}
-                      </div>
-                      <div className="text-[10px] text-slate-400 hidden sm:block">
-                        {step.desc}
-                      </div>
-                    </div>
-                  </StepLabel>
-                </StepButton>
-              </Step>
-            );
-          })}
-        </Stepper>
-
-        {/* Linear Progress Bar */}
-        <Box sx={{ width: "100%", mt: 2 }}>
-          <LinearProgress
-            variant="determinate"
-            value={((activeStep + 1) / steps.length) * 100}
-            sx={{
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: "rgba(100, 116, 139, 0.12)",
-              "& .MuiLinearProgress-bar": {
-                borderRadius: 3,
-                backgroundColor: activeStep === 3 ? "#10b981" : "#2563eb",
-              },
-            }}
-          />
-        </Box>
+                    STEP 0{index + 1}
+                  </span>
+                  {isCompleted && <Check className="h-3 w-3 text-emerald-500 shrink-0" />}
+                </div>
+                <div
+                  className={`text-xs font-bold truncate mt-0.5 ${
+                    isCurrent
+                      ? "text-white"
+                      : isCompleted
+                      ? "text-slate-900 dark:text-white"
+                      : "text-slate-500"
+                  }`}
+                >
+                  {step.title}
+                </div>
+                <div
+                  className={`text-[10px] truncate ${
+                    isCurrent ? "text-slate-300" : "text-slate-400"
+                  }`}
+                >
+                  {step.desc}
+                </div>
+              </div>
+              <div
+                className={`h-7 w-7 rounded flex items-center justify-center font-mono text-xs font-bold shrink-0 border ${
+                  isCurrent
+                    ? "bg-[#C59B27] text-[#0A0C10] border-[#C59B27]"
+                    : isCompleted
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                    : "bg-[#F4F3EF] dark:bg-[#161B24] text-slate-400 border-[#D8D5CD] dark:border-[#242A38]"
+                }`}
+              >
+                {isCompleted ? <Check className="h-3.5 w-3.5" /> : `0${index + 1}`}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Main Step Content Form Container */}
@@ -612,22 +609,24 @@ export default function VehicleIntakePage() {
         <div className="lg:col-span-8 space-y-5">
           {/* STEP 0: Vehicle Identification & Auto-VIN Decoder */}
           {activeStep === 0 && (
-            <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="h-7 w-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
-                    1
+            <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E6E4DD] dark:border-[#1E2330]">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-6 w-6 rounded bg-[#111318] text-[#D4AF37] dark:bg-[#C59B27] dark:text-[#0A0C10] flex items-center justify-center font-mono font-bold text-xs">
+                    01
                   </span>
                   <div>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                       Vehicle Identification & Optical VIN Decoder
                     </h3>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-slate-500">
                       Chassis verification, stock allocation, and showroom lot registry.
                     </p>
                   </div>
                 </div>
-                <MuiChip label="Step 1 of 4" size="small" color="primary" />
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[#F4F3EF] dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-[#D8D5CD] dark:border-[#242A38]">
+                  Step 01 / 04
+                </span>
               </div>
 
               {/* Stock ID, VIN & Yard Location */}
@@ -792,193 +791,205 @@ export default function VehicleIntakePage() {
             </div>
           )}
 
-          {/* STEP 1: Technical Specs, Customs Maktoub & Bilingual Descriptions */}
+          {/* STEP 1: Technical Specs, Customs Maktoub, Ultrasonic Paint & Bilingual Descriptions */}
           {activeStep === 1 && (
-            <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
-                    2
+            <div className="space-y-4">
+              <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#E6E4DD] dark:border-[#1E2330]">
+                  <div className="flex items-center gap-2.5">
+                    <span className="h-6 w-6 rounded bg-[#111318] text-[#D4AF37] dark:bg-[#C59B27] dark:text-[#0A0C10] flex items-center justify-center font-mono font-bold text-xs">
+                      02
+                    </span>
+                    <div>
+                      <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                        Technical Specs, Customs Maktoub & Descriptions
+                      </h3>
+                      <p className="text-[11px] text-slate-500">
+                        Powertrain specifications, Islam Qala clearance documents, and multilingual descriptions.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[#F4F3EF] dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-[#D8D5CD] dark:border-[#242A38]">
+                    Step 02 / 04
                   </span>
-                  <div>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                      Technical Specs, Customs Maktoub & Descriptions
-                    </h3>
-                    <p className="text-[11px] text-slate-400">
-                      Powertrain specifications, Islam Qala clearance documents, and multilingual descriptions.
-                    </p>
+                </div>
+
+                {/* Powertrain Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
+                  <MuiTextField
+                    label="Odometer Mileage"
+                    type="number"
+                    sizeVariant="small"
+                    value={formData.mileage}
+                    onChange={(e) => setFormData({ ...formData, mileage: Number(e.target.value) })}
+                    endAdornment={<InputAdornment position="end">KM</InputAdornment>}
+                    required
+                  />
+
+                  <MuiTextField
+                    select
+                    label="Steering Configuration"
+                    sizeVariant="small"
+                    value={formData.steering}
+                    onChange={(e) => setFormData({ ...formData, steering: e.target.value as any })}
+                  >
+                    <MenuItem value="Left-Hand Drive (LHD)">Left-Hand Drive (دست چپ)</MenuItem>
+                    <MenuItem value="Right-Hand Drive (RHD Converted)">RHD Converted</MenuItem>
+                  </MuiTextField>
+
+                  <MuiTextField
+                    select
+                    label="Fuel Type"
+                    sizeVariant="small"
+                    value={formData.fuelType}
+                    onChange={(e) => setFormData({ ...formData, fuelType: e.target.value as any })}
+                  >
+                    <MenuItem value="Petrol">Petrol (بنزین)</MenuItem>
+                    <MenuItem value="Diesel">Diesel (دیزل)</MenuItem>
+                    <MenuItem value="Hybrid">Hybrid (هایبرید - ۳۰٪ تخفیف)</MenuItem>
+                    <MenuItem value="Electric">Electric (برقی)</MenuItem>
+                  </MuiTextField>
+
+                  <MuiTextField
+                    select
+                    label="Transmission"
+                    sizeVariant="small"
+                    value={formData.transmission}
+                    onChange={(e) => setFormData({ ...formData, transmission: e.target.value as any })}
+                  >
+                    <MenuItem value="Automatic">Automatic (اتومات)</MenuItem>
+                    <MenuItem value="Manual">Manual (دستی)</MenuItem>
+                  </MuiTextField>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <MuiTextField
+                    select
+                    label="Drivetrain"
+                    sizeVariant="small"
+                    value={formData.driveType}
+                    onChange={(e) => setFormData({ ...formData, driveType: e.target.value as any })}
+                  >
+                    <MenuItem value="4WD">4WD (چهار چرخ محرک)</MenuItem>
+                    <MenuItem value="AWD">AWD (تمام چرخ محرک)</MenuItem>
+                    <MenuItem value="RWD">RWD (دیفرنسیال عقب)</MenuItem>
+                    <MenuItem value="FWD">FWD (دیفرنسیال جلو)</MenuItem>
+                  </MuiTextField>
+
+                  <div className="sm:col-span-2">
+                    <MuiTextField
+                      label="Islam Qala Customs Clearance Maktoub"
+                      sizeVariant="small"
+                      value={formData.customsClearance}
+                      onChange={(e) => setFormData({ ...formData, customsClearance: e.target.value })}
+                      helperText="Official Afghan MoF customs clearance document / maktoub ID"
+                      required
+                    />
                   </div>
                 </div>
-                <MuiChip label="Step 2 of 4" size="small" color="success" />
-              </div>
 
-              {/* Powertrain Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
-                <MuiTextField
-                  label="Odometer Mileage"
-                  type="number"
-                  sizeVariant="small"
-                  value={formData.mileage}
-                  onChange={(e) => setFormData({ ...formData, mileage: Number(e.target.value) })}
-                  endAdornment={<InputAdornment position="end">KM</InputAdornment>}
-                  required
-                />
+                {/* Interactive Features Chips */}
+                <div className="space-y-2 pt-2 border-t border-[#E6E4DD] dark:border-[#1E2330]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Equipped Factory Features & Options:
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      Click tag to toggle feature
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PRESET_VEHICLE_FEATURES.map((feat) => {
+                      const isSelected = currentFeaturesArray.includes(feat);
+                      return (
+                        <button
+                          key={feat}
+                          type="button"
+                          onClick={() => toggleFeature(feat)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+                            isSelected
+                              ? "bg-[#111318] text-white border-[#111318] dark:bg-[#C59B27] dark:text-[#0A0C10] dark:border-[#C59B27] font-bold"
+                              : "bg-[#FAF9F6] dark:bg-[#141821] text-slate-600 dark:text-slate-400 border-[#D8D5CD] dark:border-[#242A38] hover:border-slate-400"
+                          }`}
+                        >
+                          {isSelected && <Check className="h-3 w-3 shrink-0" />}
+                          <span>{feat}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                <MuiTextField
-                  select
-                  label="Steering Configuration"
-                  sizeVariant="small"
-                  value={formData.steering}
-                  onChange={(e) => setFormData({ ...formData, steering: e.target.value as any })}
-                >
-                  <MenuItem value="Left-Hand Drive (LHD)">Left-Hand Drive (دست چپ)</MenuItem>
-                  <MenuItem value="Right-Hand Drive (RHD Converted)">RHD Converted</MenuItem>
-                </MuiTextField>
+                {/* Trilingual Afghan Descriptions */}
+                <div className="space-y-3 pt-3 border-t border-[#E6E4DD] dark:border-[#1E2330]">
+                  <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500">
+                    <Languages className="h-4 w-4 text-[#C59B27]" />
+                    <span>Trilingual Afghan Showroom Descriptions</span>
+                  </div>
 
-                <MuiTextField
-                  select
-                  label="Fuel Type"
-                  sizeVariant="small"
-                  value={formData.fuelType}
-                  onChange={(e) => setFormData({ ...formData, fuelType: e.target.value as any })}
-                >
-                  <MenuItem value="Petrol">Petrol (بنزین)</MenuItem>
-                  <MenuItem value="Diesel">Diesel (دیزل)</MenuItem>
-                  <MenuItem value="Hybrid">Hybrid (هایبرید - ۳۰٪ تخفیف)</MenuItem>
-                  <MenuItem value="Electric">Electric (برقی)</MenuItem>
-                </MuiTextField>
-
-                <MuiTextField
-                  select
-                  label="Transmission"
-                  sizeVariant="small"
-                  value={formData.transmission}
-                  onChange={(e) => setFormData({ ...formData, transmission: e.target.value as any })}
-                >
-                  <MenuItem value="Automatic">Automatic (اتومات)</MenuItem>
-                  <MenuItem value="Manual">Manual (دستی)</MenuItem>
-                </MuiTextField>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                <MuiTextField
-                  select
-                  label="Drivetrain"
-                  sizeVariant="small"
-                  value={formData.driveType}
-                  onChange={(e) => setFormData({ ...formData, driveType: e.target.value as any })}
-                >
-                  <MenuItem value="4WD">4WD (چهار چرخ محرک)</MenuItem>
-                  <MenuItem value="AWD">AWD (تمام چرخ محرک)</MenuItem>
-                  <MenuItem value="RWD">RWD (دیفرنسیال عقب)</MenuItem>
-                  <MenuItem value="FWD">FWD (دیفرنسیال جلو)</MenuItem>
-                </MuiTextField>
-
-                <div className="sm:col-span-2">
                   <MuiTextField
-                    label="Islam Qala Customs Clearance Maktoub"
+                    label="English Commercial Description"
                     sizeVariant="small"
-                    value={formData.customsClearance}
-                    onChange={(e) => setFormData({ ...formData, customsClearance: e.target.value })}
-                    helperText="Official Afghan MoF customs clearance document / maktoub ID"
-                    required
+                    multiline
+                    rows={2}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Official showroom catalog description..."
+                  />
+
+                  <MuiTextField
+                    label="توضیحات موتر به زبان دری (جهت درج در قباله و استعلامات)"
+                    sizeVariant="small"
+                    multiline
+                    rows={2}
+                    dir="rtl"
+                    value={formData.descriptionDari}
+                    onChange={(e) => setFormData({ ...formData, descriptionDari: e.target.value })}
+                    placeholder="مشخصات و آپشن‌ها به زبان دری..."
+                  />
+
+                  <MuiTextField
+                    label="د موټر بشپړ معلومات په پښتو ژبه"
+                    sizeVariant="small"
+                    multiline
+                    rows={2}
+                    dir="rtl"
+                    value={formData.descriptionPashto}
+                    onChange={(e) => setFormData({ ...formData, descriptionPashto: e.target.value })}
+                    placeholder="د موټر مشخصات په پښتو ژبه..."
                   />
                 </div>
               </div>
 
-              {/* Interactive Features Chips */}
-              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Equipped Factory Features & Options:
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    Click chip to add or remove feature
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {PRESET_VEHICLE_FEATURES.map((feat) => {
-                    const isSelected = currentFeaturesArray.includes(feat);
-                    return (
-                      <MuiChip
-                        key={feat}
-                        label={feat}
-                        size="small"
-                        color={isSelected ? "primary" : "default"}
-                        variant={isSelected ? "filled" : "outlined"}
-                        onClick={() => toggleFeature(feat)}
-                        icon={isSelected ? <Check className="h-3 w-3" /> : undefined}
-                        sx={{
-                          cursor: "pointer",
-                          fontWeight: isSelected ? 700 : 500,
-                          fontSize: "11px",
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Trilingual Afghan Descriptions */}
-              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
-                  <Languages className="h-4 w-4 text-blue-600" />
-                  <span>Trilingual Afghan Showroom Descriptions</span>
-                </div>
-
-                <MuiTextField
-                  label="English Commercial Description"
-                  sizeVariant="small"
-                  multiline
-                  rows={2}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Official showroom catalog description..."
-                />
-
-                <MuiTextField
-                  label="توضیحات موتر به زبان دری (جهت درج در قباله و استعلامات)"
-                  sizeVariant="small"
-                  multiline
-                  rows={2}
-                  dir="rtl"
-                  value={formData.descriptionDari}
-                  onChange={(e) => setFormData({ ...formData, descriptionDari: e.target.value })}
-                  placeholder="مشخصات و آپشن‌ها به زبان دری..."
-                />
-
-                <MuiTextField
-                  label="د موټر بشپړ معلومات په پښتو ژبه"
-                  sizeVariant="small"
-                  multiline
-                  rows={2}
-                  dir="rtl"
-                  value={formData.descriptionPashto}
-                  onChange={(e) => setFormData({ ...formData, descriptionPashto: e.target.value })}
-                  placeholder="د موټر مشخصات په پښتو ژبه..."
-                />
-              </div>
+              {/* Ultrasonic Paint & Body-Panel Inspection Diagram during Intake */}
+              <PaintInspectionDiagram
+                vin={formData.vin}
+                cleanTitle={formData.cleanTitle}
+                editable={true}
+              />
             </div>
           )}
 
           {/* STEP 2: Landed Cost & Profit Margin Engine */}
           {activeStep === 2 && (
-            <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="h-7 w-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs">
-                    3
+            <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E6E4DD] dark:border-[#1E2330]">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-6 w-6 rounded bg-[#111318] text-[#D4AF37] dark:bg-[#C59B27] dark:text-[#0A0C10] flex items-center justify-center font-mono font-bold text-xs">
+                    03
                   </span>
                   <div>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                       Landed Cost & Profit Margin Engine
                     </h3>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-slate-500">
                       FOB purchase costs, ocean freight, customs tariffs, and target dealership margins.
                     </p>
                   </div>
                 </div>
-                <MuiChip label="Step 3 of 4" size="small" color="secondary" />
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[#F4F3EF] dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-[#D8D5CD] dark:border-[#242A38]">
+                  Step 03 / 04
+                </span>
               </div>
 
               {/* 4 Cost Components Grid */}
@@ -1029,10 +1040,10 @@ export default function VehicleIntakePage() {
               </div>
 
               {/* Selling Price Box */}
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+              <div className="p-4 rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#141821] space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block mb-0.5">
+                    <label className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block mb-0.5">
                       Target Showroom Selling Price (USD)
                     </label>
                     <span className="text-[11px] text-slate-500 font-mono">
@@ -1051,23 +1062,23 @@ export default function VehicleIntakePage() {
                   </div>
                 </div>
 
-                {/* Live Margin & Landed Breakdown */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
-                  <div className="p-2.5 rounded-lg bg-white dark:bg-[#151D2A] border border-slate-200/80 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">
+                {/* Live Margin & Landed 1px Hairline Breakdown */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-[#D8D5CD] dark:bg-[#242A38] border border-[#D8D5CD] dark:border-[#242A38] rounded overflow-hidden text-xs">
+                  <div className="p-3 bg-white dark:bg-[#11141B]">
+                    <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
                       Total Landed Cost
                     </span>
-                    <span className="font-mono font-bold text-sm text-slate-900 dark:text-white">
+                    <span className="font-mono font-bold text-sm text-slate-900 dark:text-white tabular-nums mt-0.5 block">
                       ${totalLandedCost.toLocaleString()}
                     </span>
                   </div>
 
-                  <div className="p-2.5 rounded-lg bg-white dark:bg-[#151D2A] border border-slate-200/80 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">
+                  <div className="p-3 bg-white dark:bg-[#11141B]">
+                    <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
                       Projected Profit
                     </span>
                     <span
-                      className={`font-mono font-bold text-sm ${
+                      className={`font-mono font-bold text-sm tabular-nums mt-0.5 block ${
                         estimatedProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600"
                       }`}
                     >
@@ -1075,12 +1086,12 @@ export default function VehicleIntakePage() {
                     </span>
                   </div>
 
-                  <div className="p-2.5 rounded-lg bg-white dark:bg-[#151D2A] border border-slate-200/80 dark:border-slate-800 col-span-2 sm:col-span-1">
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">
+                  <div className="p-3 bg-white dark:bg-[#11141B]">
+                    <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
                       Gross Margin (%)
                     </span>
                     <span
-                      className={`font-mono font-bold text-sm ${
+                      className={`font-mono font-bold text-sm tabular-nums mt-0.5 block ${
                         Number(marginPercent) >= 15
                           ? "text-emerald-600 dark:text-emerald-400"
                           : Number(marginPercent) > 0
@@ -1100,22 +1111,24 @@ export default function VehicleIntakePage() {
           {activeStep === 3 && (
             <div className="space-y-5">
               {/* Photo Vault Card */}
-              <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-5 sm:p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <span className="h-7 w-7 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xs">
-                      4
+              <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#E6E4DD] dark:border-[#1E2330]">
+                  <div className="flex items-center gap-2.5">
+                    <span className="h-6 w-6 rounded bg-[#111318] text-[#D4AF37] dark:bg-[#C59B27] dark:text-[#0A0C10] flex items-center justify-center font-mono font-bold text-xs">
+                      04
                     </span>
                     <div>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                      <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                         40+ Vehicle Photo Vault ({images.length} Loaded)
                       </h3>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-slate-500">
                         Upload high-resolution photography with automatic dealer watermarks.
                       </p>
                     </div>
                   </div>
-                  <MuiChip label="Final Step" size="small" color="secondary" />
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                    Final Step
+                  </span>
                 </div>
 
                 {/* Upload Toolbar */}
@@ -1166,7 +1179,7 @@ export default function VehicleIntakePage() {
                   </MuiButton>
                 </div>
 
-                {/* Watermark toggle using MUI FormControlLabel + Switch */}
+                {/* Watermark toggle */}
                 <FormControlLabel
                   control={
                     <Switch
@@ -1191,7 +1204,7 @@ export default function VehicleIntakePage() {
 
                 {/* Bulk URL Panel */}
                 {isBulkOpen && (
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="p-3 rounded bg-[#FAF9F6] dark:bg-[#141821] border border-[#D8D5CD] dark:border-[#242A38] space-y-2">
                     <MuiTextField
                       label="Paste photo image URLs (one per line)"
                       multiline
@@ -1214,20 +1227,20 @@ export default function VehicleIntakePage() {
                 )}
 
                 {/* Photo Grid Gallery */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5 max-h-80 overflow-y-auto p-1">
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-80 overflow-y-auto p-1">
                   {images.map((img, idx) => (
                     <div
                       key={idx}
-                      className={`relative aspect-[16/10] rounded-xl overflow-hidden border group shadow-2xs ${
+                      className={`relative aspect-[16/10] rounded overflow-hidden border group ${
                         idx === 0
-                          ? "border-blue-600 ring-2 ring-blue-500/30"
-                          : "border-slate-200 dark:border-slate-800"
+                          ? "border-[#C59B27] ring-2 ring-[#C59B27]/30"
+                          : "border-[#D8D5CD] dark:border-[#242A38]"
                       }`}
                     >
                       <Image src={img} alt={`Photo ${idx + 1}`} fill className="object-cover" />
 
                       {idx === 0 && (
-                        <div className="absolute top-1 left-1 bg-blue-600 text-white px-1.5 py-0.2 rounded text-[9px] font-bold">
+                        <div className="absolute top-1 left-1 bg-[#111318] text-[#D4AF37] px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase">
                           Cover
                         </div>
                       )}
@@ -1256,39 +1269,39 @@ export default function VehicleIntakePage() {
               </div>
 
               {/* Pre-Submission Final Dossier Audit Card */}
-              <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-5 shadow-xs space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
+                <div className="px-4 py-2.5 bg-[#FAF9F6] dark:bg-[#141821] border-b border-[#D8D5CD] dark:border-[#242A38] flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                    <h4 className="text-[11px] font-mono font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                       Pre-Submission Dossier Audit
                     </h4>
                   </div>
                   <span className="text-[10px] font-mono text-slate-400">Ready for catalog publication</span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase block">Vehicle</span>
-                    <span className="font-bold text-slate-900 dark:text-white truncate block">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#D8D5CD] dark:bg-[#242A38] text-xs">
+                  <div className="p-3 bg-white dark:bg-[#11141B]">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Vehicle</span>
+                    <span className="font-bold text-slate-900 dark:text-white truncate block mt-0.5">
                       {formData.year} {formData.make} {formData.model}
                     </span>
                   </div>
-                  <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase block">Chassis / VIN</span>
-                    <span className="font-mono font-bold text-blue-600 truncate block">
+                  <div className="p-3 bg-white dark:bg-[#11141B]">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Chassis / VIN</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white truncate block mt-0.5">
                       {formData.vin}
                     </span>
                   </div>
-                  <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase block">Landed Cost</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white block">
+                  <div className="p-3 bg-white dark:bg-[#11141B]">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Landed Cost</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white block mt-0.5 tabular-nums">
                       ${totalLandedCost.toLocaleString()} USD
                     </span>
                   </div>
-                  <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase block">Retail Price</span>
-                    <span className="font-mono font-bold text-emerald-600 block">
+                  <div className="p-3 bg-white dark:bg-[#11141B]">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Retail Price</span>
+                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5 tabular-nums">
                       ${formData.sellingPrice.toLocaleString()} USD
                     </span>
                   </div>
@@ -1342,28 +1355,28 @@ export default function VehicleIntakePage() {
 
         {/* Right Column: Sticky Live Dossier Card (4 cols) */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-4 shadow-xs space-y-3 sticky top-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-4 space-y-3 sticky top-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E6E4DD] dark:border-[#1E2330]">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                 Live Preview Dossier
               </span>
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                 {formData.status}
               </span>
             </div>
 
             {/* Thumbnail */}
-            <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xs bg-slate-100 dark:bg-slate-800">
+            <div className="relative aspect-[16/10] w-full rounded overflow-hidden border border-[#D8D5CD] dark:border-[#242A38] bg-slate-100 dark:bg-slate-800">
               <Image
                 src={images[0] || SAMPLE_VEHICLE_PHOTOS_40[0]}
                 alt={formData.model}
                 fill
                 className="object-cover"
               />
-              <div className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-xs text-white px-2 py-0.5 rounded text-[9px] font-mono">
+              <div className="absolute bottom-1.5 left-1.5 bg-[#0D0F14]/85 text-white px-2 py-0.5 rounded text-[9px] font-mono font-bold">
                 {formData.stockNumber}
               </div>
-              <div className="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-xs text-white px-2 py-0.5 rounded text-[9px] font-mono">
+              <div className="absolute top-1.5 right-1.5 bg-[#0D0F14]/85 text-[#D4AF37] px-2 py-0.5 rounded text-[9px] font-mono font-bold">
                 {images.length} Photos
               </div>
             </div>
@@ -1376,43 +1389,43 @@ export default function VehicleIntakePage() {
               <p className="text-[11px] text-slate-500 truncate">{formData.trim}</p>
             </div>
 
-            {/* Spec Strip */}
-            <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600 dark:text-slate-400">
-              <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center gap-1 truncate">
-                <Gauge className="h-3 w-3 text-blue-500 shrink-0" />
+            {/* 1px Hairline Spec Matrix */}
+            <div className="grid grid-cols-2 gap-px bg-[#D8D5CD] dark:bg-[#242A38] border border-[#D8D5CD] dark:border-[#242A38] rounded overflow-hidden text-[11px] font-mono">
+              <div className="p-2 bg-[#FAF9F6] dark:bg-[#141821] flex items-center gap-1.5 truncate text-slate-700 dark:text-slate-300">
+                <Gauge className="h-3 w-3 text-[#C59B27] shrink-0" />
                 <span>{formData.mileage.toLocaleString()} KM</span>
               </div>
-              <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center gap-1 truncate">
-                <Fuel className="h-3 w-3 text-blue-500 shrink-0" />
+              <div className="p-2 bg-[#FAF9F6] dark:bg-[#141821] flex items-center gap-1.5 truncate text-slate-700 dark:text-slate-300">
+                <Fuel className="h-3 w-3 text-[#C59B27] shrink-0" />
                 <span>{formData.fuelType}</span>
               </div>
-              <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center gap-1 truncate">
-                <Compass className="h-3 w-3 text-blue-500 shrink-0" />
+              <div className="p-2 bg-[#FAF9F6] dark:bg-[#141821] flex items-center gap-1.5 truncate text-slate-700 dark:text-slate-300">
+                <Compass className="h-3 w-3 text-[#C59B27] shrink-0" />
                 <span>{formData.driveType}</span>
               </div>
-              <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center gap-1 truncate">
-                <Globe className="h-3 w-3 text-blue-500 shrink-0" />
+              <div className="p-2 bg-[#FAF9F6] dark:bg-[#141821] flex items-center gap-1.5 truncate text-slate-700 dark:text-slate-300">
+                <Globe className="h-3 w-3 text-[#C59B27] shrink-0" />
                 <span>{formData.originCountry}</span>
               </div>
             </div>
 
             {/* Financial Summary */}
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 space-y-1.5">
+            <div className="p-3 rounded bg-[#FAF9F6] dark:bg-[#141821] border border-[#D8D5CD] dark:border-[#242A38] space-y-1.5">
               <div className="flex justify-between text-xs">
                 <span className="text-slate-500">Retail Selling Price:</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-white">
+                <span className="font-mono font-bold text-slate-900 dark:text-white tabular-nums">
                   ${formData.sellingPrice.toLocaleString()} USD
                 </span>
               </div>
-              <div className="flex justify-between text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
+              <div className="flex justify-between text-[11px] font-mono text-emerald-700 dark:text-emerald-400 tabular-nums">
                 <span>Sarrafi Price:</span>
                 <span>؋ {(formData.sellingPrice * exchangeRate).toLocaleString()} AFN</span>
               </div>
-              <div className="flex justify-between text-[11px] text-slate-500">
+              <div className="flex justify-between text-[11px] text-slate-500 tabular-nums">
                 <span>Total Landed:</span>
                 <span className="font-mono">${totalLandedCost.toLocaleString()}</span>
               </div>
-              <div className="pt-1.5 border-t border-slate-200 dark:border-slate-800 flex justify-between text-xs font-bold">
+              <div className="pt-1.5 border-t border-[#E6E4DD] dark:border-[#1E2330] flex justify-between text-xs font-bold tabular-nums">
                 <span className="text-slate-700 dark:text-slate-300">Projected Margin:</span>
                 <span
                   className={`font-mono ${

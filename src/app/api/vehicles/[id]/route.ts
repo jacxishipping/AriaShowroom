@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { VehicleStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -11,6 +11,9 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true });
+  }
   const unauthorized = await requireApiRole(["ADMIN", "SALES", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
 

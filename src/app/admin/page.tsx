@@ -96,7 +96,7 @@ export default function AdminDashboardPage() {
     exchangeRate,
     language,
     currentRole,
-    setCurrentRole,
+    clientPresentationMode,
     deleteVehicle,
     addCustomer,
     updateCustomerStage,
@@ -111,11 +111,13 @@ export default function AdminDashboardPage() {
   } = useShowroomStore();
 
   const t = translations[language];
+  const hideFinancialMargins = clientPresentationMode || currentRole === "SalesAgent";
 
-  // Active ERP Tab
+  // Active ERP Tab — default to CRM & Leads Pipeline
   const [activeTab, setActiveTab] = useState<
-    "inventory" | "crm" | "sales" | "invoices" | "suppliers" | "expenses" | "payments" | "accounting"
-  >("inventory");
+    "crm" | "sales" | "invoices" | "inventory" | "suppliers" | "expenses" | "payments" | "accounting"
+  >("crm");
+  const [vehicleToDelete, setVehicleToDelete] = useState<VehicleItem | null>(null);
 
   // CRM Kanban vs Table view mode
   const [crmViewMode, setCrmViewMode] = useState<"kanban" | "table">("kanban");
@@ -314,10 +316,79 @@ export default function AdminDashboardPage() {
     );
   });
 
+  // 1-Click Pre-fill Deal from CRM Lead
+  const handleInitiateDealFromLead = (cust: CustomerRecord) => {
+    const matchedVeh =
+      vehicles.find((v) => v.id === cust.interestedInVehicleId && v.status !== "Sold") ||
+      vehicles.find((v) => v.status !== "Sold") ||
+      vehicles[0];
+
+    setSaleForm({
+      stockNumber: matchedVeh?.stockNumber || "",
+      customerName: cust.fullName,
+      customerPhone: cust.phone,
+      customerTazkira: cust.tazkiraNumber || "1402-8841-HRT",
+      salesAgent: "Farhad Timori",
+      salePriceUSD: matchedVeh?.sellingPrice || cust.budget || 35000,
+      paymentType: "Hawala / Bank Transfer",
+      downPaymentUSD: matchedVeh?.sellingPrice || cust.budget || 35000,
+      installmentsRemaining: 0,
+      notes: `Closed from CRM Lead (${cust.city}).`,
+    });
+    setActiveTab("sales");
+    addToast(
+      `Loaded ${cust.fullName} into Sales Desk for contract & Sarrafi execution`,
+      "info"
+    );
+  };
+
+  // Collect Installment (Qist) Payment
+  const handleCollectInstallment = async (sale: (typeof sales)[0]) => {
+    const remainingUSD = Math.max(0, sale.salePriceUSD - (sale.downPaymentUSD || 0));
+    const qistCount = Math.max(1, sale.installmentsRemaining || 1);
+    const installmentAmountUSD = Math.round(remainingUSD / qistCount) || 2500;
+
+    try {
+      await addPaymentVoucher({
+        voucherType: "CUSTOMER_PAYMENT",
+        date: new Date().toISOString().split("T")[0],
+        partyName: sale.customerName,
+        partyPhone: sale.customerPhone,
+        partyTazkira: sale.customerTazkira,
+        amountUSD: installmentAmountUSD,
+        amountAFN: Math.round(installmentAmountUSD * exchangeRate),
+        exchangeRate,
+        paymentMethod: "Sarrafi Hawala (حواله صرافی)",
+        sarrafiAccount: "Haji Noorzai Sarrafi Desk #14 - Khorasan Market",
+        referenceNumber: `QIST-${sale.contractNumber}-${Date.now().toString().slice(-4)}`,
+        vehicleStock: sale.stockNumber,
+        purpose: `Installment (Qist) collection for ${sale.vehicleName} (${sale.contractNumber})`,
+        recordedBy: "Farhad Timori",
+      });
+      addToast(
+        `Recorded $${installmentAmountUSD.toLocaleString()} USD Qist installment voucher for ${sale.customerName}`,
+        "success"
+      );
+    } catch (error) {
+      addToast(
+        error instanceof Error ? error.message : "Unable to record installment voucher",
+        "error"
+      );
+    }
+  };
+
   const handleCreateSale = async (e: React.FormEvent) => {
     e.preventDefault();
     const vehicleObj = vehicles.find((v) => v.stockNumber === saleForm.stockNumber);
     if (!vehicleObj) return;
+
+    const priceUSD = Number(saleForm.salePriceUSD);
+    const downUSD =
+      saleForm.paymentType === "Installment Plan"
+        ? Number(saleForm.downPaymentUSD)
+        : priceUSD;
+    const isInstallment =
+      saleForm.paymentType === "Installment Plan" && downUSD < priceUSD;
 
     try {
       await addSale({
@@ -327,63 +398,127 @@ export default function AdminDashboardPage() {
         customerPhone: saleForm.customerPhone,
         customerTazkira: saleForm.customerTazkira,
         salesAgent: saleForm.salesAgent,
-        salePriceUSD: Number(saleForm.salePriceUSD),
+        salePriceUSD: priceUSD,
         exchangeRate: exchangeRate,
         paymentType: saleForm.paymentType,
-        downPaymentUSD: Number(saleForm.downPaymentUSD),
-        installmentsRemaining: Number(saleForm.installmentsRemaining),
-        status: Number(saleForm.installmentsRemaining) > 0 ? "Pending Installments" : "Completed",
+        downPaymentUSD: downUSD,
+        installmentsRemaining: isInstallment
+          ? Math.max(1, Number(saleForm.installmentsRemaining) || 6)
+          : 0,
+        status: isInstallment ? "Pending Installments" : "Completed",
       });
+
+      // Automatically issue Official Commercial Invoice
+      await addInvoice({
+        customerName: saleForm.customerName,
+        customerPhone: saleForm.customerPhone,
+        customerTazkira: saleForm.customerTazkira,
+        customerAddress: "Herat, Afghanistan",
+        vehicleStock: vehicleObj.stockNumber,
+        vehicleDesc: `${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model} (${vehicleObj.trim})`,
+        vin: vehicleObj.vin,
+        items: [
+          {
+            description: `${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model} - VIN ${vehicleObj.vin}`,
+            descriptionDari: `فروش قطعی موتر ${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model}`,
+            amountUSD: priceUSD,
+          },
+        ],
+        subtotalUSD: priceUSD,
+        customsFeeUSD: 0,
+        registrationFeeUSD: 0,
+        discountUSD: 0,
+        totalUSD: priceUSD,
+        totalAFN: Math.round(priceUSD * exchangeRate),
+        exchangeRate,
+        status: isInstallment ? "Partially Paid" : "Paid",
+        paymentMethod: saleForm.paymentType,
+        issueDate: new Date().toISOString().split("T")[0],
+        notes: saleForm.notes,
+      });
+
+      // Automatically record Down Payment / Full Settlement Voucher in Sarrafi Ledger
+      if (downUSD > 0) {
+        await addPaymentVoucher({
+          voucherType: "CUSTOMER_PAYMENT",
+          date: new Date().toISOString().split("T")[0],
+          partyName: saleForm.customerName,
+          partyPhone: saleForm.customerPhone,
+          partyTazkira: saleForm.customerTazkira,
+          amountUSD: downUSD,
+          amountAFN: Math.round(downUSD * exchangeRate),
+          exchangeRate,
+          paymentMethod:
+            saleForm.paymentType === "Full Cash"
+              ? "Cash (صندوق)"
+              : "Sarrafi Hawala (حواله صرافی)",
+          sarrafiAccount: "Haji Noorzai Sarrafi Desk #14 - Khorasan Market",
+          referenceNumber: `HAW-${Date.now().toString().slice(-5)}`,
+          vehicleStock: vehicleObj.stockNumber,
+          purpose: `${isInstallment ? "Down payment" : "Full settlement"} for ${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model}`,
+          recordedBy: saleForm.salesAgent,
+        });
+      }
+
+      // If matched CRM customer exists, mark Closed/Won
+      const matchedCust = customers.find(
+        (c) =>
+          c.fullName.toLowerCase() === saleForm.customerName.toLowerCase().trim() ||
+          (saleForm.customerPhone && c.phone === saleForm.customerPhone)
+      );
+      if (matchedCust && matchedCust.leadStage !== "Closed/Won") {
+        await updateCustomerStage(matchedCust.id, "Closed/Won");
+      }
     } catch (error) {
       addToast(error instanceof Error ? error.message : "Unable to record sale", "error");
       return;
     }
 
-    addToast("Sale registered successfully! Marked vehicle as Sold and generated contract.", "success");
+    addToast(
+      "Deal executed! Generated Sale Contract, Commercial Invoice, and Sarrafi Payment Voucher.",
+      "success"
+    );
   };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-      {/* Top Header: Title & Role Switcher */}
+      {/* Top Header: CRM & Sales Desk Overview */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800/80 dark:bg-[#121824]">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Herat Automotive ERP / CRM System
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
-            {t.erpTitle}
+          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+            CRM Pipeline & Dealership Sales Desk
+          </span>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">
+            Customer Leads, Negotiations & Contract Execution
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Authenticated Showroom Management Portal • Sadozai Motors Herat
+            Track walk-in buyers, test drives, Sarrafi price negotiations, and execute bilingual sales contracts
           </p>
         </div>
 
-        {/* Role Switcher Pill */}
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <span className="text-[10px] font-semibold uppercase text-slate-400 block">
-              {t.switchRole}
-            </span>
-            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-              {currentRole === "SuperAdmin" && "SuperAdmin (Haji Ahmad Shah)"}
-              {currentRole === "SalesAgent" && "Sales Agent (Farhad Timori)"}
-              {currentRole === "Accountant" && "Accountant (Mirwais Saljuqi)"}
-            </span>
-          </div>
-          <MuiTextField
-            select
+        <div className="flex flex-wrap items-center gap-2.5">
+          <MuiButton
+            component={Link}
+            href="/accounting"
+            variant="outlined"
+            color="inherit"
             size="small"
-            value={currentRole}
-            onChange={(e) => setCurrentRole(e.target.value as RoleType)}
-            sx={{ minWidth: 150 }}
+            startIcon={<Landmark className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
           >
-            <MenuItem value="SuperAdmin">SuperAdmin</MenuItem>
-            <MenuItem value="SalesAgent">Sales Agent</MenuItem>
-            <MenuItem value="Accountant">Accountant</MenuItem>
-          </MuiTextField>
+            Accounting & Sarrafi Hub
+          </MuiButton>
+          <MuiButton
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={() => {
+              setActiveTab("crm");
+              setIsAddCustomerModalOpen(true);
+            }}
+            startIcon={<Plus className="h-4 w-4" />}
+          >
+            New Walk-In Lead
+          </MuiButton>
         </div>
       </div>
 
@@ -395,12 +530,6 @@ export default function AdminDashboardPage() {
           color="primary"
           tabs={[
             {
-              value: "inventory",
-              label: "Vehicle Inventory",
-              icon: <Car className="h-4 w-4" />,
-              badge: vehicles.length,
-            },
-            {
               value: "crm",
               label: "CRM & Leads",
               icon: <Users className="h-4 w-4" />,
@@ -408,15 +537,21 @@ export default function AdminDashboardPage() {
             },
             {
               value: "sales",
-              label: "Sales Desk",
+              label: "Sales Desk & Contracts",
               icon: <BadgeDollarSign className="h-4 w-4" />,
               badge: sales.length,
             },
             {
               value: "invoices",
-              label: "Invoices",
+              label: "Commercial Invoices",
               icon: <FileCheck2 className="h-4 w-4" />,
               badge: invoices.length,
+            },
+            {
+              value: "inventory",
+              label: "Quick Lot Lookup",
+              icon: <Car className="h-4 w-4" />,
+              badge: vehicles.length,
             },
             {
               value: "suppliers",
@@ -432,14 +567,9 @@ export default function AdminDashboardPage() {
             },
             {
               value: "payments",
-              label: "Record Payment",
+              label: "Payment Vouchers",
               icon: <Banknote className="h-4 w-4" />,
               badge: payments.length,
-            },
-            {
-              value: "accounting",
-              label: "Full Accounting (GL)",
-              icon: <Landmark className="h-4 w-4" />,
             },
           ]}
         />
@@ -543,7 +673,9 @@ export default function AdminDashboardPage() {
                     <MuiTableCell header>Stock ID, Vehicle & VIN</MuiTableCell>
                     <MuiTableCell header>Status</MuiTableCell>
                     <MuiTableCell header>Gomrok Customs</MuiTableCell>
-                    <MuiTableCell header align="right">Landed Cost</MuiTableCell>
+                    {!hideFinancialMargins && (
+                      <MuiTableCell header align="right">Landed Cost</MuiTableCell>
+                    )}
                     <MuiTableCell header align="right">Selling Price</MuiTableCell>
                     <MuiTableCell header align="right" className="!pe-3">
                       Actions
@@ -557,7 +689,7 @@ export default function AdminDashboardPage() {
                         <div className="font-bold text-xs text-slate-900 dark:text-white leading-tight">
                           {veh.year} {veh.make} {veh.model}
                         </div>
-                        <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                        <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
                           <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-1 py-0.2 rounded border border-blue-200/50 dark:border-blue-900/50">
                             {veh.stockNumber}
                           </span>
@@ -573,23 +705,24 @@ export default function AdminDashboardPage() {
                           size="small"
                         />
                       </MuiTableCell>
-                      <MuiTableCell className="py-1.5 text-slate-600 dark:text-slate-300 text-[11px] whitespace-nowrap">
+                      <MuiTableCell className="py-1.5 text-slate-600 dark:text-slate-300 text-xs whitespace-nowrap">
                         {veh.customsClearance.split("-")[0].trim()}
                       </MuiTableCell>
-                      <MuiTableCell align="right" className="py-1.5 font-mono text-[11px] text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                        ${veh.landedCost.toLocaleString()} USD
-                      </MuiTableCell>
+                      {!hideFinancialMargins && (
+                        <MuiTableCell align="right" className="py-1.5 font-mono text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                          ${veh.landedCost.toLocaleString()} USD
+                        </MuiTableCell>
+                      )}
                       <MuiTableCell align="right" className="py-1.5 font-mono font-bold text-xs text-slate-900 dark:text-white whitespace-nowrap">
                         ${veh.sellingPrice.toLocaleString()} USD
                       </MuiTableCell>
                       <MuiTableCell align="right" className="py-1.5 whitespace-nowrap !pe-3">
                         <div className="flex items-center justify-end gap-0.5">
                           <IconButton
+                            component={Link}
                             size="small"
                             color="primary"
                             href={`/vehicles/${veh.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
                             sx={{ padding: "4px" }}
                             title="View Photo Gallery & Specs"
                           >
@@ -610,15 +743,7 @@ export default function AdminDashboardPage() {
                               size="small"
                               color="error"
                               sx={{ padding: "4px" }}
-                              onClick={async () => {
-                                if (confirm(`Delete stock ${veh.stockNumber}?`)) {
-                                  try {
-                                    await deleteVehicle(veh.id);
-                                  } catch (error) {
-                                    addToast(error instanceof Error ? error.message : "Unable to delete vehicle", "error");
-                                  }
-                                }
-                              }}
+                              onClick={() => setVehicleToDelete(veh)}
                               title="Delete vehicle"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -856,24 +981,32 @@ export default function AdminDashboardPage() {
                                   </a>
                                 </div>
 
-                                {/* Step Movers */}
+                                {/* Step Movers & 1-Click Close Deal */}
                                 <div className="flex items-center gap-1">
                                   {prevStage && (
                                     <button
                                       onClick={() => void updateCustomerStage(cust.id, prevStage).catch((error) => addToast(error.message, "error"))}
-                                      className="p-1 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+                                      className="p-1 rounded border border-[#D8D5CD] dark:border-[#242A38] hover:bg-stone-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
                                       title={`Move back to ${prevStage}`}
                                     >
                                       <ArrowLeft className="h-3 w-3" />
                                     </button>
                                   )}
+                                  {cust.leadStage !== "Closed/Won" && (
+                                    <button
+                                      onClick={() => handleInitiateDealFromLead(cust)}
+                                      className="px-2 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-mono text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                                      title="Execute Sale Contract, Invoice & Sarrafi Settlement"
+                                    >
+                                      Close Deal
+                                    </button>
+                                  )}
                                   {nextStage && (
                                     <button
                                       onClick={() => void updateCustomerStage(cust.id, nextStage).catch((error) => addToast(error.message, "error"))}
-                                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold shadow-xs cursor-pointer"
+                                      className="flex items-center gap-0.5 px-2 py-1 rounded bg-[#111318] hover:bg-slate-800 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-mono text-[10px] font-bold cursor-pointer"
                                       title={`Advance to ${nextStage}`}
                                     >
-                                      <span>Advance</span>
                                       <ArrowRight className="h-3 w-3" />
                                     </button>
                                   )}
@@ -1275,16 +1408,40 @@ export default function AdminDashboardPage() {
               </div>
 
               {saleForm.paymentType === "Installment Plan" && (
-                <MuiTextField
-                  label="Down Payment (USD)"
-                  type="number"
-                  value={saleForm.downPaymentUSD}
-                  onChange={(e) => setSaleForm({
-                    ...saleForm,
-                    downPaymentUSD: Math.min(Math.max(Number(e.target.value) || 0, 0), Number(saleForm.salePriceUSD)),
-                  })}
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <MuiTextField
+                    label="Down Payment (USD)"
+                    type="number"
+                    value={saleForm.downPaymentUSD}
+                    onChange={(e) =>
+                      setSaleForm({
+                        ...saleForm,
+                        downPaymentUSD: Math.min(
+                          Math.max(Number(e.target.value) || 0, 0),
+                          Number(saleForm.salePriceUSD)
+                        ),
+                      })
+                    }
+                  />
+                  <MuiTextField
+                    label="Qist Installments (Months)"
+                    type="number"
+                    value={saleForm.installmentsRemaining || 6}
+                    onChange={(e) =>
+                      setSaleForm({
+                        ...saleForm,
+                        installmentsRemaining: Math.max(1, Number(e.target.value) || 6),
+                      })
+                    }
+                  />
+                </div>
               )}
+
+              <div className="p-2.5 rounded border border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] text-[11px] font-mono text-slate-600 dark:text-slate-400">
+                1-Click Atomic Execution: Marks chassis <strong>SOLD</strong>, issues{" "}
+                <strong>Commercial Invoice</strong>, and posts{" "}
+                <strong>Sarrafi Receipt Voucher</strong> at 1 USD = {exchangeRate} AFN.
+              </div>
 
               <MuiButton
                 type="submit"
@@ -1293,83 +1450,172 @@ export default function AdminDashboardPage() {
                 fullWidth
                 size="medium"
               >
-                Sign Contract & Convey Title
+                Execute Contract, Invoice & Sarrafi Voucher
               </MuiButton>
             </form>
           </MuiCard>
 
-          {/* Past Sales Records Table */}
-          <MuiCard elevation={1} className="lg:col-span-7">
-            <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-900/40">
-              <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
-                Completed Showroom Contracts & Installments ({filteredSales.length})
-              </h3>
-              <div className="relative">
-                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Filter contract, buyer, vehicle..."
-                  value={salesSearch}
-                  onChange={(e) => setSalesSearch(e.target.value)}
-                  className="w-48 sm:w-56 ps-7 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 h-7"
-                />
-                {salesSearch && (
-                  <button
-                    onClick={() => setSalesSearch("")}
-                    className="absolute end-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
+          {/* Right 7 Cols: Completed Contracts + Installment (Qist) Collections Schedule */}
+          <div className="lg:col-span-7 space-y-5">
+            {/* Past Sales Records Table */}
+            <MuiCard elevation={1}>
+              <div className="p-3.5 border-b border-[#E2E0D8] dark:border-[#1F2430] flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#FAF9F6] dark:bg-[#0D1017]">
+                <h3 className="font-mono font-bold text-[#111318] dark:text-white text-xs uppercase tracking-wider">
+                  EXECUTED SHOWROOM CONTRACTS ({filteredSales.length})
+                </h3>
+                <div className="relative">
+                  <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Filter contract, buyer, vehicle..."
+                    value={salesSearch}
+                    onChange={(e) => setSalesSearch(e.target.value)}
+                    className="w-48 sm:w-56 ps-7 pe-6 py-1 text-xs rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] text-[#111318] dark:text-white placeholder-slate-400 outline-none focus:border-[#111318] dark:focus:border-amber-500 h-7"
+                  />
+                  {salesSearch && (
+                    <button
+                      onClick={() => setSalesSearch("")}
+                      className="absolute end-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <MuiTable dense size="small" className="w-full">
+                  <MuiTableHead>
+                    <MuiTableRow hover={false}>
+                      <MuiTableCell header>Contract #</MuiTableCell>
+                      <MuiTableCell header>Vehicle</MuiTableCell>
+                      <MuiTableCell header>Buyer & Tazkira</MuiTableCell>
+                      <MuiTableCell header align="right">Contract Price</MuiTableCell>
+                      <MuiTableCell header>Settlement</MuiTableCell>
+                    </MuiTableRow>
+                  </MuiTableHead>
+                  <MuiTableBody>
+                    {filteredSales.map((s) => (
+                      <MuiTableRow key={s.id}>
+                        <MuiTableCell className="py-1.5 font-mono font-bold text-[#111318] dark:text-amber-400 text-xs">
+                          {s.contractNumber}
+                        </MuiTableCell>
+                        <MuiTableCell className="py-1.5">
+                          <div className="font-semibold text-xs text-[#111318] dark:text-white leading-tight">
+                            {s.vehicleName}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-mono">
+                            {s.stockNumber}
+                          </div>
+                        </MuiTableCell>
+                        <MuiTableCell className="py-1.5">
+                          <div className="text-xs font-medium text-[#111318] dark:text-white">
+                            {s.customerName}
+                          </div>
+                          <div className="text-[10px] font-mono text-slate-400">
+                            {s.customerTazkira}
+                          </div>
+                        </MuiTableCell>
+                        <MuiTableCell align="right" className="py-1.5 font-mono tabular-nums font-bold text-xs text-[#111318] dark:text-white whitespace-nowrap">
+                          ${s.salePriceUSD.toLocaleString()}
+                        </MuiTableCell>
+                        <MuiTableCell className="py-1.5 whitespace-nowrap">
+                          <MuiChip
+                            label={s.paymentType}
+                            color={s.paymentType === "Full Cash" ? "success" : "warning"}
+                            size="small"
+                          />
+                        </MuiTableCell>
+                      </MuiTableRow>
+                    ))}
+                  </MuiTableBody>
+                </MuiTable>
+              </div>
+            </MuiCard>
+
+            {/* Installment (Qist) Amortization & Due-Date Collections Schedule */}
+            <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#111318] dark:text-amber-400 block">
+                    INSTALLMENT (QIST) RECEIVABLES & COLLECTIONS SCHEDULE
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    Active buyer installment plans, remaining USD/AFN balances & 1-click Hawala collection
+                  </span>
+                </div>
+                <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                  {sales.filter((s) => s.paymentType === "Installment Plan" || s.status === "Pending Installments").length} ACTIVE QIST ACCOUNTS
+                </span>
+              </div>
+
+              <div className="divide-y divide-[#E2E0D8] dark:divide-[#1F2430]">
+                {sales
+                  .filter(
+                    (s) =>
+                      s.paymentType === "Installment Plan" ||
+                      s.status === "Pending Installments" ||
+                      s.downPaymentUSD < s.salePriceUSD
+                  )
+                  .map((s) => {
+                    const balanceUSD = Math.max(0, s.salePriceUSD - (s.downPaymentUSD || 0));
+                    const months = Math.max(1, s.installmentsRemaining || 6);
+                    const monthlyQistUSD = Math.round(balanceUSD / months);
+                    const reminderWhatsapp = `https://wa.me/${(s.customerPhone || "93799102030").replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                      `Salam ${s.customerName}, friendly reminder from Sadozai Motors Herat regarding your vehicle installment (${s.vehicleName}, Contract #${s.contractNumber}). Next Qist due: $${monthlyQistUSD.toLocaleString()} USD (؋ ${(monthlyQistUSD * exchangeRate).toLocaleString()} AFN).`
+                    )}`;
+
+                    return (
+                      <div
+                        key={s.id}
+                        className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#FAF9F6] dark:hover:bg-[#151922] transition-colors"
+                      >
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs text-[#111318] dark:text-white">
+                              {s.customerName}
+                            </span>
+                            <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-[#D8D5CD] dark:border-slate-700">
+                              {s.contractNumber}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-0.5">
+                            {s.vehicleName} · Paid Down:{" "}
+                            <strong className="font-mono text-emerald-700 dark:text-emerald-400">
+                              ${(s.downPaymentUSD || 0).toLocaleString()}
+                            </strong>{" "}
+                            · Remaining:{" "}
+                            <strong className="font-mono text-amber-700 dark:text-amber-400">
+                              ${balanceUSD.toLocaleString()} USD
+                            </strong>{" "}
+                            ({months} Qists @ ${monthlyQistUSD.toLocaleString()}/mo)
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <a
+                            href={reminderWhatsapp}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-[#D8D5CD] dark:border-[#242A38] text-[11px] font-mono font-semibold text-emerald-700 dark:text-emerald-400 hover:border-emerald-600 transition-colors"
+                          >
+                            <Send className="h-3 w-3" />
+                            <span>WhatsApp Reminder</span>
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => void handleCollectInstallment(s)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#111318] hover:bg-slate-800 dark:bg-amber-600 dark:hover:bg-amber-500 text-white text-[11px] font-mono font-bold cursor-pointer transition-colors"
+                          >
+                            <Banknote className="h-3 w-3" />
+                            <span>Collect Qist (${monthlyQistUSD.toLocaleString()})</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <MuiTable dense size="small" className="w-full">
-                <MuiTableHead>
-                  <MuiTableRow hover={false}>
-                    <MuiTableCell header>Contract #</MuiTableCell>
-                    <MuiTableCell header>Vehicle</MuiTableCell>
-                    <MuiTableCell header>Buyer & Tazkira</MuiTableCell>
-                    <MuiTableCell header align="right">Price</MuiTableCell>
-                    <MuiTableCell header>Payment</MuiTableCell>
-                  </MuiTableRow>
-                </MuiTableHead>
-                <MuiTableBody>
-                  {filteredSales.map((s) => (
-                    <MuiTableRow key={s.id}>
-                      <MuiTableCell className="py-1.5 font-mono font-semibold text-primary text-xs">
-                        {s.contractNumber}
-                      </MuiTableCell>
-                      <MuiTableCell className="py-1.5">
-                        <div className="font-semibold text-xs text-slate-900 dark:text-white leading-tight">
-                          {s.vehicleName}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-mono">
-                          {s.stockNumber}
-                        </div>
-                      </MuiTableCell>
-                      <MuiTableCell className="py-1.5">
-                        <div className="text-xs font-medium text-slate-900 dark:text-white">{s.customerName}</div>
-                        <div className="text-[10px] font-mono text-slate-400">
-                          {s.customerTazkira}
-                        </div>
-                      </MuiTableCell>
-                      <MuiTableCell align="right" className="py-1.5 font-mono font-bold text-xs text-slate-900 dark:text-white whitespace-nowrap">
-                        ${s.salePriceUSD.toLocaleString()}
-                      </MuiTableCell>
-                      <MuiTableCell className="py-1.5 whitespace-nowrap">
-                        <MuiChip
-                          label={s.paymentType}
-                          color={s.paymentType === "Full Cash" ? "success" : "default"}
-                          size="small"
-                        />
-                      </MuiTableCell>
-                    </MuiTableRow>
-                  ))}
-                </MuiTableBody>
-              </MuiTable>
-            </div>
-          </MuiCard>
+          </div>
         </div>
       )}
 
@@ -1387,6 +1633,57 @@ export default function AdminDashboardPage() {
 
       {/* TAB 8: FULL GENERAL LEDGER ACCOUNTING */}
       {activeTab === "accounting" && <AccountingTab />}
+      {/* Custom Delete Vehicle Confirmation Dialog */}
+      <Dialog
+        open={Boolean(vehicleToDelete)}
+        onClose={() => setVehicleToDelete(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="font-bold text-slate-900 dark:text-white">
+          Confirm Vehicle Removal
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
+            Are you sure you want to permanently remove{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {vehicleToDelete?.year} {vehicleToDelete?.make} {vehicleToDelete?.model}
+            </strong>{" "}
+            (Stock <span className="font-mono font-semibold">{vehicleToDelete?.stockNumber}</span>) from the showroom registry?
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <MuiButton
+            variant="outlined"
+            color="inherit"
+            size="small"
+            onClick={() => setVehicleToDelete(null)}
+          >
+            Cancel
+          </MuiButton>
+          <MuiButton
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={async () => {
+              if (!vehicleToDelete) return;
+              const target = vehicleToDelete;
+              setVehicleToDelete(null);
+              try {
+                await deleteVehicle(target.id);
+                addToast(`Removed vehicle ${target.stockNumber}`, "info");
+              } catch (error) {
+                addToast(
+                  error instanceof Error ? error.message : "Unable to delete vehicle",
+                  "error"
+                );
+              }
+            }}
+          >
+            Delete Permanently
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

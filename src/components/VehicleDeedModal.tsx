@@ -16,14 +16,13 @@ interface VehicleDeedModalProps {
 
 export function VehicleDeedModal({ vehicle, isOpen, onClose }: VehicleDeedModalProps) {
   const deedRef = useRef<HTMLDivElement>(null);
-  const { language } = useShowroomStore();
+  const { language, exchangeRate } = useShowroomStore();
 
   const [buyerName, setBuyerName] = useState("Haji Abdul Qadir Karimi");
   const [buyerTazkira, setBuyerTazkira] = useState("HRT-1402-984210");
   const [buyerPhone, setBuyerPhone] = useState("+93 79 988 7766");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
 
-  const exchangeRate = 70.5;
   const priceAfn = Math.round(vehicle.sellingPrice * exchangeRate);
   const contractNumber = `SM-DEED-2026-${vehicle.stockNumber.replace("SM-HRT-", "")}`;
   const today = new Date().toLocaleDateString("en-US", {
@@ -36,6 +35,7 @@ export function VehicleDeedModal({ vehicle, isOpen, onClose }: VehicleDeedModalP
   useEffect(() => {
     if (!isOpen) return;
 
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://sadozaimotors.af";
     const payload = JSON.stringify({
       issuer: "Sadozai Motors Herat",
       contract: contractNumber,
@@ -47,7 +47,7 @@ export function VehicleDeedModal({ vehicle, isOpen, onClose }: VehicleDeedModalP
       buyerTazkira: buyerTazkira,
       customsMaktoub: vehicle.customsClearance,
       verifiedAt: new Date().toISOString(),
-      validationUrl: `https://ariashowroom.af/verify?contract=${contractNumber}&vin=${vehicle.vin}`,
+      validationUrl: `${origin}/verify/${vehicle.id}?contract=${contractNumber}&vin=${vehicle.vin}`,
     });
 
     QRCode.toDataURL(payload, {

@@ -327,33 +327,31 @@ export default function LogisticsAndCustomsPage() {
   };
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto pb-12">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-200/90 dark:border-slate-800/90">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shadow-2xs">
-            <Truck className="h-6 w-6" />
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Architectural Corridor Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-[#D8D5CD] dark:border-[#242A38]">
+        <div>
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-1">
+            <span>DOGHAROUN ➔ ISLAM QALA BORDER CORRIDOR</span>
+            <span>·</span>
+            <span className="text-[#111318] dark:text-amber-400 font-bold">
+              TIR CARNET & GOMROK MANIFEST
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                {language === "ps"
-                  ? "د اسلام قلعه او ترانزیت لوژستیکي مدیریت"
-                  : language === "fa"
-                  ? "لوجستیک بندر، ترانزیت و گمرک اسلام قلعه"
-                  : "Port Logistics & Islam Qala Customs Tracker"}
-              </h1>
-              <MuiChip label="Dry Port Herat" size="small" color="primary" />
-              <MuiChip label="TIR Carnet Corridor" size="small" variant="outlined" />
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {language === "ps"
-                ? "له دوبۍ او نړیوالو بندرونو څخه تر اسلام قلعه او د سدوزي موټرو ګودام پورې د موټرونو تعقیب"
-                : language === "fa"
-                ? "ردیابی موترها از بنادر دبی و چابهار از طریق مرز اسلام قلعه تا نندارتون مرکزی هرات"
-                : "Real-time pipeline tracking from Dubai / Chabahar ports through Islam Qala border to Herat lot"}
-            </p>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111318] dark:text-white">
+            {language === "ps"
+              ? "د اسلام قلعه او ترانزیت لوژستیکي مدیریت"
+              : language === "fa"
+              ? "لوجستیک بندر، ترانزیت و گمرک اسلام قلعه"
+              : "Port Logistics & Islam Qala Customs Tracker"}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {language === "ps"
+              ? "له دوبۍ او نړیوالو بندرونو څخه تر اسلام قلعه او د سدوزي موټرو ګودام پورې د موټرونو تعقیب"
+              : language === "fa"
+              ? "ردیابی موترها از بنادر دبی و چابهار از طریق مرز اسلام قلعه تا نندارتون مرکزی هرات"
+              : "Real-time pipeline tracking from Dubai / Chabahar ports through Islam Qala border to Herat lot"}
+          </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -362,7 +360,6 @@ export default function LogisticsAndCustomsPage() {
             size="small"
             onClick={handleDispatchDemoShipment}
             startIcon={<Plus className="h-4 w-4" />}
-            sx={{ fontSize: "11px", py: "4px" }}
           >
             + Dispatch Dubai Transit
           </MuiButton>
@@ -370,8 +367,7 @@ export default function LogisticsAndCustomsPage() {
             <MuiButton
               variant="contained"
               size="small"
-              startIcon={<Sparkles className="h-4 w-4" />}
-              sx={{ fontSize: "11px", py: "4px" }}
+              startIcon={<Truck className="h-4 w-4" />}
             >
               {language === "ps" ? "د نوي موټر ثبتول" : language === "fa" ? "ثبت موتر ترانزیتی" : "Intake Transit Stock"}
             </MuiButton>
@@ -379,95 +375,102 @@ export default function LogisticsAndCustomsPage() {
         </div>
       </div>
 
-      {/* Corridor Summary Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Active In-Transit Fleet
+      {/* 1px Hairline Corridor Ledger Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#D8D5CD] dark:bg-[#242A38] border border-[#D8D5CD] dark:border-[#242A38] rounded-md overflow-hidden">
+        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+            <span>01 / IN-TRANSIT FLEET</span>
+            <span className="text-amber-700 dark:text-amber-400 font-bold">TRANSIT</span>
+          </div>
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#111318] dark:text-white">
+            {inTransitVehicles.length} Units
+          </div>
+          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>FOB VALUE</span>
+            <span className="font-bold text-[#111318] dark:text-slate-200 tabular-nums">
+              ${totalInTransitValueUSD.toLocaleString()}
             </span>
-            <Truck className="h-4 w-4 text-amber-500" />
-          </div>
-          <div className="text-lg font-black text-slate-900 dark:text-white font-mono">
-            {inTransitVehicles.length} Units En Route
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
-            FOB Value: ${totalInTransitValueUSD.toLocaleString()} USD
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Islam Qala Customs Stage
+        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+            <span>02 / ISLAM QALA GOMROK</span>
+            <span className="text-emerald-700 dark:text-emerald-400 font-bold">BORDER</span>
+          </div>
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#111318] dark:text-white">
+            {vehiclesAtGomrokCount} Units
+          </div>
+          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>CLEARANCE</span>
+            <span className="font-bold text-emerald-700 dark:text-emerald-400">
+              APPRAISAL ACTIVE
             </span>
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-          </div>
-          <div className="text-lg font-black text-slate-900 dark:text-white font-mono">
-            {vehiclesAtGomrokCount} Units at Border
-          </div>
-          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-medium">
-            Inspection & Tariff Appraisal Active
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Projected Customs Dues
+        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+            <span>03 / PROJECTED TARIFFS</span>
+            <span className="text-[#111318] dark:text-amber-400 font-bold">DUTY</span>
+          </div>
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#111318] dark:text-white">
+            ${totalCustomsDuesUSD.toLocaleString()}
+          </div>
+          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>AFN EQUIV</span>
+            <span className="tabular-nums text-[#111318] dark:text-slate-300">
+              ؋ {(totalCustomsDuesUSD * exchangeRate).toLocaleString()}
             </span>
-            <Calculator className="h-4 w-4 text-blue-500" />
-          </div>
-          <div className="text-lg font-black text-blue-600 dark:text-blue-400 font-mono">
-            ${totalCustomsDuesUSD.toLocaleString()} USD
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
-            ≈ {(totalCustomsDuesUSD * exchangeRate).toLocaleString()} AFN
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Average Corridor Velocity
-            </span>
-            <Clock className="h-4 w-4 text-purple-500" />
+        <div className="bg-white dark:bg-[#11141B] p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.14em] text-slate-500">
+            <span>04 / CORRIDOR LEAD TIME</span>
+            <span className="text-slate-500 font-bold">SLA</span>
           </div>
-          <div className="text-lg font-black text-slate-900 dark:text-white font-mono">
-            12 – 16 Days
+          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#111318] dark:text-white">
+            12–16 Days
           </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-            Dubai Port to Herat Showroom Lot
+          <div className="mt-2 pt-2 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>ROUTE</span>
+            <span className="text-[#111318] dark:text-slate-300">JEBEL ALI ➔ HERAT</span>
           </div>
         </div>
       </div>
 
-      {/* 5-Stage Supply Chain Pipeline Stepper Banner */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs">
-        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Automotive Supply Chain Corridor
+      {/* Connected 1px Hairline 5-Stage Supply Chain Matrix */}
+      <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-[#111318] dark:text-amber-400">
+              SUPPLY CHAIN CHECKPOINTS
             </span>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-              {language === "ps"
-                ? "له مبدأ څخه تر هرات نندارتون پورې ۵ لوژستیکي پړاوونه"
-                : language === "fa"
-                ? "مراحل ۵ گانه ترانزیت، بارگیری و ترخیص گمرکی موترها"
-                : "5-Stage Port-to-Showroom Transit & Clearance Pipeline"}
-            </h2>
+            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              Click any stage to filter manifest
+            </span>
           </div>
-          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg">
-            Border Crossing: Dogharoun ➔ Islam Qala
-          </span>
+          <button
+            onClick={() => setActiveStageFilter("ALL")}
+            className="text-[10px] font-mono uppercase tracking-wider text-slate-500 hover:text-[#111318] dark:hover:text-white cursor-pointer"
+          >
+            SHOW ALL ({vehicles.length})
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-px bg-[#E2E0D8] dark:bg-[#1F2430]">
           {PIPELINE_MILESTONES.map((m) => {
-            const Icon = m.icon;
             const inStageCount = vehicles.filter(
               (v) => (vehicleMilestones[v.id] || (v.status === "In Transit" ? 3 : 5)) === m.id
             ).length;
+
+            const isSelectedStage =
+              (activeStageFilter === "PORT" && (m.id === 1 || m.id === 2)) ||
+              (activeStageFilter === "CHABAHAR" && m.id === 3) ||
+              (activeStageFilter === "GOMROK" && m.id === 4) ||
+              (activeStageFilter === "ARRIVED" && m.id === 5);
 
             return (
               <div
@@ -478,31 +481,27 @@ export default function LogisticsAndCustomsPage() {
                   else if (m.id === 4) setActiveStageFilter("GOMROK");
                   else setActiveStageFilter("ARRIVED");
                 }}
-                className={`p-3 rounded-xl border transition-all cursor-pointer relative group ${
-                  (activeStageFilter === "PORT" && (m.id === 1 || m.id === 2)) ||
-                  (activeStageFilter === "CHABAHAR" && m.id === 3) ||
-                  (activeStageFilter === "GOMROK" && m.id === 4) ||
-                  (activeStageFilter === "ARRIVED" && m.id === 5)
-                    ? "border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 shadow-xs"
-                    : "border-slate-200/80 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700"
+                className={`p-3.5 transition-colors cursor-pointer relative ${
+                  isSelectedStage
+                    ? "bg-[#FAF9F6] dark:bg-[#181C26] border-t-2 border-t-[#111318] dark:border-t-amber-500"
+                    : "bg-white dark:bg-[#11141B] hover:bg-[#FAF9F6] dark:hover:bg-[#151922]"
                 }`}
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="h-5 w-5 rounded-full bg-slate-200 dark:bg-slate-800 text-[10px] font-mono font-bold flex items-center justify-center text-slate-700 dark:text-slate-300">
-                    {m.id}
+                <div className="flex items-center justify-between mb-2 font-mono">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    STAGE 0{m.id}
                   </span>
-                  <div className="flex items-center gap-1">
-                    {inStageCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-md bg-blue-600 text-white text-[10px] font-bold font-mono">
-                        {inStageCount}
-                      </span>
-                    )}
-                    <span className={`p-1 rounded-lg border ${m.color}`}>
-                      <Icon className="h-3.5 w-3.5" />
-                    </span>
-                  </div>
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums ${
+                      inStageCount > 0
+                        ? "bg-[#111318] text-white dark:bg-amber-500 dark:text-black"
+                        : "bg-stone-100 dark:bg-slate-800 text-slate-400"
+                    }`}
+                  >
+                    {inStageCount} UNITS
+                  </span>
                 </div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                <h4 className="text-xs font-bold text-[#111318] dark:text-white leading-snug">
                   {language === "fa" || language === "ps" ? m.titleDari : m.title}
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">

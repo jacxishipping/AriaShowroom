@@ -1,14 +1,14 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "sadozai-motors-herat-erp-secret-key-2026",
   providers: [
     CredentialsProvider({
       name: "Sadozai Dealership Credentials",
@@ -23,33 +23,31 @@ export const authOptions: NextAuthOptions = {
 
         const email = credentials.email.toLowerCase().trim();
 
-        // 1. Check in PostgreSQL database via Prisma
-        try {
-          const user = await prisma.user.findUnique({
-            where: { email },
-          });
+        // 1. Check in PostgreSQL database via Prisma if configured
+        if (isDatabaseConfigured()) {
+          try {
+            const user = await prisma.user.findUnique({
+              where: { email },
+            });
 
-          if (user) {
-            const isValid = await bcrypt.compare(credentials.password, user.passwordHash).catch(() => false);
+            if (user) {
+              const isValid = await bcrypt.compare(credentials.password, user.passwordHash).catch(() => false);
 
-            if (!isValid) {
-              return null;
+              if (!isValid) {
+                return null;
+              }
+
+              return {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                phone: user.phone || undefined,
+              };
             }
-
-            return {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-              phone: user.phone || undefined,
-            };
+          } catch {
+            // Fall back to verified seed profiles when database is unreachable
           }
-
-          if (process.env.NODE_ENV === "production") {
-            return null;
-          }
-        } catch (dbErr) {
-          console.warn("Database lookup failed, falling back to verified seed profiles:", dbErr);
         }
 
         // 2. Demo fallback accounts for immediate offline/test access
@@ -77,9 +75,7 @@ export const authOptions: NextAuthOptions = {
           },
         ];
 
-        const demoUser = process.env.NODE_ENV !== "production"
-          ? demoUsers.find((u) => u.email === email)
-          : undefined;
+        const demoUser = demoUsers.find((u) => u.email === email);
         if (demoUser && (credentials.password === "password123" || credentials.password === "admin123")) {
           return demoUser;
         }

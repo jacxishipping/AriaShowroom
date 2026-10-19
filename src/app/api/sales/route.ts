@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { PaymentType, VehicleStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -9,6 +9,9 @@ import { createLedgerEntry } from "@/lib/ledger";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true, data: [] });
+  }
   const unauthorized = await requireApiRole(["ADMIN", "SALES", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
 
@@ -32,15 +35,15 @@ export async function GET() {
     });
 
     return NextResponse.json({ success: true, count: sales.length, data: sales });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch sales" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ success: false, fallback: true, data: [] });
   }
 }
 
 export async function POST(request: Request) {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true });
+  }
   const unauthorized = await requireApiRole(["ADMIN", "SALES"]);
   if (unauthorized) return unauthorized;
 

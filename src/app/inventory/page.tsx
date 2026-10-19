@@ -27,6 +27,10 @@ import {
   IconButton,
   ButtonGroup,
   Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@/components/mui";
 import {
   Car,
@@ -55,16 +59,19 @@ export default function InventoryPage() {
     currency,
     exchangeRate,
     currentRole,
+    clientPresentationMode,
     deleteVehicle,
     setVehicleStatus,
     addToast,
   } = useShowroomStore();
 
   const t = translations[language];
+  const hideFinancialMargins = clientPresentationMode || currentRole === "SalesAgent";
 
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(12);
+  const [vehicleToDelete, setVehicleToDelete] = useState<VehicleItem | null>(null);
 
   const [sortField, setSortField] = useState<
     "sellingPrice" | "landedCost" | "year" | "stockNumber"
@@ -129,22 +136,24 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Inventory Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/90 dark:border-slate-800/90">
+      {/* Architectural Inventory Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-3 border-b border-[#D8D5CD] dark:border-[#242A38]">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              {language === "ps"
-                ? "د موجودو موټرونو ګودام او سټاک"
-                : language === "fa"
-                ? "گدام و موجودی موترها"
-                : "Vehicle Inventory & Fleet Registry"}
-            </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              <span>{filteredVehicles.length} Units Listed</span>
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-1">
+            <span>HERAT CUSTOMS LOT #04</span>
+            <span>·</span>
+            <span className="text-[#111318] dark:text-amber-400 font-bold">
+              {filteredVehicles.length} VERIFIED CHASSIS
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#111318] dark:text-white tracking-tight">
+            {language === "ps"
+              ? "د موجودو موټرونو ګودام او سټاک"
+              : language === "fa"
+              ? "گدام و موجودی موترها"
+              : "Vehicle Inventory & Fleet Registry"}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Browse verified stock • Landed cost, Islam Qala clearance & real-time Afghan market valuation
           </p>
         </div>
@@ -215,28 +224,28 @@ export default function InventoryPage() {
             </div>
 
             {/* Pagination Strip */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2.5 rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] text-xs font-mono text-slate-500 dark:text-slate-400">
               <div>
-                Showing {page * rowsPerPage + 1} to{" "}
-                {Math.min((page + 1) * rowsPerPage, filteredVehicles.length)} of{" "}
-                {filteredVehicles.length} vehicles
+                SHOWING {page * rowsPerPage + 1}–
+                {Math.min((page + 1) * rowsPerPage, filteredVehicles.length)} OF{" "}
+                {filteredVehicles.length} UNITS
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-[#111318] dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#111318] dark:hover:border-amber-500 transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="font-semibold px-2">
-                  Page {page + 1} of {totalPages}
+                <span className="font-semibold px-2 tabular-nums text-[#111318] dark:text-white">
+                  PAGE {page + 1} / {totalPages}
                 </span>
                 <button
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] text-[#111318] dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#111318] dark:hover:border-amber-500 transition-colors"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -244,7 +253,7 @@ export default function InventoryPage() {
             </div>
           </div>
         ) : (
-          <MuiTableContainer className="rounded-2xl shadow-sm overflow-x-auto">
+          <MuiTableContainer className="rounded-md overflow-x-auto">
             <MuiTable dense size="small" className="w-full">
               <MuiTableHead>
                 <MuiTableRow hover={false}>
@@ -268,25 +277,27 @@ export default function InventoryPage() {
                   </MuiTableCell>
                   <MuiTableCell header>Status</MuiTableCell>
                   <MuiTableCell header>Customs</MuiTableCell>
-                  <MuiTableCell
-                    header
-                    align="right"
-                    onClick={() => handleSort("landedCost")}
-                    className="cursor-pointer select-none"
-                  >
-                    <div className="flex items-center justify-end gap-1.5">
-                      <span>Landed Cost</span>
-                      {sortField === "landedCost" ? (
-                        sortDir === "asc" ? (
-                          <ArrowUp className="h-3 w-3 text-blue-600" />
+                  {!hideFinancialMargins && (
+                    <MuiTableCell
+                      header
+                      align="right"
+                      onClick={() => handleSort("landedCost")}
+                      className="cursor-pointer select-none"
+                    >
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span>Landed Cost</span>
+                        {sortField === "landedCost" ? (
+                          sortDir === "asc" ? (
+                            <ArrowUp className="h-3 w-3 text-blue-600" />
+                          ) : (
+                            <ArrowDown className="h-3 w-3 text-blue-600" />
+                          )
                         ) : (
-                          <ArrowDown className="h-3 w-3 text-blue-600" />
-                        )
-                      ) : (
-                        <ArrowUpDown className="h-3 w-3 text-slate-400" />
-                      )}
-                    </div>
-                  </MuiTableCell>
+                          <ArrowUpDown className="h-3 w-3 text-slate-400" />
+                        )}
+                      </div>
+                    </MuiTableCell>
+                  )}
                   <MuiTableCell
                     header
                     align="right"
@@ -306,7 +317,9 @@ export default function InventoryPage() {
                       )}
                     </div>
                   </MuiTableCell>
-                  <MuiTableCell header align="right">Target Margin</MuiTableCell>
+                  {!hideFinancialMargins && (
+                    <MuiTableCell header align="right">Target Margin</MuiTableCell>
+                  )}
                   <MuiTableCell header align="right" className="!pe-3">Actions</MuiTableCell>
                 </MuiTableRow>
               </MuiTableHead>
@@ -342,12 +355,12 @@ export default function InventoryPage() {
                           <div className="min-w-0">
                             <Link
                               href={`/vehicles/${veh.id}`}
-                              className="font-bold text-xs text-slate-900 dark:text-white hover:text-blue-600 transition-colors block truncate leading-tight"
+                              className="font-bold text-xs text-[#111318] dark:text-white hover:text-amber-700 dark:hover:text-amber-400 transition-colors block truncate leading-tight"
                             >
                               {veh.year} {veh.make} {veh.model}
                             </Link>
                             <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
-                              <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-1 py-0.2 rounded border border-blue-200/50 dark:border-blue-900/50">
+                              <span className="font-bold text-[#111318] dark:text-amber-400 bg-stone-100 dark:bg-slate-800 px-1 py-0.2 rounded border border-[#D8D5CD] dark:border-slate-700">
                                 {veh.stockNumber}
                               </span>
                               <span className="select-all text-slate-500 font-mono tracking-tight">
@@ -360,29 +373,27 @@ export default function InventoryPage() {
                         </div>
                       </MuiTableCell>
 
-                      {/* Interactive Status Pill Badge */}
+                      {/* Interactive Status Badge */}
                       <MuiTableCell className="py-1.5 whitespace-nowrap">
                         <div className="relative inline-block">
                           <select
                             value={veh.status}
                             onChange={(e) => void setVehicleStatus(veh.id, e.target.value as VehicleItem["status"]).catch((error) => addToast(error.message, "error"))}
-                            className={`text-[11px] font-semibold rounded-full px-2 py-0.5 border transition-all cursor-pointer outline-none appearance-none pe-5 leading-tight ${
+                            className={`text-[10px] font-mono font-bold uppercase tracking-wider rounded px-2 py-0.5 border transition-colors cursor-pointer outline-none appearance-none pe-5 leading-tight ${
                               veh.status === "Available on Lot"
-                                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                                ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
                                 : veh.status === "In Transit"
-                                ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800"
+                                ? "bg-stone-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-stone-300 dark:border-slate-700"
                                 : veh.status === "Reserved/Deposit Paid"
-                                ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800"
-                                : veh.status === "Sold"
-                                ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700"
-                                : "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800"
+                                ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700"
                             }`}
                           >
-                            <option value="Available on Lot">Available</option>
-                            <option value="In Transit">In Transit</option>
-                            <option value="Reserved/Deposit Paid">Reserved</option>
-                            <option value="Under Prep/Maintenance">Under Prep</option>
-                            <option value="Sold">Sold</option>
+                            <option value="Available on Lot">ON LOT</option>
+                            <option value="In Transit">IN TRANSIT</option>
+                            <option value="Reserved/Deposit Paid">RESERVED</option>
+                            <option value="Under Prep/Maintenance">PREP</option>
+                            <option value="Sold">SOLD</option>
                           </select>
                           <ChevronDown className="h-2.5 w-2.5 text-current opacity-60 absolute end-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         </div>
@@ -397,24 +408,28 @@ export default function InventoryPage() {
                         </div>
                       </MuiTableCell>
 
-                      <MuiTableCell align="right" className="py-1.5 font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                        ${veh.landedCost.toLocaleString()}
-                      </MuiTableCell>
+                      {!hideFinancialMargins && (
+                        <MuiTableCell align="right" className="py-1.5 font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                          ${veh.landedCost.toLocaleString()}
+                        </MuiTableCell>
+                      )}
 
                       <MuiTableCell align="right" className="py-1.5 whitespace-nowrap">
                         <div className="font-bold font-mono text-xs text-slate-900 dark:text-white">
                           ${veh.sellingPrice.toLocaleString()}
                         </div>
                         {currency === "AFN" && (
-                          <div className="text-[9px] font-mono text-slate-400 leading-none">
+                          <div className="text-[11px] font-mono text-slate-400 leading-none mt-0.5">
                             ؋ {(veh.sellingPrice * exchangeRate).toLocaleString()}
                           </div>
                         )}
                       </MuiTableCell>
 
-                      <MuiTableCell align="right" className="py-1.5 font-mono font-semibold text-xs text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                        +${marginAmount.toLocaleString()} <span className="text-[10px] text-emerald-500/80 font-normal">({marginPercent}%)</span>
-                      </MuiTableCell>
+                      {!hideFinancialMargins && (
+                        <MuiTableCell align="right" className="py-1.5 font-mono font-semibold text-xs text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                          +${marginAmount.toLocaleString()} <span className="text-[11px] text-emerald-500/80 font-normal">({marginPercent}%)</span>
+                        </MuiTableCell>
+                      )}
 
                       <MuiTableCell align="right" className="py-1.5 whitespace-nowrap !pe-3">
                         <div className="flex items-center justify-end gap-0.5">
@@ -445,16 +460,7 @@ export default function InventoryPage() {
                               size="small"
                               color="error"
                               sx={{ padding: "4px" }}
-                              onClick={async () => {
-                                if (confirm(`Delete vehicle ${veh.stockNumber}?`)) {
-                                  try {
-                                    await deleteVehicle(veh.id);
-                                    addToast(`Deleted vehicle ${veh.stockNumber}`, "info");
-                                  } catch (error) {
-                                    addToast(error instanceof Error ? error.message : "Unable to delete vehicle", "error");
-                                  }
-                                }
-                              }}
+                              onClick={() => setVehicleToDelete(veh)}
                               title="Delete vehicle"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -495,6 +501,58 @@ export default function InventoryPage() {
       )}
 
       <CompareBar />
+
+      {/* Custom Delete Vehicle Confirmation Dialog */}
+      <Dialog
+        open={Boolean(vehicleToDelete)}
+        onClose={() => setVehicleToDelete(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="font-bold text-slate-900 dark:text-white">
+          Confirm Vehicle Removal
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
+            Are you sure you want to permanently remove{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {vehicleToDelete?.year} {vehicleToDelete?.make} {vehicleToDelete?.model}
+            </strong>{" "}
+            (Stock <span className="font-mono font-semibold">{vehicleToDelete?.stockNumber}</span>) from the showroom registry?
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <MuiButton
+            variant="outlined"
+            color="inherit"
+            size="small"
+            onClick={() => setVehicleToDelete(null)}
+          >
+            Cancel
+          </MuiButton>
+          <MuiButton
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={async () => {
+              if (!vehicleToDelete) return;
+              const target = vehicleToDelete;
+              setVehicleToDelete(null);
+              try {
+                await deleteVehicle(target.id);
+                addToast(`Removed vehicle ${target.stockNumber}`, "info");
+              } catch (error) {
+                addToast(
+                  error instanceof Error ? error.message : "Unable to delete vehicle",
+                  "error"
+                );
+              }
+            }}
+          >
+            Delete Permanently
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

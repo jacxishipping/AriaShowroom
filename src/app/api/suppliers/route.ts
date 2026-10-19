@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { requireApiRole } from "@/lib/api-auth";
 
 export async function GET() {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true, data: [] });
+  }
   const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
 
@@ -15,16 +18,15 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ success: true, data: suppliers });
-  } catch (error: any) {
-    console.error("Failed to fetch suppliers from database:", error);
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch suppliers" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ success: false, fallback: true, data: [] });
   }
 }
 
 export async function POST(req: Request) {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true });
+  }
   const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
 

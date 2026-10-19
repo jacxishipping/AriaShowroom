@@ -10,6 +10,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        primary: {
+          DEFAULT: "#2563EB",
+          dark: "#1D4ED8",
+          light: "#60A5FA",
+        },
+        error: {
+          DEFAULT: "#DC2626",
+          dark: "#B91C1C",
+        },
         obsidian: "#0A0E17",
         navy: {
           DEFAULT: "#0F172A",
@@ -43,7 +52,12 @@ const config: Config = {
           "selected-dark": "rgba(25, 118, 210, 0.16)",
         },
       },
+      backdropBlur: {
+        xs: "2px",
+      },
       boxShadow: {
+        "2xs": "0 1px 2px 0 rgba(15, 23, 42, 0.04)",
+        xs: "0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04)",
         "mui-1": "0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)",
         "mui-2": "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
         "mui-3": "0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12)",
@@ -53,8 +67,9 @@ const config: Config = {
         "mui-24": "0px 11px 15px -7px rgba(0,0,0,0.2), 0px 24px 38px 3px rgba(0,0,0,0.14), 0px 9px 46px 8px rgba(0,0,0,0.12)",
       },
       fontFamily: {
-        sans: ["Roboto", "var(--font-inter)", "var(--font-vazirmatn)", "Helvetica", "Arial", "sans-serif"],
-        dari: ["var(--font-vazirmatn)", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "var(--font-vazirmatn)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+        dari: ["var(--font-vazirmatn)", "var(--font-inter)", "system-ui", "sans-serif"],
       },
     },
   },

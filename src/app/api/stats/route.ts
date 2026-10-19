@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { requireApiRole } from "@/lib/api-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true });
+  }
   const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
 

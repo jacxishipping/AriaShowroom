@@ -90,89 +90,30 @@ export function AccountingTab({
     .filter((a) => a.type === "LIABILITY")
     .reduce((acc, a) => acc + a.balanceUSD, 0);
 
+  // Calculate Khorasan Sarrafi FX Rate Gain/Loss across executed sales
+  // Compares historical contract exchangeRate at sale time vs current live Sarrafi desk exchangeRate
+  const fxGainLossAFN = sales.reduce((acc, s) => {
+    const lockedRate = s.exchangeRate || 70.5;
+    return acc + Math.round(s.salePriceUSD * (exchangeRate - lockedRate));
+  }, 0);
+  const fxGainLossUSD = Math.round(fxGainLossAFN / (exchangeRate || 70.5));
+  const avgLockedRate =
+    sales.length > 0
+      ? (sales.reduce((acc, s) => acc + (s.exchangeRate || 70.5), 0) / sales.length).toFixed(2)
+      : exchangeRate.toFixed(2);
+
   return (
     <div className="space-y-4">
-      {/* Top Executive Balance Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Assets (دارایی‌های کل)
-            </span>
-            <span className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
-              <Landmark className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
-            ${totalAssets.toLocaleString()}
-          </p>
-          <p className="mt-0.5 text-[11px] text-slate-500 font-mono">
-            ؋ {(totalAssets * exchangeRate).toLocaleString()} AFN
-          </p>
-        </div>
-
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Accounts Payable (بدهی)
-            </span>
-            <span className="p-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40">
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-rose-600 dark:text-rose-400 tracking-tight">
-            ${totalLiabilities.toLocaleString()}
-          </p>
-          <p className="mt-0.5 text-[11px] text-slate-500 font-mono">
-            ؋ {(totalLiabilities * exchangeRate).toLocaleString()} AFN
-          </p>
-        </div>
-
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Gross Sales (فروش ناخالص)
-            </span>
-            <span className="p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
-              <TrendingUp className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
-            +${totalRevenueUSD.toLocaleString()}
-          </p>
-          <p className="mt-0.5 text-[11px] text-slate-500">
-            {sales.length} title deeds executed
-          </p>
-        </div>
-
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Net Profit (مفاد خالص)
-            </span>
-            <span className="p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
-              <Scale className="h-3.5 w-3.5" />
-            </span>
-          </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
-            +${netOperatingProfitUSD.toLocaleString()}
-          </p>
-          <p className="mt-0.5 text-[11px] text-slate-500 font-mono">
-            ؋ {netOperatingProfitAFN.toLocaleString()} AFN
-          </p>
-        </div>
-      </div>
-
-      {/* Sub-navigation Segmented Control */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-1">
-        <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/60 shrink-0">
+      {/* Sub-navigation & Balance Sheet / FX Telemetry Strip */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-[#E2E0D8] dark:border-[#1F2430]">
+        <div className="inline-flex items-center divide-x divide-[#D8D5CD] dark:divide-[#242A38] rtl:divide-x-reverse rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#0D1017] shrink-0">
           <button
             type="button"
             onClick={() => setSubView("pnl")}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider whitespace-nowrap transition-colors cursor-pointer ${
               subView === "pnl"
-                ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-[#111318] text-white dark:bg-amber-600 dark:text-white"
+                : "text-slate-600 dark:text-slate-400 hover:text-[#111318] dark:hover:text-white"
             }`}
           >
             Income Statement (P&L)
@@ -180,10 +121,10 @@ export function AccountingTab({
           <button
             type="button"
             onClick={() => setSubView("coa")}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider whitespace-nowrap transition-colors cursor-pointer ${
               subView === "coa"
-                ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-[#111318] text-white dark:bg-amber-600 dark:text-white"
+                : "text-slate-600 dark:text-slate-400 hover:text-[#111318] dark:hover:text-white"
             }`}
           >
             Chart of Accounts
@@ -191,10 +132,10 @@ export function AccountingTab({
           <button
             type="button"
             onClick={() => setSubView("trial")}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider whitespace-nowrap transition-colors cursor-pointer ${
               subView === "trial"
-                ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-[#111318] text-white dark:bg-amber-600 dark:text-white"
+                : "text-slate-600 dark:text-slate-400 hover:text-[#111318] dark:hover:text-white"
             }`}
           >
             Trial Balance
@@ -202,10 +143,10 @@ export function AccountingTab({
           <button
             type="button"
             onClick={() => setSubView("journal")}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider whitespace-nowrap transition-colors cursor-pointer ${
               subView === "journal"
-                ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-[#111318] text-white dark:bg-amber-600 dark:text-white"
+                : "text-slate-600 dark:text-slate-400 hover:text-[#111318] dark:hover:text-white"
             }`}
           >
             General Ledger Entries
@@ -213,16 +154,16 @@ export function AccountingTab({
         </div>
 
         {/* Trial Balance Audit Indicator */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 font-mono">
           {isBalanced ? (
-            <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/40">
+            <span className="flex items-center gap-1.5 rounded px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
               <CheckCircle2 className="h-3 w-3" />
-              Books Balanced
+              DOUBLE-ENTRY BOOKS BALANCED
             </span>
           ) : (
-            <span className="flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/40">
+            <span className="flex items-center gap-1.5 rounded px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-800 dark:text-rose-300 border border-rose-500/30">
               <AlertCircle className="h-3 w-3" />
-              Imbalance Detected
+              IMBALANCE DETECTED
             </span>
           )}
         </div>
@@ -230,103 +171,108 @@ export function AccountingTab({
 
       {/* SUBVIEW 1: INCOME STATEMENT (P&L) */}
       {subView === "pnl" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-8 p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs space-y-4">
-            <div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
-                Showroom Income Statement (صورت حساب سود و زیان)
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Financial period covering realized sales, vehicle landed costs, and import overhead.
-              </p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-8 rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] flex items-center justify-between">
+              <div>
+                <h3 className="font-mono font-bold text-[#111318] dark:text-white text-xs uppercase tracking-wider">
+                  AUDITED INCOME STATEMENT (صورت حساب سود و زیان)
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Realized vehicle liquidations, landed cost of goods sold, and Islam Qala customs overhead
+                </p>
+              </div>
+              <span className="text-[10px] font-mono text-slate-400">
+                RATE: 1 USD = {exchangeRate} AFN
+              </span>
             </div>
 
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+            <div className="p-4 sm:p-5 divide-y divide-[#E2E0D8] dark:divide-[#1F2430] text-xs">
               {/* Revenue Section */}
               <div className="py-2.5">
-                <div className="flex items-center justify-between font-bold text-slate-900 dark:text-white text-xs mb-1.5">
+                <div className="flex items-center justify-between font-bold text-[#111318] dark:text-white text-xs mb-1.5">
                   <span>Operating Revenue (عواید عملیاتی)</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400">
+                  <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                     ${totalRevenueUSD.toLocaleString()} USD
                   </span>
                 </div>
-                <div className="pl-3 space-y-1 text-slate-600 dark:text-slate-300">
+                <div className="ps-3 space-y-1 text-slate-600 dark:text-slate-300">
                   <div className="flex justify-between text-[11px]">
-                    <span>Vehicle Sales Inflow (فروش موترها)</span>
-                    <span className="font-mono">${totalRevenueUSD.toLocaleString()}</span>
+                    <span>Vehicle Sales Inflow ({sales.length} Executed Contracts)</span>
+                    <span className="font-mono tabular-nums">${totalRevenueUSD.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
               {/* COGS Section */}
               <div className="py-2.5">
-                <div className="flex items-center justify-between font-bold text-slate-900 dark:text-white text-xs mb-1.5">
-                  <span>Cost of Goods Sold - COGS (بهای تمام‌شده)</span>
-                  <span className="font-mono text-rose-600 dark:text-rose-400">
+                <div className="flex items-center justify-between font-bold text-[#111318] dark:text-white text-xs mb-1.5">
+                  <span>Cost of Goods Sold · COGS (بهای تمام‌شده)</span>
+                  <span className="font-mono tabular-nums text-rose-700 dark:text-rose-400">
                     -${totalCogsUSD.toLocaleString()} USD
                   </span>
                 </div>
-                <div className="pl-3 space-y-1 text-slate-600 dark:text-slate-300">
+                <div className="ps-3 space-y-1 text-slate-600 dark:text-slate-300">
                   <div className="flex justify-between text-[11px]">
                     <span>Vehicle Landed Purchase Costs (قیمت خرید و ورود)</span>
-                    <span className="font-mono">-${totalCogsUSD.toLocaleString()}</span>
+                    <span className="font-mono tabular-nums">-${totalCogsUSD.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
               {/* Gross Profit Subtotal */}
-              <div className="py-2.5 bg-slate-50 dark:bg-[#101622] px-3 rounded-xl flex items-center justify-between font-bold text-slate-900 dark:text-white">
+              <div className="py-2.5 bg-[#FAF9F6] dark:bg-[#0D1017] px-3 rounded border border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between font-bold text-[#111318] dark:text-white">
                 <div>
                   <span className="text-xs">Gross Profit (سود ناخالص)</span>
-                  <span className="ml-2 text-[10px] font-normal text-slate-400">
-                    Margin: {grossMarginPercent}%
+                  <span className="ms-2 text-[10px] font-mono text-slate-400">
+                    MARGIN: {grossMarginPercent}%
                   </span>
                 </div>
-                <span className="font-mono text-sm text-emerald-600 dark:text-emerald-400">
+                <span className="font-mono tabular-nums text-sm text-emerald-700 dark:text-emerald-400">
                   +${grossProfitUSD.toLocaleString()} USD
                 </span>
               </div>
 
               {/* Operating Expenses Section */}
               <div className="py-2.5">
-                <div className="flex items-center justify-between font-bold text-slate-900 dark:text-white text-xs mb-1.5">
+                <div className="flex items-center justify-between font-bold text-[#111318] dark:text-white text-xs mb-1.5">
                   <span>Operational & Import Overhead (مصارف عملیاتی)</span>
-                  <span className="font-mono text-rose-600 dark:text-rose-400">
+                  <span className="font-mono tabular-nums text-rose-700 dark:text-rose-400">
                     -${totalOperatingExpensesUSD.toLocaleString()} USD
                   </span>
                 </div>
-                <div className="pl-3 space-y-1 text-slate-600 dark:text-slate-300 text-[11px]">
+                <div className="ps-3 space-y-1 text-slate-600 dark:text-slate-300 text-[11px]">
                   <div className="flex justify-between">
                     <span>Islam Qala Customs Duty & Tariffs (گمرک)</span>
-                    <span className="font-mono">-${customsExpensesUSD.toLocaleString()}</span>
+                    <span className="font-mono tabular-nums">-${customsExpensesUSD.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Transit Trailers & Bandar Abbas Freight (ترانزیت)</span>
-                    <span className="font-mono">-${transitExpensesUSD.toLocaleString()}</span>
+                    <span className="font-mono tabular-nums">-${transitExpensesUSD.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Mechanical Tuning, Detailing Polish & Parts</span>
-                    <span className="font-mono">-${detailingExpensesUSD.toLocaleString()}</span>
+                    <span className="font-mono tabular-nums">-${detailingExpensesUSD.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Showroom Overhead, Solar Battery & Commissions</span>
-                    <span className="font-mono">-${showroomOverheadUSD.toLocaleString()}</span>
+                    <span className="font-mono tabular-nums">-${showroomOverheadUSD.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
               {/* Net Operating Income Total */}
-              <div className="pt-3 border-t-2 border-slate-200 dark:border-slate-700 flex items-center justify-between font-bold text-slate-900 dark:text-white">
+              <div className="pt-3 border-t-2 border-[#111318] dark:border-amber-500/60 flex items-center justify-between font-bold text-[#111318] dark:text-white">
                 <div>
-                  <div className="text-xs uppercase tracking-wider text-slate-900 dark:text-white">
-                    Net Operating Profit (سود خالص)
+                  <div className="text-xs font-mono uppercase tracking-wider text-[#111318] dark:text-white">
+                    NET OPERATING PROFIT (سود خالص)
                   </div>
-                  <div className="text-[10px] font-mono text-slate-400">
+                  <div className="text-[11px] font-mono tabular-nums text-slate-500">
                     ؋ {netOperatingProfitAFN.toLocaleString()} AFN
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="font-mono text-lg text-emerald-600 dark:text-emerald-400">
+                <div className="text-end">
+                  <span className="font-mono tabular-nums text-lg text-emerald-700 dark:text-emerald-400">
                     +${netOperatingProfitUSD.toLocaleString()} USD
                   </span>
                 </div>
@@ -334,41 +280,76 @@ export function AccountingTab({
             </div>
           </div>
 
-          {/* Quick P&L Metrics Widget */}
-          <div className="lg:col-span-4 space-y-3">
-            <div className="p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs space-y-3">
-              <h4 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
-                Dealership Profitability Insights
-              </h4>
-
-              <div className="space-y-2.5 text-xs">
-                <div>
-                  <div className="flex justify-between text-slate-500 mb-1 text-[11px]">
-                    <span>Gross Profit Margin</span>
-                    <span className="font-bold text-slate-900 dark:text-white font-mono">{grossMarginPercent}%</span>
+          {/* Right 4 Cols: Balance Sheet & Khorasan FX Rate Lock Analytics */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* Balance Sheet Snapshot */}
+            <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017]">
+                <h4 className="font-mono font-bold text-[#111318] dark:text-white text-[11px] uppercase tracking-wider">
+                  BALANCE SHEET POSITION (ترازنامه)
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 divide-y divide-[#E2E0D8] dark:divide-[#1F2430] font-mono text-xs">
+                <div className="p-3.5 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase block">TOTAL ASSETS</span>
+                    <span className="text-[11px] text-slate-500">؋ {(totalAssets * exchangeRate).toLocaleString()}</span>
                   </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-blue-600 h-full rounded-full" style={{ width: `${Math.min(Number(grossMarginPercent) * 2, 100)}%` }} />
-                  </div>
+                  <span className="text-base font-bold tabular-nums text-[#111318] dark:text-white">
+                    ${totalAssets.toLocaleString()}
+                  </span>
                 </div>
-
-                <div>
-                  <div className="flex justify-between text-slate-500 mb-1 text-[11px]">
-                    <span>Customs Tariff Burden</span>
-                    <span className="font-bold text-slate-900 dark:text-white font-mono">
-                      {totalRevenueUSD > 0 ? ((customsExpensesUSD / totalRevenueUSD) * 100).toFixed(1) : 0}% of Rev
-                    </span>
+                <div className="p-3.5 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase block">ACCOUNTS PAYABLE (AP)</span>
+                    <span className="text-[11px] text-slate-500">؋ {(totalLiabilities * exchangeRate).toLocaleString()}</span>
                   </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-amber-500 h-full rounded-full" style={{ width: "24%" }} />
-                  </div>
+                  <span className="text-base font-bold tabular-nums text-rose-700 dark:text-rose-400">
+                    ${totalLiabilities.toLocaleString()}
+                  </span>
                 </div>
-
-                <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800">
-                  <div className="text-[11px] text-slate-500">Average Profit Per Vehicle:</div>
-                  <div className="text-base font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
+                <div className="p-3.5 flex items-center justify-between bg-[#FAF9F6] dark:bg-[#0D1017]">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold">AVG PROFIT / UNIT</span>
+                  <span className="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
                     +${sales.length > 0 ? Math.round(netOperatingProfitUSD / sales.length).toLocaleString() : 0} USD
-                  </div>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Khorasan Sarrafi FX Rate Lock & Currency Gain/Loss Card */}
+            <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] flex items-center justify-between">
+                <span className="font-mono font-bold text-[#111318] dark:text-amber-400 text-[11px] uppercase tracking-wider">
+                  SARRAFI FX RATE LOCK & VARIANCE
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">USD / AFN</span>
+              </div>
+              <div className="p-4 space-y-3 font-mono text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Avg Contract Rate Locked:</span>
+                  <span className="font-bold text-[#111318] dark:text-white tabular-nums">
+                    {avgLockedRate} AFN
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Live Khorasan Desk Rate:</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-400 tabular-nums">
+                    {exchangeRate.toFixed(2)} AFN
+                  </span>
+                </div>
+                <div className="pt-2.5 border-t border-[#E2E0D8] dark:border-[#1F2430] flex items-center justify-between">
+                  <span className="text-[10px] uppercase text-slate-400">FX REVALUATION DELTA:</span>
+                  <span
+                    className={`font-bold tabular-nums ${
+                      fxGainLossAFN >= 0
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : "text-rose-700 dark:text-rose-400"
+                    }`}
+                  >
+                    {fxGainLossAFN >= 0 ? "+" : ""}
+                    {fxGainLossAFN.toLocaleString()} AFN ({fxGainLossUSD >= 0 ? "+" : ""}${fxGainLossUSD})
+                  </span>
                 </div>
               </div>
             </div>

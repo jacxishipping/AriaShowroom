@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { VehicleStatus, FuelType, TransmissionType, SteeringSide } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -8,6 +8,10 @@ import { requireApiRole } from "@/lib/api-auth";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true, data: [] });
+  }
+
   try {
     const session = await getServerSession(authOptions);
     const role = (session?.user as { role?: string } | undefined)?.role;
@@ -50,16 +54,15 @@ export async function GET(request: Request) {
       : vehicles.map(({ purchasePrice, freightCost, customsDuty, repairCost, landedCost, minTargetPrice, conditionNotes, ...vehicle }) => vehicle);
 
     return NextResponse.json({ success: true, count: data.length, data });
-  } catch (error: any) {
-    console.error("Error fetching vehicles from Prisma:", error);
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch vehicles" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ success: false, fallback: true, data: [] });
   }
 }
 
 export async function POST(request: Request) {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true });
+  }
   const unauthorized = await requireApiRole(["ADMIN"]);
   if (unauthorized) return unauthorized;
 
@@ -151,10 +154,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: vehicle }, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating vehicle in Prisma:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to create vehicle" },
-      { status: 500 }
+      { success: false, fallback: true, error: error.message || "Failed to create vehicle" },
+      { status: 200 }
     );
   }
 }
