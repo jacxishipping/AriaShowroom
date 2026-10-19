@@ -34,6 +34,10 @@ import {
   MuiTextField,
   MenuItem,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@/components/mui";
 import {
   LayoutDashboard,
@@ -69,6 +73,12 @@ import {
   ArrowDownLeft,
   Percent,
   BookOpen,
+  Kanban,
+  Table as TableIcon,
+  Send,
+  ArrowLeft,
+  ArrowRight,
+  PlusCircle,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -88,6 +98,7 @@ export default function AdminDashboardPage() {
     currentRole,
     setCurrentRole,
     deleteVehicle,
+    addCustomer,
     updateCustomerStage,
     addSale,
     addExpense,
@@ -105,6 +116,152 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<
     "inventory" | "crm" | "sales" | "invoices" | "suppliers" | "expenses" | "payments" | "accounting"
   >("inventory");
+
+  // CRM Kanban vs Table view mode
+  const [crmViewMode, setCrmViewMode] = useState<"kanban" | "table">("kanban");
+  const [crmSearchQuery, setCrmSearchQuery] = useState("");
+  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
+  const [newCustomerForm, setNewCustomerForm] = useState({
+    fullName: "",
+    phone: "",
+    whatsapp: "",
+    tazkiraNumber: "",
+    city: "Herat",
+    address: "",
+    budget: 35000,
+    interestedInVehicleId: vehicles[0]?.id || "",
+    tradeInRecord: "",
+    notes: "Herat showroom inquiry.",
+    leadStage: "New Inquiry" as CustomerRecord["leadStage"],
+  });
+
+  const KANBAN_STAGES: Array<{
+    id: CustomerRecord["leadStage"];
+    label: string;
+    sublabel: string;
+    color: string;
+    badgeBg: string;
+    borderColor: string;
+    headerBg: string;
+  }> = [
+    {
+      id: "New Inquiry",
+      label: "New Inquiries",
+      sublabel: "استعلام جدید",
+      color: "text-blue-700 dark:text-blue-300",
+      badgeBg: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+      borderColor: "border-blue-200 dark:border-blue-900",
+      headerBg: "bg-blue-50/70 dark:bg-blue-950/30",
+    },
+    {
+      id: "Follow-Up",
+      label: "Follow-Up & Contact",
+      sublabel: "پیگیری و تماس",
+      color: "text-indigo-700 dark:text-indigo-300",
+      badgeBg: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
+      borderColor: "border-indigo-200 dark:border-indigo-900",
+      headerBg: "bg-indigo-50/70 dark:bg-indigo-950/30",
+    },
+    {
+      id: "Test Drive",
+      label: "Inspection & Test Drive",
+      sublabel: "معاینه و تست درایو",
+      color: "text-amber-700 dark:text-amber-300",
+      badgeBg: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+      borderColor: "border-amber-200 dark:border-amber-900",
+      headerBg: "bg-amber-50/70 dark:bg-amber-950/30",
+    },
+    {
+      id: "Negotiation",
+      label: "Negotiation & Sarrafi",
+      sublabel: "مذاکره قیمت و صرافی",
+      color: "text-purple-700 dark:text-purple-300",
+      badgeBg: "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+      borderColor: "border-purple-200 dark:border-purple-900",
+      headerBg: "bg-purple-50/70 dark:bg-purple-950/30",
+    },
+    {
+      id: "Closed/Won",
+      label: "Contract Executed",
+      sublabel: "معامله تکمیل شد",
+      color: "text-emerald-700 dark:text-emerald-300",
+      badgeBg: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+      borderColor: "border-emerald-200 dark:border-emerald-900",
+      headerBg: "bg-emerald-50/70 dark:bg-emerald-950/30",
+    },
+    {
+      id: "Lost",
+      label: "Lost / Passed",
+      sublabel: "عدم توافق",
+      color: "text-rose-700 dark:text-rose-300",
+      badgeBg: "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+      borderColor: "border-rose-200 dark:border-rose-900",
+      headerBg: "bg-rose-50/70 dark:bg-rose-950/30",
+    },
+  ];
+
+  const getNextStage = (
+    current: CustomerRecord["leadStage"]
+  ): CustomerRecord["leadStage"] | null => {
+    const order: CustomerRecord["leadStage"][] = [
+      "New Inquiry",
+      "Follow-Up",
+      "Test Drive",
+      "Negotiation",
+      "Closed/Won",
+    ];
+    const idx = order.indexOf(current);
+    if (idx !== -1 && idx < order.length - 1) return order[idx + 1];
+    return null;
+  };
+
+  const getPrevStage = (
+    current: CustomerRecord["leadStage"]
+  ): CustomerRecord["leadStage"] | null => {
+    const order: CustomerRecord["leadStage"][] = [
+      "New Inquiry",
+      "Follow-Up",
+      "Test Drive",
+      "Negotiation",
+      "Closed/Won",
+    ];
+    const idx = order.indexOf(current);
+    if (idx > 0) return order[idx - 1];
+    return null;
+  };
+
+  const handleAddCustomer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomerForm.fullName.trim() || !newCustomerForm.phone.trim()) return;
+    addCustomer({
+      fullName: newCustomerForm.fullName,
+      phone: newCustomerForm.phone,
+      whatsapp: newCustomerForm.whatsapp || newCustomerForm.phone,
+      tazkiraNumber: newCustomerForm.tazkiraNumber,
+      city: newCustomerForm.city,
+      address: newCustomerForm.address,
+      budget: Number(newCustomerForm.budget),
+      interestedInVehicleId: newCustomerForm.interestedInVehicleId,
+      tradeInRecord: newCustomerForm.tradeInRecord || undefined,
+      notes: newCustomerForm.notes,
+      leadStage: newCustomerForm.leadStage,
+    });
+    setIsAddCustomerModalOpen(false);
+    addToast(`Added new customer lead: ${newCustomerForm.fullName}`, "success");
+    setNewCustomerForm({
+      fullName: "",
+      phone: "",
+      whatsapp: "",
+      tazkiraNumber: "",
+      city: "Herat",
+      address: "",
+      budget: 35000,
+      interestedInVehicleId: vehicles[0]?.id || "",
+      tradeInRecord: "",
+      notes: "Herat showroom inquiry.",
+      leadStage: "New Inquiry",
+    });
+  };
 
   // Search & filters in inventory and sales
   const [inventorySearch, setInventorySearch] = useState("");
@@ -467,92 +624,540 @@ export default function AdminDashboardPage() {
       {/* TAB 2: CRM & LEADS PIPELINE */}
       {activeTab === "crm" && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          {/* Header & Controls Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Herat Showroom Customer & Lead Registry
-              </h3>
-              <p className="text-xs text-slate-500">
-                Pipeline tracked by Sales Desk (WhatsApp & Showroom Walk-ins)
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Herat Showroom Customer & CRM Pipeline (مدیریت مشتریان و لیدها)
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Funnel progression across walk-ins, phone inquiries, and test drive inspections.
               </p>
             </div>
-            <MuiChip label={`${customers.length} Active Leads`} color="primary" size="small" />
+
+            <div className="flex items-center gap-2">
+              {/* View Switcher: Kanban vs Table */}
+              <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+                <button
+                  onClick={() => setCrmViewMode("kanban")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    crmViewMode === "kanban"
+                      ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs font-bold"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <Kanban className="h-3.5 w-3.5" />
+                  <span>Kanban Board</span>
+                </button>
+                <button
+                  onClick={() => setCrmViewMode("table")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    crmViewMode === "table"
+                      ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs font-bold"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <TableIcon className="h-3.5 w-3.5" />
+                  <span>Data Table</span>
+                </button>
+              </div>
+
+              {/* Add Lead Button */}
+              <MuiButton
+                onClick={() => setIsAddCustomerModalOpen(true)}
+                variant="contained"
+                color="primary"
+                size="small"
+                startIcon={<Plus className="h-4 w-4" />}
+              >
+                New Lead
+              </MuiButton>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {customers.map((cust) => (
-              <MuiCard
-                key={cust.id}
-                elevation={1}
-                className="p-4 space-y-3"
+          {/* Quick Metrics & Search Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search leads by name, phone, city, tazkira..."
+                value={crmSearchQuery}
+                onChange={(e) => setCrmSearchQuery(e.target.value)}
+                className="w-full ps-8 pe-6 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500"
+              />
+              {crmSearchQuery && (
+                <button
+                  onClick={() => setCrmSearchQuery("")}
+                  className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-4 text-xs font-mono">
+              <span className="text-slate-500">
+                Total Leads: <strong className="text-slate-900 dark:text-white">{customers.length}</strong>
+              </span>
+              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <span className="text-slate-500">
+                Pipeline Value:{" "}
+                <strong className="text-emerald-600 font-bold">
+                  ${customers.reduce((sum, c) => sum + (c.budget || 0), 0).toLocaleString()} USD
+                </strong>
+              </span>
+            </div>
+          </div>
+
+          {/* VIEW MODE 1: KANBAN BOARD */}
+          {crmViewMode === "kanban" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3.5 items-start overflow-x-auto pb-4">
+              {KANBAN_STAGES.map((stage) => {
+                const stageCustomers = customers
+                  .filter((c) => c.leadStage === stage.id)
+                  .filter((c) => {
+                    if (!crmSearchQuery.trim()) return true;
+                    const q = crmSearchQuery.toLowerCase();
+                    return (
+                      c.fullName.toLowerCase().includes(q) ||
+                      c.phone.includes(q) ||
+                      c.tazkiraNumber.toLowerCase().includes(q) ||
+                      c.city.toLowerCase().includes(q)
+                    );
+                  });
+
+                const stageTotalBudget = stageCustomers.reduce(
+                  (acc, curr) => acc + (curr.budget || 0),
+                  0
+                );
+
+                return (
+                  <div
+                    key={stage.id}
+                    className={`rounded-2xl border ${stage.borderColor} bg-slate-50/70 dark:bg-[#111827]/70 flex flex-col min-h-[480px] shadow-2xs`}
+                  >
+                    {/* Stage Header */}
+                    <div className={`p-3 rounded-t-2xl border-b ${stage.borderColor} ${stage.headerBg}`}>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-bold tracking-tight ${stage.color}`}>
+                          {stage.label}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${stage.badgeBg}`}>
+                          {stageCustomers.length}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                        <span>{stage.sublabel}</span>
+                        <span className="font-mono font-semibold">
+                          ${stageTotalBudget.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Cards Container */}
+                    <div className="p-2 space-y-2.5 flex-1 overflow-y-auto max-h-[65vh]">
+                      {stageCustomers.length === 0 ? (
+                        <div className="py-8 text-center text-[11px] text-slate-400 italic">
+                          No leads in this stage
+                        </div>
+                      ) : (
+                        stageCustomers.map((cust) => {
+                          const matchedVehicle = vehicles.find(
+                            (v) => v.id === cust.interestedInVehicleId
+                          );
+                          const nextStage = getNextStage(cust.leadStage);
+                          const prevStage = getPrevStage(cust.leadStage);
+
+                          const whatsappUrl = `https://wa.me/${cust.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                            `Salam ${cust.fullName}! Regarding your inquiry at Sadozai Motors Herat...`
+                          )}`;
+
+                          return (
+                            <div
+                              key={cust.id}
+                              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151D2A] p-3 shadow-xs hover:shadow-md transition-all space-y-2.5"
+                            >
+                              {/* Top Name & City */}
+                              <div className="flex items-start justify-between gap-1">
+                                <div>
+                                  <span className="font-bold text-xs text-slate-900 dark:text-white block leading-tight">
+                                    {cust.fullName}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400">
+                                    {cust.city} • {cust.tazkiraNumber}
+                                  </span>
+                                </div>
+                                <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                                  ${cust.budget.toLocaleString()}
+                                </span>
+                              </div>
+
+                              {/* Interested Vehicle Info */}
+                              {matchedVehicle ? (
+                                <div className="text-[11px] p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+                                  <span className="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">
+                                    Interested Unit:
+                                  </span>
+                                  <span className="font-semibold block truncate">
+                                    {matchedVehicle.year} {matchedVehicle.make} {matchedVehicle.model}
+                                  </span>
+                                  <span className="text-[10px] font-mono text-slate-400">
+                                    Stock #{matchedVehicle.stockNumber} (${matchedVehicle.sellingPrice.toLocaleString()})
+                                  </span>
+                                </div>
+                              ) : cust.tradeInRecord ? (
+                                <div className="text-[11px] p-1.5 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/40 text-amber-800 dark:text-amber-300">
+                                  <span className="text-[9px] uppercase tracking-wider text-amber-500 block font-bold">
+                                    Trade-In Record:
+                                  </span>
+                                  <span className="text-[10px] block truncate">
+                                    {cust.tradeInRecord}
+                                  </span>
+                                </div>
+                              ) : null}
+
+                              {/* Communication & Stage Advancement Toolbar */}
+                              <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-1">
+                                {/* WhatsApp & Phone */}
+                                <div className="flex items-center gap-1">
+                                  <a
+                                    href={whatsappUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                                    title="WhatsApp Message"
+                                  >
+                                    <Send className="h-3 w-3" />
+                                  </a>
+                                  <a
+                                    href={`tel:${cust.phone}`}
+                                    className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 hover:bg-blue-100 transition-colors"
+                                    title="Call Phone"
+                                  >
+                                    <Phone className="h-3 w-3" />
+                                  </a>
+                                </div>
+
+                                {/* Step Movers */}
+                                <div className="flex items-center gap-1">
+                                  {prevStage && (
+                                    <button
+                                      onClick={() => updateCustomerStage(cust.id, prevStage)}
+                                      className="p-1 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+                                      title={`Move back to ${prevStage}`}
+                                    >
+                                      <ArrowLeft className="h-3 w-3" />
+                                    </button>
+                                  )}
+                                  {nextStage && (
+                                    <button
+                                      onClick={() => updateCustomerStage(cust.id, nextStage)}
+                                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold shadow-xs cursor-pointer"
+                                      title={`Advance to ${nextStage}`}
+                                    >
+                                      <span>Advance</span>
+                                      <ArrowRight className="h-3 w-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* VIEW MODE 2: DATA TABLE */}
+          {crmViewMode === "table" && (
+            <MuiCard elevation={1}>
+              <div className="overflow-x-auto">
+                <MuiTable dense size="small" className="w-full">
+                  <MuiTableHead>
+                    <MuiTableRow hover={false}>
+                      <MuiTableCell header>Customer & Tazkira</MuiTableCell>
+                      <MuiTableCell header>Contact & Location</MuiTableCell>
+                      <MuiTableCell header>Vehicle of Interest</MuiTableCell>
+                      <MuiTableCell header align="right">Budget (USD)</MuiTableCell>
+                      <MuiTableCell header align="right">Budget (AFN)</MuiTableCell>
+                      <MuiTableCell header>Funnel Stage</MuiTableCell>
+                      <MuiTableCell header align="right" className="!pe-3">Actions</MuiTableCell>
+                    </MuiTableRow>
+                  </MuiTableHead>
+                  <MuiTableBody>
+                    {customers
+                      .filter((c) => {
+                        if (!crmSearchQuery.trim()) return true;
+                        const q = crmSearchQuery.toLowerCase();
+                        return (
+                          c.fullName.toLowerCase().includes(q) ||
+                          c.phone.includes(q) ||
+                          c.tazkiraNumber.toLowerCase().includes(q) ||
+                          c.city.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((cust) => {
+                        const matchedVehicle = vehicles.find(
+                          (v) => v.id === cust.interestedInVehicleId
+                        );
+                        const whatsappUrl = `https://wa.me/${cust.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                          `Salam ${cust.fullName}! Regarding your inquiry at Sadozai Motors Herat...`
+                        )}`;
+
+                        return (
+                          <MuiTableRow key={cust.id}>
+                            <MuiTableCell className="py-2">
+                              <span className="font-bold text-xs text-slate-900 dark:text-white block">
+                                {cust.fullName}
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-500">
+                                Tazkira: {cust.tazkiraNumber}
+                              </span>
+                            </MuiTableCell>
+                            <MuiTableCell className="py-2 text-xs">
+                              <span className="font-mono text-slate-800 dark:text-slate-200 block">
+                                {cust.phone}
+                              </span>
+                              <span className="text-[10px] text-slate-400">
+                                {cust.city}
+                              </span>
+                            </MuiTableCell>
+                            <MuiTableCell className="py-2 text-xs">
+                              {matchedVehicle ? (
+                                <div>
+                                  <span className="font-semibold text-slate-900 dark:text-white block">
+                                    {matchedVehicle.year} {matchedVehicle.make} {matchedVehicle.model}
+                                  </span>
+                                  <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">
+                                    Stock #{matchedVehicle.stockNumber}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-slate-400 italic text-[11px]">General Inquiry</span>
+                              )}
+                            </MuiTableCell>
+                            <MuiTableCell align="right" className="py-2 font-mono font-bold text-xs text-slate-900 dark:text-white">
+                              ${cust.budget.toLocaleString()}
+                            </MuiTableCell>
+                            <MuiTableCell align="right" className="py-2 font-mono text-xs text-slate-500">
+                              ؋ {(cust.budget * exchangeRate).toLocaleString()}
+                            </MuiTableCell>
+                            <MuiTableCell className="py-2">
+                              <select
+                                value={cust.leadStage}
+                                onChange={(e) => updateCustomerStage(cust.id, e.target.value as any)}
+                                className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 outline-none cursor-pointer"
+                              >
+                                <option value="New Inquiry">New Inquiry</option>
+                                <option value="Follow-Up">Follow-Up</option>
+                                <option value="Test Drive">Test Drive</option>
+                                <option value="Negotiation">Negotiation</option>
+                                <option value="Closed/Won">Closed/Won</option>
+                                <option value="Lost">Lost</option>
+                              </select>
+                            </MuiTableCell>
+                            <MuiTableCell align="right" className="py-2 !pe-3">
+                              <div className="flex items-center justify-end gap-1">
+                                <a
+                                  href={whatsappUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                                  title="WhatsApp Message"
+                                >
+                                  <Send className="h-3.5 w-3.5" />
+                                </a>
+                                <a
+                                  href={`tel:${cust.phone}`}
+                                  className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 hover:bg-blue-100 transition-colors"
+                                  title="Call Phone"
+                                >
+                                  <Phone className="h-3.5 w-3.5" />
+                                </a>
+                              </div>
+                            </MuiTableCell>
+                          </MuiTableRow>
+                        );
+                      })}
+                  </MuiTableBody>
+                </MuiTable>
+              </div>
+            </MuiCard>
+          )}
+
+          {/* Add New Customer Lead Dialog */}
+          <Dialog
+            open={isAddCustomerModalOpen}
+            onClose={() => setIsAddCustomerModalOpen(false)}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogTitle className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-bold text-slate-900 dark:text-white">
+                  Add New Customer Lead (ثبت مشتری و لید جدید)
+                </span>
+              </div>
+              <button
+                onClick={() => setIsAddCustomerModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
-                <div className="flex items-center justify-between">
-                  <MuiChip
-                    label={cust.leadStage}
+                <X className="h-5 w-5" />
+              </button>
+            </DialogTitle>
+
+            <form onSubmit={handleAddCustomer}>
+              <DialogContent className="p-4 sm:p-6 space-y-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <MuiTextField
+                    label="Customer Full Name (نام و تخلص)"
+                    required
                     size="small"
-                    color={
-                      cust.leadStage === "Closed/Won"
-                        ? "success"
-                        : cust.leadStage === "Lost"
-                        ? "error"
-                        : "default"
+                    value={newCustomerForm.fullName}
+                    onChange={(e) =>
+                      setNewCustomerForm({
+                        ...newCustomerForm,
+                        fullName: e.target.value,
+                      })
                     }
                   />
-                  <span className="text-[11px] font-mono text-slate-400">
-                    {cust.city}
-                  </span>
+
+                  <MuiTextField
+                    label="Phone Number (شماره تماس)"
+                    required
+                    size="small"
+                    placeholder="0799123456"
+                    value={newCustomerForm.phone}
+                    onChange={(e) =>
+                      setNewCustomerForm({
+                        ...newCustomerForm,
+                        phone: e.target.value,
+                        whatsapp: newCustomerForm.whatsapp || e.target.value,
+                      })
+                    }
+                  />
                 </div>
 
-                <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white">
-                    {cust.fullName}
-                  </h4>
-                  <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                    <Phone className="h-3 w-3 text-slate-400" />
-                    <span>{cust.phone}</span>
-                  </p>
-                  <p className="text-[11px] font-mono text-slate-400">
-                    Tazkira: {cust.tazkiraNumber}
-                  </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <MuiTextField
+                    label="Tazkira ID / National ID (نمبر تذکره)"
+                    size="small"
+                    placeholder="e.g. 1402-9988-HRT"
+                    value={newCustomerForm.tazkiraNumber}
+                    onChange={(e) =>
+                      setNewCustomerForm({
+                        ...newCustomerForm,
+                        tazkiraNumber: e.target.value,
+                      })
+                    }
+                  />
+
+                  <MuiTextField
+                    label="City / Province (ولایت)"
+                    size="small"
+                    value={newCustomerForm.city}
+                    onChange={(e) =>
+                      setNewCustomerForm({
+                        ...newCustomerForm,
+                        city: e.target.value,
+                      })
+                    }
+                  />
                 </div>
 
-                {cust.tradeInRecord && (
-                  <div className="rounded-md bg-slate-50 p-2 text-[11px] dark:bg-[#121824] border border-slate-200 dark:border-slate-800">
-                    <span className="font-bold text-slate-700 dark:text-slate-300 block">
-                      Trade-In Vehicle:
-                    </span>
-                    <span className="text-slate-500">{cust.tradeInRecord}</span>
-                  </div>
-                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <MuiTextField
+                    label="Budget USD (بودجه خرید دالر)"
+                    type="number"
+                    size="small"
+                    value={newCustomerForm.budget}
+                    onChange={(e) =>
+                      setNewCustomerForm({
+                        ...newCustomerForm,
+                        budget: Number(e.target.value),
+                      })
+                    }
+                  />
 
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-2 flex items-center justify-between text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">Budget:</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white">
-                    ${cust.budget.toLocaleString()} USD
-                  </span>
+                  <MuiTextField
+                    select
+                    label="Interested Vehicle"
+                    size="small"
+                    value={newCustomerForm.interestedInVehicleId}
+                    onChange={(e) =>
+                      setNewCustomerForm({
+                        ...newCustomerForm,
+                        interestedInVehicleId: e.target.value,
+                      })
+                    }
+                  >
+                    {vehicles.map((v) => (
+                      <MenuItem key={v.id} value={v.id}>
+                        {v.year} {v.make} {v.model} (${v.sellingPrice.toLocaleString()})
+                      </MenuItem>
+                    ))}
+                  </MuiTextField>
                 </div>
 
-                {/* Stage Mover Dropdown */}
                 <MuiTextField
-                  select
+                  label="Trade-In Vehicle Details (موتر معاوضه - اختیاری)"
                   size="small"
-                  label="Lead Stage"
-                  value={cust.leadStage}
+                  placeholder="e.g. 2012 Toyota Corolla LE White (Plate Herat -3)"
+                  value={newCustomerForm.tradeInRecord}
                   onChange={(e) =>
-                    updateCustomerStage(cust.id, e.target.value as any)
+                    setNewCustomerForm({
+                      ...newCustomerForm,
+                      tradeInRecord: e.target.value,
+                    })
                   }
                   fullWidth
+                />
+
+                <MuiTextField
+                  label="Inquiry Notes & Preferences"
+                  size="small"
+                  multiline
+                  rows={2}
+                  value={newCustomerForm.notes}
+                  onChange={(e) =>
+                    setNewCustomerForm({
+                      ...newCustomerForm,
+                      notes: e.target.value,
+                    })
+                  }
+                  fullWidth
+                />
+              </DialogContent>
+
+              <DialogActions className="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                <MuiButton
+                  onClick={() => setIsAddCustomerModalOpen(false)}
+                  variant="outlined"
+                  color="inherit"
+                  size="small"
                 >
-                  <MenuItem value="New Inquiry">New Inquiry</MenuItem>
-                  <MenuItem value="Follow-Up">Follow-Up</MenuItem>
-                  <MenuItem value="Test Drive">Test Drive</MenuItem>
-                  <MenuItem value="Negotiation">Negotiation</MenuItem>
-                  <MenuItem value="Closed/Won">Closed / Won</MenuItem>
-                  <MenuItem value="Lost">Lost</MenuItem>
-                </MuiTextField>
-              </MuiCard>
-            ))}
-          </div>
+                  Cancel
+                </MuiButton>
+                <MuiButton
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                >
+                  Save Lead
+                </MuiButton>
+              </DialogActions>
+            </form>
+          </Dialog>
         </div>
       )}
 

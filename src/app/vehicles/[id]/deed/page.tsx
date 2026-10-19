@@ -13,6 +13,8 @@ import {
   MuiTextField,
   MuiChip,
   IconButton,
+  Switch,
+  FormControlLabel,
 } from "@/components/mui";
 import {
   Printer,
@@ -25,6 +27,12 @@ import {
   Share2,
   Car,
   Download,
+  PenTool,
+  RotateCcw,
+  Check,
+  FileText,
+  Building2,
+  Upload,
 } from "lucide-react";
 
 export default function VehicleDeedPage() {
@@ -40,6 +48,16 @@ export default function VehicleDeedPage() {
   const [buyerPhone, setBuyerPhone] = useState("+93 79 988 7766");
   const [downPaymentUSD, setDownPaymentUSD] = useState<number>(10000);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+
+  // Digital Signature Pad States
+  const [buyerSignatureUrl, setBuyerSignatureUrl] = useState<string | null>(null);
+  const [sellerSignatureUrl, setSellerSignatureUrl] = useState<string | null>(null);
+  const [isSigningBuyer, setIsSigningBuyer] = useState(false);
+  const [isSigningSeller, setIsSigningSeller] = useState(false);
+
+  const buyerCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const sellerCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isDrawingRef = useRef(false);
 
   const priceAfn = Math.round((vehicle?.sellingPrice || 45000) * exchangeRate);
   const contractNumber = `SM-DEED-2026-${(vehicle?.stockNumber || "SM-HRT-882").replace("SM-HRT-", "")}`;
@@ -80,6 +98,63 @@ export default function VehicleDeedPage() {
       .catch((err) => console.error("QR Code error:", err));
   }, [vehicle, contractNumber, priceAfn, buyerTazkira]);
 
+  // Drawing Canvas Handlers
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement | null) => {
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    isDrawingRef.current = true;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = "touches" in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y = "touches" in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#1e293b";
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement | null) => {
+    if (!isDrawingRef.current || !canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = "touches" in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y = "touches" in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = (type: "buyer" | "seller") => {
+    isDrawingRef.current = false;
+    const canvas = type === "buyer" ? buyerCanvasRef.current : sellerCanvasRef.current;
+    if (canvas) {
+      const dataUrl = canvas.toDataURL();
+      if (type === "buyer") {
+        setBuyerSignatureUrl(dataUrl);
+        setIsSigningBuyer(false);
+      } else {
+        setSellerSignatureUrl(dataUrl);
+        setIsSigningSeller(false);
+      }
+      addToast(`${type === "buyer" ? "Buyer" : "Seller"} signature captured!`, "success");
+    }
+  };
+
+  const clearCanvas = (type: "buyer" | "seller") => {
+    const canvas = type === "buyer" ? buyerCanvasRef.current : sellerCanvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      ctx?.clearRect(0, 0, canvas.width, canvas.height);
+      if (type === "buyer") setBuyerSignatureUrl(null);
+      else setSellerSignatureUrl(null);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -105,29 +180,27 @@ export default function VehicleDeedPage() {
   const remainingBalanceUSD = vehicle.sellingPrice - downPaymentUSD;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 lg:px-8 space-y-4">
+    <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 lg:px-8 space-y-4 pb-16">
       {/* Top Navigation & Action Toolbar (Hidden in Print) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200/90 dark:border-slate-800/90 print:hidden">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-            <Link href="/" className="hover:text-primary transition-colors">
+            <Link href="/" className="hover:text-blue-600 transition-colors">
               Cockpit
             </Link>
             <span>/</span>
-            <Link href="/inventory" className="hover:text-primary transition-colors">
+            <Link href="/inventory" className="hover:text-blue-600 transition-colors">
               Inventory
             </Link>
             <span>/</span>
-            <Link href={`/vehicles/${vehicle.id}`} className="hover:text-primary transition-colors">
+            <Link href={`/vehicles/${vehicle.id}`} className="hover:text-blue-600 transition-colors">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </Link>
             <span>/</span>
-            <span className="text-slate-900 dark:text-white font-medium">
-              Sales Deed
-            </span>
+            <span className="text-slate-900 dark:text-white font-medium">Sales Deed</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
+            <ShieldCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             Official Bilingual Sales Deed & Title Contract
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -135,7 +208,7 @@ export default function VehicleDeedPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <MuiButton
             component={Link}
             href={`/vehicles/${vehicle.id}`}
@@ -143,6 +216,7 @@ export default function VehicleDeedPage() {
             color="inherit"
             size="small"
             startIcon={<ArrowLeft className="h-4 w-4" />}
+            sx={{ fontSize: "11px", py: "3px" }}
           >
             Back to Vehicle
           </MuiButton>
@@ -151,7 +225,8 @@ export default function VehicleDeedPage() {
             color="inherit"
             size="small"
             onClick={handleCopyLink}
-            startIcon={<Share2 className="h-4 w-4" />}
+            startIcon={<Share2 className="h-3.5 w-3.5" />}
+            sx={{ fontSize: "11px", py: "3px" }}
           >
             Copy Link
           </MuiButton>
@@ -161,293 +236,352 @@ export default function VehicleDeedPage() {
             size="small"
             onClick={handlePrint}
             startIcon={<Printer className="h-4 w-4" />}
+            sx={{ fontSize: "11px", py: "3px" }}
           >
-            Print Official Deed (چاپ قباله)
+            Print Deed
           </MuiButton>
         </div>
       </div>
 
-      {/* Live Buyer Data Entry Strip (Hidden in Print) */}
+      {/* Contract Configuration Strip (Hidden in Print) */}
       <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] p-4 shadow-xs print:hidden space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-            Live Contract Data Entry (مشخصات خریدار و بیعانه جهت درج در قباله):
-          </span>
-          <span className="text-[10px] text-slate-400 font-mono">
-            Changes update contract layout & QR code in real-time
-          </span>
-        </div>
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+          Contract Parties & Settlement Terms:
+        </span>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <MuiTextField
             label="Buyer Full Name (نام خریدار)"
+            sizeVariant="small"
             value={buyerName}
             onChange={(e) => setBuyerName(e.target.value)}
-            sizeVariant="small"
           />
           <MuiTextField
-            label="Tazkira / National ID (نمبر تذکره)"
+            label="Buyer Tazkira ID (شماره تذکره)"
+            sizeVariant="small"
             value={buyerTazkira}
             onChange={(e) => setBuyerTazkira(e.target.value)}
-            sizeVariant="small"
           />
           <MuiTextField
-            label="Phone Number (شماره تماس)"
+            label="Buyer WhatsApp / Phone"
+            sizeVariant="small"
             value={buyerPhone}
             onChange={(e) => setBuyerPhone(e.target.value)}
-            sizeVariant="small"
           />
           <MuiTextField
-            label="Deposit Paid (USD بیعانه)"
+            label="Deposit Received (USD)"
             type="number"
+            sizeVariant="small"
             value={downPaymentUSD}
             onChange={(e) => setDownPaymentUSD(Number(e.target.value))}
-            sizeVariant="small"
           />
         </div>
       </div>
 
-      {/* Printable Deed Certificate (Clean white background for physical printing) */}
-      <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-200/90 dark:border-slate-800/90 dark:bg-[#111827] text-slate-900 dark:text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0">
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-center justify-between border-b-2 border-slate-900 dark:border-slate-100 pb-5 gap-4 print:border-black">
-            <div className="text-center sm:text-left">
-              <h2 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white print:text-black uppercase">
-                Sadozai Motors Herat
-              </h2>
-              <p className="text-xs font-medium text-slate-600 dark:text-slate-300 print:text-gray-700">
-                Registered Luxury Automotive Merchant • Bagh-e-Azadi, Herat, Afghanistan
-              </p>
-              <p className="text-[11px] font-mono text-slate-500 print:text-gray-600">
-                Tax & License ID: HRT-AUTO-8921 | Customs Islam Qala Verified
-              </p>
-            </div>
+      {/* Official Deed Printable Document */}
+      <div className="rounded-2xl border-2 border-slate-200/90 bg-white p-6 sm:p-10 shadow-sm dark:border-slate-800/90 dark:bg-[#111827] print:border-none print:shadow-none print:p-0 text-slate-900 dark:text-slate-100 print:text-black print:bg-white space-y-6 relative overflow-hidden">
+        {/* Background Watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] dark:opacity-[0.05] print:opacity-[0.04]">
+          <Building2 className="w-96 h-96" />
+        </div>
 
-            <div className="text-center sm:text-right" dir="rtl">
-              <h2 className="text-2xl font-bold font-dari text-slate-950 dark:text-white print:text-black">
-                {language === "ps" ? "سدوزی موټرز هرات" : "موتر فروشی سدوزی هرات"}
-              </h2>
-              <p className="text-xs font-medium font-dari text-slate-600 dark:text-slate-300 print:text-gray-700">
-                {language === "ps"
-                  ? "د موټر د پلور او واک سپارلو رسمي قباله (د اسلام قلعه او هرات ګمرک محصول شوی)"
-                  : "قباله رسمی معامله و سند واگذاری موتر (با محصول قطعی گمرک هرات)"}
-              </p>
-              <p className="text-[11px] font-mono text-slate-500 print:text-gray-600">
-                {language === "ps" ? "د تړون شمیره:" : "نمبر قرارداد:"} {contractNumber} | {language === "ps" ? "نیټه:" : "تاریخ:"} {today}
-              </p>
-            </div>
+        {/* Certificate Header Banner */}
+        <div className="border-b-2 border-slate-900 dark:border-slate-700 pb-4 text-center space-y-1">
+          <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 print:text-black">
+            <span>Islamic Emirate of Afghanistan</span>
+            <span>•</span>
+            <span>Herat Municipality & Chamber of Commerce</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white print:text-black">
+            Official Automotive Bill of Sale & Transfer Deed
+          </h2>
+          <p className="text-sm font-dari font-bold text-slate-700 dark:text-slate-300 print:text-black">
+            سند رسمی بیع قطعی، استعلام اصالت، تسلیم و انتقال مالکیت واسطه نقلیه
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-1 text-[11px] font-mono text-slate-500">
+            <span>Contract #{contractNumber}</span>
+            <span>•</span>
+            <span>Execution Date: {today}</span>
+            <span>•</span>
+            <span className="text-emerald-600 font-semibold">Chamber Notary Reg #AF-HRT-88219</span>
+          </div>
+        </div>
+
+        {/* Transaction Parties Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          {/* Seller / Showroom Info */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60 print:bg-white print:border-gray-300 space-y-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+              Party A: Seller / Dealership (فروشنده)
+            </span>
+            <p className="font-bold text-slate-900 dark:text-white print:text-black text-sm">
+              Sadozai Motors Herat Central Showroom
+            </p>
+            <p className="text-slate-600 dark:text-slate-300 font-dari">
+              نندارتون موتر سدوزی هرات - مدیریت محترم حاجی احمد شاه سدوزی
+            </p>
+            <p className="font-mono text-slate-500 text-[11px]">
+              License: #AF-HRT-88219 • Herat Chamber of Commerce Notary
+            </p>
+            <p className="text-slate-500">Showroom Address: Bagh-e-Azadi Avenue, Herat, Afghanistan</p>
           </div>
 
-          {/* Bilingual Title */}
-          <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2.5 text-center text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-white print:bg-gray-100 print:text-black border border-slate-200 dark:border-slate-700 print:border-gray-300">
-            {language === "ps"
-              ? "VEHICLE SALES CONTRACT & TITLE DEED / د موټر د پلور او واک سپارلو رسمي شرعي قباله"
-              : "BILINGUAL VEHICLE SALES CONTRACT & TITLE CONVEYANCE DEED / قباله شرعی و رسمی فروش موتر"}
+          {/* Buyer Info */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60 print:bg-white print:border-gray-300 space-y-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+              Party B: Buyer / Purchaser (خریدار)
+            </span>
+            <p className="font-bold text-slate-900 dark:text-white print:text-black text-sm">
+              {buyerName}
+            </p>
+            <p className="text-slate-600 dark:text-slate-300 font-dari">
+              محترم خریدار: دارای تذکره الکترونیکی صادره ولایت هرات
+            </p>
+            <p className="font-mono text-slate-500 text-[11px]">
+              Tazkira ID: {buyerTazkira}
+            </p>
+            <p className="text-slate-500 font-mono">Phone / WhatsApp: {buyerPhone}</p>
           </div>
+        </div>
 
-          {/* Parties Particulars */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 print:border-gray-400">
-              <span className="font-bold text-slate-900 dark:text-white uppercase block mb-1.5">
-                First Party / Merchant (طرف اول - فروشنده):
+        {/* Vehicle Specification Grid */}
+        <div className="space-y-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+            Vehicle Specification & Legal Identification
+          </span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 print:border-gray-300">
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">Vehicle Make & Model</span>
+              <span className="font-bold text-slate-900 dark:text-white mt-0.5 block">
+                {vehicle.year} {vehicle.make} {vehicle.model}
               </span>
-              <p className="text-slate-700 dark:text-slate-300">
-                <strong>Business Name:</strong> Sadozai Motors (Haji Ahmad Shah Sadozai)
-              </p>
-              <p className="text-slate-700 dark:text-slate-300">
-                <strong>Address:</strong> Bagh-e-Azadi Commercial Blvd, Herat
-              </p>
-              <p className="text-slate-700 dark:text-slate-300">
-                <strong>Contact:</strong> +93 79 910 2030 | info@sadozaimotors.af
-              </p>
             </div>
+            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 print:border-gray-300">
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">Trim Level / Package</span>
+              <span className="font-bold text-slate-900 dark:text-white mt-0.5 block">{vehicle.trim}</span>
+            </div>
+            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 print:border-gray-300">
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">Chassis / VIN</span>
+              <span className="font-mono font-bold text-blue-600 mt-0.5 block">{vehicle.vin}</span>
+            </div>
+            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 print:border-gray-300">
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">Gomrok Customs Clearance</span>
+              <span className="font-semibold text-emerald-600 mt-0.5 block">{vehicle.customsClearance}</span>
+            </div>
+          </div>
+        </div>
 
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 print:border-gray-400">
-              <span className="font-bold text-slate-900 dark:text-white uppercase block mb-1.5">
-                Second Party / Buyer (طرف دوم - خریدار محترم):
+        {/* Financial Consideration Block */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/60 print:bg-white print:border-gray-300 space-y-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+            Financial Consideration & Agreed Settlement (ثمن معامله)
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+            <div className="p-2.5 rounded-lg bg-white dark:bg-[#151D2A] border border-slate-200 dark:border-slate-800 print:border-gray-300">
+              <span className="text-[10px] uppercase font-bold text-slate-400">Total Purchase Price</span>
+              <p className="mt-1 text-lg font-black text-slate-900 dark:text-white font-mono">
+                ${vehicle.sellingPrice.toLocaleString()} USD
+              </p>
+              <span className="text-[10px] text-slate-500 font-mono">
+                (؋ {priceAfn.toLocaleString()} AFN)
               </span>
-              <p className="text-slate-700 dark:text-slate-300">
-                <strong>Full Name:</strong> {buyerName}
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-white dark:bg-[#151D2A] border border-slate-200 dark:border-slate-800 print:border-gray-300">
+              <span className="text-[10px] uppercase font-bold text-slate-400">Initial Deposit Paid</span>
+              <p className="mt-1 text-lg font-black text-emerald-600 font-mono">
+                ${downPaymentUSD.toLocaleString()} USD
               </p>
-              <p className="text-slate-700 dark:text-slate-300">
-                <strong>Tazkira ID / Passport:</strong> {buyerTazkira}
+              <span className="text-[10px] text-slate-500 font-mono">
+                (؋ {(downPaymentUSD * exchangeRate).toLocaleString()} AFN)
+              </span>
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-white dark:bg-[#151D2A] border border-slate-200 dark:border-slate-800 print:border-gray-300">
+              <span className="text-[10px] uppercase font-bold text-slate-400">Remaining Balance</span>
+              <p className="mt-1 text-lg font-black text-blue-600 dark:text-blue-400 font-mono">
+                ${remainingBalanceUSD.toLocaleString()} USD
               </p>
-              <p className="text-slate-700 dark:text-slate-300">
-                <strong>Contact Phone:</strong> {buyerPhone}
-              </p>
+              <span className="text-[10px] text-slate-500 font-mono">
+                (؋ {(remainingBalanceUSD * exchangeRate).toLocaleString()} AFN)
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Vehicle Particulars Table */}
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 print:border-gray-400">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100 dark:bg-slate-800 font-bold print:bg-gray-100">
-                <tr>
-                  <th className="p-3">Make & Model (کمپنی و نوعیت)</th>
-                  <th className="p-3">Year / Trim (سال و تیپ)</th>
-                  <th className="p-3">VIN / Chassis # (نمبر شاسی)</th>
-                  <th className="p-3">Color / Steering (رنگ و اشترنگ)</th>
-                  <th className="p-3">Customs Clearance (اسناد گمرکی)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800 print:divide-gray-300 font-mono text-[11px]">
-                <tr>
-                  <td className="p-3 font-bold font-sans">
-                    {vehicle.make} {vehicle.model}
-                  </td>
-                  <td className="p-3 font-sans">
-                    {vehicle.year} • {vehicle.trim}
-                  </td>
-                  <td className="p-3 font-bold text-slate-950 dark:text-white print:text-black">
-                    {vehicle.vin}
-                  </td>
-                  <td className="p-3 font-sans">
-                    {vehicle.color} ({vehicle.steering.split(" ")[0]})
-                  </td>
-                  <td className="p-3 font-sans text-emerald-600 dark:text-emerald-400 font-semibold print:text-black">
-                    {vehicle.customsClearance}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        {/* Legal Terms & Warranties */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-3">
+          <div>
+            <p className="font-bold uppercase tracking-wider text-slate-900 dark:text-white print:text-black mb-1">
+              English Legal Warranty:
+            </p>
+            <p className="text-slate-600 dark:text-slate-300 print:text-gray-700">
+              Sadozai Motors warrants that the vehicle designated above is free from all claims, liens, and disputes. Customs duties have been legally settled at Herat / Islam Qala Port. All vehicle keys, export titles, and original documents are conveyed unconditionally upon receipt of full funds.
+            </p>
           </div>
-
-          {/* Financial Settlement & Terms */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/60 p-4 print:bg-gray-50 print:border-gray-400">
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-center">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Agreed Sale Price (USD)
-                </span>
-                <p className="mt-1 text-xl font-black text-slate-950 dark:text-white print:text-black font-mono">
-                  ${vehicle.sellingPrice.toLocaleString()}
-                </p>
-                <span className="text-[10px] text-slate-500 font-dari">قیمت نهایی به دالر</span>
-              </div>
-
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Sarrafi Market Rate
-                </span>
-                <p className="mt-1 text-xl font-black text-slate-950 dark:text-white print:text-black font-mono">
-                  1 USD = {exchangeRate} AFN
-                </p>
-                <span className="text-[10px] text-slate-500 font-dari">نرخ روز صرافی هرات</span>
-              </div>
-
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Deposit Paid (بیعانه)
-                </span>
-                <p className="mt-1 text-xl font-black text-emerald-600 print:text-black font-mono">
-                  ${downPaymentUSD.toLocaleString()} USD
-                </p>
-                <span className="text-[10px] text-slate-500 font-dari">مبلغ پیش‌پرداخت تسلیم شده</span>
-              </div>
-
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Remaining Payable
-                </span>
-                <p className="mt-1 text-xl font-black text-primary print:text-black font-mono">
-                  ${remainingBalanceUSD.toLocaleString()} USD
-                </p>
-                <span className="text-[10px] text-slate-500 font-dari">
-                  (؋ {(remainingBalanceUSD * exchangeRate).toLocaleString()} AFN)
-                </span>
-              </div>
-            </div>
+          <div dir="rtl" className="font-dari">
+            <p className="font-bold text-slate-900 dark:text-white print:text-black mb-1">
+              مقررات و شرایط شرعی و قانونی (دری):
+            </p>
+            <p className="text-slate-600 dark:text-slate-300 print:text-gray-700">
+              نمایشگاه موتر سدوزی تضمین می‌نماید که واسطه فوق‌الذکر پاک، بدون تکر شدید، محصول شده قطعی گمرک اسلام قلعه و دارای اسناد قانونی معتبر می‌باشد. با پرداخت کامل بها، کلیه حقوق و اسناد واسطه نقلیه به خریدار تسلیم گردیده و طرفین با رضایت کامل ایجاب و قبول نمودند.
+            </p>
           </div>
+        </div>
 
-          {/* Legal Warranties & Terms (Bilingual) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] leading-relaxed">
+        {/* Digital Signatures Canvas & Notary Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-3 text-center text-xs border-t-2 border-slate-900 dark:border-slate-700">
+          {/* Seller / Merchant Signature Canvas */}
+          <div className="rounded-xl border border-dashed border-slate-300 p-3 dark:border-slate-700 print:border-gray-400 flex flex-col justify-between">
             <div>
-              <p className="font-bold uppercase tracking-wider text-slate-900 dark:text-white print:text-black mb-1">
-                English Legal Terms:
-              </p>
-              <p className="text-slate-600 dark:text-slate-300 print:text-gray-700">
-                Sadozai Motors warrants that the vehicle designated above is free from all claims, liens, and disputes. Customs duties have been legally settled at Herat / Islam Qala Port. All vehicle keys, export titles, and original documents are conveyed unconditionally upon receipt of full funds.
-              </p>
+              <p className="font-bold text-slate-900 dark:text-white text-[11px]">Seller / Merchant</p>
+              <p className="text-[10px] text-slate-400 font-dari">مدیر عمومی (حاجی احمد شاه)</p>
             </div>
-            <div dir="rtl" className="font-dari">
-              <p className="font-bold text-slate-900 dark:text-white print:text-black mb-1">
-                {language === "ps"
-                  ? "شرعي او قانوني مقررات (پښتو):"
-                  : "مقررات و شرایط شرعی و قانونی (دری):"}
-              </p>
-              <p className="text-slate-600 dark:text-slate-300 print:text-gray-700">
-                {language === "ps"
-                  ? "د سدوزی موټرز نندارتون تضمین کوي چې یاد موټر بې‌ټکره، پاک، د هرات او اسلام قلعه د ګمرک بشپړ محصول شوی او ټول قانوني اسناد یې چمتو دي. د بشپړې بیې په تر لاسه کولو سره، د موټر ټول حقوق او اصلي اسناد پیرودونکي ته سپارل کیږي او معامله په رضایت ترسره شوه."
-                  : "نمایشگاه موتر سدوزی تضمین می‌نماید که واسطه فوق‌الذکر پاک، بدون تکر شدید، محصول شده قطعی گمرک اسلام قلعه و دارای اسناد قانونی معتبر می‌باشد. با پرداخت کامل بها، کلیه حقوق و اسناد واسطه نقلیه به خریدار تسلیم گردیده و طرفین با رضایت کامل ایجاب و قبول نمودند."}
-              </p>
+
+            <div className="my-1 flex items-center justify-center min-h-[56px] relative">
+              {sellerSignatureUrl ? (
+                <img src={sellerSignatureUrl} alt="Seller Signature" className="h-12 object-contain" />
+              ) : isSigningSeller ? (
+                <div className="space-y-1 w-full">
+                  <canvas
+                    ref={sellerCanvasRef}
+                    width={180}
+                    height={50}
+                    className="border border-slate-300 rounded bg-white w-full touch-none cursor-crosshair"
+                    onMouseDown={(e) => startDrawing(e, sellerCanvasRef.current)}
+                    onMouseMove={(e) => draw(e, sellerCanvasRef.current)}
+                    onMouseUp={() => stopDrawing("seller")}
+                    onTouchStart={(e) => startDrawing(e, sellerCanvasRef.current)}
+                    onTouchMove={(e) => draw(e, sellerCanvasRef.current)}
+                    onTouchEnd={() => stopDrawing("seller")}
+                  />
+                  <div className="flex justify-center gap-1 print:hidden">
+                    <button
+                      type="button"
+                      onClick={() => clearCanvas("seller")}
+                      className="text-[9px] text-slate-400 hover:text-red-500"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => stopDrawing("seller")}
+                      className="text-[9px] text-blue-600 font-bold"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsSigningSeller(true)}
+                  className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline print:hidden cursor-pointer"
+                >
+                  <PenTool className="h-3 w-3" />
+                  <span>Sign Digitally</span>
+                </button>
+              )}
+            </div>
+
+            <div className="border-t border-slate-300 pt-1 text-[10px] text-slate-500 font-dari">
+              امضاء و شست فروشنده
             </div>
           </div>
 
-          {/* Signatures, Official Stamp & Scannable QR Code */}
-          <div className="grid grid-cols-4 gap-4 pt-4 text-center text-xs">
-            {/* Merchant Signature */}
-            <div className="rounded-xl border border-dashed border-slate-300 p-3.5 dark:border-slate-700 print:border-gray-400">
-              <p className="font-bold text-slate-900 dark:text-white print:text-black text-[11px]">Seller / Merchant</p>
-              <p className="text-[10px] text-slate-400 font-dari">
-                {language === "ps" ? "پلورونکی (سدوزی موټرز)" : "فروشنده (سدوزی موترز)"}
-              </p>
-              <div className="h-12" />
-              <div className="border-t border-slate-300 pt-1 text-[10px] font-medium text-slate-500 font-dari">
-                {language === "ps" ? "لاسلیک او د ګوتې نښه" : "امضاء و شست"}
-              </div>
+          {/* Buyer Signature Canvas */}
+          <div className="rounded-xl border border-dashed border-slate-300 p-3 dark:border-slate-700 print:border-gray-400 flex flex-col justify-between">
+            <div>
+              <p className="font-bold text-slate-900 dark:text-white text-[11px]">Buyer / Purchaser</p>
+              <p className="text-[10px] text-slate-400 font-dari">خریدار محترم (تذکره)</p>
             </div>
 
-            {/* Buyer Signature */}
-            <div className="rounded-xl border border-dashed border-slate-300 p-3.5 dark:border-slate-700 print:border-gray-400">
-              <p className="font-bold text-slate-900 dark:text-white print:text-black text-[11px]">Buyer / Purchaser</p>
-              <p className="text-[10px] text-slate-400 font-dari">
-                {language === "ps" ? "پیرودونکی (د تابعیت تذکره)" : "خریدار محترم (تذکره)"}
-              </p>
-              <div className="h-12" />
-              <div className="border-t border-slate-300 pt-1 text-[10px] font-medium text-slate-500 font-dari">
-                {language === "ps" ? "لاسلیک او د ګوتې نښه" : "امضاء و شست"}
-              </div>
-            </div>
-
-            {/* Official Stamp Seal */}
-            <div className="rounded-xl border border-dashed border-slate-300 p-3.5 dark:border-slate-700 print:border-gray-400 flex flex-col items-center justify-between">
-              <div>
-                <p className="font-bold text-slate-900 dark:text-white print:text-black text-[11px]">Official Stamp</p>
-                <p className="text-[10px] text-slate-400 font-dari">
-                  {language === "ps" ? "د نندارتون رسمي ټاپه" : "مهر رسمی نمایشگاه"}
-                </p>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary/40 text-primary print:border-gray-400 print:text-gray-600">
-                <Stamp className="h-6 w-6" />
-              </div>
-              <div className="border-t border-slate-300 w-full pt-1 text-[9px] font-mono text-slate-400">
-                HERAT AUTHENTIC LOT
-              </div>
-            </div>
-
-            {/* Scannable Traffic & Notary QR Code */}
-            <div className="rounded-xl border border-slate-200 bg-white p-2.5 dark:border-slate-700 dark:bg-white flex flex-col items-center justify-between shadow-2xs print:border-gray-400 print:shadow-none">
-              <div className="text-center">
-                <span className="text-[10px] font-bold text-slate-900 uppercase block tracking-wider">
-                  Verification QR
-                </span>
-                <span className="text-[9px] text-slate-500 block font-dari">تاییدیه مدیریت ترافیک</span>
-              </div>
-              {qrCodeDataUrl ? (
-                <img
-                  src={qrCodeDataUrl}
-                  alt="Contract Verification QR"
-                  className="h-20 w-20 object-contain my-1"
-                />
-              ) : (
-                <div className="h-20 w-20 flex items-center justify-center bg-slate-100 text-slate-400">
-                  <QrCode className="h-8 w-8 animate-pulse" />
+            <div className="my-1 flex items-center justify-center min-h-[56px] relative">
+              {buyerSignatureUrl ? (
+                <img src={buyerSignatureUrl} alt="Buyer Signature" className="h-12 object-contain" />
+              ) : isSigningBuyer ? (
+                <div className="space-y-1 w-full">
+                  <canvas
+                    ref={buyerCanvasRef}
+                    width={180}
+                    height={50}
+                    className="border border-slate-300 rounded bg-white w-full touch-none cursor-crosshair"
+                    onMouseDown={(e) => startDrawing(e, buyerCanvasRef.current)}
+                    onMouseMove={(e) => draw(e, buyerCanvasRef.current)}
+                    onMouseUp={() => stopDrawing("buyer")}
+                    onTouchStart={(e) => startDrawing(e, buyerCanvasRef.current)}
+                    onTouchMove={(e) => draw(e, buyerCanvasRef.current)}
+                    onTouchEnd={() => stopDrawing("buyer")}
+                  />
+                  <div className="flex justify-center gap-1 print:hidden">
+                    <button
+                      type="button"
+                      onClick={() => clearCanvas("buyer")}
+                      className="text-[9px] text-slate-400 hover:text-red-500"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => stopDrawing("buyer")}
+                      className="text-[9px] text-blue-600 font-bold"
+                    >
+                      Done
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsSigningBuyer(true)}
+                  className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline print:hidden cursor-pointer"
+                >
+                  <PenTool className="h-3 w-3" />
+                  <span>Sign Digitally</span>
+                </button>
               )}
-              <span className="text-[8px] font-mono text-slate-600 truncate max-w-full">
-                {contractNumber}
-              </span>
             </div>
+
+            <div className="border-t border-slate-300 pt-1 text-[10px] text-slate-500 font-dari">
+              امضاء و شست خریدار
+            </div>
+          </div>
+
+          {/* Official Showroom Stamp Seal */}
+          <div className="rounded-xl border border-dashed border-slate-300 p-3 dark:border-slate-700 print:border-gray-400 flex flex-col items-center justify-between">
+            <div>
+              <p className="font-bold text-slate-900 dark:text-white text-[11px]">Official Stamp</p>
+              <p className="text-[10px] text-slate-400 font-dari">مهر رسمی نمایشگاه</p>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-500/40 text-red-600">
+              <Stamp className="h-6 w-6" />
+            </div>
+            <div className="border-t border-slate-300 w-full pt-1 text-[9px] font-mono text-slate-400">
+              HERAT AUTHENTIC LOT
+            </div>
+          </div>
+
+          {/* Scannable Traffic & Notary QR Code */}
+          <div className="rounded-xl border border-slate-200 bg-white p-2.5 dark:border-slate-700 dark:bg-white flex flex-col items-center justify-between shadow-2xs print:border-gray-400 print:shadow-none">
+            <div className="text-center">
+              <span className="text-[10px] font-bold text-slate-900 uppercase block tracking-wider">
+                Verification QR
+              </span>
+              <span className="text-[9px] text-slate-500 block font-dari">تاییدیه مدیریت ترافیک</span>
+            </div>
+            {qrCodeDataUrl ? (
+              <img
+                src={qrCodeDataUrl}
+                alt="Contract Verification QR"
+                className="h-16 w-16 object-contain my-1"
+              />
+            ) : (
+              <div className="h-16 w-16 flex items-center justify-center bg-slate-100 text-slate-400">
+                <QrCode className="h-8 w-8 animate-pulse" />
+              </div>
+            )}
+            <span className="text-[8px] font-mono text-slate-600 truncate max-w-full">
+              {contractNumber}
+            </span>
           </div>
         </div>
       </div>
