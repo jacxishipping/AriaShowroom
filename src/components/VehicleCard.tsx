@@ -178,19 +178,25 @@ Link: http://localhost:3000/vehicles/${vehicle.id}`
         </div>
 
         {/* Photo Navigation Arrows */}
-        {vehicle.images.length > 1 && isHovered && (
-          <div className="absolute inset-x-2.5 top-1/2 -translate-y-1/2 flex justify-between z-10 pointer-events-none animate-in fade-in duration-150">
+        {vehicle.images.length > 1 && (
+          <div
+            className={`absolute inset-x-2 top-1/2 -translate-y-1/2 flex justify-between z-10 pointer-events-none transition-opacity duration-150 ${
+              isHovered ? "opacity-100" : "opacity-80 sm:opacity-0"
+            }`}
+          >
             <button
               onClick={handlePrevPhoto}
               className="pointer-events-auto h-7 w-7 rounded-full bg-black/70 text-white hover:bg-black flex items-center justify-center backdrop-blur-xs shadow-md transition-colors"
+              aria-label="Previous photo"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
             </button>
             <button
               onClick={handleNextPhoto}
               className="pointer-events-auto h-7 w-7 rounded-full bg-black/70 text-white hover:bg-black flex items-center justify-center backdrop-blur-xs shadow-md transition-colors"
+              aria-label="Next photo"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4 rtl:rotate-180" />
             </button>
           </div>
         )}

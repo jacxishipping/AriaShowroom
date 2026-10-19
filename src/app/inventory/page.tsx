@@ -44,6 +44,7 @@ import {
   Layers,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 
 export default function InventoryPage() {
@@ -363,26 +364,37 @@ export default function InventoryPage() {
                         {veh.vin}
                       </MuiTableCell>
 
-                      {/* Inline Status Changer */}
+                      {/* Interactive Status Pill Badge */}
                       <MuiTableCell>
-                        <MuiTextField
-                          select
-                          size="small"
-                          value={veh.status}
-                          onChange={(e) =>
-                            setVehicleStatus(
-                              veh.id,
-                              e.target.value as VehicleItem["status"]
-                            )
-                          }
-                          sx={{ minWidth: 150 }}
-                        >
-                          <MenuItem value="Available on Lot">Available on Lot</MenuItem>
-                          <MenuItem value="In Transit">In Transit</MenuItem>
-                          <MenuItem value="Reserved/Deposit Paid">Reserved / Deposit</MenuItem>
-                          <MenuItem value="Under Prep/Maintenance">Under Prep</MenuItem>
-                          <MenuItem value="Sold">Sold</MenuItem>
-                        </MuiTextField>
+                        <div className="relative inline-block">
+                          <select
+                            value={veh.status}
+                            onChange={(e) =>
+                              setVehicleStatus(
+                                veh.id,
+                                e.target.value as VehicleItem["status"]
+                              )
+                            }
+                            className={`text-xs font-semibold rounded-full px-2.5 py-1 border transition-all cursor-pointer outline-none appearance-none pe-6 ${
+                              veh.status === "Available on Lot"
+                                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                                : veh.status === "In Transit"
+                                ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800"
+                                : veh.status === "Reserved/Deposit Paid"
+                                ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800"
+                                : veh.status === "Sold"
+                                ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700"
+                                : "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800"
+                            }`}
+                          >
+                            <option value="Available on Lot">Available on Lot</option>
+                            <option value="In Transit">In Transit</option>
+                            <option value="Reserved/Deposit Paid">Reserved</option>
+                            <option value="Under Prep/Maintenance">Under Prep</option>
+                            <option value="Sold">Sold</option>
+                          </select>
+                          <ChevronDown className="h-3 w-3 text-current opacity-60 absolute end-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
                       </MuiTableCell>
 
                       <MuiTableCell className="text-slate-600 dark:text-slate-400">

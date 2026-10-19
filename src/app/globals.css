@@ -8,6 +8,7 @@
     --foreground: #0F172A;
     --paper: #FFFFFF;
     --divider: rgba(0, 0, 0, 0.08);
+    --font-vazirmatn: "Vazirmatn", "Segoe UI Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
   }
 
   .dark {
@@ -21,7 +22,7 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Segoe UI Arabic", "Noto Sans Arabic", Tahoma, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

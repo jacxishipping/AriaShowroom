@@ -21,7 +21,7 @@ export function CompareBar({ onOpenCompare }: CompareBarProps) {
   return (
     <div className="fixed bottom-6 inset-x-0 z-40 flex justify-center pointer-events-none px-4 animate-in fade-in slide-in-from-bottom-4">
       <div className="pointer-events-auto flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-2xl bg-slate-900/95 dark:bg-[#111827]/95 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md max-w-xl w-full">
-        <div className="flex items-center gap-2 pl-2">
+        <div className="flex items-center gap-2 ps-2">
           <Layers className="h-4 w-4 text-primary shrink-0" />
           <span className="text-xs font-bold whitespace-nowrap">
             Compare ({comparedVehicles.length}/3)
@@ -48,7 +48,7 @@ export function CompareBar({ onOpenCompare }: CompareBarProps) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 pr-1">
+        <div className="flex items-center gap-2 pe-1">
           <MuiButton
             onClick={clearCompare}
             variant="text"
@@ -63,7 +63,7 @@ export function CompareBar({ onOpenCompare }: CompareBarProps) {
             variant="contained"
             color="primary"
             size="small"
-            endIcon={<ArrowRight className="h-3.5 w-3.5" />}
+            endIcon={<ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />}
           >
             Compare Now
           </MuiButton>

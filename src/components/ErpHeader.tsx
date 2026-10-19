@@ -26,6 +26,8 @@ import {
   ArrowRight,
   TrendingUp,
   ExternalLink,
+  Menu,
+  Globe,
 } from "lucide-react";
 
 interface ErpHeaderProps {
@@ -53,6 +55,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
     notifications,
     markNotificationRead,
     markAllNotificationsRead,
+    toggleMobileDrawer,
   } = useShowroomStore();
 
   const [isRateEditOpen, setIsRateEditOpen] = useState(false);
@@ -60,10 +63,13 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const roleMenuRef = useRef<HTMLDivElement>(null);
+  const langMenuRef = useRef<HTMLDivElement>(null);
+  const rateEditRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const t = translations[language];
@@ -88,6 +94,18 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
         !roleMenuRef.current.contains(event.target as Node)
       ) {
         setIsRoleMenuOpen(false);
+      }
+      if (
+        langMenuRef.current &&
+        !langMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsLangMenuOpen(false);
+      }
+      if (
+        rateEditRef.current &&
+        !rateEditRef.current.contains(event.target as Node)
+      ) {
+        setIsRateEditOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -182,57 +200,67 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
   const activeProfile = roleProfiles[currentRole];
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-slate-200/90 dark:border-slate-800/90 bg-white/95 dark:bg-[#111827]/95 px-4 sm:px-6 backdrop-blur-md transition-colors">
-      {/* Left: OmniSearch Bar with Barcode Scanner Icon & Command Dropdown */}
-      <div ref={searchContainerRef} className="relative w-full max-w-sm sm:max-w-md">
-        <div className="relative flex items-center">
-          <Search className="absolute left-3 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder={
-              language === "ps"
-                ? "د موټر VIN، سټاک کوډ، یا تذکره..."
-                : language === "fa"
-                ? "جستجوی VIN، استاک موتر، یا تذکره..."
-                : "Search VIN, Stock #, Customer, or Make..."
-            }
-            value={filters.search}
-            onChange={(e) => {
-              setFilter("search", e.target.value);
-              setIsSearchFocused(true);
-            }}
-            onFocus={() => setIsSearchFocused(true)}
-            className="w-full pl-9 pr-20 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all"
-          />
+    <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-slate-200/90 dark:border-slate-800/90 bg-white/95 dark:bg-[#111827]/95 px-3 sm:px-6 backdrop-blur-md transition-colors gap-2">
+      {/* Left: Hamburger Button (Mobile) + OmniSearch Bar */}
+      <div className="flex items-center gap-1 sm:gap-2 w-full max-w-sm sm:max-w-md">
+        <button
+          onClick={toggleMobileDrawer}
+          className="md:hidden p-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+          aria-label="Open Navigation Menu"
+          title="Open Menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
 
-          <div className="absolute right-2 flex items-center gap-1.5">
-            {filters.search && (
-              <button
-                onClick={() => setFilter("search", "")}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
+        <div ref={searchContainerRef} className="relative w-full">
+          <div className="relative flex items-center">
+            <Search className="absolute start-3 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder={
+                language === "ps"
+                  ? "د موټر VIN، سټاک کوډ، یا تذکره..."
+                  : language === "fa"
+                  ? "جستجوی VIN، استاک موتر، یا تذکره..."
+                  : "Search VIN, Stock #, Customer..."
+              }
+              value={filters.search}
+              onChange={(e) => {
+                setFilter("search", e.target.value);
+                setIsSearchFocused(true);
+              }}
+              onFocus={() => setIsSearchFocused(true)}
+              className="w-full ps-9 pe-16 sm:pe-20 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all"
+            />
+
+            <div className="absolute end-2 flex items-center gap-1.5">
+              {filters.search && (
+                <button
+                  onClick={() => setFilter("search", "")}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+
+              <Link
+                href="/scanner"
+                className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1"
+                title="Scan VIN Barcode"
               >
-                <X className="h-3 w-3" />
-              </button>
-            )}
+                <ScanLine className="h-3.5 w-3.5" />
+              </Link>
 
-            <Link
-              href="/scanner"
-              className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1"
-              title="Scan VIN Barcode"
-            >
-              <ScanLine className="h-3.5 w-3.5" />
-            </Link>
-
-            <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-400 border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
-              ⌘K
-            </span>
+              <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-400 border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
+                ⌘K
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* OmniSearch Quick Dropdown */}
-        {isSearchFocused && (
-          <div className="absolute left-0 right-0 top-11 z-50 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111827]/95 p-3 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-1 max-h-[80vh] overflow-y-auto">
+          {/* OmniSearch Quick Dropdown */}
+          {isSearchFocused && (
+            <div className="absolute start-0 end-0 top-11 z-50 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111827]/95 p-3 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-1 max-h-[80vh] overflow-y-auto">
             {filters.search.trim() ? (
               <div className="space-y-3">
                 {/* Vehicles Results */}
@@ -374,131 +402,143 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
             )}
           </div>
         )}
+        </div>
       </div>
 
-      {/* Right Controls: Executive Tools & Preferences */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5">
-        {/* Quick Add Vehicle Intake Button */}
-        <div className="hidden sm:block">
-          <MuiButton
-            component={Link}
-            href="/intake"
-            variant="contained"
-            color="primary"
-            size="small"
-            startIcon={<Plus className="h-3.5 w-3.5" />}
-          >
-            New Intake
-          </MuiButton>
-        </div>
-
-        {/* Sarrafi Exchange Rate Pill */}
-        <div className="relative">
+      {/* Right Controls: Unified Luxury Toolbar */}
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Unified Financial / Currency & Sarrafi Rate Pill */}
+        <div ref={rateEditRef} className="relative">
           <button
             onClick={() => setIsRateEditOpen(!isRateEditOpen)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer shadow-2xs"
-            title="Click to edit Sarrafi market rate"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer shadow-2xs"
+            title="Switch Currency & Market Rate"
           >
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>$1 = {exchangeRate} AFN</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="font-bold text-blue-600 dark:text-blue-400 font-mono">{currency}</span>
+            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">؋{exchangeRate}</span>
+            <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
           </button>
 
           {isRateEditOpen && (
-            <div className="absolute right-0 top-10 z-50 w-56 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111827]/95 p-3.5 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-1">
-              <form onSubmit={handleSaveRate} className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Herat Sarrafi Rate
-                  </span>
-                  <span className="text-[10px] text-emerald-600 font-mono">Live Sync</span>
+            <div className="absolute end-0 top-11 z-50 w-64 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111827]/95 p-3.5 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-1 space-y-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  Display Currency
                 </div>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={tempRate}
-                    onChange={(e) => setTempRate(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:border-blue-500"
-                    autoFocus
-                  />
+                <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-xs font-medium">
                   <button
-                    type="submit"
-                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shrink-0"
+                    type="button"
+                    onClick={() => {
+                      setCurrency("USD");
+                      setIsRateEditOpen(false);
+                    }}
+                    className={`py-1.5 rounded-lg transition-all font-semibold ${
+                      currency === "USD"
+                        ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                    }`}
                   >
-                    Save
+                    USD ($)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrency("AFN");
+                      setIsRateEditOpen(false);
+                    }}
+                    className={`py-1.5 rounded-lg transition-all font-semibold ${
+                      currency === "AFN"
+                        ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                    }`}
+                  >
+                    AFN (؋)
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-400">
-                  Updates dual-currency calculations across inventory & deed contracts.
-                </p>
-              </form>
+              </div>
+
+              <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2.5">
+                <form onSubmit={handleSaveRate} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Herat Sarrafi Rate
+                    </span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-semibold">Live Rate</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute start-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono">$1=</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={tempRate}
+                        onChange={(e) => setTempRate(e.target.value)}
+                        className="w-full ps-9 pe-2 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                        autoFocus
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shrink-0"
+                    >
+                      Save
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    Converts vehicle prices & margins into Afghan Afghani.
+                  </p>
+                </form>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Currency Switcher Pill */}
-        <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-0.5 text-xs font-medium shadow-2xs">
+        {/* Compact Language Selector Dropdown */}
+        <div ref={langMenuRef} className="relative">
           <button
-            onClick={() => setCurrency("USD")}
-            className={`px-2 py-1 rounded-lg transition-colors ${
-              currency === "USD"
-                ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs font-bold"
-                : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
-            }`}
+            onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors shadow-2xs"
+            title="Select Language / ژبه"
           >
-            USD
+            <Globe className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+            <span className="font-semibold">{language === "en" ? "EN" : language === "fa" ? "دری" : "پښتو"}</span>
+            <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
           </button>
-          <button
-            onClick={() => setCurrency("AFN")}
-            className={`px-2 py-1 rounded-lg transition-colors ${
-              currency === "AFN"
-                ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs font-bold"
-                : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
-            }`}
-          >
-            AFN
-          </button>
-        </div>
 
-        {/* Language Switcher */}
-        <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-0.5 text-xs font-medium shadow-2xs">
-          <button
-            onClick={() => setLanguage("en")}
-            className={`px-1.5 py-1 rounded-lg transition-colors ${
-              language === "en"
-                ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs font-bold"
-                : "text-slate-500"
-            }`}
-          >
-            EN
-          </button>
-          <button
-            onClick={() => setLanguage("fa")}
-            className={`px-1.5 py-1 rounded-lg font-dari transition-colors ${
-              language === "fa"
-                ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs font-bold"
-                : "text-slate-500"
-            }`}
-          >
-            دری
-          </button>
-          <button
-            onClick={() => setLanguage("ps")}
-            className={`px-1.5 py-1 rounded-lg font-dari transition-colors ${
-              language === "ps"
-                ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs font-bold"
-                : "text-slate-500"
-            }`}
-          >
-            پښتو
-          </button>
+          {isLangMenuOpen && (
+            <div className="absolute end-0 top-11 z-50 w-36 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111827]/95 p-1.5 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-1 space-y-0.5">
+              {[
+                { code: "en", label: "English (US)" },
+                { code: "fa", label: "دری / فارسی" },
+                { code: "ps", label: "پښتو" },
+              ].map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => {
+                    setLanguage(l.code as any);
+                    setIsLangMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    language === l.code
+                      ? "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <span>{l.label}</span>
+                  {language === l.code && <Check className="h-3.5 w-3.5 text-blue-600" />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Showroom Notifications Bell */}
         <div ref={notificationsRef} className="relative">
           <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="h-8 w-8 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors relative"
             title="Activity Notifications"
           >
             <Bell className="h-4 w-4" />
@@ -511,7 +551,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
           </button>
 
           {isNotificationsOpen && (
-            <div className="absolute right-0 top-11 z-50 w-80 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111827]/95 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-1 overflow-hidden">
+            <div className="absolute end-0 top-11 z-50 w-80 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111827]/95 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-1 overflow-hidden">
               <div className="flex items-center justify-between p-3.5 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-bold text-slate-900 dark:text-white">
@@ -561,13 +601,13 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
         </div>
 
         {/* Theme Toggle Button */}
-        <IconButton
-          size="small"
+        <button
           onClick={toggleDarkMode}
+          className="h-8 w-8 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors"
           title="Toggle Dark / Light Theme"
         >
-          {darkMode ? <Sun className="h-4 w-4 text-warning" /> : <Moon className="h-4 w-4" />}
-        </IconButton>
+          {darkMode ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4" />}
+        </button>
 
         {/* Role & Staff Profile Pill */}
         <div ref={roleMenuRef} className="relative">
@@ -592,7 +632,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
           </button>
 
           {isRoleMenuOpen && (
-            <div className="absolute right-0 top-11 z-50 w-64 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111827]/95 p-2 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-1">
+            <div className="absolute end-0 top-11 z-50 w-64 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111827]/95 p-2 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1.5 block">
                 Herat Dealership Personnel
               </span>

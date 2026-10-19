@@ -49,6 +49,7 @@ interface ShowroomStore {
   language: LanguageType;
   currentRole: RoleType;
   darkMode: boolean;
+  mobileDrawerOpen: boolean;
 
   // Actions for App Settings
   setCurrency: (currency: CurrencyType) => void;
@@ -56,6 +57,8 @@ interface ShowroomStore {
   setLanguage: (lang: LanguageType) => void;
   setCurrentRole: (role: RoleType) => void;
   toggleDarkMode: () => void;
+  setMobileDrawerOpen: (open: boolean) => void;
+  toggleMobileDrawer: () => void;
 
   // Vehicles
   vehicles: VehicleItem[];
@@ -155,12 +158,15 @@ export const useShowroomStore = create<ShowroomStore>()(
       language: "en",
       currentRole: "SuperAdmin",
       darkMode: false,
+      mobileDrawerOpen: false,
 
       setCurrency: (currency) => set({ currency }),
       setExchangeRate: (exchangeRate) => set({ exchangeRate }),
       setLanguage: (language) => set({ language }),
       setCurrentRole: (currentRole) => set({ currentRole }),
       toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
+      setMobileDrawerOpen: (open) => set({ mobileDrawerOpen: open }),
+      toggleMobileDrawer: () => set((state) => ({ mobileDrawerOpen: !state.mobileDrawerOpen })),
 
       vehicles: INITIAL_VEHICLES,
       filters: initialFilters,

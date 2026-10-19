@@ -26,6 +26,7 @@ import {
   Sparkles,
   Layers,
   ScanLine,
+  X,
 } from "lucide-react";
 
 interface ErpSidebarProps {
@@ -34,7 +35,17 @@ interface ErpSidebarProps {
 
 export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
   const pathname = usePathname();
-  const { vehicles, customers, sales, invoices, language, currentRole, compareIds } = useShowroomStore();
+  const {
+    vehicles,
+    customers,
+    sales,
+    invoices,
+    language,
+    currentRole,
+    compareIds,
+    mobileDrawerOpen,
+    setMobileDrawerOpen,
+  } = useShowroomStore();
   const [collapsed, setCollapsed] = useState(false);
 
   const t = translations[language];
@@ -94,15 +105,11 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
     },
   ];
 
-  return (
-    <aside
-      className={`sticky top-0 z-40 flex h-screen flex-col border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#121824] shadow-mui-1 transition-all duration-300 ${
-        collapsed ? "w-20" : "w-64"
-      }`}
-    >
+  const renderSidebarContent = (isMobile = false) => (
+    <>
       {/* Enterprise Drawer Header: Brand Avatar & Showroom ID */}
-      <div className="flex h-14 items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 px-4">
-        {!collapsed && (
+      <div className="flex h-14 items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 px-4 shrink-0">
+        {(!collapsed || isMobile) && (
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-slate-800 dark:text-white border border-slate-700/60 shadow-xs font-bold">
               <Car className="h-4 w-4 text-primary" />
@@ -118,41 +125,54 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
           </div>
         )}
 
-        {collapsed && (
+        {collapsed && !isMobile && (
           <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-slate-800 border border-slate-700/60 shadow-xs font-bold">
             <Car className="h-4 w-4 text-primary" />
           </div>
         )}
 
-        <IconButton
-          size="small"
-          onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? "Expand Drawer" : "Collapse Drawer"}
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </IconButton>
+        {isMobile ? (
+          <IconButton
+            size="small"
+            onClick={() => setMobileDrawerOpen(false)}
+            title="Close Drawer"
+          >
+            <X className="h-5 w-5" />
+          </IconButton>
+        ) : (
+          <IconButton
+            size="small"
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Expand Drawer" : "Collapse Drawer"}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+            ) : (
+              <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+            )}
+          </IconButton>
+        )}
       </div>
 
-      {/* Quick Intake Button (Material Contained Button) */}
-      <div className="p-3">
-        <MuiButton
-          component={Link}
+      {/* Quick Intake Button */}
+      <div className="p-3 shrink-0">
+        <Link
           href="/intake"
-          variant="contained"
-          color="primary"
-          fullWidth
-          size="medium"
-          startIcon={<PlusCircle className="h-4 w-4" />}
-          className={collapsed ? "!px-0 !min-w-0" : ""}
+          onClick={() => isMobile && setMobileDrawerOpen(false)}
+          className={`flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-xs tracking-wide shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200 py-2.5 px-3 ${
+            collapsed && !isMobile ? "w-10 h-10 p-0 mx-auto" : "w-full"
+          }`}
+          title={t.addNewVehicle}
         >
-          {!collapsed && <span>{t.addNewVehicle}</span>}
-        </MuiButton>
+          <PlusCircle className="h-4 w-4 shrink-0" />
+          {(!collapsed || isMobile) && <span className="truncate">{t.addNewVehicle}</span>}
+        </Link>
       </div>
 
       {/* Material List Items */}
       <nav className="flex-1 space-y-1 px-2 py-2 overflow-y-auto">
         <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-          {!collapsed && <span>Main Navigation</span>}
+          {(!collapsed || isMobile) && <span>Main Navigation</span>}
         </div>
 
         {navItems.map((item) => {
@@ -163,12 +183,13 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => isMobile && setMobileDrawerOpen(false)}
               className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium transition-all ${
                 isActive
                   ? "bg-primary/10 text-primary font-semibold dark:bg-primary/20 dark:text-primary"
                   : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/60 dark:hover:text-white"
-              } ${collapsed ? "justify-center" : ""}`}
-              title={collapsed ? item.title : undefined}
+              } ${collapsed && !isMobile ? "justify-center" : ""}`}
+              title={collapsed && !isMobile ? item.title : undefined}
             >
               <span
                 className={`shrink-0 transition-colors ${
@@ -180,7 +201,7 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
                 <IconComponent className="h-4 w-4" />
               </span>
 
-              {!collapsed && (
+              {(!collapsed || isMobile) && (
                 <>
                   <span className="flex-1 truncate">{item.title}</span>
                   {item.badge && (
@@ -197,7 +218,7 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
         })}
 
         {/* Live Lot Telemetry Widget */}
-        {!collapsed && (
+        {(!collapsed || isMobile) && (
           <div className="mt-6 mx-1 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 p-3 dark:bg-slate-900/30">
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -225,10 +246,10 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
       </nav>
 
       {/* Material Drawer Footer: User Profile Card */}
-      <div className="border-t border-slate-200/80 dark:border-slate-800/80 p-3">
+      <div className="border-t border-slate-200/80 dark:border-slate-800/80 p-3 shrink-0">
         <div
           className={`flex items-center gap-3 rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors ${
-            collapsed ? "justify-center" : ""
+            collapsed && !isMobile ? "justify-center" : ""
           }`}
         >
           <div className="relative shrink-0">
@@ -246,7 +267,7 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
             <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#121824]" />
           </div>
 
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <div className="truncate">
               <span className="text-xs font-bold text-slate-900 dark:text-white block truncate leading-tight">
                 {currentRole === "SuperAdmin"
@@ -262,6 +283,36 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
           )}
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Persistent Sidebar */}
+      <aside
+        className={`sticky top-0 z-40 hidden md:flex h-screen flex-col border-r rtl:border-r-0 rtl:border-l border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#121824] shadow-mui-1 transition-all duration-300 ${
+          collapsed ? "w-20" : "w-64"
+        }`}
+      >
+        {renderSidebarContent(false)}
+      </aside>
+
+      {/* Mobile Slide-Over Overlay Drawer */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+          {/* Drawer Panel */}
+          <aside
+            className="relative z-50 flex h-full w-72 max-w-[85vw] flex-col border-r rtl:border-r-0 rtl:border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-[#121824] shadow-2xl animate-in slide-in-from-left rtl:slide-in-from-right duration-200"
+          >
+            {renderSidebarContent(true)}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }
