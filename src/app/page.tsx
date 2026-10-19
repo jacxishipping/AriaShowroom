@@ -469,12 +469,12 @@ export default function ErpOperationsCockpit() {
           </div>
         )}
 
-        {/* Clean Enterprise Data Table */}
+        {/* Clean Enterprise Dense Data Table */}
         <MuiTableContainer className="overflow-x-auto">
-          <MuiTable dense>
+          <MuiTable dense size="small" className="w-full">
             <MuiTableHead>
               <MuiTableRow hover={false}>
-                <MuiTableCell header className="w-10">
+                <MuiTableCell header className="w-8 !px-2 text-center">
                   <input
                     type="checkbox"
                     checked={
@@ -482,7 +482,7 @@ export default function ErpOperationsCockpit() {
                       selectedVehicleIds.length === processedVehicles.length
                     }
                     onChange={handleSelectAll}
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                 </MuiTableCell>
                 <MuiTableCell
@@ -491,7 +491,7 @@ export default function ErpOperationsCockpit() {
                   className="cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span>Vehicle & Stock</span>
+                    <span>Vehicle, Stock & VIN</span>
                     {sortField === "stockNumber" ? (
                       sortDir === "asc" ? (
                         <ArrowUp className="h-3 w-3 text-blue-600" />
@@ -503,9 +503,8 @@ export default function ErpOperationsCockpit() {
                     )}
                   </div>
                 </MuiTableCell>
-                <MuiTableCell header>VIN / Chassis</MuiTableCell>
                 <MuiTableCell header>Status</MuiTableCell>
-                <MuiTableCell header>Customs Clearance</MuiTableCell>
+                <MuiTableCell header>Customs</MuiTableCell>
                 <MuiTableCell
                   header
                   align="right"
@@ -545,13 +544,13 @@ export default function ErpOperationsCockpit() {
                   </div>
                 </MuiTableCell>
                 <MuiTableCell header align="right">Margin</MuiTableCell>
-                <MuiTableCell header align="right">Actions</MuiTableCell>
+                <MuiTableCell header align="right" className="!pe-3">Actions</MuiTableCell>
               </MuiTableRow>
             </MuiTableHead>
             <MuiTableBody>
               {processedVehicles.length === 0 ? (
                 <MuiTableRow>
-                  <MuiTableCell colSpan={9} align="center" className="py-12 text-slate-400">
+                  <MuiTableCell colSpan={8} align="center" className="py-8 text-slate-400">
                     No vehicles found matching current criteria.
                   </MuiTableCell>
                 </MuiTableRow>
@@ -572,21 +571,21 @@ export default function ErpOperationsCockpit() {
                       }
                     >
                       {/* Checkbox */}
-                      <MuiTableCell>
+                      <MuiTableCell className="w-8 !px-2 text-center">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSelect(veh.id)}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         />
                       </MuiTableCell>
 
-                      {/* Vehicle & Stock with Thumbnail */}
-                      <MuiTableCell>
-                        <div className="flex items-center gap-3">
+                      {/* Vehicle, Stock & VIN */}
+                      <MuiTableCell className="py-1.5">
+                        <div className="flex items-center gap-2.5">
                           <Link
                             href={`/vehicles/${veh.id}`}
-                            className="relative h-11 w-14 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 group/thumb cursor-pointer block shadow-2xs"
+                            className="relative h-8 w-11 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 block shadow-2xs group/thumb"
                             title="Inspect vehicle dossier"
                           >
                             <Image
@@ -596,44 +595,40 @@ export default function ErpOperationsCockpit() {
                               className="object-cover group-hover/thumb:scale-110 transition-transform"
                             />
                             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center text-white transition-opacity">
-                              <Eye className="h-3.5 w-3.5" />
+                              <Eye className="h-3 w-3" />
                             </div>
                           </Link>
 
-                          <div>
+                          <div className="min-w-0">
                             <Link
                               href={`/vehicles/${veh.id}`}
-                              className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors block leading-snug"
+                              className="font-bold text-xs text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors block truncate leading-tight"
                             >
                               {veh.year} {veh.make} {veh.model}
                             </Link>
-                            <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-1">
-                              <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 px-1.5 py-0.2 rounded border border-blue-200/50 dark:border-blue-900/50">
+                            <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                              <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-1 py-0.2 rounded border border-blue-200/50 dark:border-blue-900/50">
                                 {veh.stockNumber}
                               </span>
+                              <span className="select-all text-slate-500 font-mono tracking-tight">
+                                {veh.vin}
+                              </span>
                               <span>•</span>
-                              <span>{veh.originCountry} Import</span>
-                              <span>•</span>
-                              <span>{veh.images.length} photos</span>
+                              <span>{veh.originCountry}</span>
                             </div>
                           </div>
                         </div>
                       </MuiTableCell>
 
-                      {/* VIN */}
-                      <MuiTableCell className="font-mono text-slate-600 dark:text-slate-400 text-xs select-all whitespace-nowrap">
-                        {veh.vin}
-                      </MuiTableCell>
-
                       {/* Interactive Status Pill Badge */}
-                      <MuiTableCell>
+                      <MuiTableCell className="py-1.5 whitespace-nowrap">
                         <div className="relative inline-block">
                           <select
                             value={veh.status}
                             onChange={(e) =>
                               setVehicleStatus(veh.id, e.target.value as VehicleItem["status"])
                             }
-                            className={`text-xs font-semibold rounded-full px-2.5 py-1 border transition-all cursor-pointer outline-none appearance-none pe-6 ${
+                            className={`text-[11px] font-semibold rounded-full px-2 py-0.5 border transition-all cursor-pointer outline-none appearance-none pe-5 leading-tight ${
                               veh.status === "Available on Lot"
                                 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
                                 : veh.status === "In Transit"
@@ -645,64 +640,65 @@ export default function ErpOperationsCockpit() {
                                 : "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800"
                             }`}
                           >
-                            <option value="Available on Lot">Available on Lot</option>
+                            <option value="Available on Lot">Available</option>
                             <option value="In Transit">In Transit</option>
                             <option value="Reserved/Deposit Paid">Reserved</option>
                             <option value="Under Prep/Maintenance">Under Prep</option>
                             <option value="Sold">Sold</option>
                           </select>
-                          <ChevronDown className="h-3 w-3 text-current opacity-60 absolute end-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <ChevronDown className="h-2.5 w-2.5 text-current opacity-60 absolute end-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         </div>
                       </MuiTableCell>
 
                       {/* Customs */}
-                      <MuiTableCell className="text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                          <span className="text-[11px] font-medium">
+                      <MuiTableCell className="py-1.5 whitespace-nowrap">
+                        <div className="flex items-center gap-1">
+                          <ShieldCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                             {veh.customsClearance.split("-")[0].trim()}
                           </span>
                         </div>
                       </MuiTableCell>
 
                       {/* Landed Cost */}
-                      <MuiTableCell align="right" className="font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                      <MuiTableCell align="right" className="py-1.5 font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
                         ${veh.landedCost.toLocaleString()}
                       </MuiTableCell>
 
                       {/* Selling Price */}
-                      <MuiTableCell align="right" className="whitespace-nowrap">
-                        <div className="font-bold font-mono text-xs sm:text-sm text-slate-900 dark:text-white">
+                      <MuiTableCell align="right" className="py-1.5 whitespace-nowrap">
+                        <div className="font-bold font-mono text-xs text-slate-900 dark:text-white">
                           ${veh.sellingPrice.toLocaleString()}
                         </div>
                         {currency === "AFN" && (
-                          <div className="text-[10px] font-mono text-slate-400">
+                          <div className="text-[9px] font-mono text-slate-400 leading-none">
                             ؋ {(veh.sellingPrice * exchangeRate).toLocaleString()}
                           </div>
                         )}
                       </MuiTableCell>
 
                       {/* Target Margin */}
-                      <MuiTableCell align="right" className="whitespace-nowrap">
+                      <MuiTableCell align="right" className="py-1.5 whitespace-nowrap">
                         <div className="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
                           +${marginAmount.toLocaleString()}
                         </div>
-                        <div className="text-[10px] text-emerald-500/80 font-mono">
+                        <div className="text-[9px] text-emerald-500/80 font-mono leading-none">
                           ({marginPercent}%)
                         </div>
                       </MuiTableCell>
 
                       {/* Actions */}
-                      <MuiTableCell align="right" className="whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1">
+                      <MuiTableCell align="right" className="py-1.5 whitespace-nowrap !pe-3">
+                        <div className="flex items-center justify-end gap-0.5">
                           <IconButton
                             component={Link}
                             href={`/vehicles/${veh.id}`}
                             size="small"
                             color="primary"
+                            sx={{ padding: "4px" }}
                             title="Inspect vehicle dossier"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-3.5 w-3.5" />
                           </IconButton>
 
                           <IconButton
@@ -710,15 +706,17 @@ export default function ErpOperationsCockpit() {
                             href={`/vehicles/${veh.id}/deed`}
                             size="small"
                             color="warning"
+                            sx={{ padding: "4px" }}
                             title="Generate Official Bilingual Deed"
                           >
-                            <FileText className="h-4 w-4" />
+                            <FileText className="h-3.5 w-3.5" />
                           </IconButton>
 
                           {currentRole === "SuperAdmin" && (
                             <IconButton
                               size="small"
                               color="error"
+                              sx={{ padding: "4px" }}
                               onClick={() => {
                                 if (confirm(`Delete vehicle ${veh.stockNumber}?`)) {
                                   deleteVehicle(veh.id);
@@ -727,7 +725,7 @@ export default function ErpOperationsCockpit() {
                               }}
                               title="Delete vehicle"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </IconButton>
                           )}
                         </div>

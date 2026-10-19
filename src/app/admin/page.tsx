@@ -309,16 +309,15 @@ export default function AdminDashboardPage() {
           {/* Material Vehicle Inventory Table */}
           <MuiCard elevation={1}>
             <div className="overflow-x-auto">
-              <MuiTable dense>
+              <MuiTable dense size="small" className="w-full">
                 <MuiTableHead>
                   <MuiTableRow hover={false}>
-                    <MuiTableCell header>Stock ID & Vehicle</MuiTableCell>
-                    <MuiTableCell header>VIN / Chassis</MuiTableCell>
+                    <MuiTableCell header>Stock ID, Vehicle & VIN</MuiTableCell>
                     <MuiTableCell header>Status</MuiTableCell>
                     <MuiTableCell header>Gomrok Customs</MuiTableCell>
-                    <MuiTableCell header>Landed Cost</MuiTableCell>
-                    <MuiTableCell header>Selling Price</MuiTableCell>
-                    <MuiTableCell header align="right">
+                    <MuiTableCell header align="right">Landed Cost</MuiTableCell>
+                    <MuiTableCell header align="right">Selling Price</MuiTableCell>
+                    <MuiTableCell header align="right" className="!pe-3">
                       Actions
                     </MuiTableCell>
                   </MuiTableRow>
@@ -326,61 +325,63 @@ export default function AdminDashboardPage() {
                 <MuiTableBody>
                   {filteredInventory.map((veh) => (
                     <MuiTableRow key={veh.id}>
-                      <MuiTableCell>
-                        <div className="font-semibold text-slate-900 dark:text-white">
+                      <MuiTableCell className="py-1.5">
+                        <div className="font-bold text-xs text-slate-900 dark:text-white leading-tight">
                           {veh.year} {veh.make} {veh.model}
                         </div>
-                        <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                          <span>{veh.stockNumber} • {veh.originCountry}</span>
-                          <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-500 font-sans">
-                            {veh.images.length} Photos
+                        <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                          <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-1 py-0.2 rounded border border-blue-200/50 dark:border-blue-900/50">
+                            {veh.stockNumber}
                           </span>
+                          <span className="select-all text-slate-500 font-mono tracking-tight">{veh.vin}</span>
+                          <span>•</span>
+                          <span>{veh.originCountry}</span>
                         </div>
                       </MuiTableCell>
-                      <MuiTableCell className="font-mono text-slate-600 dark:text-slate-400">
-                        {veh.vin}
-                      </MuiTableCell>
-                      <MuiTableCell>
+                      <MuiTableCell className="py-1.5 whitespace-nowrap">
                         <MuiChip
                           label={veh.status}
                           color={veh.status === "Available on Lot" ? "success" : "default"}
                           size="small"
                         />
                       </MuiTableCell>
-                      <MuiTableCell className="text-slate-600 dark:text-slate-400 truncate max-w-[160px]">
-                        {veh.customsClearance}
+                      <MuiTableCell className="py-1.5 text-slate-600 dark:text-slate-300 text-[11px] whitespace-nowrap">
+                        {veh.customsClearance.split("-")[0].trim()}
                       </MuiTableCell>
-                      <MuiTableCell className="font-mono text-slate-600 dark:text-slate-300">
+                      <MuiTableCell align="right" className="py-1.5 font-mono text-[11px] text-slate-600 dark:text-slate-300 whitespace-nowrap">
                         ${veh.landedCost.toLocaleString()} USD
                       </MuiTableCell>
-                      <MuiTableCell className="font-mono font-semibold text-slate-900 dark:text-white">
+                      <MuiTableCell align="right" className="py-1.5 font-mono font-bold text-xs text-slate-900 dark:text-white whitespace-nowrap">
                         ${veh.sellingPrice.toLocaleString()} USD
                       </MuiTableCell>
-                      <MuiTableCell align="right">
-                        <div className="flex items-center justify-end gap-1">
+                      <MuiTableCell align="right" className="py-1.5 whitespace-nowrap !pe-3">
+                        <div className="flex items-center justify-end gap-0.5">
                           <IconButton
                             size="small"
                             color="primary"
                             href={`/vehicles/${veh.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
+                            sx={{ padding: "4px" }}
                             title="View Photo Gallery & Specs"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-3.5 w-3.5" />
                           </IconButton>
                           <IconButton
                             component={Link}
                             href={`/vehicles/${veh.id}/deed`}
                             size="small"
                             color="primary"
+                            sx={{ padding: "4px" }}
                             title="Print Legal Deed"
                           >
-                            <FileText className="h-4 w-4" />
+                            <FileText className="h-3.5 w-3.5" />
                           </IconButton>
                           {currentRole === "SuperAdmin" && (
                             <IconButton
                               size="small"
                               color="error"
+                              sx={{ padding: "4px" }}
                               onClick={() => {
                                 if (confirm(`Delete stock ${veh.stockNumber}?`)) {
                                   deleteVehicle(veh.id);
@@ -388,7 +389,7 @@ export default function AdminDashboardPage() {
                               }}
                               title="Delete vehicle"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </IconButton>
                           )}
                         </div>
@@ -607,40 +608,40 @@ export default function AdminDashboardPage() {
               </h3>
             </div>
             <div className="overflow-x-auto">
-              <MuiTable dense>
+              <MuiTable dense size="small" className="w-full">
                 <MuiTableHead>
                   <MuiTableRow hover={false}>
                     <MuiTableCell header>Contract #</MuiTableCell>
                     <MuiTableCell header>Vehicle</MuiTableCell>
                     <MuiTableCell header>Buyer & Tazkira</MuiTableCell>
-                    <MuiTableCell header>Price</MuiTableCell>
+                    <MuiTableCell header align="right">Price</MuiTableCell>
                     <MuiTableCell header>Payment</MuiTableCell>
                   </MuiTableRow>
                 </MuiTableHead>
                 <MuiTableBody>
                   {sales.map((s) => (
                     <MuiTableRow key={s.id}>
-                      <MuiTableCell className="font-mono font-semibold text-primary">
+                      <MuiTableCell className="py-1.5 font-mono font-semibold text-primary text-xs">
                         {s.contractNumber}
                       </MuiTableCell>
-                      <MuiTableCell>
-                        <div className="font-semibold text-slate-900 dark:text-white">
+                      <MuiTableCell className="py-1.5">
+                        <div className="font-semibold text-xs text-slate-900 dark:text-white leading-tight">
                           {s.vehicleName}
                         </div>
-                        <div className="text-[11px] text-slate-400">
+                        <div className="text-[10px] text-slate-400 font-mono">
                           {s.stockNumber}
                         </div>
                       </MuiTableCell>
-                      <MuiTableCell>
-                        <div className="text-slate-900 dark:text-white">{s.customerName}</div>
+                      <MuiTableCell className="py-1.5">
+                        <div className="text-xs font-medium text-slate-900 dark:text-white">{s.customerName}</div>
                         <div className="text-[10px] font-mono text-slate-400">
                           {s.customerTazkira}
                         </div>
                       </MuiTableCell>
-                      <MuiTableCell className="font-mono font-semibold text-slate-900 dark:text-white">
+                      <MuiTableCell align="right" className="py-1.5 font-mono font-bold text-xs text-slate-900 dark:text-white whitespace-nowrap">
                         ${s.salePriceUSD.toLocaleString()}
                       </MuiTableCell>
-                      <MuiTableCell>
+                      <MuiTableCell className="py-1.5 whitespace-nowrap">
                         <MuiChip
                           label={s.paymentType}
                           color={s.paymentType === "Full Cash" ? "success" : "default"}

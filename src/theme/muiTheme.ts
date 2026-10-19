@@ -115,17 +115,24 @@ export function getMuiTheme(mode: "light" | "dark") {
       MuiTableCell: {
         styleOverrides: {
           root: {
-            fontSize: "0.8125rem",
-            padding: "10px 14px",
+            fontSize: "0.75rem",
+            padding: "7px 10px",
             borderColor: isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.06)",
+            lineHeight: 1.3,
+          },
+          sizeSmall: {
+            padding: "5px 8px",
+            fontSize: "0.75rem",
           },
           head: {
             fontWeight: 700,
-            fontSize: "0.75rem",
+            fontSize: "0.6875rem",
             textTransform: "uppercase",
-            letterSpacing: "0.03em",
+            letterSpacing: "0.04em",
+            padding: "7px 10px",
             backgroundColor: isDark ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.02)",
             color: isDark ? "#94a3b8" : "#64748b",
+            whiteSpace: "nowrap",
           },
         },
       },
