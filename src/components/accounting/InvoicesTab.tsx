@@ -21,6 +21,7 @@ import {
   FileCheck2,
   Plus,
   Search,
+  X,
   Eye,
   Printer,
   DollarSign,
@@ -48,13 +49,18 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
   const [registrationFeeUSD, setRegistrationFeeUSD] = useState<number>(400);
   const [discountUSD, setDiscountUSD] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState("Cash (نقدی)");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
-  const filteredInvoices = invoices.filter(
-    (inv) =>
-      inv.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
-      inv.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      (inv.vehicleStock && inv.vehicleStock.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredInvoices = invoices.filter((inv) => {
+    if (statusFilter !== "ALL" && inv.status !== statusFilter) return false;
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      inv.invoiceNumber.toLowerCase().includes(q) ||
+      inv.customerName.toLowerCase().includes(q) ||
+      (inv.vehicleStock && inv.vehicleStock.toLowerCase().includes(q))
+    );
+  });
 
   const totalInvoiced = invoices.reduce((acc, inv) => acc + inv.totalUSD, 0);
   const totalPaid = invoices
@@ -175,14 +181,53 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
 
       {/* Toolbar & Search */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-        <MuiTextField
-          size="small"
-          placeholder="Search invoice #, buyer, stock..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          startAdornment={<Search className="h-3.5 w-3.5 text-slate-400" />}
-          className="w-full sm:w-64"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search invoice #, buyer, stock..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-52 sm:w-64 ps-7 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 h-8"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
+          >
+            <option value="ALL">All Invoices</option>
+            <option value="Paid">Paid / Settled (تسویه‌شده)</option>
+            <option value="Pending">Pending (در انتظار پرداخت)</option>
+            <option value="Overdue">Overdue (معوقه)</option>
+          </select>
+
+          {(search || statusFilter !== "ALL") && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setStatusFilter("ALL");
+              }}
+              className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline px-1 cursor-pointer"
+            >
+              Reset
+            </button>
+          )}
+
+          <span className="text-[11px] font-mono text-slate-400">
+            ({filteredInvoices.length} invoices)
+          </span>
+        </div>
 
         <MuiButton
           variant="contained"

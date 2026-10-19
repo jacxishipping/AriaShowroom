@@ -20,6 +20,7 @@ import {
   Building2,
   Plus,
   Search,
+  X,
   Eye,
   DollarSign,
   Phone,
@@ -53,13 +54,21 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
   const [bankOrSarrafiAccount, setBankOrSarrafiAccount] = useState("Sarrafi Khorasan Market Holding Safe");
   const [notes, setNotes] = useState("");
 
+  const [standingFilter, setStandingFilter] = useState("all");
+
   const filteredSuppliers = suppliers.filter((s) => {
     const matchesSearch =
       s.companyName.toLowerCase().includes(search.toLowerCase()) ||
       s.contactName.toLowerCase().includes(search.toLowerCase()) ||
       Boolean(s.city && s.city.toLowerCase().includes(search.toLowerCase()));
     const matchesCountry = countryFilter === "all" || s.country.toLowerCase().includes(countryFilter.toLowerCase());
-    return matchesSearch && matchesCountry;
+    const matchesStanding =
+      standingFilter === "all"
+        ? true
+        : standingFilter === "owing"
+        ? s.balanceUSD > 0
+        : s.balanceUSD <= 0;
+    return matchesSearch && matchesCountry && matchesStanding;
   });
 
   const totalPayablesUSD = suppliers.reduce((acc, s) => acc + s.balanceUSD, 0);
@@ -166,31 +175,66 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
         </div>
       </div>
 
-      {/* Control Bar: Search, Country Filter, and Add Supplier */}
+      {/* Control Bar: Search, Country Filter, Standing Filter, and Add Supplier */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-        <div className="flex flex-1 items-center gap-2">
-          <MuiTextField
-            size="small"
-            placeholder="Search supplier, contact, city..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            startAdornment={<Search className="h-3.5 w-3.5 text-slate-400" />}
-            sx={{ minWidth: 200, maxWidth: 300 }}
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search supplier, contact, city..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-52 sm:w-64 ps-7 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 h-8"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
 
-          <MuiTextField
-            select
-            size="small"
+          <select
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
-            sx={{ minWidth: 140 }}
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
           >
-            <MenuItem value="all">All Origins</MenuItem>
-            <MenuItem value="uae">UAE (Dubai)</MenuItem>
-            <MenuItem value="japan">Japan</MenuItem>
-            <MenuItem value="iran">Iran</MenuItem>
-            <MenuItem value="afghanistan">Transit / Local</MenuItem>
-          </MuiTextField>
+            <option value="all">All Origins</option>
+            <option value="uae">UAE (Dubai)</option>
+            <option value="japan">Japan</option>
+            <option value="iran">Iran</option>
+            <option value="afghanistan">Transit / Local</option>
+          </select>
+
+          <select
+            value={standingFilter}
+            onChange={(e) => setStandingFilter(e.target.value)}
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
+          >
+            <option value="all">All Accounts</option>
+            <option value="owing">Awaiting Hawala (Owing)</option>
+            <option value="settled">Cleared Standing (0 Bal)</option>
+          </select>
+
+          {(search || countryFilter !== "all" || standingFilter !== "all") && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setCountryFilter("all");
+                setStandingFilter("all");
+              }}
+              className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline px-1 cursor-pointer"
+            >
+              Reset
+            </button>
+          )}
+
+          <span className="text-[11px] font-mono text-slate-400">
+            ({filteredSuppliers.length} suppliers)
+          </span>
         </div>
 
         <MuiButton

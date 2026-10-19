@@ -43,6 +43,7 @@ import {
   TrendingUp,
   Plus,
   Search,
+  X,
   Trash2,
   Edit,
   Eye,
@@ -105,8 +106,10 @@ export default function AdminDashboardPage() {
     "inventory" | "crm" | "sales" | "invoices" | "suppliers" | "expenses" | "payments" | "accounting"
   >("inventory");
 
-  // Search in inventory table
+  // Search & filters in inventory and sales
   const [inventorySearch, setInventorySearch] = useState("");
+  const [inventoryStatus, setInventoryStatus] = useState("ALL");
+  const [salesSearch, setSalesSearch] = useState("");
 
   // Sale transaction creation state
   const [saleForm, setSaleForm] = useState({
@@ -123,13 +126,31 @@ export default function AdminDashboardPage() {
   });
 
   // Filtered vehicles for inventory tab
-  const filteredInventory = vehicles.filter(
-    (v) =>
-      v.make.toLowerCase().includes(inventorySearch.toLowerCase()) ||
-      v.model.toLowerCase().includes(inventorySearch.toLowerCase()) ||
-      v.stockNumber.toLowerCase().includes(inventorySearch.toLowerCase()) ||
-      v.vin.toLowerCase().includes(inventorySearch.toLowerCase())
-  );
+  const filteredInventory = vehicles.filter((v) => {
+    if (inventoryStatus !== "ALL" && v.status !== inventoryStatus) return false;
+    if (inventorySearch.trim()) {
+      const q = inventorySearch.toLowerCase();
+      return (
+        v.make.toLowerCase().includes(q) ||
+        v.model.toLowerCase().includes(q) ||
+        v.stockNumber.toLowerCase().includes(q) ||
+        v.vin.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
+  // Filtered sales records
+  const filteredSales = sales.filter((s) => {
+    if (!salesSearch.trim()) return true;
+    const q = salesSearch.toLowerCase();
+    return (
+      s.contractNumber.toLowerCase().includes(q) ||
+      s.customerName.toLowerCase().includes(q) ||
+      s.vehicleName.toLowerCase().includes(q) ||
+      s.customerTazkira.toLowerCase().includes(q)
+    );
+  });
 
   const handleCreateSale = (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,16 +302,56 @@ export default function AdminDashboardPage() {
       {/* TAB 1: INVENTORY MANAGEMENT */}
       {activeTab === "inventory" && (
         <div className="space-y-6">
-          {/* Actions Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <MuiTextField
-              size="small"
-              placeholder="Search stock #, VIN, make..."
-              value={inventorySearch}
-              onChange={(e) => setInventorySearch(e.target.value)}
-              startAdornment={<Search className="h-4 w-4 text-slate-400" />}
-              className="w-full sm:w-72"
-            />
+          {/* Actions Bar with Status Filter and Search */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search stock #, VIN, make..."
+                  value={inventorySearch}
+                  onChange={(e) => setInventorySearch(e.target.value)}
+                  className="w-52 sm:w-60 ps-7 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 h-8"
+                />
+                {inventorySearch && (
+                  <button
+                    onClick={() => setInventorySearch("")}
+                    className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+
+              <select
+                value={inventoryStatus}
+                onChange={(e) => setInventoryStatus(e.target.value)}
+                className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="Available on Lot">Available on Lot</option>
+                <option value="In Transit">In Transit</option>
+                <option value="Reserved/Deposit Paid">Reserved / Deposit</option>
+                <option value="Sold">Sold</option>
+              </select>
+
+              {(inventorySearch || inventoryStatus !== "ALL") && (
+                <button
+                  onClick={() => {
+                    setInventorySearch("");
+                    setInventoryStatus("ALL");
+                  }}
+                  className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline px-1 cursor-pointer"
+                >
+                  Reset
+                </button>
+              )}
+
+              <span className="text-[11px] font-mono text-slate-400">
+                ({filteredInventory.length} units)
+              </span>
+            </div>
 
             {currentRole !== "Accountant" && (
               <MuiButton
@@ -602,10 +663,28 @@ export default function AdminDashboardPage() {
 
           {/* Past Sales Records Table */}
           <MuiCard elevation={1} className="lg:col-span-7">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">
-                Completed Showroom Contracts & Installments
+            <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-900/40">
+              <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
+                Completed Showroom Contracts & Installments ({filteredSales.length})
               </h3>
+              <div className="relative">
+                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Filter contract, buyer, vehicle..."
+                  value={salesSearch}
+                  onChange={(e) => setSalesSearch(e.target.value)}
+                  className="w-48 sm:w-56 ps-7 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 h-7"
+                />
+                {salesSearch && (
+                  <button
+                    onClick={() => setSalesSearch("")}
+                    className="absolute end-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
             </div>
             <div className="overflow-x-auto">
               <MuiTable dense size="small" className="w-full">
@@ -619,7 +698,7 @@ export default function AdminDashboardPage() {
                   </MuiTableRow>
                 </MuiTableHead>
                 <MuiTableBody>
-                  {sales.map((s) => (
+                  {filteredSales.map((s) => (
                     <MuiTableRow key={s.id}>
                       <MuiTableCell className="py-1.5 font-mono font-semibold text-primary text-xs">
                         {s.contractNumber}

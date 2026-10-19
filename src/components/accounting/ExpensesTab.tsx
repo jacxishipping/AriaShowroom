@@ -18,6 +18,7 @@ import {
   Receipt,
   Plus,
   Search,
+  X,
   DollarSign,
   Car,
   Filter,
@@ -197,47 +198,69 @@ export function ExpensesTab() {
 
       {/* Control Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-        <div className="flex flex-1 flex-wrap items-center gap-2">
-          <MuiTextField
-            size="small"
-            placeholder="Search description, payee..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            startAdornment={<Search className="h-3.5 w-3.5 text-slate-400" />}
-            sx={{ minWidth: 180, maxWidth: 260 }}
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search description, payee..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-48 sm:w-60 ps-7 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 h-8"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
 
-          <MuiTextField
-            select
-            size="small"
+          <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            sx={{ minWidth: 150 }}
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
           >
-            <MenuItem value="all">All Categories</MenuItem>
-            <MenuItem value="Gomrok & Port Tariffs">Gomrok & Tariffs</MenuItem>
-            <MenuItem value="Transit & Ocean Freight">Transit & Freight</MenuItem>
-            <MenuItem value="Vehicle Maintenance/Detailing">Maintenance & Detailing</MenuItem>
-            <MenuItem value="Showroom Overhead & Fuel">Showroom Overhead & Fuel</MenuItem>
-            <MenuItem value="Staff Commissions">Staff Commissions</MenuItem>
-          </MuiTextField>
+            <option value="all">All Categories</option>
+            <option value="Gomrok & Port Tariffs">Gomrok & Tariffs</option>
+            <option value="Transit & Ocean Freight">Transit & Freight</option>
+            <option value="Vehicle Maintenance/Detailing">Maintenance & Detailing</option>
+            <option value="Showroom Overhead & Fuel">Showroom Overhead & Fuel</option>
+            <option value="Staff Commissions">Staff Commissions</option>
+          </select>
 
-          <MuiTextField
-            select
-            size="small"
-            label="Vehicle Allocation"
+          <select
             value={vehicleFilter}
             onChange={(e) => setVehicleFilter(e.target.value)}
-            sx={{ minWidth: 220 }}
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer max-w-[200px] truncate"
           >
-            <MenuItem value="all">All Vehicle Cost Allocations</MenuItem>
-            <MenuItem value="overhead">Showroom General Overhead (Unallocated)</MenuItem>
+            <option value="all">All Allocations</option>
+            <option value="overhead">General Overhead</option>
             {vehicles.map((v) => (
-              <MenuItem key={v.id} value={v.stockNumber}>
-                {v.stockNumber} - {v.year} {v.make} {v.model}
-              </MenuItem>
+              <option key={v.id} value={v.stockNumber}>
+                {v.stockNumber} - {v.make} {v.model}
+              </option>
             ))}
-          </MuiTextField>
+          </select>
+
+          {(search || categoryFilter !== "all" || vehicleFilter !== "all") && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setCategoryFilter("all");
+                setVehicleFilter("all");
+              }}
+              className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline px-1 cursor-pointer"
+            >
+              Reset
+            </button>
+          )}
+
+          <span className="text-[11px] font-mono text-slate-400">
+            ({filteredExpenses.length} expenses)
+          </span>
         </div>
 
         <MuiButton

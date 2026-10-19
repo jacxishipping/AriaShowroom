@@ -66,6 +66,7 @@ export default function ErpOperationsCockpit() {
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [makeFilter, setMakeFilter] = useState("ALL");
   const [statusTab, setStatusTab] = useState<
     "ALL" | "Available on Lot" | "In Transit" | "Reserved/Deposit Paid" | "Sold"
   >("ALL");
@@ -116,6 +117,7 @@ export default function ErpOperationsCockpit() {
   const processedVehicles = useMemo(() => {
     let list = vehicles.filter((v) => {
       if (statusTab !== "ALL" && v.status !== statusTab) return false;
+      if (makeFilter !== "ALL" && v.make !== makeFilter) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         return (
@@ -401,24 +403,57 @@ export default function ErpOperationsCockpit() {
             })}
           </div>
 
-          {/* Table Quick Filter Input */}
-          <div className="relative flex items-center shrink-0">
-            <Search className="absolute start-3 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Filter stock #, VIN, model..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-64 ps-8 pe-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-            />
-            {searchQuery && (
+          {/* Table Quick Filter Input & Make Filter */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Make Selector */}
+            <select
+              value={makeFilter}
+              onChange={(e) => setMakeFilter(e.target.value)}
+              className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
+            >
+              <option value="ALL">All Makes</option>
+              <option value="Toyota">Toyota</option>
+              <option value="Lexus">Lexus</option>
+            </select>
+
+            {/* Table Quick Filter Input */}
+            <div className="relative flex items-center">
+              <Search className="absolute start-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Filter stock #, VIN, model..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-48 sm:w-56 ps-7 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all h-8"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute end-2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Quick Reset when active */}
+            {(searchQuery || makeFilter !== "ALL" || statusTab !== "ALL") && (
               <button
-                onClick={() => setSearchQuery("")}
-                className="absolute end-2 text-slate-400 hover:text-slate-600 p-0.5"
+                onClick={() => {
+                  setSearchQuery("");
+                  setMakeFilter("ALL");
+                  setStatusTab("ALL");
+                }}
+                className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline px-1 cursor-pointer"
               >
-                <X className="h-3 w-3" />
+                Reset
               </button>
             )}
+
+            {/* Counter */}
+            <span className="text-[11px] font-mono text-slate-400 hidden xl:inline">
+              ({processedVehicles.length}/{vehicles.length})
+            </span>
           </div>
         </div>
 

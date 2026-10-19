@@ -20,6 +20,7 @@ import {
   Banknote,
   Plus,
   Search,
+  X,
   Eye,
   Printer,
   DollarSign,
@@ -200,41 +201,64 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
 
       {/* Control Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-        <div className="flex flex-1 flex-wrap items-center gap-2">
-          <MuiTextField
-            size="small"
-            placeholder="Search voucher #, party, hawala..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            startAdornment={<Search className="h-3.5 w-3.5 text-slate-400" />}
-            sx={{ minWidth: 180, maxWidth: 260 }}
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search voucher #, party, hawala..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-48 sm:w-60 ps-7 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 h-8"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
 
-          <MuiTextField
-            select
-            size="small"
+          <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            sx={{ minWidth: 140 }}
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
           >
-            <MenuItem value="all">All Types</MenuItem>
-            <MenuItem value="CUSTOMER_PAYMENT">Customer Receipts (دریافتی)</MenuItem>
-            <MenuItem value="SUPPLIER_PAYMENT">Supplier Hawala (تامین‌کننده)</MenuItem>
-            <MenuItem value="EXPENSE_PAYMENT">Expense Outlays (مصارف)</MenuItem>
-          </MuiTextField>
+            <option value="all">All Types</option>
+            <option value="CUSTOMER_PAYMENT">Customer Receipts (دریافتی)</option>
+            <option value="SUPPLIER_PAYMENT">Supplier Hawala (تامین‌کننده)</option>
+            <option value="EXPENSE_PAYMENT">Expense Outlays (مصارف)</option>
+          </select>
 
-          <MuiTextField
-            select
-            size="small"
+          <select
             value={methodFilter}
             onChange={(e) => setMethodFilter(e.target.value)}
-            sx={{ minWidth: 130 }}
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
           >
-            <MenuItem value="all">All Channels</MenuItem>
-            <MenuItem value="cash">Cash Safe (نقدی)</MenuItem>
-            <MenuItem value="hawala">Sarrafi (حواله)</MenuItem>
-            <MenuItem value="bank">Bank Wire (بانک)</MenuItem>
-          </MuiTextField>
+            <option value="all">All Channels</option>
+            <option value="cash">Cash Safe (نقدی)</option>
+            <option value="hawala">Sarrafi (حواله)</option>
+            <option value="bank">Bank Wire (بانک)</option>
+          </select>
+
+          {(search || typeFilter !== "all" || methodFilter !== "all") && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setTypeFilter("all");
+                setMethodFilter("all");
+              }}
+              className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline px-1 cursor-pointer"
+            >
+              Reset
+            </button>
+          )}
+
+          <span className="text-[11px] font-mono text-slate-400">
+            ({filteredPayments.length} vouchers)
+          </span>
         </div>
 
         <MuiButton
