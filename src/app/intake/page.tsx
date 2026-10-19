@@ -406,14 +406,15 @@ export default function VehicleIntakePage() {
     }
   };
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     if (!validateStep(0) || !validateStep(1) || !validateStep(2)) {
       return;
     }
 
-    addVehicle({
+    try {
+      await addVehicle({
       stockNumber: formData.stockNumber,
       vin: formData.vin,
       make: formData.make,
@@ -451,7 +452,11 @@ export default function VehicleIntakePage() {
       },
       images: images.length > 0 ? images : [SAMPLE_VEHICLE_PHOTOS_40[0]],
       documents: [],
-    });
+      });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to save vehicle intake", "error");
+      return;
+    }
 
     addToast(
       `✓ Successfully registered ${formData.make} ${formData.model} (${formData.stockNumber}) into showroom inventory!`,

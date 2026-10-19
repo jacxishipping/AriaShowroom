@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 
 export function ExpensesTab() {
-  const { expenses, vehicles, exchangeRate, addExpense } = useShowroomStore();
+  const { expenses, vehicles, exchangeRate, addExpense, addToast } = useShowroomStore();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [vehicleFilter, setVehicleFilter] = useState("all");
@@ -87,23 +87,29 @@ export function ExpensesTab() {
     .filter((e) => e.category === "Showroom Overhead & Fuel" || e.category === "Staff Commissions")
     .reduce((acc, e) => acc + e.amountUSD, 0);
 
-  const handleCreateExpense = (e: React.FormEvent) => {
+  const handleCreateExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (amountUSD <= 0) return;
 
-    addExpense({
-      category,
-      vehicleStock: vehicleStock ? vehicleStock : undefined,
-      amountUSD: Number(amountUSD),
-      description,
-      payee: payee || undefined,
-      receiptNumber: receiptNumber || undefined,
-    });
+    try {
+      await addExpense({
+        category,
+        vehicleStock: vehicleStock ? vehicleStock : undefined,
+        amountUSD: Number(amountUSD),
+        description,
+        payee: payee || undefined,
+        receiptNumber: receiptNumber || undefined,
+      });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to save expense", "error");
+      return;
+    }
 
     // Reset Form
     setDescription("");
     setReceiptNumber("MKT-HRT-2026-");
     setIsCreating(false);
+    addToast("Expense recorded", "success");
   };
 
   const getCategoryColor = (cat: string) => {

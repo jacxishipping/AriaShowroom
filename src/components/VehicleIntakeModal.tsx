@@ -31,7 +31,7 @@ interface VehicleIntakeModalProps {
 }
 
 export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps) {
-  const { addVehicle } = useShowroomStore();
+  const { addVehicle, addToast } = useShowroomStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -171,10 +171,11 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    addVehicle({
+    try {
+      await addVehicle({
       stockNumber: formData.stockNumber,
       vin: formData.vin,
       make: formData.make,
@@ -212,7 +213,11 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
       },
       images: images.length > 0 ? images : [SAMPLE_VEHICLE_PHOTOS_40[0]],
       documents: [],
-    });
+      });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to save vehicle intake", "error");
+      return;
+    }
 
     onClose();
   };

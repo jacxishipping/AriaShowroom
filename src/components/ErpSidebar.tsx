@@ -107,74 +107,51 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
 
   const renderSidebarContent = (isMobile = false) => (
     <>
-      {/* Enterprise Drawer Header: Brand Avatar & Showroom ID */}
-      <div className="flex h-14 items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 px-4 shrink-0">
+      <div className="flex h-16 items-center justify-between border-b border-slate-200/80 px-4 dark:border-slate-800/80">
         {(!collapsed || isMobile) && (
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-slate-800 dark:text-white border border-slate-700/60 shadow-xs font-bold">
-              <Car className="h-4 w-4 text-primary" />
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm dark:bg-slate-700">
+              <Car className="h-4 w-4" />
             </div>
             <div className="truncate">
-              <span className="text-xs font-bold tracking-tight text-slate-900 dark:text-white block">
-                {t.brandName}
-              </span>
-              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block font-medium">
-                Dealership ERP
-              </span>
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">{t.brandName}</div>
+              <div className="text-[10px] uppercase tracking-[0.14em] text-slate-500">ERP</div>
             </div>
           </div>
         )}
 
         {collapsed && !isMobile && (
-          <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-slate-800 border border-slate-700/60 shadow-xs font-bold">
-            <Car className="h-4 w-4 text-primary" />
+          <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-slate-700">
+            <Car className="h-4 w-4" />
           </div>
         )}
 
         {isMobile ? (
-          <IconButton
-            size="small"
-            onClick={() => setMobileDrawerOpen(false)}
-            title="Close Drawer"
-          >
-            <X className="h-5 w-5" />
+          <IconButton size="small" onClick={() => setMobileDrawerOpen(false)} title="Close Drawer">
+            <X className="h-4 w-4" />
           </IconButton>
         ) : (
-          <IconButton
-            size="small"
-            onClick={() => setCollapsed(!collapsed)}
-            title={collapsed ? "Expand Drawer" : "Collapse Drawer"}
-          >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4 rtl:rotate-180" />
-            ) : (
-              <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
-            )}
+          <IconButton size="small" onClick={() => setCollapsed(!collapsed)} title={collapsed ? "Expand Drawer" : "Collapse Drawer"}>
+            {collapsed ? <ChevronRight className="h-4 w-4 rtl:rotate-180" /> : <ChevronLeft className="h-4 w-4 rtl:rotate-180" />}
           </IconButton>
         )}
       </div>
 
-      {/* Quick Intake Button */}
-      <div className="p-3 shrink-0">
+      <div className="px-3 py-3">
         <Link
           href="/intake"
           onClick={() => isMobile && setMobileDrawerOpen(false)}
-          className={`flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-xs tracking-wide shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200 py-2.5 px-3 ${
-            collapsed && !isMobile ? "w-10 h-10 p-0 mx-auto" : "w-full"
+          className={`flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 ${
+            collapsed && !isMobile ? "h-10 w-10 p-0" : "w-full"
           }`}
           title={t.addNewVehicle}
         >
-          <PlusCircle className="h-4 w-4 shrink-0" />
-          {(!collapsed || isMobile) && <span className="truncate">{t.addNewVehicle}</span>}
+          <PlusCircle className="h-4 w-4" />
+          {(!collapsed || isMobile) && <span>{t.addNewVehicle}</span>}
         </Link>
       </div>
 
-      {/* Material List Items */}
-      <nav className="flex-1 space-y-1 px-2 py-2 overflow-y-auto">
-        <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-          {(!collapsed || isMobile) && <span>Main Navigation</span>}
-        </div>
-
+      <nav className="flex-1 space-y-1.5 overflow-y-auto px-2 py-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const IconComponent = item.icon;
@@ -184,20 +161,14 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
               key={item.href}
               href={item.href}
               onClick={() => isMobile && setMobileDrawerOpen(false)}
-              className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium transition-all ${
+              className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
                 isActive
-                  ? "bg-primary/10 text-primary font-semibold dark:bg-primary/20 dark:text-primary"
-                  : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/60 dark:hover:text-white"
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white"
               } ${collapsed && !isMobile ? "justify-center" : ""}`}
               title={collapsed && !isMobile ? item.title : undefined}
             >
-              <span
-                className={`shrink-0 transition-colors ${
-                  isActive
-                    ? "text-primary"
-                    : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"
-                }`}
-              >
+              <span className={`shrink-0 ${isActive ? "text-blue-600 dark:text-blue-300" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"}`}>
                 <IconComponent className="h-4 w-4" />
               </span>
 
@@ -205,57 +176,23 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
                 <>
                   <span className="flex-1 truncate">{item.title}</span>
                   {item.badge && (
-                    <MuiChip
-                      label={item.badge}
-                      size="small"
-                      color={isActive ? "primary" : "default"}
-                    />
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${isActive ? "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300"}`}>
+                      {item.badge}
+                    </span>
                   )}
                 </>
               )}
             </Link>
           );
         })}
-
-        {/* Live Lot Telemetry Widget */}
-        {(!collapsed || isMobile) && (
-          <div className="mt-6 mx-1 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 p-3 dark:bg-slate-900/30">
-            <div className="flex items-center justify-between text-xs mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Herat Lot Status
-              </span>
-              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600 dark:text-slate-400 text-[11px]">Available on Lot</span>
-                <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]">
-                  {activeLotCount} Cars
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600 dark:text-slate-400 text-[11px]">Islam Qala Transit</span>
-                <span className="font-mono font-semibold text-amber-600 dark:text-amber-400 text-[11px]">
-                  {inTransitCount} Units
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
       </nav>
 
-      {/* Material Drawer Footer: User Profile Card */}
-      <div className="border-t border-slate-200/80 dark:border-slate-800/80 p-3 shrink-0">
-        <div
-          className={`flex items-center gap-3 rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors ${
-            collapsed && !isMobile ? "justify-center" : ""
-          }`}
-        >
+      <div className="border-t border-slate-200/80 p-3 dark:border-slate-800/80">
+        <div className={`flex items-center gap-3 rounded-xl bg-slate-50 p-2 dark:bg-slate-900/60 ${collapsed && !isMobile ? "justify-center" : ""}`}>
           <div className="relative shrink-0">
             <Avatar
               sx={{
-                bgcolor: "primary.main",
+                bgcolor: "#2563eb",
                 width: 32,
                 height: 32,
                 fontSize: "0.75rem",
@@ -264,21 +201,15 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
             >
               {currentRole === "SuperAdmin" ? "HA" : currentRole === "SalesAgent" ? "FT" : "MS"}
             </Avatar>
-            <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#121824]" />
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-50 dark:ring-slate-900" />
           </div>
 
           {(!collapsed || isMobile) && (
-            <div className="truncate">
-              <span className="text-xs font-bold text-slate-900 dark:text-white block truncate leading-tight">
-                {currentRole === "SuperAdmin"
-                  ? "Haji Ahmad Shah"
-                  : currentRole === "SalesAgent"
-                  ? "Farhad Timori"
-                  : "Mirwais Saljuqi"}
-              </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block">
-                {currentRole} • Bagh-e-Azadi Lot
-              </span>
+            <div className="min-w-0 truncate">
+              <div className="truncate text-xs font-semibold text-slate-900 dark:text-white">
+                {currentRole === "SuperAdmin" ? "Haji Ahmad Shah" : currentRole === "SalesAgent" ? "Farhad Timori" : "Mirwais Saljuqi"}
+              </div>
+              <div className="truncate text-[10px] text-slate-500 dark:text-slate-400">{currentRole}</div>
             </div>
           )}
         </div>

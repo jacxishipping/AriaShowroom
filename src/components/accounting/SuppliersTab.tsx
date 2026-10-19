@@ -38,7 +38,7 @@ interface SuppliersTabProps {
 }
 
 export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
-  const { suppliers, exchangeRate, addSupplier } = useShowroomStore();
+  const { suppliers, exchangeRate, addSupplier, addToast } = useShowroomStore();
   const [search, setSearch] = useState("");
   const [countryFilter, setCountryFilter] = useState("all");
   const [isCreating, setIsCreating] = useState(false);
@@ -76,21 +76,26 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
   const settledCount = suppliers.filter((s) => s.balanceUSD <= 0).length;
   const activeOwingCount = suppliers.filter((s) => s.balanceUSD > 0).length;
 
-  const handleCreateSupplier = (e: React.FormEvent) => {
+  const handleCreateSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyName.trim()) return;
 
-    addSupplier({
-      companyName,
-      contactName: contactName || "Account Representative",
-      country,
-      city,
-      phone,
-      whatsapp,
-      email,
-      bankOrSarrafiAccount,
-      notes,
-    });
+    try {
+      await addSupplier({
+        companyName,
+        contactName: contactName || "Account Representative",
+        country,
+        city,
+        phone,
+        whatsapp,
+        email,
+        bankOrSarrafiAccount,
+        notes,
+      });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to save supplier", "error");
+      return;
+    }
 
     // Reset Form
     setCompanyName("");
@@ -100,6 +105,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
     setEmail("");
     setNotes("");
     setIsCreating(false);
+    addToast("Supplier added", "success");
   };
 
   return (

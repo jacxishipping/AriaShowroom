@@ -210,7 +210,7 @@ export default function LogisticsAndCustomsPage() {
   }, [vehicles, vehicleMilestones]);
 
   // Advance milestone for a vehicle
-  const handleAdvanceMilestone = (vehicle: VehicleItem) => {
+  const handleAdvanceMilestone = async (vehicle: VehicleItem) => {
     const current = vehicleMilestones[vehicle.id] || (vehicle.status === "In Transit" ? 3 : 5);
     if (current < 4) {
       const next = current + 1;
@@ -221,11 +221,16 @@ export default function LogisticsAndCustomsPage() {
       );
     } else if (current === 4) {
       // Move from Islam Qala to Lot
+      try {
+        await updateVehicle(vehicle.id, {
+          status: "Available on Lot",
+          customsClearance: "Islam Qala Gomrok - Verified & Cleared (Doc #MK-2026-8819)",
+        });
+      } catch (error) {
+        addToast(error instanceof Error ? error.message : "Unable to update customs clearance", "error");
+        return;
+      }
       setVehicleMilestones((prev) => ({ ...prev, [vehicle.id]: 5 }));
-      updateVehicle(vehicle.id, {
-        status: "Available on Lot",
-        customsClearance: "Islam Qala Gomrok - Verified & Cleared (Doc #MK-2026-8819)",
-      });
       addToast(
         `🎉 ${vehicle.make} ${vehicle.model} cleared Islam Qala customs and is now Available on Lot!`,
         "success"
@@ -234,12 +239,17 @@ export default function LogisticsAndCustomsPage() {
   };
 
   // Quick action: Clear Gomrok directly
-  const handleDirectClearGomrok = (vehicle: VehicleItem) => {
+  const handleDirectClearGomrok = async (vehicle: VehicleItem) => {
+    try {
+      await updateVehicle(vehicle.id, {
+        status: "Available on Lot",
+        customsClearance: "Islam Qala Gomrok - Cleared via Maktoub #IQ-GMRK-2026-904",
+      });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to update customs clearance", "error");
+      return;
+    }
     setVehicleMilestones((prev) => ({ ...prev, [vehicle.id]: 5 }));
-    updateVehicle(vehicle.id, {
-      status: "Available on Lot",
-      customsClearance: "Islam Qala Gomrok - Cleared via Maktoub #IQ-GMRK-2026-904",
-    });
     addToast(
       `${vehicle.year} ${vehicle.make} ${vehicle.model} customs clearance finalized!`,
       "success"
@@ -247,7 +257,7 @@ export default function LogisticsAndCustomsPage() {
   };
 
   // Quick Action: Dispatch new Dubai Transit Demo Vehicle
-  const handleDispatchDemoShipment = () => {
+  const handleDispatchDemoShipment = async () => {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const newStock = `ARI-DXB-${randomSuffix}`;
     const newVin = `JTEBU5JR8R50${randomSuffix}`;
@@ -306,8 +316,13 @@ export default function LogisticsAndCustomsPage() {
       inquiriesCount: 2,
     };
 
-    addVehicle(demoVehicle);
-    setVehicleMilestones((prev) => ({ ...prev, [demoVehicle.id]: 2 })); // set at High Seas Ocean
+    try {
+      const savedVehicle = await addVehicle(demoVehicle);
+      setVehicleMilestones((prev) => ({ ...prev, [savedVehicle.id]: 2 }));
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to dispatch shipment", "error");
+      return;
+    }
     addToast(`Dispatched new transit shipment: 2024 Lexus LX600 (${newStock}) en route from Dubai!`, "success");
   };
 

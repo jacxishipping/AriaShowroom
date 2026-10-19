@@ -37,7 +37,7 @@ interface PaymentsTabProps {
 }
 
 export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
-  const { payments, suppliers, vehicles, exchangeRate, addPaymentVoucher } = useShowroomStore();
+  const { payments, suppliers, vehicles, exchangeRate, addPaymentVoucher, addToast } = useShowroomStore();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [methodFilter, setMethodFilter] = useState("all");
@@ -83,12 +83,13 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
   const netCashflowUSD = totalInflowsUSD - totalOutflowsUSD;
   const netCashflowAFN = Math.round(netCashflowUSD * exchangeRate);
 
-  const handleCreateVoucher = (e: React.FormEvent) => {
+  const handleCreateVoucher = async (e: React.FormEvent) => {
     e.preventDefault();
     const numAmountUSD = Number(amountUSD);
     const amountAFN = Math.round(numAmountUSD * exchangeRate);
 
-    addPaymentVoucher({
+    try {
+      await addPaymentVoucher({
       voucherType,
       partyName,
       partyPhone: partyPhone || undefined,
@@ -103,7 +104,11 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
       vehicleStock: vehicleStock || undefined,
       purpose,
       recordedBy: "Mirwais Saljuqi (Accountant)",
-    });
+      });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to save payment voucher", "error");
+      return;
+    }
 
     // Reset Form
     setPartyName("");
@@ -111,6 +116,7 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
     setPartyTazkira("");
     setReferenceNumber("");
     setIsCreating(false);
+    addToast("Payment voucher recorded", "success");
   };
 
   const getTypeBadge = (type: string) => {

@@ -34,7 +34,7 @@ interface InvoicesTabProps {
 }
 
 export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
-  const { invoices, vehicles, exchangeRate, addInvoice } = useShowroomStore();
+  const { invoices, vehicles, exchangeRate, addInvoice, addToast } = useShowroomStore();
   const [search, setSearch] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
@@ -68,7 +68,7 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
     .reduce((acc, inv) => acc + inv.totalUSD, 0);
   const totalPending = totalInvoiced - totalPaid;
 
-  const handleCreateInvoice = (e: React.FormEvent) => {
+  const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     const vehicleObj = vehicles.find((v) => v.stockNumber === selectedStock);
     const subtotal = Number(basePriceUSD);
@@ -78,7 +78,8 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
     const totalUSD = subtotal + customs + reg - disc;
     const totalAFN = Math.round(totalUSD * exchangeRate);
 
-    addInvoice({
+    try {
+      await addInvoice({
       customerName,
       customerPhone,
       customerTazkira,
@@ -114,13 +115,17 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
       paymentMethod,
       issueDate: new Date().toISOString().split("T")[0],
       notes: "Commercial invoice generated from ERP Sales Desk",
-    });
+      });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to save invoice", "error");
+      return;
+    }
 
     setIsCreating(false);
     setCustomerName("");
     setCustomerPhone("");
     setCustomerTazkira("");
-    alert("Commercial Invoice generated successfully!");
+    addToast("Commercial invoice generated", "success");
   };
 
   return (

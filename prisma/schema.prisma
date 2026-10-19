@@ -137,11 +137,13 @@ model Customer {
   fullName      String
   phone         String
   whatsapp      String?
-  tazkiraNumber String    @unique
+  tazkiraNumber String?   @unique
   city          String    @default("Herat")
   address       String?
   tradeInRecord String?
   leadStage     LeadStage @default(NEW_INQUIRY)
+  budget        Float     @default(0)
+  interestedInVehicleId String?
   notes         String?
   sales         Sale[]
   createdAt     DateTime  @default(now())

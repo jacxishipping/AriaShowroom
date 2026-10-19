@@ -365,12 +365,7 @@ export default function InventoryPage() {
                         <div className="relative inline-block">
                           <select
                             value={veh.status}
-                            onChange={(e) =>
-                              setVehicleStatus(
-                                veh.id,
-                                e.target.value as VehicleItem["status"]
-                              )
-                            }
+                            onChange={(e) => void setVehicleStatus(veh.id, e.target.value as VehicleItem["status"]).catch((error) => addToast(error.message, "error"))}
                             className={`text-[11px] font-semibold rounded-full px-2 py-0.5 border transition-all cursor-pointer outline-none appearance-none pe-5 leading-tight ${
                               veh.status === "Available on Lot"
                                 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
@@ -450,10 +445,14 @@ export default function InventoryPage() {
                               size="small"
                               color="error"
                               sx={{ padding: "4px" }}
-                              onClick={() => {
+                              onClick={async () => {
                                 if (confirm(`Delete vehicle ${veh.stockNumber}?`)) {
-                                  deleteVehicle(veh.id);
-                                  addToast(`Deleted vehicle ${veh.stockNumber}`, "info");
+                                  try {
+                                    await deleteVehicle(veh.id);
+                                    addToast(`Deleted vehicle ${veh.stockNumber}`, "info");
+                                  } catch (error) {
+                                    addToast(error instanceof Error ? error.message : "Unable to delete vehicle", "error");
+                                  }
                                 }
                               }}
                               title="Delete vehicle"

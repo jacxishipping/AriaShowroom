@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
+import { requireApiRole } from "@/lib/api-auth";
 
 export async function POST(request: Request): Promise<NextResponse> {
+  const unauthorized = await requireApiRole(["ADMIN", "SALES"]);
+  if (unauthorized) return unauthorized;
+
   const token = process.env.BLOB_READ_WRITE_TOKEN;
 
   try {

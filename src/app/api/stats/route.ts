@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireApiRole } from "@/lib/api-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
+  if (unauthorized) return unauthorized;
+
   try {
     const [vehicles, sales, customers, expenses] = await Promise.all([
       prisma.vehicle.findMany({

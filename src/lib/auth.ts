@@ -8,7 +8,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET || "sadozai-herat-luxury-showroom-secret-key-2026",
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "Sadozai Dealership Credentials",
@@ -30,20 +30,23 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (user) {
-            // Check password hash, or match default demo seed password "password123"
-            const isValid =
-              credentials.password === "password123" ||
-              (await bcrypt.compare(credentials.password, user.passwordHash).catch(() => false));
+            const isValid = await bcrypt.compare(credentials.password, user.passwordHash).catch(() => false);
 
-            if (isValid) {
-              return {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                phone: user.phone || undefined,
-              };
+            if (!isValid) {
+              return null;
             }
+
+            return {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              phone: user.phone || undefined,
+            };
+          }
+
+          if (process.env.NODE_ENV === "production") {
+            return null;
           }
         } catch (dbErr) {
           console.warn("Database lookup failed, falling back to verified seed profiles:", dbErr);
@@ -74,7 +77,9 @@ export const authOptions: NextAuthOptions = {
           },
         ];
 
-        const demoUser = demoUsers.find((u) => u.email === email);
+        const demoUser = process.env.NODE_ENV !== "production"
+          ? demoUsers.find((u) => u.email === email)
+          : undefined;
         if (demoUser && (credentials.password === "password123" || credentials.password === "admin123")) {
           return demoUser;
         }

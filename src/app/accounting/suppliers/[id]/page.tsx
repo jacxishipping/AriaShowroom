@@ -68,17 +68,22 @@ export default function SupplierLedgerPage() {
     );
   }
 
-  const handlePaySubmit = (e: React.FormEvent) => {
+  const handlePaySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (payAmount <= 0) return;
 
-    recordSupplierPayment(
-      supplier.id,
-      Number(payAmount),
-      payMethod,
-      payRef,
-      paySarrafi
-    );
+    try {
+      await recordSupplierPayment(
+        supplier.id,
+        Number(payAmount),
+        payMethod,
+        payRef,
+        paySarrafi
+      );
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to record supplier payment", "error");
+      return;
+    }
 
     setIsPaying(false);
     setPayAmount(0);
@@ -86,12 +91,13 @@ export default function SupplierLedgerPage() {
     addToast(`Payment of $${payAmount.toLocaleString()} recorded for ${supplier.companyName}!`, "success");
   };
 
-  const handleBillSubmit = (e: React.FormEvent) => {
+  const handleBillSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (billAmount <= 0) return;
 
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    addSupplierBill({
+    try {
+      await addSupplierBill({
       billNumber: `BILL-${supplier.country.includes("UAE") ? "DXB" : supplier.country.includes("Japan") ? "TYO" : "HRT"}-${randomNum}`,
       supplierId: supplier.id,
       stockNumber: billStock,
@@ -99,7 +105,11 @@ export default function SupplierLedgerPage() {
       amountUSD: Number(billAmount),
       status: "Unpaid",
       issueDate: new Date().toISOString().split("T")[0],
-    });
+      });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to record supplier bill", "error");
+      return;
+    }
 
     setIsBilling(false);
     setBillStock("");

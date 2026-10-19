@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireApiRole } from "@/lib/api-auth";
 
 export async function GET() {
+  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
+  if (unauthorized) return unauthorized;
+
   try {
     const suppliers = await prisma.supplier.findMany({
       include: {
@@ -21,6 +25,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
+  if (unauthorized) return unauthorized;
+
   try {
     const body = await req.json();
 

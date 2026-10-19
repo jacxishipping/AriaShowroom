@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { VehicleStatus, FuelType, TransmissionType, SteeringSide } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { requireApiRole } from "@/lib/api-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    const role = (session?.user as { role?: string } | undefined)?.role;
+    const canViewFinancials = role === "ADMIN" || role === "ACCOUNTANT";
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
     const status = searchParams.get("status");
@@ -34,12 +40,16 @@ export async function GET(request: Request) {
         images: {
           orderBy: { order: "asc" },
         },
-        documents: true,
+        ...(canViewFinancials ? { documents: true } : {}),
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ success: true, count: vehicles.length, data: vehicles });
+    const data = canViewFinancials
+      ? vehicles
+      : vehicles.map(({ purchasePrice, freightCost, customsDuty, repairCost, landedCost, minTargetPrice, conditionNotes, ...vehicle }) => vehicle);
+
+    return NextResponse.json({ success: true, count: data.length, data });
   } catch (error: any) {
     console.error("Error fetching vehicles from Prisma:", error);
     return NextResponse.json(
@@ -50,6 +60,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = await requireApiRole(["ADMIN"]);
+  if (unauthorized) return unauthorized;
+
   try {
     const body = await request.json();
 
@@ -81,7 +94,8 @@ export async function POST(request: Request) {
       features = [],
       description = "",
       descriptionDari = "",
-      descriptionPashto = "",
+      conditionNotes = undefined,
+      yardLocation = undefined,
       images = [],
     } = body;
 
@@ -121,6 +135,7 @@ export async function POST(request: Request) {
         features: Array.isArray(features) ? features : [],
         description,
         descriptionDari,
+        conditionNotes: conditionNotes || (yardLocation ? { yardLocation } : undefined),
         images: {
           create: images.map((img: { url: string; isPrimary?: boolean }, idx: number) => ({
             url: typeof img === "string" ? img : img.url,

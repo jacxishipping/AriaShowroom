@@ -62,7 +62,10 @@ export default function AccountingHubPage() {
   }, 0);
   const grossProfitUSD = totalRevenueUSD - totalCogsUSD;
   const totalExpensesUSD = expenses.reduce((acc, e) => acc + e.amountUSD, 0);
-  const netProfitUSD = grossProfitUSD - totalExpensesUSD;
+  const operatingExpensesUSD = expenses
+    .filter((expense) => !expense.vehicleStock)
+    .reduce((acc, expense) => acc + expense.amountUSD, 0);
+  const netProfitUSD = grossProfitUSD - operatingExpensesUSD;
 
   // Sarrafi Hawala Balance & Cash In Hand
   const cashAccounts = accounts.filter((a) => a.code.startsWith("101") || a.code.startsWith("102"));

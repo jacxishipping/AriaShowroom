@@ -47,23 +47,25 @@ export function AccountingTab({
   const grossMarginPercent = totalRevenueUSD > 0 ? ((grossProfitUSD / totalRevenueUSD) * 100).toFixed(1) : "0.0";
 
   // Operating Expenses Breakdown
-  const customsExpensesUSD = expenses
+  const operatingExpenses = expenses.filter((expense) => !expense.vehicleStock);
+
+  const customsExpensesUSD = operatingExpenses
     .filter((e) => e.category === "Gomrok & Port Tariffs")
     .reduce((acc, e) => acc + e.amountUSD, 0);
 
-  const transitExpensesUSD = expenses
+  const transitExpensesUSD = operatingExpenses
     .filter((e) => e.category === "Transit & Ocean Freight")
     .reduce((acc, e) => acc + e.amountUSD, 0);
 
-  const detailingExpensesUSD = expenses
+  const detailingExpensesUSD = operatingExpenses
     .filter((e) => e.category === "Vehicle Maintenance/Detailing")
     .reduce((acc, e) => acc + e.amountUSD, 0);
 
-  const showroomOverheadUSD = expenses
+  const showroomOverheadUSD = operatingExpenses
     .filter((e) => e.category === "Showroom Overhead & Fuel" || e.category === "Staff Commissions")
     .reduce((acc, e) => acc + e.amountUSD, 0);
 
-  const totalOperatingExpensesUSD = expenses.reduce((acc, e) => acc + e.amountUSD, 0);
+  const totalOperatingExpensesUSD = operatingExpenses.reduce((acc, e) => acc + e.amountUSD, 0);
   const netOperatingProfitUSD = grossProfitUSD - totalOperatingExpensesUSD;
   const netOperatingProfitAFN = Math.round(netOperatingProfitUSD * exchangeRate);
 

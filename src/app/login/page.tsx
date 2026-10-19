@@ -34,7 +34,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
-  const { language, setLanguage, setCurrentRole, addToast } = useShowroomStore();
+  const { language, setLanguage, setCurrentRole, addToast, fetchDatabaseRecords } = useShowroomStore();
   const t = translations[language];
 
   const [email, setEmail] = useState("");
@@ -101,11 +101,16 @@ function LoginContent() {
         setErrorMessage("Invalid email or password. Please verify your credentials.");
         setLoading(false);
       } else {
-        // Sync local store role
-        const matched = demoAccounts.find((d) => d.email.toLowerCase() === email.toLowerCase());
-        if (matched) {
-          setCurrentRole(matched.role);
-        }
+        const sessionResponse = await fetch("/api/auth/session");
+        const session = await sessionResponse.json();
+        const roleMap: Record<string, RoleType> = {
+          ADMIN: "SuperAdmin",
+          SALES: "SalesAgent",
+          ACCOUNTANT: "Accountant",
+        };
+        const sessionRole = roleMap[session?.user?.role];
+        if (sessionRole) setCurrentRole(sessionRole);
+        await fetchDatabaseRecords();
 
         addToast(
           language === "ps"

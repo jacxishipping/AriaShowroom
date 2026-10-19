@@ -230,10 +230,11 @@ export default function AdminDashboardPage() {
     return null;
   };
 
-  const handleAddCustomer = (e: React.FormEvent) => {
+  const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustomerForm.fullName.trim() || !newCustomerForm.phone.trim()) return;
-    addCustomer({
+    try {
+      await addCustomer({
       fullName: newCustomerForm.fullName,
       phone: newCustomerForm.phone,
       whatsapp: newCustomerForm.whatsapp || newCustomerForm.phone,
@@ -245,7 +246,11 @@ export default function AdminDashboardPage() {
       tradeInRecord: newCustomerForm.tradeInRecord || undefined,
       notes: newCustomerForm.notes,
       leadStage: newCustomerForm.leadStage,
-    });
+      });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to save customer", "error");
+      return;
+    }
     setIsAddCustomerModalOpen(false);
     addToast(`Added new customer lead: ${newCustomerForm.fullName}`, "success");
     setNewCustomerForm({
@@ -276,7 +281,7 @@ export default function AdminDashboardPage() {
     customerTazkira: "",
     salesAgent: "Farhad Timori",
     salePriceUSD: vehicles[0]?.sellingPrice || 35000,
-    paymentType: "Full Cash" as const,
+    paymentType: "Full Cash" as "Full Cash" | "Installment Plan" | "Hawala / Bank Transfer",
     downPaymentUSD: vehicles[0]?.sellingPrice || 35000,
     installmentsRemaining: 0,
     notes: "Herat showroom transaction settlement.",
@@ -309,25 +314,30 @@ export default function AdminDashboardPage() {
     );
   });
 
-  const handleCreateSale = (e: React.FormEvent) => {
+  const handleCreateSale = async (e: React.FormEvent) => {
     e.preventDefault();
     const vehicleObj = vehicles.find((v) => v.stockNumber === saleForm.stockNumber);
     if (!vehicleObj) return;
 
-    addSale({
-      stockNumber: saleForm.stockNumber,
-      vehicleName: `${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model}`,
-      customerName: saleForm.customerName,
-      customerPhone: saleForm.customerPhone,
-      customerTazkira: saleForm.customerTazkira,
-      salesAgent: saleForm.salesAgent,
-      salePriceUSD: Number(saleForm.salePriceUSD),
-      exchangeRate: exchangeRate,
-      paymentType: saleForm.paymentType,
-      downPaymentUSD: Number(saleForm.downPaymentUSD),
-      installmentsRemaining: Number(saleForm.installmentsRemaining),
-      status: Number(saleForm.installmentsRemaining) > 0 ? "Pending Installments" : "Completed",
-    });
+    try {
+      await addSale({
+        stockNumber: saleForm.stockNumber,
+        vehicleName: `${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model}`,
+        customerName: saleForm.customerName,
+        customerPhone: saleForm.customerPhone,
+        customerTazkira: saleForm.customerTazkira,
+        salesAgent: saleForm.salesAgent,
+        salePriceUSD: Number(saleForm.salePriceUSD),
+        exchangeRate: exchangeRate,
+        paymentType: saleForm.paymentType,
+        downPaymentUSD: Number(saleForm.downPaymentUSD),
+        installmentsRemaining: Number(saleForm.installmentsRemaining),
+        status: Number(saleForm.installmentsRemaining) > 0 ? "Pending Installments" : "Completed",
+      });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to record sale", "error");
+      return;
+    }
 
     addToast("Sale registered successfully! Marked vehicle as Sold and generated contract.", "success");
   };
@@ -600,9 +610,13 @@ export default function AdminDashboardPage() {
                               size="small"
                               color="error"
                               sx={{ padding: "4px" }}
-                              onClick={() => {
+                              onClick={async () => {
                                 if (confirm(`Delete stock ${veh.stockNumber}?`)) {
-                                  deleteVehicle(veh.id);
+                                  try {
+                                    await deleteVehicle(veh.id);
+                                  } catch (error) {
+                                    addToast(error instanceof Error ? error.message : "Unable to delete vehicle", "error");
+                                  }
                                 }
                               }}
                               title="Delete vehicle"
@@ -846,7 +860,7 @@ export default function AdminDashboardPage() {
                                 <div className="flex items-center gap-1">
                                   {prevStage && (
                                     <button
-                                      onClick={() => updateCustomerStage(cust.id, prevStage)}
+                                      onClick={() => void updateCustomerStage(cust.id, prevStage).catch((error) => addToast(error.message, "error"))}
                                       className="p-1 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
                                       title={`Move back to ${prevStage}`}
                                     >
@@ -855,7 +869,7 @@ export default function AdminDashboardPage() {
                                   )}
                                   {nextStage && (
                                     <button
-                                      onClick={() => updateCustomerStage(cust.id, nextStage)}
+                                      onClick={() => void updateCustomerStage(cust.id, nextStage).catch((error) => addToast(error.message, "error"))}
                                       className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold shadow-xs cursor-pointer"
                                       title={`Advance to ${nextStage}`}
                                     >
@@ -953,7 +967,7 @@ export default function AdminDashboardPage() {
                             <MuiTableCell className="py-2">
                               <select
                                 value={cust.leadStage}
-                                onChange={(e) => updateCustomerStage(cust.id, e.target.value as any)}
+                                onChange={(e) => void updateCustomerStage(cust.id, e.target.value as any).catch((error) => addToast(error.message, "error"))}
                                 className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 outline-none cursor-pointer"
                               >
                                 <option value="New Inquiry">New Inquiry</option>
@@ -1245,7 +1259,13 @@ export default function AdminDashboardPage() {
                   label="Payment Structure"
                   value={saleForm.paymentType}
                   onChange={(e) =>
-                    setSaleForm({ ...saleForm, paymentType: e.target.value as any })
+                    setSaleForm({
+                      ...saleForm,
+                      paymentType: e.target.value as any,
+                      downPaymentUSD: e.target.value === "Installment Plan"
+                        ? Math.round(Number(saleForm.salePriceUSD) * 0.2)
+                        : Number(saleForm.salePriceUSD),
+                    })
                   }
                 >
                   <MenuItem value="Full Cash">Full Cash</MenuItem>
@@ -1253,6 +1273,18 @@ export default function AdminDashboardPage() {
                   <MenuItem value="Hawala / Bank Transfer">Hawala / Sarrafi</MenuItem>
                 </MuiTextField>
               </div>
+
+              {saleForm.paymentType === "Installment Plan" && (
+                <MuiTextField
+                  label="Down Payment (USD)"
+                  type="number"
+                  value={saleForm.downPaymentUSD}
+                  onChange={(e) => setSaleForm({
+                    ...saleForm,
+                    downPaymentUSD: Math.min(Math.max(Number(e.target.value) || 0, 0), Number(saleForm.salePriceUSD)),
+                  })}
+                />
+              )}
 
               <MuiButton
                 type="submit"

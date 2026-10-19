@@ -133,11 +133,14 @@ export default function LotBarcodeScannerPage() {
   };
 
   // Re-assign yard location
-  const handleUpdateYardBay = () => {
+  const handleUpdateYardBay = async () => {
     if (!scannedVehicle) return;
-    updateVehicle(scannedVehicle.id, {
-      yardLocation: newYardBay,
-    });
+    try {
+      await updateVehicle(scannedVehicle.id, { yardLocation: newYardBay });
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Unable to update yard location", "error");
+      return;
+    }
     setScannedVehicle((prev) => (prev ? { ...prev, yardLocation: newYardBay } : null));
     addToast(`${scannedVehicle.make} ${scannedVehicle.model} bay updated to: ${newYardBay}`, "success");
   };

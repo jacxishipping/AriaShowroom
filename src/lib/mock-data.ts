@@ -936,6 +936,7 @@ export const INITIAL_ACCOUNTS: AccountRecord[] = [
   { code: "2020", name: "Customs Duty Payable (Gomrok Islam Qala)", nameDari: "عوارض گمرکی پرداختنی اسلام قلعه", type: "LIABILITY", balanceUSD: 4500 },
   { code: "2030", name: "Customer Advance Deposits", nameDari: "پیش‌پرداخت و بیعانه موترها", type: "LIABILITY", balanceUSD: 8000 },
   { code: "3010", name: "Owner Capital & Equity", nameDari: "سرمایه مالک نندارتون (حاجی احمد شاه)", type: "EQUITY", balanceUSD: 450000 },
+  { code: "3020", name: "Opening Balance Equity", nameDari: "تعدیل مانده افتتاحیه", type: "EQUITY", balanceUSD: 176500 },
   { code: "4010", name: "Vehicle Sales Revenue", nameDari: "عواید حاصل از فروش موترها", type: "REVENUE", balanceUSD: 236800 },
   { code: "4020", name: "Documentation & Transfer Fee Income", nameDari: "عواید کمیشن و ترخیص اسناد رسمی", type: "REVENUE", balanceUSD: 4800 },
   { code: "5010", name: "COGS - Vehicle Purchase Cost", nameDari: "بهای تمام‌شده خرید موتر (دبی/جاپان)", type: "EXPENSE", balanceUSD: 182000 },

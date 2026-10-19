@@ -65,42 +65,42 @@ interface ShowroomStore {
   filters: FilterState;
   setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void;
   resetFilters: () => void;
-  addVehicle: (vehicle: Omit<VehicleItem, "id" | "viewsCount" | "inquiriesCount">) => void;
-  updateVehicle: (id: string, updates: Partial<VehicleItem>) => void;
-  deleteVehicle: (id: string) => void;
+  addVehicle: (vehicle: Omit<VehicleItem, "id" | "viewsCount" | "inquiriesCount">) => Promise<VehicleItem>;
+  updateVehicle: (id: string, updates: Partial<VehicleItem>) => Promise<void>;
+  deleteVehicle: (id: string) => Promise<void>;
 
   // CRM Leads
   customers: CustomerRecord[];
-  addCustomer: (customer: Omit<CustomerRecord, "id" | "createdAt">) => void;
-  updateCustomerStage: (customerId: string, stage: CustomerRecord["leadStage"]) => void;
+  addCustomer: (customer: Omit<CustomerRecord, "id" | "createdAt">) => Promise<void>;
+  updateCustomerStage: (customerId: string, stage: CustomerRecord["leadStage"]) => Promise<void>;
 
   // Sales & Transactions
   sales: SaleRecord[];
-  addSale: (sale: Omit<SaleRecord, "id" | "contractNumber" | "saleDate">) => void;
+  addSale: (sale: Omit<SaleRecord, "id" | "contractNumber" | "saleDate">) => Promise<void>;
 
   // Expenses & Vehicle Cost Allocation
   expenses: ExpenseRecord[];
-  addExpense: (expense: Omit<ExpenseRecord, "id" | "date">) => void;
+  addExpense: (expense: Omit<ExpenseRecord, "id" | "date">) => Promise<void>;
 
   // Suppliers & Supplier Ledger
   suppliers: SupplierRecord[];
-  addSupplier: (supplier: Omit<SupplierRecord, "id" | "bills" | "totalPurchasedUSD" | "totalPaidUSD" | "balanceUSD">) => void;
-  addSupplierBill: (bill: Omit<SupplierBillRecord, "id">) => void;
-  recordSupplierPayment: (supplierId: string, amountUSD: number, paymentMethod: any, referenceNumber?: string, sarrafiAccount?: string) => void;
+  addSupplier: (supplier: Omit<SupplierRecord, "id" | "bills" | "totalPurchasedUSD" | "totalPaidUSD" | "balanceUSD">) => Promise<void>;
+  addSupplierBill: (bill: Omit<SupplierBillRecord, "id">) => Promise<void>;
+  recordSupplierPayment: (supplierId: string, amountUSD: number, paymentMethod: any, referenceNumber?: string, sarrafiAccount?: string) => Promise<void>;
 
   // Commercial Invoicing
   invoices: InvoiceRecord[];
-  addInvoice: (invoice: Omit<InvoiceRecord, "id" | "invoiceNumber">) => void;
-  updateInvoiceStatus: (invoiceId: string, status: InvoiceRecord["status"]) => void;
+  addInvoice: (invoice: Omit<InvoiceRecord, "id" | "invoiceNumber">) => Promise<void>;
+  updateInvoiceStatus: (invoiceId: string, status: InvoiceRecord["status"]) => Promise<void>;
 
   // Payment Vouchers Engine
   payments: PaymentVoucherRecord[];
-  addPaymentVoucher: (voucher: Omit<PaymentVoucherRecord, "id" | "voucherNumber">) => void;
+  addPaymentVoucher: (voucher: Omit<PaymentVoucherRecord, "id" | "voucherNumber">) => Promise<void>;
 
   // Accounting & Chart of Accounts
   accounts: AccountRecord[];
   journalEntries: JournalEntryRecord[];
-  addJournalEntry: (entry: Omit<JournalEntryRecord, "id" | "entryNumber">) => void;
+  addJournalEntry: (entry: Omit<JournalEntryRecord, "id" | "entryNumber">) => Promise<void>;
 
   // UI/UX Enhancements: Favorites & Comparison
   favoriteIds: string[];
@@ -110,8 +110,8 @@ interface ShowroomStore {
   clearCompare: () => void;
 
   // Quick Status Actions
-  setVehicleStatus: (id: string, status: VehicleItem["status"]) => void;
-  batchUpdateVehicleStatus: (ids: string[], status: VehicleItem["status"]) => void;
+  setVehicleStatus: (id: string, status: VehicleItem["status"]) => Promise<void>;
+  batchUpdateVehicleStatus: (ids: string[], status: VehicleItem["status"]) => Promise<void>;
 
   // Toast Notification System
   toasts: Array<{ id: string; type: "success" | "info" | "warning" | "error"; message: string }>;
@@ -150,6 +150,53 @@ const initialFilters: FilterState = {
   status: "ALL",
 };
 
+async function writeRecord(path: string, data: unknown, method = "POST") {
+  const response = await fetch(path, {
+    method,
+    ...(data === undefined ? {} : {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  });
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.error || `Request failed (${response.status})`);
+  }
+
+  return result.data;
+}
+
+const vehicleStatusToDatabase = {
+  "In Transit": "IN_TRANSIT",
+  "Under Prep/Maintenance": "UNDER_PREP",
+  "Available on Lot": "AVAILABLE",
+  "Reserved/Deposit Paid": "RESERVED",
+  Sold: "SOLD",
+} as const;
+
+const customerStageToDatabase = {
+  "New Inquiry": "NEW_INQUIRY",
+  "Follow-Up": "FOLLOW_UP",
+  "Test Drive": "TEST_DRIVE",
+  Negotiation: "NEGOTIATION",
+  "Closed/Won": "CLOSED_WON",
+  Lost: "LOST",
+} as const;
+
+function vehicleToDatabase(vehicle: Partial<VehicleItem>) {
+  return {
+    ...vehicle,
+    status: vehicle.status ? vehicleStatusToDatabase[vehicle.status] : undefined,
+    steering: vehicle.steering === "Right-Hand Drive (RHD Converted)" ? "RIGHT_HAND_CONVERTED" : vehicle.steering ? "LEFT_HAND" : undefined,
+    fuelType: vehicle.fuelType?.toUpperCase(),
+    transmission: vehicle.transmission?.toUpperCase(),
+    conditionNotes: vehicle.conditionNotes || vehicle.yardLocation
+      ? { ...vehicle.conditionNotes, ...(vehicle.yardLocation ? { yardLocation: vehicle.yardLocation } : {}) }
+      : undefined,
+  };
+}
+
 export const useShowroomStore = create<ShowroomStore>()(
   persist(
     (set, get) => ({
@@ -178,312 +225,157 @@ export const useShowroomStore = create<ShowroomStore>()(
 
       resetFilters: () => set({ filters: initialFilters }),
 
-      addVehicle: (vehicleData) =>
-        set((state) => {
-          const newId = `veh-${Date.now().toString().slice(-4)}`;
-          const newVehicle: VehicleItem = {
-            ...vehicleData,
-            id: newId,
-            viewsCount: 0,
-            inquiriesCount: 0,
-          };
-          return { vehicles: [newVehicle, ...state.vehicles] };
-        }),
+      addVehicle: async (vehicleData) => {
+        await writeRecord("/api/vehicles", vehicleToDatabase(vehicleData));
+        await get().fetchDatabaseRecords();
+        const vehicle = get().vehicles.find((item) => item.stockNumber === vehicleData.stockNumber);
+        if (!vehicle) throw new Error("Vehicle was saved but could not be loaded from inventory.");
+        return vehicle;
+      },
 
-      updateVehicle: (id, updates) =>
-        set((state) => ({
-          vehicles: state.vehicles.map((v) => (v.id === id ? { ...v, ...updates } : v)),
-        })),
+      updateVehicle: async (id, updates) => {
+        await writeRecord(`/api/vehicles/${encodeURIComponent(id)}`, vehicleToDatabase(updates), "PATCH");
+        await get().fetchDatabaseRecords();
+      },
 
-      deleteVehicle: (id) =>
-        set((state) => ({
-          vehicles: state.vehicles.filter((v) => v.id !== id),
-        })),
+      deleteVehicle: async (id) => {
+        await writeRecord(`/api/vehicles/${encodeURIComponent(id)}`, undefined, "DELETE");
+        await get().fetchDatabaseRecords();
+      },
 
       customers: INITIAL_CUSTOMERS,
-      addCustomer: (customerData) =>
-        set((state) => {
-          const newId = `cust-${Date.now().toString().slice(-4)}`;
-          const newCust: CustomerRecord = {
-            ...customerData,
-            id: newId,
-            createdAt: new Date().toISOString().split("T")[0],
-          };
-          return { customers: [newCust, ...state.customers] };
-        }),
+      addCustomer: async (customerData) => {
+        await writeRecord("/api/customers", {
+          fullName: customerData.fullName,
+          phone: customerData.phone,
+          whatsapp: customerData.whatsapp,
+          tazkiraNumber: customerData.tazkiraNumber,
+          city: customerData.city,
+          address: customerData.address,
+          tradeInRecord: customerData.tradeInRecord,
+          budget: customerData.budget,
+          interestedInVehicleId: customerData.interestedInVehicleId,
+          notes: customerData.notes,
+          leadStage: customerStageToDatabase[customerData.leadStage],
+        });
+        await get().fetchDatabaseRecords();
+      },
 
-      updateCustomerStage: (customerId, stage) =>
-        set((state) => ({
-          customers: state.customers.map((c) =>
-            c.id === customerId ? { ...c, leadStage: stage } : c
-          ),
-        })),
+      updateCustomerStage: async (customerId, stage) => {
+        await writeRecord("/api/customers", {
+          customerId,
+          leadStage: customerStageToDatabase[stage],
+        }, "PATCH");
+        await get().fetchDatabaseRecords();
+      },
 
       sales: INITIAL_SALES,
-      addSale: (saleData) =>
-        set((state) => {
-          const randomNum = Math.floor(100 + Math.random() * 900);
-          const contractNumber = `SM-CNTR-2026-${randomNum}`;
-          const newSale: SaleRecord = {
-            ...saleData,
-            id: `sale-${Date.now().toString().slice(-4)}`,
-            contractNumber,
-            saleDate: new Date().toISOString().split("T")[0],
-          };
+      addSale: async (saleData) => {
+        const vehicle = get().vehicles.find((item) => item.stockNumber === saleData.stockNumber);
+        if (!vehicle) throw new Error("The selected vehicle is no longer in inventory.");
 
-          // Mark vehicle as Sold
-          const updatedVehicles = state.vehicles.map((v) =>
-            v.stockNumber === saleData.stockNumber ? { ...v, status: "Sold" as const } : v
-          );
-
-          return {
-            sales: [newSale, ...state.sales],
-            vehicles: updatedVehicles,
-          };
-        }),
+        await writeRecord("/api/sales", {
+          vehicleId: vehicle.id,
+          customerName: saleData.customerName,
+          customerPhone: saleData.customerPhone,
+          customerTazkira: saleData.customerTazkira,
+          salePrice: saleData.salePriceUSD,
+          currency: "USD",
+          exchangeRate: saleData.exchangeRate,
+          paymentType: saleData.paymentType === "Installment Plan"
+            ? "INSTALLMENT"
+            : saleData.paymentType === "Hawala / Bank Transfer"
+            ? "BANK_TRANSFER"
+            : "CASH",
+          downPaymentUSD: saleData.downPaymentUSD,
+          installmentsRemaining: saleData.installmentsRemaining,
+        });
+        await get().fetchDatabaseRecords();
+      },
 
       expenses: INITIAL_EXPENSES,
-      addExpense: (expenseData) =>
-        set((state) => {
-          const newExpense: ExpenseRecord = {
-            ...expenseData,
-            id: `exp-${Date.now().toString().slice(-4)}`,
-            date: new Date().toISOString().split("T")[0],
-          };
+      addExpense: async (expenseData) => {
+        const state = get();
+        const vehicle = expenseData.vehicleStock
+          ? state.vehicles.find((item) => item.stockNumber === expenseData.vehicleStock)
+          : undefined;
+        if (expenseData.vehicleStock && !vehicle) {
+          throw new Error("The selected vehicle is no longer in inventory.");
+        }
 
-          // Also update vehicle landed cost if vehicleStock is linked
-          let updatedVehicles = state.vehicles;
-          if (expenseData.vehicleStock) {
-            updatedVehicles = state.vehicles.map((v) => {
-              if (v.stockNumber === expenseData.vehicleStock) {
-                const newLanded = v.landedCost + expenseData.amountUSD;
-                return { ...v, landedCost: newLanded };
-              }
-              return v;
-            });
-          }
-
-          // Also log a journal entry for accounting
-          const newJe: JournalEntryRecord = {
-            id: `je-${Date.now().toString().slice(-4)}`,
-            entryNumber: `JE-EXP-${Date.now().toString().slice(-4)}`,
-            date: new Date().toISOString().split("T")[0],
-            description: `${expenseData.category}: ${expenseData.description}`,
-            reference: expenseData.vehicleStock || "GENERAL_OVERHEAD",
-            debitAccount: "5020 - COGS - Freight & Port Clearance",
-            creditAccount: "1010 - Showroom Central Cash Safe",
-            amountUSD: expenseData.amountUSD,
-            amountAFN: Math.round(expenseData.amountUSD * state.exchangeRate),
-          };
-
-          return {
-            expenses: [newExpense, ...state.expenses],
-            vehicles: updatedVehicles,
-            journalEntries: [newJe, ...state.journalEntries],
-          };
-        }),
+        await writeRecord("/api/expenses", {
+          category: expenseData.category,
+          amount: expenseData.amountUSD,
+          currency: "USD",
+          description: expenseData.description,
+          payee: expenseData.payee,
+          receiptNum: expenseData.receiptNumber,
+          vehicleId: vehicle?.id,
+          exchangeRate: state.exchangeRate,
+        });
+        await get().fetchDatabaseRecords();
+      },
 
       // Suppliers & Supplier Ledger
       suppliers: INITIAL_SUPPLIERS,
-      addSupplier: (supData) =>
-        set((state) => {
-          const newId = `sup-${Date.now().toString().slice(-4)}`;
-          const newSup: SupplierRecord = {
-            ...supData,
-            id: newId,
-            bills: [],
-            totalPurchasedUSD: 0,
-            totalPaidUSD: 0,
-            balanceUSD: 0,
-          };
-          return { suppliers: [newSup, ...state.suppliers] };
-        }),
+      addSupplier: async (supplierData) => {
+        await writeRecord("/api/suppliers", supplierData);
+        await get().fetchDatabaseRecords();
+      },
 
-      addSupplierBill: (billData) =>
-        set((state) => {
-          const newId = `bill-${Date.now().toString().slice(-4)}`;
-          const newBill: SupplierBillRecord = {
-            ...billData,
-            id: newId,
-          };
+      addSupplierBill: async (billData) => {
+        await writeRecord(`/api/suppliers/${encodeURIComponent(billData.supplierId)}/bills`, billData);
+        await get().fetchDatabaseRecords();
+      },
 
-          const updatedSuppliers = state.suppliers.map((sup) => {
-            if (sup.id === billData.supplierId) {
-              const newPurchased = sup.totalPurchasedUSD + billData.amountUSD;
-              const newBal = newPurchased - sup.totalPaidUSD;
-              return {
-                ...sup,
-                totalPurchasedUSD: newPurchased,
-                balanceUSD: newBal,
-                bills: [newBill, ...sup.bills],
-              };
-            }
-            return sup;
-          });
+      recordSupplierPayment: async (supplierId, amountUSD, paymentMethod, referenceNumber, sarrafiAccount) => {
+        const state = get();
+        const supplier = state.suppliers.find((item) => item.id === supplierId);
+        if (!supplier) throw new Error("Supplier record not found.");
 
-          // Journal Entry for Supplier Bill (Accounts Payable Debit Asset / Credit AP)
-          const newJe: JournalEntryRecord = {
-            id: `je-${Date.now().toString().slice(-4)}`,
-            entryNumber: `JE-BILL-${Date.now().toString().slice(-4)}`,
-            date: billData.issueDate || new Date().toISOString().split("T")[0],
-            description: `Vehicle purchase bill: ${billData.vehicleDescription || "Consignment"}`,
-            reference: billData.billNumber,
-            debitAccount: "1040 - Vehicle Inventory Asset (Lot & Port)",
-            creditAccount: "2010 - Accounts Payable (Auto Suppliers UAE/Japan)",
-            amountUSD: billData.amountUSD,
-            amountAFN: Math.round(billData.amountUSD * state.exchangeRate),
-          };
-
-          return {
-            suppliers: updatedSuppliers,
-            journalEntries: [newJe, ...state.journalEntries],
-          };
-        }),
-
-      recordSupplierPayment: (supplierId, amountUSD, paymentMethod, referenceNumber, sarrafiAccount) =>
-        set((state) => {
-          const updatedSuppliers = state.suppliers.map((sup) => {
-            if (sup.id === supplierId) {
-              const newPaid = sup.totalPaidUSD + amountUSD;
-              const newBal = sup.totalPurchasedUSD - newPaid;
-              return {
-                ...sup,
-                totalPaidUSD: newPaid,
-                balanceUSD: newBal,
-              };
-            }
-            return sup;
-          });
-
-          const targetSup = state.suppliers.find((s) => s.id === supplierId);
-          const newVoucher: PaymentVoucherRecord = {
-            id: `pv-${Date.now().toString().slice(-4)}`,
-            voucherNumber: `PV-SUP-${Math.floor(100 + Math.random() * 900)}`,
-            voucherType: "SUPPLIER_PAYMENT",
-            date: new Date().toISOString().split("T")[0],
-            partyName: targetSup?.companyName || "International Auto Supplier",
-            partyPhone: targetSup?.phone,
-            amountUSD,
-            amountAFN: Math.round(amountUSD * state.exchangeRate),
-            exchangeRate: state.exchangeRate,
-            paymentMethod: paymentMethod || "Sarrafi Hawala (حواله صرافی)",
-            sarrafiAccount: sarrafiAccount || "Sarrafi Khorasan Market Holding Safe",
-            referenceNumber: referenceNumber || `HWL-${Date.now().toString().slice(-5)}`,
-            supplierId,
-            purpose: `Supplier account payoff for consignment imports`,
-            recordedBy: state.currentRole,
-          };
-
-          const newJe: JournalEntryRecord = {
-            id: `je-${Date.now().toString().slice(-4)}`,
-            entryNumber: `JE-PAY-${Date.now().toString().slice(-4)}`,
-            date: new Date().toISOString().split("T")[0],
-            description: `Payment payoff to ${targetSup?.companyName || "Supplier"}`,
-            reference: newVoucher.voucherNumber,
-            debitAccount: "2010 - Accounts Payable (Auto Suppliers UAE/Japan)",
-            creditAccount: paymentMethod?.includes("Cash")
-              ? "1010 - Showroom Central Cash Safe"
-              : "1020 - Sarrafi Khorasan Holding Account",
-            amountUSD,
-            amountAFN: Math.round(amountUSD * state.exchangeRate),
-          };
-
-          return {
-            suppliers: updatedSuppliers,
-            payments: [newVoucher, ...state.payments],
-            journalEntries: [newJe, ...state.journalEntries],
-          };
-        }),
+        await writeRecord("/api/vouchers", {
+          voucherType: "SUPPLIER_PAYMENT",
+          partyName: supplier.companyName,
+          partyPhone: supplier.phone,
+          supplierId,
+          amountUSD,
+          amountAFN: Math.round(amountUSD * state.exchangeRate),
+          exchangeRate: state.exchangeRate,
+          paymentMethod,
+          sarrafiAccount,
+          referenceNumber,
+          purpose: "Supplier account payoff",
+          recordedBy: state.currentRole,
+        });
+        await get().fetchDatabaseRecords();
+      },
 
       // Invoices
       invoices: INITIAL_INVOICES,
-      addInvoice: (invoiceData) =>
-        set((state) => {
-          const randomNum = Math.floor(1000 + Math.random() * 9000);
-          const invoiceNumber = `INV-HRT-2026-${randomNum}`;
-          const newInvoice: InvoiceRecord = {
-            ...invoiceData,
-            id: `inv-${Date.now().toString().slice(-4)}`,
-            invoiceNumber,
-          };
+      addInvoice: async (invoiceData) => {
+        await writeRecord("/api/invoices", invoiceData);
+        await get().fetchDatabaseRecords();
+      },
 
-          return { invoices: [newInvoice, ...state.invoices] };
-        }),
-
-      updateInvoiceStatus: (invoiceId, status) =>
-        set((state) => ({
-          invoices: state.invoices.map((inv) =>
-            inv.id === invoiceId ? { ...inv, status } : inv
-          ),
-        })),
+      updateInvoiceStatus: async (invoiceId, status) => {
+        await writeRecord("/api/invoices", { invoiceId, status }, "PATCH");
+        await get().fetchDatabaseRecords();
+      },
 
       // Payment Vouchers
       payments: INITIAL_PAYMENTS,
-      addPaymentVoucher: (voucherData) =>
-        set((state) => {
-          const randomNum = Math.floor(100 + Math.random() * 900);
-          const prefix =
-            voucherData.voucherType === "CUSTOMER_PAYMENT"
-              ? "PV-REC"
-              : voucherData.voucherType === "SUPPLIER_PAYMENT"
-              ? "PV-PAY"
-              : "PV-EXP";
-          const voucherNumber = `${prefix}-2026-${randomNum}`;
-
-          const newVoucher: PaymentVoucherRecord = {
-            ...voucherData,
-            id: `pv-${Date.now().toString().slice(-4)}`,
-            voucherNumber,
-          };
-
-          // Automatic journal entry
-          const debitAcct =
-            voucherData.voucherType === "CUSTOMER_PAYMENT"
-              ? voucherData.paymentMethod.includes("Cash")
-                ? "1010 - Showroom Central Cash Safe"
-                : "1020 - Sarrafi Khorasan Holding Account"
-              : voucherData.voucherType === "SUPPLIER_PAYMENT"
-              ? "2010 - Accounts Payable (Auto Suppliers UAE/Japan)"
-              : "5020 - COGS - Freight & Port Clearance";
-
-          const creditAcct =
-            voucherData.voucherType === "CUSTOMER_PAYMENT"
-              ? "4010 - Vehicle Sales Revenue"
-              : voucherData.paymentMethod.includes("Cash")
-              ? "1010 - Showroom Central Cash Safe"
-              : "1020 - Sarrafi Khorasan Holding Account";
-
-          const newJe: JournalEntryRecord = {
-            id: `je-${Date.now().toString().slice(-4)}`,
-            entryNumber: `JE-${Date.now().toString().slice(-4)}`,
-            date: voucherData.date || new Date().toISOString().split("T")[0],
-            description: voucherData.purpose,
-            reference: voucherNumber,
-            debitAccount: debitAcct,
-            creditAccount: creditAcct,
-            amountUSD: voucherData.amountUSD,
-            amountAFN: voucherData.amountAFN,
-          };
-
-          return {
-            payments: [newVoucher, ...state.payments],
-            journalEntries: [newJe, ...state.journalEntries],
-          };
-        }),
+      addPaymentVoucher: async (voucherData) => {
+        await writeRecord("/api/vouchers", voucherData);
+        await get().fetchDatabaseRecords();
+      },
 
       // Accounting & Chart of Accounts
       accounts: INITIAL_ACCOUNTS,
       journalEntries: INITIAL_JOURNAL_ENTRIES,
-      addJournalEntry: (entryData) =>
-        set((state) => {
-          const entryNumber = `JE-2026-${Math.floor(100 + Math.random() * 900)}`;
-          const newEntry: JournalEntryRecord = {
-            ...entryData,
-            id: `je-${Date.now().toString().slice(-4)}`,
-            entryNumber,
-          };
-          return { journalEntries: [newEntry, ...state.journalEntries] };
-        }),
+      addJournalEntry: async (entryData) => {
+        await writeRecord("/api/journal-entries", entryData);
+        await get().fetchDatabaseRecords();
+      },
 
       // UI/UX Enhancements: Favorites & Comparison
       favoriteIds: [],
@@ -511,42 +403,26 @@ export const useShowroomStore = create<ShowroomStore>()(
       clearCompare: () => set({ compareIds: [] }),
 
       // Quick Status Actions with Toast
-      setVehicleStatus: (id, status) =>
-        set((state) => {
-          const target = state.vehicles.find((v) => v.id === id);
-          const updated = state.vehicles.map((v) => (v.id === id ? { ...v, status } : v));
-          const toastId = `toast-${Date.now()}`;
-          const newToast = {
-            id: toastId,
-            type: "success" as const,
-            message: target
-              ? `${target.make} ${target.model} status changed to "${status}"`
-              : `Vehicle status changed to "${status}"`,
-          };
-          return {
-            vehicles: updated,
-            toasts: [...state.toasts, newToast],
-          };
-        }),
+      setVehicleStatus: async (id, status) => {
+        const target = get().vehicles.find((vehicle) => vehicle.id === id);
+        await get().updateVehicle(id, { status });
+        get().addToast(
+          target
+            ? `${target.make} ${target.model} status changed to "${status}"`
+            : `Vehicle status changed to "${status}"`,
+          "success"
+        );
+      },
 
-      batchUpdateVehicleStatus: (ids, status) =>
-        set((state) => {
-          const updated = state.vehicles.map((v) =>
-            ids.includes(v.id) ? { ...v, status } : v
-          );
-          const toastId = `toast-${Date.now()}`;
-          return {
-            vehicles: updated,
-            toasts: [
-              ...state.toasts,
-              {
-                id: toastId,
-                type: "success",
-                message: `Updated status for ${ids.length} vehicle(s) to "${status}"`,
-              },
-            ],
-          };
-        }),
+      batchUpdateVehicleStatus: async (ids, status) => {
+        await Promise.all(ids.map((id) => writeRecord(
+          `/api/vehicles/${encodeURIComponent(id)}`,
+          vehicleToDatabase({ status }),
+          "PATCH"
+        )));
+        await get().fetchDatabaseRecords();
+        get().addToast(`Updated status for ${ids.length} vehicle(s) to "${status}"`, "success");
+      },
 
       // Toast Notification System
       toasts: [],
@@ -611,17 +487,29 @@ export const useShowroomStore = create<ShowroomStore>()(
       // Live PostgreSQL Database Sync
       fetchDatabaseRecords: async () => {
         try {
-          const [vehRes, custRes, invRes, vouchRes, suppRes, expRes, jeRes] = await Promise.all([
+          const [vehRes, custRes, saleRes, invRes, vouchRes, suppRes, expRes, jeRes, acctRes] = await Promise.all([
             fetch("/api/vehicles").then((r) => r.json()).catch(() => null),
             fetch("/api/customers").then((r) => r.json()).catch(() => null),
+            fetch("/api/sales").then((r) => r.json()).catch(() => null),
             fetch("/api/invoices").then((r) => r.json()).catch(() => null),
             fetch("/api/vouchers").then((r) => r.json()).catch(() => null),
             fetch("/api/suppliers").then((r) => r.json()).catch(() => null),
             fetch("/api/expenses").then((r) => r.json()).catch(() => null),
             fetch("/api/journal-entries").then((r) => r.json()).catch(() => null),
+            fetch("/api/accounts").then((r) => r.json()).catch(() => null),
           ]);
 
-          if (vehRes?.success && Array.isArray(vehRes.data) && vehRes.data.length > 0) {
+          set({
+            ...(!saleRes?.success ? { sales: [] } : {}),
+            ...(!invRes?.success ? { invoices: [] } : {}),
+            ...(!vouchRes?.success ? { payments: [] } : {}),
+            ...(!suppRes?.success ? { suppliers: [] } : {}),
+            ...(!expRes?.success ? { expenses: [] } : {}),
+            ...(!jeRes?.success ? { journalEntries: [] } : {}),
+            ...(!acctRes?.success ? { accounts: [] } : {}),
+          });
+
+          if (vehRes?.success && Array.isArray(vehRes.data)) {
             const statusMap: Record<string, VehicleItem["status"]> = {
               AVAILABLE: "Available on Lot",
               IN_TRANSIT: "In Transit",
@@ -691,6 +579,9 @@ export const useShowroomStore = create<ShowroomStore>()(
                   tires: "Good condition",
                   accidentHistory: "Clean Title",
                 },
+                yardLocation: v.conditionNotes && typeof v.conditionNotes === "object"
+                  ? (v.conditionNotes as Record<string, string>).yardLocation
+                  : undefined,
                 images: imageUrls,
                 documents: v.documents || [],
                 viewsCount: 0,
@@ -701,7 +592,7 @@ export const useShowroomStore = create<ShowroomStore>()(
             set({ vehicles: mappedVehicles });
           }
 
-          if (custRes?.success && Array.isArray(custRes.data) && custRes.data.length > 0) {
+          if (custRes?.success && Array.isArray(custRes.data)) {
             const leadMap: Record<string, CustomerRecord["leadStage"]> = {
               NEW_INQUIRY: "New Inquiry",
               FOLLOW_UP: "Follow-Up",
@@ -721,8 +612,8 @@ export const useShowroomStore = create<ShowroomStore>()(
               address: c.address || "",
               tradeInRecord: c.tradeInRecord || undefined,
               leadStage: leadMap[c.leadStage] || "New Inquiry",
-              budget: 45000,
-              interestedInVehicleId: "",
+              budget: Number(c.budget) || 0,
+              interestedInVehicleId: c.interestedInVehicleId || "",
               notes: c.notes || "",
               createdAt: c.createdAt ? new Date(c.createdAt).toISOString().split("T")[0] : "",
             }));
@@ -730,40 +621,111 @@ export const useShowroomStore = create<ShowroomStore>()(
             set({ customers: mappedCusts });
           }
 
+          if (saleRes?.success && Array.isArray(saleRes.data)) {
+            const paymentTypeMap: Record<string, SaleRecord["paymentType"]> = {
+              CASH: "Full Cash",
+              INSTALLMENT: "Installment Plan",
+              BANK_TRANSFER: "Hawala / Bank Transfer",
+            };
+
+            const mappedSales: SaleRecord[] = saleRes.data.map((sale: any) => {
+              const rate = Number(sale.exchangeRate) || 70.5;
+              const salePriceUSD = sale.currency === "AFN"
+                ? Number(sale.salePrice) / rate
+                : Number(sale.salePrice);
+              const installments = Array.isArray(sale.installments) ? sale.installments : [];
+              const outstanding = installments
+                .filter((installment: any) => installment.status !== "PAID")
+                .reduce((total: number, installment: any) => total + Number(installment.amount || 0), 0);
+
+              return {
+                id: sale.id,
+                stockNumber: sale.vehicle?.stockNumber || "",
+                vehicleName: sale.vehicle
+                  ? `${sale.vehicle.year} ${sale.vehicle.make} ${sale.vehicle.model}`
+                  : "Vehicle",
+                customerName: sale.customer?.fullName || "Customer",
+                customerPhone: sale.customer?.phone || "",
+                customerTazkira: sale.customer?.tazkiraNumber || "",
+                salesAgent: sale.seller?.name || "Sales",
+                salePriceUSD,
+                exchangeRate: rate,
+                paymentType: paymentTypeMap[sale.paymentType] || "Full Cash",
+                downPaymentUSD: Math.max(salePriceUSD - outstanding, 0),
+                installmentsRemaining: installments.filter((installment: any) => installment.status !== "PAID").length,
+                contractNumber: sale.contractNumber,
+                saleDate: sale.saleDate ? new Date(sale.saleDate).toISOString().split("T")[0] : "",
+                status: outstanding > 0 ? "Pending Installments" : "Completed",
+              };
+            });
+
+            set({ sales: mappedSales });
+          }
+
           // Live Invoices Sync
-          if (invRes?.success && Array.isArray(invRes.data) && invRes.data.length > 0) {
-            set({ invoices: invRes.data });
+          if (invRes?.success && Array.isArray(invRes.data)) {
+            set({
+              invoices: invRes.data.map((invoice: any) => ({
+                ...invoice,
+                issueDate: invoice.issueDate ? new Date(invoice.issueDate).toISOString().split("T")[0] : "",
+                dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split("T")[0] : undefined,
+              })),
+            });
           }
 
           // Live Payment Vouchers Sync
-          if (vouchRes?.success && Array.isArray(vouchRes.data) && vouchRes.data.length > 0) {
-            set({ payments: vouchRes.data });
+          if (vouchRes?.success && Array.isArray(vouchRes.data)) {
+            set({
+              payments: vouchRes.data.map((payment: any) => ({
+                ...payment,
+                date: payment.date ? new Date(payment.date).toISOString().split("T")[0] : "",
+              })),
+            });
           }
 
           // Live Suppliers Sync
-          if (suppRes?.success && Array.isArray(suppRes.data) && suppRes.data.length > 0) {
-            set({ suppliers: suppRes.data });
+          if (suppRes?.success && Array.isArray(suppRes.data)) {
+            set({
+              suppliers: suppRes.data.map((supplier: any) => ({
+                ...supplier,
+                bills: (supplier.bills || []).map((bill: any) => ({
+                  ...bill,
+                  issueDate: bill.issueDate ? new Date(bill.issueDate).toISOString().split("T")[0] : "",
+                  dueDate: bill.dueDate ? new Date(bill.dueDate).toISOString().split("T")[0] : undefined,
+                })),
+              })),
+            });
           }
 
           // Live Expenses Sync
-          if (expRes?.success && Array.isArray(expRes.data) && expRes.data.length > 0) {
+          if (expRes?.success && Array.isArray(expRes.data)) {
             set({
               expenses: expRes.data.map((e: any) => ({
                 id: e.id,
                 category: e.category,
                 amountUSD: e.amount,
-                amountAFN: Math.round(e.amount * 70.5),
+                amountAFN: Math.round(e.amount * get().exchangeRate),
                 description: e.description,
                 payee: e.payee || "Vendor",
                 receiptNumber: e.receiptNum || "",
                 date: e.date ? new Date(e.date).toISOString().split("T")[0] : "",
+                vehicleStock: e.vehicle?.stockNumber || undefined,
               })),
             });
           }
 
           // Live Journal Entries Sync
-          if (jeRes?.success && Array.isArray(jeRes.data) && jeRes.data.length > 0) {
-            set({ journalEntries: jeRes.data });
+          if (jeRes?.success && Array.isArray(jeRes.data)) {
+            set({
+              journalEntries: jeRes.data.map((entry: any) => ({
+                ...entry,
+                date: entry.date ? new Date(entry.date).toISOString().split("T")[0] : "",
+              })),
+            });
+          }
+
+          if (acctRes?.success && Array.isArray(acctRes.data)) {
+            set({ accounts: acctRes.data });
           }
         } catch (error) {
           console.warn("Failed syncing from database, using cached showroom state:", error);
@@ -772,6 +734,28 @@ export const useShowroomStore = create<ShowroomStore>()(
     }),
     {
       name: "sadozai_motors_storage",
+      version: 2,
+      partialize: (state) => ({
+        currency: state.currency,
+        exchangeRate: state.exchangeRate,
+        language: state.language,
+        darkMode: state.darkMode,
+        filters: state.filters,
+        favoriteIds: state.favoriteIds,
+        compareIds: state.compareIds,
+      }),
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<ShowroomStore> | undefined;
+        return {
+          currency: state?.currency || "USD",
+          exchangeRate: state?.exchangeRate || 70.5,
+          language: state?.language || "en",
+          darkMode: Boolean(state?.darkMode),
+          filters: state?.filters || initialFilters,
+          favoriteIds: state?.favoriteIds || [],
+          compareIds: state?.compareIds || [],
+        } as ShowroomStore;
+      },
     }
   )
 );
