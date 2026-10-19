@@ -26,9 +26,13 @@ import {
   PieChart,
 } from "lucide-react";
 
-export function AccountingTab() {
+export function AccountingTab({
+  initialSubView = "pnl",
+}: {
+  initialSubView?: "pnl" | "coa" | "trial" | "journal";
+} = {}) {
   const { accounts, journalEntries, sales, expenses, vehicles, exchangeRate } = useShowroomStore();
-  const [subView, setSubView] = useState<"pnl" | "coa" | "trial" | "journal">("pnl");
+  const [subView, setSubView] = useState<"pnl" | "coa" | "trial" | "journal">(initialSubView);
 
   // Calculate live financial statements
   const totalRevenueUSD = sales.reduce((acc, s) => acc + s.salePriceUSD, 0);

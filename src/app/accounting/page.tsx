@@ -236,12 +236,12 @@ export default function AccountingHubPage() {
 
         {/* Tab Content Panes */}
         <div className="p-3 sm:p-5">
-          {activeTab === "0" && <AccountingTab />}
+          {activeTab === "0" && <AccountingTab initialSubView="pnl" />}
           {activeTab === "1" && <InvoicesTab />}
           {activeTab === "2" && <PaymentsTab />}
           {activeTab === "3" && <SuppliersTab />}
           {activeTab === "4" && <ExpensesTab />}
-          {activeTab === "5" && <AccountingTab />}
+          {activeTab === "5" && <AccountingTab initialSubView="coa" />}
         </div>
       </div>
     </div>
