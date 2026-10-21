@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireApiRole } from "@/lib/api-auth";
 import { createLedgerEntry } from "@/lib/ledger";
+import { recordSessionAuditEvent } from "@/lib/audit-log";
 
 export async function GET() {
   if (!isDatabaseConfigured()) {
@@ -135,6 +136,17 @@ export async function POST(req: Request) {
           amountAFN: payment.amountAFN,
       });
 
+      await recordSessionAuditEvent(tx, {
+        action: "PAYMENT_RECORDED",
+        entityType: "Payment",
+        entityId: payment.id,
+        changes: {
+          voucherNumber: payment.voucherNumber,
+          voucherType: payment.voucherType,
+          amountUSD: payment.amountUSD,
+          paymentMethod: payment.paymentMethod,
+        },
+      });
       return payment;
     });
 

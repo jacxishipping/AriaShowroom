@@ -64,9 +64,11 @@ model User {
   name         String
   email        String   @unique
   passwordHash String
+  passwordChangeRequired Boolean @default(false)
   role         UserRole @default(SALES)
   phone        String?
   sales        Sale[]   @relation("SellerSales")
+  auditEvents  AuditLog[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -90,6 +92,7 @@ model Vehicle {
   driveType        String            @default("AWD")
   color            String
   status           VehicleStatus     @default(AVAILABLE)
+  statusChangedAt  DateTime          @default(now())
   purchasePrice    Float
   freightCost      Float             @default(0)
   customsDuty      Float             @default(0)
@@ -301,4 +304,20 @@ model JournalEntry {
   amountUSD   Float
   amountAFN   Float
   createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorEmail  String
+  action      String
+  entityType  String
+  entityId    String
+  changes     Json?
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
 }

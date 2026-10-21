@@ -36,6 +36,9 @@ export const authOptions: NextAuthOptions = {
         ) {
           return null;
         }
+        const passwordState = await prisma.$queryRaw<{ passwordChangeRequired: boolean }[]>`
+          SELECT "passwordChangeRequired" FROM "User" WHERE id = ${user.id}
+        `;
 
         return {
           id: user.id,
@@ -43,6 +46,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           role: user.role,
           phone: user.phone || undefined,
+          mustChangePassword: passwordState[0]?.passwordChangeRequired ?? false,
         };
       },
     }),
@@ -53,6 +57,16 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as any).role || "SALES";
         token.phone = (user as any).phone;
+        token.mustChangePassword = (user as any).mustChangePassword ?? false;
+      }
+      if (token.id) {
+        const passwordState = await prisma.$queryRaw<
+          { passwordChangeRequired: boolean }[]
+        >`
+          SELECT "passwordChangeRequired" FROM "User" WHERE id = ${token.id}
+        `;
+        token.mustChangePassword =
+          passwordState[0]?.passwordChangeRequired ?? token.mustChangePassword ?? false;
       }
       return token;
     },
@@ -61,6 +75,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id as string;
         (session.user as any).role = token.role as string;
         (session.user as any).phone = token.phone as string;
+        session.user.mustChangePassword = token.mustChangePassword === true;
       }
       return session;
     },

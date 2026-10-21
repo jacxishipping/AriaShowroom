@@ -4,12 +4,13 @@ import { VehicleStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireApiRole } from "@/lib/api-auth";
+import { recordSessionAuditEvent } from "@/lib/audit-log";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   if (!isDatabaseConfigured()) {
     return NextResponse.json({ success: false, fallback: true });
@@ -18,7 +19,7 @@ export async function GET(
   if (unauthorized) return unauthorized;
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     const role = (session?.user as { role?: string } | undefined)?.role;
 
@@ -74,13 +75,13 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const unauthorized = await requireApiRole(["ADMIN"]);
   if (unauthorized) return unauthorized;
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const allowedFields = [
       "stockNumber", "vin", "make", "model", "year", "trim", "bodyType",
@@ -116,12 +117,42 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: "No supported vehicle fields supplied" }, { status: 400 });
     }
 
-    const vehicle = await prisma.vehicle.update({
-      where: { id },
-      data,
-      include: {
-        images: true,
-      },
+    const previous = await prisma.vehicle.findUnique({ where: { id } });
+    if (!previous) {
+      return NextResponse.json({ success: false, error: "Vehicle not found" }, { status: 404 });
+    }
+    const vehicle = await prisma.$transaction(async (tx) => {
+      const updated = await tx.vehicle.update({
+        where: { id },
+        data,
+        include: {
+          images: true,
+        },
+      });
+      if (data.status !== undefined && data.status !== previous.status) {
+        await tx.$executeRaw`
+          UPDATE "Vehicle" SET "statusChangedAt" = NOW() WHERE id = ${id}
+        `;
+      }
+      const trackedFields = ["status", "sellingPrice", "landedCost", "minTargetPrice"];
+      const changes = Object.fromEntries(
+        trackedFields
+          .filter((field) => data[field] !== undefined && data[field] !== previous[field as keyof typeof previous])
+          .map((field) => [
+            field,
+            {
+              from: previous[field as keyof typeof previous],
+              to: data[field],
+            },
+          ])
+      );
+      await recordSessionAuditEvent(tx, {
+        action: "VEHICLE_UPDATED",
+        entityType: "Vehicle",
+        entityId: id,
+        changes: Object.keys(changes).length > 0 ? changes : { fields: Object.keys(data) },
+      });
+      return updated;
     });
 
     return NextResponse.json({ success: true, data: vehicle });
@@ -135,17 +166,32 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const unauthorized = await requireApiRole(["ADMIN"]);
   if (unauthorized) return unauthorized;
 
   try {
-    const { id } = params;
+    const { id } = await params;
 
-    await prisma.vehicleImage.deleteMany({ where: { vehicleId: id } });
-    await prisma.vehicleDocument.deleteMany({ where: { vehicleId: id } });
-    await prisma.vehicle.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      const vehicle = await tx.vehicle.findUnique({
+        where: { id },
+        select: { id: true, stockNumber: true },
+      });
+      if (!vehicle) {
+        throw new Error("Vehicle not found");
+      }
+      await tx.vehicleImage.deleteMany({ where: { vehicleId: id } });
+      await tx.vehicleDocument.deleteMany({ where: { vehicleId: id } });
+      await tx.vehicle.delete({ where: { id } });
+      await recordSessionAuditEvent(tx, {
+        action: "VEHICLE_DELETED",
+        entityType: "Vehicle",
+        entityId: id,
+        changes: { stockNumber: vehicle.stockNumber },
+      });
+    });
 
     return NextResponse.json({ success: true, message: "Vehicle deleted successfully" });
   } catch (error: any) {

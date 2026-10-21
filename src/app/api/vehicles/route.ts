@@ -4,6 +4,7 @@ import { VehicleStatus, FuelType, TransmissionType, SteeringSide } from "@prisma
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireApiRole } from "@/lib/api-auth";
+import { recordSessionAuditEvent } from "@/lib/audit-log";
 
 export const dynamic = "force-dynamic";
 
@@ -108,8 +109,9 @@ export async function POST(request: Request) {
       Number(customsDuty || 0) +
       Number(repairCost || 0);
 
-    const vehicle = await prisma.vehicle.create({
-      data: {
+    const vehicle = await prisma.$transaction(async (tx) => {
+      const created = await tx.vehicle.create({
+        data: {
         stockNumber,
         vin,
         make,
@@ -146,17 +148,25 @@ export async function POST(request: Request) {
             order: idx,
           })),
         },
-      },
-      include: {
-        images: true,
-      },
+        },
+        include: {
+          images: true,
+        },
+      });
+      await recordSessionAuditEvent(tx, {
+        action: "VEHICLE_CREATED",
+        entityType: "Vehicle",
+        entityId: created.id,
+        changes: { stockNumber, status, sellingPrice },
+      });
+      return created;
     });
 
     return NextResponse.json({ success: true, data: vehicle }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, fallback: true, error: error.message || "Failed to create vehicle" },
-      { status: 200 }
+      { success: false, error: error.message || "Failed to create vehicle" },
+      { status: 500 }
     );
   }
 }

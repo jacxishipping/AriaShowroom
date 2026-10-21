@@ -5,8 +5,9 @@ import { createLedgerEntry } from "@/lib/ledger";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
 
@@ -25,7 +26,7 @@ export async function POST(
       const bill = await tx.supplierBill.create({
         data: {
           billNumber: body.billNumber,
-          supplierId: params.id,
+          supplierId: id,
           stockNumber: body.stockNumber || null,
           vehicleDescription: body.vehicleDescription || null,
           amountUSD,
@@ -38,7 +39,7 @@ export async function POST(
       });
 
       await tx.supplier.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           totalPurchasedUSD: { increment: amountUSD },
           balanceUSD: { increment: amountUSD },

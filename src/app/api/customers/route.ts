@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { LeadStage } from "@prisma/client";
 import { requireApiRole } from "@/lib/api-auth";
+import { recordSessionAuditEvent } from "@/lib/audit-log";
 
 export const dynamic = "force-dynamic";
 
@@ -68,8 +69,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const customer = await prisma.customer.create({
-      data: {
+    const customer = await prisma.$transaction(async (tx) => {
+      const created = await tx.customer.create({
+        data: {
         fullName,
         phone,
         whatsapp: whatsapp || phone,
@@ -81,7 +83,15 @@ export async function POST(request: Request) {
         interestedInVehicleId: interestedInVehicleId || null,
         notes,
         leadStage: leadStage as LeadStage,
-      },
+        },
+      });
+      await recordSessionAuditEvent(tx, {
+        action: "CUSTOMER_CREATED",
+        entityType: "Customer",
+        entityId: created.id,
+        changes: { leadStage: created.leadStage },
+      });
+      return created;
     });
 
     return NextResponse.json({ success: true, data: customer }, { status: 201 });
@@ -116,9 +126,22 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const customer = await prisma.customer.update({
-      where: { id: body.customerId },
-      data: { leadStage: stage },
+    const customer = await prisma.$transaction(async (tx) => {
+      const previous = await tx.customer.findUnique({
+        where: { id: body.customerId },
+        select: { leadStage: true },
+      });
+      const updated = await tx.customer.update({
+        where: { id: body.customerId },
+        data: { leadStage: stage },
+      });
+      await recordSessionAuditEvent(tx, {
+        action: "CUSTOMER_STAGE_CHANGED",
+        entityType: "Customer",
+        entityId: updated.id,
+        changes: { leadStage: { from: previous?.leadStage, to: updated.leadStage } },
+      });
+      return updated;
     });
     return NextResponse.json({ success: true, data: customer });
   } catch (error: any) {

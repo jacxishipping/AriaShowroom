@@ -8,6 +8,7 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "tsc --noEmit",
+    "test": "tsx --test src/lib/csv.test.ts src/lib/report-metrics.test.ts src/lib/translations.test.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts"
@@ -28,7 +29,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.454.0",
-    "next": "14.2.15",
+    "next": "^15.5.28",
     "next-auth": "^4.24.15",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
@@ -41,10 +42,13 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.47",
+    "postcss": "^8.5.31",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.14",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3"
+  },
+  "overrides": {
+    "postcss": "^8.5.31"
   }
 }

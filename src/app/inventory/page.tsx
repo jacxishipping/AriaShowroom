@@ -261,6 +261,17 @@ export default function InventoryPage() {
           >
             {t.addNewVehicle}
           </MuiButton>
+          {currentRole === "SuperAdmin" && (
+            <MuiButton
+              component={Link}
+              href="/inventory/import"
+              variant="outlined"
+              color="inherit"
+              size="small"
+            >
+              {t.importTitle}
+            </MuiButton>
+          )}
         </div>
       </div>
 

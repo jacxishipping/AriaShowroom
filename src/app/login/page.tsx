@@ -82,7 +82,11 @@ function LoginContent() {
           "success"
         );
 
-        router.push(callbackUrl);
+        router.push(
+          session?.user?.mustChangePassword
+            ? "/account/security/password"
+            : callbackUrl
+        );
         router.refresh();
       }
     } catch (err: any) {

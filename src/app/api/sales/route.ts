@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireApiRole } from "@/lib/api-auth";
 import { createLedgerEntry } from "@/lib/ledger";
+import { recordSessionAuditEvent } from "@/lib/audit-log";
 
 export const dynamic = "force-dynamic";
 
@@ -125,6 +126,18 @@ export async function POST(request: Request) {
       await tx.vehicle.update({
         where: { id: vehicleId },
         data: { status: VehicleStatus.SOLD },
+      });
+      await recordSessionAuditEvent(tx, {
+        action: "VEHICLE_SOLD",
+        entityType: "Sale",
+        entityId: sale.id,
+        changes: {
+          contractNumber,
+          vehicleId,
+          customerId: customer.id,
+          salePrice: price,
+          paymentType: paymentTypeValue,
+        },
       });
 
       if (Number(vehicle.landedCost) > 0) {

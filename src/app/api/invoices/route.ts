@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { requireApiRole } from "@/lib/api-auth";
 import { createLedgerEntry } from "@/lib/ledger";
+import { recordSessionAuditEvent } from "@/lib/audit-log";
 
 export async function GET() {
   if (!isDatabaseConfigured()) {
@@ -106,6 +107,16 @@ export async function POST(req: Request) {
         });
       }
 
+      await recordSessionAuditEvent(tx, {
+        action: "INVOICE_CREATED",
+        entityType: "Invoice",
+        entityId: invoice.id,
+        changes: {
+          invoiceNumber: invoice.invoiceNumber,
+          totalUSD: invoice.totalUSD,
+          status: invoice.status,
+        },
+      });
       return invoice;
     });
 
@@ -170,7 +181,14 @@ export async function PATCH(req: Request) {
         });
       }
 
-      return tx.invoice.findUniqueOrThrow({ where: { id: body.invoiceId } });
+      const updated = await tx.invoice.findUniqueOrThrow({ where: { id: body.invoiceId } });
+      await recordSessionAuditEvent(tx, {
+        action: "INVOICE_STATUS_CHANGED",
+        entityType: "Invoice",
+        entityId: updated.id,
+        changes: { status: { from: existing.status, to: updated.status } },
+      });
+      return updated;
     });
     return NextResponse.json({ success: true, data: invoice });
   } catch (error: any) {

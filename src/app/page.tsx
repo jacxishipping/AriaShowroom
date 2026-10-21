@@ -8,6 +8,7 @@ import { translations } from "@/lib/translations";
 import { formatCurrency } from "@/lib/utils";
 import { CompareBar } from "@/components/CompareBar";
 import { FloatingBatchToolbar } from "@/components/FloatingBatchToolbar";
+import { WorkflowAlerts } from "@/components/WorkflowAlerts";
 import { PinnedViewsBar } from "@/components/PinnedViewsBar";
 import { LookerAnalyticsStrip } from "@/components/LookerAnalyticsStrip";
 import { VehicleItem } from "@/lib/mock-data";
@@ -280,6 +281,7 @@ export default function ErpOperationsCockpit() {
 
       {/* Customizable Pinned Views & Saved Filter Presets */}
       <PinnedViewsBar />
+      <WorkflowAlerts />
 
       {/* Google Cloud 1px Hairline KPI Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-200 dark:bg-[#262F40] border border-slate-200 dark:border-[#262F40] rounded-lg overflow-hidden">

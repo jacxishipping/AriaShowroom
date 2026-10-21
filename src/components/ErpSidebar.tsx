@@ -177,6 +177,56 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
     },
   ];
 
+  navSections.push({
+    label: t.historyTitle,
+    items: [
+      {
+        title: t.historyTitle,
+        href: "/history",
+        icon: Users,
+        count: null,
+        shortcut: null,
+      },
+    ],
+  });
+
+  if (currentRole === "SuperAdmin") {
+    navSections.push({
+      label: t.adminStaffTitle,
+      items: [
+        {
+          title: t.adminStaffTitle,
+          href: "/admin/users",
+          icon: Users,
+          count: null,
+          shortcut: null,
+        },
+        {
+          title: t.auditTitle,
+          href: "/admin/audit",
+          icon: Receipt,
+          count: null,
+          shortcut: null,
+        },
+      ],
+    });
+  }
+
+  if (currentRole === "SuperAdmin" || currentRole === "Accountant") {
+    navSections.push({
+      label: t.reportsTitle,
+      items: [
+        {
+          title: t.reportsTitle,
+          href: "/reports",
+          icon: Receipt,
+          count: null,
+          shortcut: null,
+        },
+      ],
+    });
+  }
+
   const renderSidebarContent = (isMobile = false) => (
     <>
       {/* Google Cloud Console Brand Header */}

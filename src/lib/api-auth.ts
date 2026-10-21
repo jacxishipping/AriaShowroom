@@ -14,6 +14,13 @@ export async function requireApiRole(allowedRoles: ApiRole[]) {
     );
   }
 
+  if (session.user.mustChangePassword) {
+    return NextResponse.json(
+      { success: false, error: "Change your temporary password before continuing" },
+      { status: 403 }
+    );
+  }
+
   const role = (session.user as typeof session.user & { role?: ApiRole }).role;
   if (!role || !allowedRoles.includes(role)) {
     return NextResponse.json(
