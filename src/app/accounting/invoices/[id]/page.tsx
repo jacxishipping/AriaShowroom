@@ -24,7 +24,10 @@ import {
   Calendar,
   CheckCircle2,
   Share2,
+  Download,
+  Loader2,
 } from "lucide-react";
+import { downloadCommercialInvoicePDF } from "@/lib/invoice-pdf";
 
 export default function CommercialInvoicePage() {
   const params = useParams();
@@ -37,6 +40,7 @@ export default function CommercialInvoicePage() {
     invoices[0];
 
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState<boolean>(false);
 
   useEffect(() => {
     if (!invoice) return;
@@ -58,6 +62,21 @@ export default function CommercialInvoicePage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!invoice) return;
+    setIsDownloadingPDF(true);
+    addToast("Generating commercial invoice PDF...", "info");
+    try {
+      await downloadCommercialInvoicePDF(invoice, "commercial-invoice-document");
+      addToast(`Commercial invoice ${invoice.invoiceNumber} downloaded as PDF`, "success");
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      addToast("Failed to generate PDF. Please try again.", "error");
+    } finally {
+      setIsDownloadingPDF(false);
+    }
   };
 
   const handleCopyLink = () => {
@@ -105,7 +124,7 @@ export default function CommercialInvoicePage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center flex-wrap gap-2.5">
           <MuiButton
             component={Link}
             href="/admin"
@@ -126,19 +145,38 @@ export default function CommercialInvoicePage() {
             Copy Link
           </MuiButton>
           <MuiButton
-            variant="contained"
-            color="primary"
-            size="medium"
+            variant="outlined"
+            color="inherit"
+            size="small"
             onClick={handlePrint}
             startIcon={<Printer className="h-4 w-4" />}
           >
-            Print Invoice (چاپ فاکتور)
+            Print (چاپ)
+          </MuiButton>
+          <MuiButton
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleDownloadPDF}
+            disabled={isDownloadingPDF}
+            startIcon={
+              isDownloadingPDF ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )
+            }
+          >
+            {isDownloadingPDF ? "Generating PDF..." : "Download PDF (دانلود PDF)"}
           </MuiButton>
         </div>
       </div>
 
       {/* Printable Invoice Container */}
-      <div className="rounded-2xl bg-white p-6 sm:p-10 shadow-lg border border-slate-200 dark:border-slate-800 dark:bg-[#111827] text-slate-900 dark:text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0 space-y-6">
+      <div
+        id="commercial-invoice-document"
+        className="rounded-2xl bg-white p-6 sm:p-10 shadow-lg border border-slate-200 dark:border-slate-800 dark:bg-[#111827] text-slate-900 dark:text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0 space-y-6"
+      >
         {/* Dealership Header & Invoice ID */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-6 print:border-black">
           <div>

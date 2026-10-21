@@ -4,7 +4,7 @@
  * to ensure Dari/Pashto Arabic script renders properly in Microsoft Excel.
  */
 
-import { VehicleItem, SaleRecord, CustomerRecord } from "./mock-data";
+import { VehicleItem, SaleRecord, CustomerRecord, InvoiceRecord } from "./mock-data";
 
 export function exportCustomersToCSV(
   customers: CustomerRecord[],
@@ -164,6 +164,58 @@ export function exportSalesLedgerToCSV(sales: SaleRecord[], filename = "sadozai_
   const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
   downloadBlob(csvContent, filename, "text/csv;charset=utf-8;");
 }
+
+export function exportInvoicesToCSV(
+  invoices: InvoiceRecord[],
+  filename = "sadozai_commercial_invoices.csv"
+) {
+  const headers = [
+    "Invoice Number (نمبر فاکتور)",
+    "Issue Date (تاریخ صدور)",
+    "Customer Name (نام خریدار)",
+    "Customer Phone (شماره تماس)",
+    "Tazkira Number (نمبر تذکره)",
+    "Vehicle (شرح موتر)",
+    "Stock Number (نمبر استاک)",
+    "VIN / Chassis (نمبر شاسی)",
+    "Subtotal USD (مجموع)",
+    "Customs Fee USD (محصول گمرک)",
+    "Registration Fee USD (ثبت ترافیک)",
+    "Discount USD (تخفیف)",
+    "Total USD (مجموع نهایی دالر)",
+    "Exchange Rate (نرخ اسعار)",
+    "Total AFN (مجموع نهایی افغانی)",
+    "Status (حالت فاکتور)",
+    "Payment Method (روش پرداخت)",
+  ];
+
+  const rows = invoices.map((inv) => {
+    return [
+      `"${inv.invoiceNumber}"`,
+      `"${inv.issueDate}"`,
+      `"${(inv.customerName || "").replace(/"/g, '""')}"`,
+      `"${inv.customerPhone || ""}"`,
+      `"${inv.customerTazkira || ""}"`,
+      `"${(inv.vehicleDesc || "").replace(/"/g, '""')}"`,
+      `"${inv.vehicleStock || ""}"`,
+      `"${inv.vin || ""}"`,
+      inv.subtotalUSD || 0,
+      inv.customsFeeUSD || 0,
+      inv.registrationFeeUSD || 0,
+      inv.discountUSD || 0,
+      inv.totalUSD || 0,
+      inv.exchangeRate || 70.5,
+      inv.totalAFN || 0,
+      `"${inv.status}"`,
+      `"${(inv.paymentMethod || "").replace(/"/g, '""')}"`,
+    ].join(",");
+  });
+
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+  downloadBlob(csvContent, filename, "text/csv;charset=utf-8;");
+}
+
+export { downloadCommercialInvoicePDF } from "./invoice-pdf";
 
 function downloadBlob(content: string, filename: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType });

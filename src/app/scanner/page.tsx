@@ -37,7 +37,9 @@ import {
   ShieldCheck,
   Check,
   Navigation,
+  ClipboardCheck,
 } from "lucide-react";
+import { ScanAuditHistory, ScanAuditEntry } from "@/components/ScanAuditHistory";
 
 export default function LotBarcodeScannerPage() {
   const router = useRouter();
@@ -48,12 +50,49 @@ export default function LotBarcodeScannerPage() {
   const [selectedYard, setSelectedYard] = useState("Main Showroom - Bagh-e-Azadi");
   const [scannedVin, setScannedVin] = useState("");
   const [scannedVehicle, setScannedVehicle] = useState<VehicleItem | null>(() => vehicles[0] || null);
-  const [scanHistory, setScanHistory] = useState<VehicleItem[]>([]);
   const [isLaserActive, setIsLaserActive] = useState(true);
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [isSoundMuted, setIsSoundMuted] = useState(false);
-  const [auditedVehicleIds, setAuditedVehicleIds] = useState<string[]>([]);
   const [newYardBay, setNewYardBay] = useState("");
+
+  // Scan Audit History tracking for the active lot walk session
+  const [auditEntries, setAuditEntries] = useState<ScanAuditEntry[]>(() => {
+    if (!vehicles || vehicles.length === 0) return [];
+    // Seed realistic initial session audit scans from showroom vehicles
+    const initialSamples = vehicles.slice(0, 4);
+    return initialSamples.map((v, idx) => {
+      const offset = (initialSamples.length - idx) * 9;
+      const d = new Date(Date.now() - offset * 60000);
+      return {
+        id: `audit-${v.id}-${idx}`,
+        vin: v.vin,
+        vehicleId: v.id,
+        stockNumber: v.stockNumber,
+        make: v.make,
+        model: v.model,
+        year: v.year,
+        trim: v.trim,
+        sellingPrice: v.sellingPrice,
+        image: v.images[0],
+        bayLocation: v.yardLocation || "Main Showroom - Bagh-e-Azadi",
+        timestamp: d.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }),
+        scannedAt: d,
+        isAudited: idx === 0 || idx === 1,
+        scanMethod: idx === 0 ? "OPTICAL_CAMERA" : idx === 1 ? "LASER_GUN" : "QUICK_CHIP",
+        status: v.status,
+      };
+    });
+  });
+
+  const [auditedVehicleIds, setAuditedVehicleIds] = useState<string[]>(() => {
+    if (!vehicles || vehicles.length === 0) return [];
+    return [vehicles[0]?.id, vehicles[1]?.id].filter(Boolean) as string[];
+  });
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -107,6 +146,43 @@ export default function LotBarcodeScannerPage() {
     (v) => !selectedYard || v.yardLocation === selectedYard
   );
 
+  // Helper to record a scan into the session audit history
+  const recordScanEntry = (
+    v: VehicleItem,
+    method: "OPTICAL_CAMERA" | "LASER_GUN" | "MANUAL_ENTRY" | "QUICK_CHIP" = "OPTICAL_CAMERA",
+    customBay?: string
+  ) => {
+    const bay = customBay || selectedYard || v.yardLocation || "Main Showroom - Bagh-e-Azadi";
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+
+    const newEntry: ScanAuditEntry = {
+      id: `audit-${v.id}-${Date.now()}`,
+      vin: v.vin,
+      vehicleId: v.id,
+      stockNumber: v.stockNumber,
+      make: v.make,
+      model: v.model,
+      year: v.year,
+      trim: v.trim,
+      sellingPrice: v.sellingPrice,
+      image: v.images[0],
+      bayLocation: bay,
+      timestamp: timeStr,
+      scannedAt: now,
+      isAudited: auditedVehicleIds.includes(v.id),
+      scanMethod: method,
+      status: v.status,
+    };
+
+    setAuditEntries((prev) => [newEntry, ...prev.filter((e) => e.vin !== v.vin)]);
+  };
+
   const handleManualSearch = (val: string) => {
     setScannedVin(val);
     const found = vehicles.find(
@@ -117,18 +193,36 @@ export default function LotBarcodeScannerPage() {
     );
     if (found) {
       setScannedVehicle(found);
-      if (!scanHistory.some((h) => h.id === found.id)) {
-        setScanHistory((prev) => [found, ...prev]);
-      }
+      recordScanEntry(found, "MANUAL_ENTRY");
+    } else if (val.trim().length >= 6) {
+      // Record uncatalogued VIN entry
+      const now = new Date();
+      const rawEntry: ScanAuditEntry = {
+        id: `audit-raw-${Date.now()}`,
+        vin: val.toUpperCase().trim(),
+        bayLocation: selectedYard,
+        timestamp: now.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }),
+        scannedAt: now,
+        isAudited: false,
+        scanMethod: "LASER_GUN",
+        notes: "Uncatalogued lot unit",
+      };
+      setAuditEntries((prev) => [rawEntry, ...prev.filter((e) => e.vin !== rawEntry.vin)]);
     }
   };
 
-  const handleSelectVehicle = (v: VehicleItem) => {
+  const handleSelectVehicle = (
+    v: VehicleItem,
+    method: "OPTICAL_CAMERA" | "LASER_GUN" | "MANUAL_ENTRY" | "QUICK_CHIP" = "QUICK_CHIP"
+  ) => {
     setScannedVehicle(v);
     setScannedVin(v.vin);
-    if (!scanHistory.some((h) => h.id === v.id)) {
-      setScanHistory((prev) => [v, ...prev]);
-    }
+    recordScanEntry(v, method);
     addToast(`Identified ${v.year} ${v.make} ${v.model} (${v.stockNumber})`, "success");
   };
 
@@ -142,19 +236,91 @@ export default function LotBarcodeScannerPage() {
       return;
     }
     setScannedVehicle((prev) => (prev ? { ...prev, yardLocation: newYardBay } : null));
+    setAuditEntries((prev) =>
+      prev.map((e) =>
+        e.vehicleId === scannedVehicle.id ? { ...e, bayLocation: newYardBay } : e
+      )
+    );
     addToast(`${scannedVehicle.make} ${scannedVehicle.model} bay updated to: ${newYardBay}`, "success");
   };
 
   // Mark audited during lot walk
   const handleMarkAudited = () => {
     if (!scannedVehicle) return;
-    if (!auditedVehicleIds.includes(scannedVehicle.id)) {
+    const isCurrentlyAudited = auditedVehicleIds.includes(scannedVehicle.id);
+
+    if (!isCurrentlyAudited) {
       setAuditedVehicleIds((prev) => [...prev, scannedVehicle.id]);
+      setAuditEntries((prev) =>
+        prev.map((e) =>
+          e.vehicleId === scannedVehicle.id ? { ...e, isAudited: true } : e
+        )
+      );
+      addToast(
+        `✓ Audited & verified ${scannedVehicle.make} ${scannedVehicle.model} physical location`,
+        "success"
+      );
+    } else {
+      setAuditedVehicleIds((prev) => prev.filter((id) => id !== scannedVehicle.id));
+      setAuditEntries((prev) =>
+        prev.map((e) =>
+          e.vehicleId === scannedVehicle.id ? { ...e, isAudited: false } : e
+        )
+      );
+      addToast(
+        `Unmarked ${scannedVehicle.make} ${scannedVehicle.model} audit verification`,
+        "info"
+      );
     }
-    addToast(
-      `✓ Audited & verified ${scannedVehicle.make} ${scannedVehicle.model} physical location`,
-      "success"
+  };
+
+  const handleSelectAuditEntry = (entry: ScanAuditEntry) => {
+    if (entry.vehicleId) {
+      const v = vehicles.find((item) => item.id === entry.vehicleId);
+      if (v) {
+        setScannedVehicle(v);
+        setScannedVin(v.vin);
+        if (entry.bayLocation) setSelectedYard(entry.bayLocation);
+        addToast(`Loaded ${v.year} ${v.make} ${v.model} (${v.stockNumber}) from audit log`, "info");
+      }
+    } else if (entry.vin) {
+      setScannedVin(entry.vin);
+    }
+  };
+
+  const handleToggleEntryAudited = (entryId: string) => {
+    setAuditEntries((prev) =>
+      prev.map((e) => {
+        if (e.id === entryId) {
+          const nextAudited = !e.isAudited;
+          if (e.vehicleId) {
+            if (nextAudited) {
+              setAuditedVehicleIds((ids) =>
+                ids.includes(e.vehicleId!) ? ids : [...ids, e.vehicleId!]
+              );
+            } else {
+              setAuditedVehicleIds((ids) => ids.filter((id) => id !== e.vehicleId));
+            }
+          }
+          addToast(
+            nextAudited ? `Marked VIN ${e.vin} as audited ✓` : `Unmarked VIN ${e.vin}`,
+            "info"
+          );
+          return { ...e, isAudited: nextAudited };
+        }
+        return e;
+      })
     );
+  };
+
+  const handleClearAuditHistory = () => {
+    setAuditEntries([]);
+    setAuditedVehicleIds([]);
+    addToast("Lot walk audit history cleared for new session", "info");
+  };
+
+  const handleDeleteAuditEntry = (entryId: string) => {
+    setAuditEntries((prev) => prev.filter((e) => e.id !== entryId));
   };
 
   const auditProgressPercent = Math.round((auditedVehicleIds.length / (vehicles.length || 1)) * 100);
@@ -658,44 +824,41 @@ export default function LotBarcodeScannerPage() {
             </div>
           )}
 
-          {/* Session Scan History */}
-          {scanHistory.length > 0 && (
-            <div className="p-3.5 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  Recent Session Audits ({scanHistory.length})
-                </h4>
-                <button
-                  onClick={() => setScanHistory([])}
-                  className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  Clear History
-                </button>
+          {/* Active Session Audit Mini Status */}
+          <div className="p-3.5 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+                <ClipboardCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span>Session Walk Audit Tracker</span>
               </div>
-
-              <div className="space-y-1">
-                {scanHistory.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => setScannedVehicle(item)}
-                    className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-xs"
-                  >
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <Car className="h-3 w-3 text-slate-400 shrink-0" />
-                      <span className="font-semibold text-slate-900 dark:text-white truncate">
-                        {item.year} {item.make} {item.model}
-                      </span>
-                    </div>
-                    <span className="font-mono text-[10px] text-slate-400 shrink-0">
-                      {item.stockNumber}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/60">
+                {auditEntries.length} VINs Scanned
+              </span>
             </div>
-          )}
+
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              Every barcode or VIN scanned during your walk is logged with its timestamp and physical bay location. Review the comprehensive audit table below.
+            </p>
+
+            <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-[11px] font-mono">
+              <span className="text-slate-400">Reconciled:</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                {auditEntries.filter((e) => e.isAudited).length} / {auditEntries.length} units
+              </span>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Full-Width Scan Audit History Component */}
+      <ScanAuditHistory
+        entries={auditEntries}
+        currentVehicleId={scannedVehicle?.id}
+        onSelectEntry={handleSelectAuditEntry}
+        onToggleAudited={handleToggleEntryAudited}
+        onClearHistory={handleClearAuditHistory}
+        onDeleteEntry={handleDeleteAuditEntry}
+      />
     </div>
   );
 }

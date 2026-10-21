@@ -16,7 +16,10 @@ import {
   Calendar,
   CheckCircle2,
   Car,
+  Download,
+  Loader2,
 } from "lucide-react";
+import { downloadCommercialInvoicePDF } from "@/lib/invoice-pdf";
 
 interface CommercialInvoiceModalProps {
   invoice: InvoiceRecord | null;
@@ -29,8 +32,9 @@ export function CommercialInvoiceModal({
   isOpen,
   onClose,
 }: CommercialInvoiceModalProps) {
-  const { exchangeRate } = useShowroomStore();
+  const { exchangeRate, addToast } = useShowroomStore();
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState<boolean>(false);
 
   React.useEffect(() => {
     if (!invoice) return;
@@ -56,6 +60,21 @@ export function CommercialInvoiceModal({
     window.print();
   };
 
+  const handleDownloadPDF = async () => {
+    if (!invoice) return;
+    setIsDownloadingPDF(true);
+    addToast("Generating commercial invoice PDF...", "info");
+    try {
+      await downloadCommercialInvoicePDF(invoice, "commercial-invoice-modal-content");
+      addToast(`Commercial invoice ${invoice.invoiceNumber} downloaded as PDF`, "success");
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      addToast("Failed to generate PDF. Please try again.", "error");
+    } finally {
+      setIsDownloadingPDF(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-3 sm:p-4 backdrop-blur-xs overflow-y-auto">
       <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-xl bg-white p-6 sm:p-8 shadow-2xl dark:bg-[#121824] dark:text-white border border-slate-200 dark:border-slate-800">
@@ -70,13 +89,29 @@ export function CommercialInvoiceModal({
 
           <div className="flex items-center gap-2">
             <MuiButton
-              variant="contained"
-              color="primary"
+              variant="outlined"
+              color="inherit"
               size="small"
               onClick={handlePrint}
               startIcon={<Printer className="h-3.5 w-3.5" />}
             >
-              Print Invoice (چاپ فاکتور)
+              Print (چاپ)
+            </MuiButton>
+            <MuiButton
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={handleDownloadPDF}
+              disabled={isDownloadingPDF}
+              startIcon={
+                isDownloadingPDF ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )
+              }
+            >
+              {isDownloadingPDF ? "Generating PDF..." : "Download PDF (دانلود PDF)"}
             </MuiButton>
             <IconButton size="small" onClick={onClose}>
               <X className="h-5 w-5" />
@@ -85,7 +120,10 @@ export function CommercialInvoiceModal({
         </div>
 
         {/* Printable Invoice Container */}
-        <div className="mt-6 space-y-6 text-slate-900 dark:text-slate-100 print:m-0 print:p-0">
+        <div
+          id="commercial-invoice-modal-content"
+          className="mt-6 space-y-6 text-slate-900 dark:text-slate-100 print:m-0 print:p-0"
+        >
           {/* Header & Logo */}
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
             <div>

@@ -33,12 +33,15 @@ import {
   FileText,
   Building2,
   Upload,
+  Loader2,
 } from "lucide-react";
+import { InvoiceRecord } from "@/lib/mock-data";
+import { downloadCommercialInvoicePDF } from "@/lib/invoice-pdf";
 
 export default function VehicleDeedPage() {
   const params = useParams();
   const vehicleId = params?.id as string;
-  const { vehicles, exchangeRate, language, addToast } = useShowroomStore();
+  const { vehicles, invoices, exchangeRate, language, addToast } = useShowroomStore();
   const t = translations[language];
 
   const vehicle = vehicles.find((v) => v.id === vehicleId) || vehicles[0];
@@ -48,6 +51,7 @@ export default function VehicleDeedPage() {
   const [buyerPhone, setBuyerPhone] = useState("+93 79 988 7766");
   const [downPaymentUSD, setDownPaymentUSD] = useState<number>(10000);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
 
   // Digital Signature Pad States
   const [buyerSignatureUrl, setBuyerSignatureUrl] = useState<string | null>(null);
@@ -170,6 +174,54 @@ export default function VehicleDeedPage() {
     }
   };
 
+  const handleDownloadInvoice = async () => {
+    setIsDownloadingInvoice(true);
+    addToast("Generating commercial invoice PDF for vehicle...", "info");
+    try {
+      const existing = invoices.find((inv) => inv.vehicleStock === vehicle.stockNumber);
+      const invoiceData: InvoiceRecord = existing || {
+        id: `inv-${vehicle.id}`,
+        invoiceNumber: `INV-${contractNumber.replace("SM-DEED-", "")}`,
+        customerName: buyerName,
+        customerPhone: buyerPhone,
+        customerTazkira: buyerTazkira,
+        vehicleStock: vehicle.stockNumber,
+        vehicleDesc: `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim}`,
+        vin: vehicle.vin,
+        items: [
+          {
+            description: `${vehicle.year} ${vehicle.make} ${vehicle.model} Direct Import`,
+            descriptionDari: "قیمت معامله موتر وارداتی",
+            amountUSD: vehicle.sellingPrice,
+          },
+          {
+            description: "Islam Qala Port Customs Duty & Legal Maktoub Clearance",
+            descriptionDari: "محصول گمرکی و مکتوب رسمی ترخیص",
+            amountUSD: 2500,
+          },
+        ],
+        subtotalUSD: vehicle.sellingPrice,
+        customsFeeUSD: 2500,
+        registrationFeeUSD: 0,
+        discountUSD: 0,
+        totalUSD: vehicle.sellingPrice + 2500,
+        totalAFN: Math.round((vehicle.sellingPrice + 2500) * exchangeRate),
+        exchangeRate,
+        status: "Paid",
+        paymentMethod: "Cash / Direct Hawala",
+        issueDate: new Date().toISOString().split("T")[0],
+      };
+
+      await downloadCommercialInvoicePDF(invoiceData);
+      addToast(`Commercial invoice for ${vehicle.stockNumber} downloaded as PDF`, "success");
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      addToast("Failed to download PDF invoice. Please try again.", "error");
+    } finally {
+      setIsDownloadingInvoice(false);
+    }
+  };
+
   if (!vehicle) {
     return (
       <div className="p-8 text-center text-slate-500">
@@ -258,6 +310,23 @@ export default function VehicleDeedPage() {
             sx={{ fontSize: "11px", py: "3px" }}
           >
             Copy Link
+          </MuiButton>
+          <MuiButton
+            variant="outlined"
+            color="primary"
+            size="small"
+            onClick={handleDownloadInvoice}
+            disabled={isDownloadingInvoice}
+            startIcon={
+              isDownloadingInvoice ? (
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )
+            }
+            sx={{ fontSize: "11px", py: "3px" }}
+          >
+            {isDownloadingInvoice ? "Generating..." : "Download Invoice (PDF)"}
           </MuiButton>
           <MuiButton
             variant="contained"

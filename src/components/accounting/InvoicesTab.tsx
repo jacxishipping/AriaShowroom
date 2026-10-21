@@ -27,7 +27,13 @@ import {
   DollarSign,
   Car,
   CheckCircle2,
+  Download,
+  Loader2,
+  FileText,
 } from "lucide-react";
+import { CommercialInvoiceModal } from "@/components/CommercialInvoiceModal";
+import { downloadCommercialInvoicePDF } from "@/lib/invoice-pdf";
+import { exportInvoicesToCSV } from "@/lib/export-utils";
 
 interface InvoicesTabProps {
   onSelectInvoice?: (invoice: InvoiceRecord) => void;
@@ -37,6 +43,22 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
   const { invoices, vehicles, exchangeRate, addInvoice, addToast } = useShowroomStore();
   const [search, setSearch] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [previewInvoice, setPreviewInvoice] = useState<InvoiceRecord | null>(null);
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
+
+  const handleDownloadInvoicePDF = async (inv: InvoiceRecord) => {
+    setDownloadingInvoiceId(inv.id);
+    addToast(`Generating PDF for ${inv.invoiceNumber}...`, "info");
+    try {
+      await downloadCommercialInvoicePDF(inv);
+      addToast(`Invoice ${inv.invoiceNumber} downloaded as PDF`, "success");
+    } catch (err) {
+      console.error("PDF download error:", err);
+      addToast("Failed to generate PDF. Please try again.", "error");
+    } finally {
+      setDownloadingInvoiceId(null);
+    }
+  };
 
   // Form state
   const [customerName, setCustomerName] = useState("");
@@ -234,16 +256,31 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
           </span>
         </div>
 
-        <MuiButton
-          variant="contained"
-          color="primary"
-          size="small"
-          onClick={() => setIsCreating(!isCreating)}
-          startIcon={<Plus className="h-3.5 w-3.5" />}
-          sx={{ fontSize: "11px", py: "5px" }}
-        >
-          {isCreating ? "Close Form" : "Generate Commercial Invoice"}
-        </MuiButton>
+        <div className="flex items-center gap-2">
+          <MuiButton
+            variant="outlined"
+            color="inherit"
+            size="small"
+            onClick={() => {
+              exportInvoicesToCSV(filteredInvoices);
+              addToast(`Exported ${filteredInvoices.length} invoices to CSV`, "success");
+            }}
+            startIcon={<Download className="h-3.5 w-3.5" />}
+            sx={{ fontSize: "11px", py: "5px" }}
+          >
+            Export CSV
+          </MuiButton>
+          <MuiButton
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={() => setIsCreating(!isCreating)}
+            startIcon={<Plus className="h-3.5 w-3.5" />}
+            sx={{ fontSize: "11px", py: "5px" }}
+          >
+            {isCreating ? "Close Form" : "Generate Commercial Invoice"}
+          </MuiButton>
+        </div>
       </div>
 
       {/* Invoice Generator Form */}
@@ -404,16 +441,41 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                     </span>
                   </MuiTableCell>
                   <MuiTableCell align="right">
-                    <IconButton
-                      component={Link}
-                      href={`/accounting/invoices/${inv.id}`}
-                      size="small"
-                      color="primary"
-                      title="View & Print Official Invoice"
-                      sx={{ p: "3px" }}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </IconButton>
+                    <div className="flex items-center justify-end gap-1">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        title="Download Commercial Invoice as PDF (دانلود PDF)"
+                        onClick={() => handleDownloadInvoicePDF(inv)}
+                        disabled={downloadingInvoiceId === inv.id}
+                        sx={{ p: "3px" }}
+                      >
+                        {downloadingInvoiceId === inv.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                        ) : (
+                          <Download className="h-3.5 w-3.5" />
+                        )}
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="inherit"
+                        title="Quick Preview Invoice Modal"
+                        onClick={() => setPreviewInvoice(inv)}
+                        sx={{ p: "3px" }}
+                      >
+                        <FileText className="h-3.5 w-3.5 text-slate-500" />
+                      </IconButton>
+                      <IconButton
+                        component={Link}
+                        href={`/accounting/invoices/${inv.id}`}
+                        size="small"
+                        color="primary"
+                        title="View & Print Official Invoice Page"
+                        sx={{ p: "3px" }}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </IconButton>
+                    </div>
                   </MuiTableCell>
                 </MuiTableRow>
               ))}
@@ -421,6 +483,13 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
           </MuiTable>
         </div>
       </div>
+
+      {/* Quick View Commercial Invoice Modal */}
+      <CommercialInvoiceModal
+        invoice={previewInvoice}
+        isOpen={Boolean(previewInvoice)}
+        onClose={() => setPreviewInvoice(null)}
+      />
     </div>
   );
 }

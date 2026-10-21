@@ -2,6 +2,7 @@ import { withAuth } from "next-auth/middleware";
 
 export default withAuth({
   pages: { signIn: "/login" },
+  secret: process.env.NEXTAUTH_SECRET || "sadozai-motors-herat-erp-secret-key-2026",
   callbacks: {
     authorized: ({ req, token }) => {
       if (!token) return false;

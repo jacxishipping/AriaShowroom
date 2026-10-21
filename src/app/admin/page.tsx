@@ -13,6 +13,7 @@ import { translations } from "@/lib/translations";
 import {
   VehicleItem,
   CustomerRecord,
+  SaleRecord,
   InvoiceRecord,
   SupplierRecord,
   PaymentVoucherRecord,
@@ -84,7 +85,10 @@ import {
   ArrowLeft,
   ArrowRight,
   PlusCircle,
+  Download,
+  Loader2,
 } from "lucide-react";
+import { downloadCommercialInvoicePDF } from "@/lib/invoice-pdf";
 
 export default function AdminDashboardPage() {
   const {
@@ -133,6 +137,53 @@ export default function AdminDashboardPage() {
   const [crmSearchQuery, setCrmSearchQuery] = useState("");
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [selectedAdminVehicleIds, setSelectedAdminVehicleIds] = useState<string[]>([]);
+  const [downloadingSaleInvoiceId, setDownloadingSaleInvoiceId] = useState<string | null>(null);
+
+  const handleDownloadSaleInvoicePDF = async (sale: SaleRecord) => {
+    setDownloadingSaleInvoiceId(sale.id);
+    addToast(`Generating commercial invoice PDF for contract ${sale.contractNumber}...`, "info");
+    try {
+      const existing = invoices.find(
+        (inv) => inv.saleId === sale.id || inv.vehicleStock === sale.stockNumber
+      );
+      const invoiceData: InvoiceRecord = existing || {
+        id: `inv-${sale.id}`,
+        invoiceNumber: `INV-${sale.contractNumber.replace(/[^a-zA-Z0-9-]/g, "")}`,
+        saleId: sale.id,
+        customerName: sale.customerName,
+        customerPhone: sale.customerPhone,
+        customerTazkira: sale.customerTazkira,
+        vehicleStock: sale.stockNumber,
+        vehicleDesc: sale.vehicleName,
+        items: [
+          {
+            description: `${sale.vehicleName} (${sale.stockNumber}) Final Bill of Sale`,
+            descriptionDari: "فاکتور قطعی و سند تجارتی موتر معامله‌شده",
+            amountUSD: sale.salePriceUSD,
+          },
+        ],
+        subtotalUSD: sale.salePriceUSD,
+        customsFeeUSD: 0,
+        registrationFeeUSD: 0,
+        discountUSD: 0,
+        totalUSD: sale.salePriceUSD,
+        totalAFN: Math.round(sale.salePriceUSD * (sale.exchangeRate || exchangeRate)),
+        exchangeRate: sale.exchangeRate || exchangeRate,
+        status: "Paid",
+        paymentMethod: sale.paymentType,
+        issueDate: sale.saleDate,
+      };
+
+      await downloadCommercialInvoicePDF(invoiceData);
+      addToast(`Commercial invoice for ${sale.contractNumber} downloaded`, "success");
+    } catch (err) {
+      console.error("PDF download error:", err);
+      addToast("Failed to download PDF invoice. Please try again.", "error");
+    } finally {
+      setDownloadingSaleInvoiceId(null);
+    }
+  };
+
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [newCustomerForm, setNewCustomerForm] = useState({
     fullName: "",
@@ -1689,42 +1740,82 @@ export default function AdminDashboardPage() {
                       <MuiTableCell header>Buyer & Tazkira</MuiTableCell>
                       <MuiTableCell header align="right">Contract Price</MuiTableCell>
                       <MuiTableCell header>Settlement</MuiTableCell>
+                      <MuiTableCell header align="right">Commercial Invoice</MuiTableCell>
                     </MuiTableRow>
                   </MuiTableHead>
                   <MuiTableBody>
-                    {filteredSales.map((s) => (
-                      <MuiTableRow key={s.id}>
-                        <MuiTableCell className="py-1.5 font-mono font-bold text-[#111318] dark:text-amber-400 text-xs">
-                          {s.contractNumber}
-                        </MuiTableCell>
-                        <MuiTableCell className="py-1.5">
-                          <div className="font-semibold text-xs text-[#111318] dark:text-white leading-tight">
-                            {s.vehicleName}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono">
-                            {s.stockNumber}
-                          </div>
-                        </MuiTableCell>
-                        <MuiTableCell className="py-1.5">
-                          <div className="text-xs font-medium text-[#111318] dark:text-white">
-                            {s.customerName}
-                          </div>
-                          <div className="text-[10px] font-mono text-slate-400">
-                            {s.customerTazkira}
-                          </div>
-                        </MuiTableCell>
-                        <MuiTableCell align="right" className="py-1.5 font-mono tabular-nums font-bold text-xs text-[#111318] dark:text-white whitespace-nowrap">
-                          ${s.salePriceUSD.toLocaleString()}
-                        </MuiTableCell>
-                        <MuiTableCell className="py-1.5 whitespace-nowrap">
-                          <MuiChip
-                            label={s.paymentType}
-                            color={s.paymentType === "Full Cash" ? "success" : "warning"}
-                            size="small"
-                          />
-                        </MuiTableCell>
-                      </MuiTableRow>
-                    ))}
+                    {filteredSales.map((s) => {
+                      const matchedInv = invoices.find(
+                        (inv) => inv.saleId === s.id || inv.vehicleStock === s.stockNumber
+                      );
+                      const isDownloadingThis = downloadingSaleInvoiceId === s.id;
+
+                      return (
+                        <MuiTableRow key={s.id}>
+                          <MuiTableCell className="py-1.5 font-mono font-bold text-[#111318] dark:text-amber-400 text-xs">
+                            {s.contractNumber}
+                          </MuiTableCell>
+                          <MuiTableCell className="py-1.5">
+                            <div className="font-semibold text-xs text-[#111318] dark:text-white leading-tight">
+                              {s.vehicleName}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">
+                              {s.stockNumber}
+                            </div>
+                          </MuiTableCell>
+                          <MuiTableCell className="py-1.5">
+                            <div className="text-xs font-medium text-[#111318] dark:text-white">
+                              {s.customerName}
+                            </div>
+                            <div className="text-[10px] font-mono text-slate-400">
+                              {s.customerTazkira}
+                            </div>
+                          </MuiTableCell>
+                          <MuiTableCell align="right" className="py-1.5 font-mono tabular-nums font-bold text-xs text-[#111318] dark:text-white whitespace-nowrap">
+                            ${s.salePriceUSD.toLocaleString()}
+                          </MuiTableCell>
+                          <MuiTableCell className="py-1.5 whitespace-nowrap">
+                            <MuiChip
+                              label={s.paymentType}
+                              color={s.paymentType === "Full Cash" ? "success" : "warning"}
+                              size="small"
+                            />
+                          </MuiTableCell>
+                          <MuiTableCell align="right" className="py-1.5 whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                title="Download Commercial Invoice as PDF (دانلود فاکتور PDF)"
+                                onClick={() => handleDownloadSaleInvoicePDF(s)}
+                                disabled={isDownloadingThis}
+                                sx={{ p: "3px" }}
+                              >
+                                {isDownloadingThis ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                                ) : (
+                                  <Download className="h-3.5 w-3.5" />
+                                )}
+                              </IconButton>
+                              <IconButton
+                                component={Link}
+                                href={
+                                  matchedInv
+                                    ? `/accounting/invoices/${matchedInv.id}`
+                                    : `/vehicles/${vehicles.find((v) => v.stockNumber === s.stockNumber)?.id || ""}/deed`
+                                }
+                                size="small"
+                                color="inherit"
+                                title="View Official Commercial Invoice / Deed"
+                                sx={{ p: "3px" }}
+                              >
+                                <Eye className="h-3.5 w-3.5 text-slate-500" />
+                              </IconButton>
+                            </div>
+                          </MuiTableCell>
+                        </MuiTableRow>
+                      );
+                    })}
                   </MuiTableBody>
                 </MuiTable>
               </div>

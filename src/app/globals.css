@@ -12,6 +12,9 @@
     --primary: #1A73E8;
     --primary-hover: #1557B0;
     --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --font-display: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-inter: "Public Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     --font-vazirmatn: "Vazirmatn", "Segoe UI Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
   }
 
