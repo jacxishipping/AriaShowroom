@@ -17,7 +17,12 @@ import {
   SupplierRecord,
   PaymentVoucherRecord,
 } from "@/lib/mock-data";
-import { exportInventoryToCSV, exportSalesLedgerToCSV } from "@/lib/export-utils";
+import { FloatingBatchToolbar } from "@/components/FloatingBatchToolbar";
+import {
+  exportInventoryToCSV,
+  exportSalesLedgerToCSV,
+  exportCustomersToCSV,
+} from "@/lib/export-utils";
 import {
   MuiCard,
   MuiCardHeader,
@@ -98,8 +103,12 @@ export default function AdminDashboardPage() {
     currentRole,
     clientPresentationMode,
     deleteVehicle,
+    setInspectedVehicleId,
+    batchUpdateVehicleStatus,
+    batchAdjustVehiclePrice,
     addCustomer,
     updateCustomerStage,
+    batchUpdateCustomerStage,
     addSale,
     addExpense,
     addSupplier,
@@ -120,8 +129,10 @@ export default function AdminDashboardPage() {
   const [vehicleToDelete, setVehicleToDelete] = useState<VehicleItem | null>(null);
 
   // CRM Kanban vs Table view mode
-  const [crmViewMode, setCrmViewMode] = useState<"kanban" | "table">("kanban");
+  const [crmViewMode, setCrmViewMode] = useState<"kanban" | "table">("table");
   const [crmSearchQuery, setCrmSearchQuery] = useState("");
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
+  const [selectedAdminVehicleIds, setSelectedAdminVehicleIds] = useState<string[]>([]);
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [newCustomerForm, setNewCustomerForm] = useState({
     fullName: "",
@@ -303,6 +314,99 @@ export default function AdminDashboardPage() {
     }
     return true;
   });
+
+  // Filtered CRM customers
+  const filteredCustomers = customers.filter((c) => {
+    if (!crmSearchQuery.trim()) return true;
+    const q = crmSearchQuery.toLowerCase();
+    return (
+      c.fullName.toLowerCase().includes(q) ||
+      c.phone.includes(q) ||
+      c.tazkiraNumber.toLowerCase().includes(q) ||
+      c.city.toLowerCase().includes(q)
+    );
+  });
+
+  // CRM Batch Selection Handlers
+  const handleToggleCustomerSelect = (customerId: string) => {
+    setSelectedCustomerIds((prev) =>
+      prev.includes(customerId)
+        ? prev.filter((id) => id !== customerId)
+        : [...prev, customerId]
+    );
+  };
+
+  const handleSelectAllCustomers = () => {
+    if (
+      filteredCustomers.length > 0 &&
+      filteredCustomers.every((c) => selectedCustomerIds.includes(c.id))
+    ) {
+      setSelectedCustomerIds([]);
+    } else {
+      setSelectedCustomerIds(filteredCustomers.map((c) => c.id));
+    }
+  };
+
+  const handleBatchCustomerStage = async (stage: string) => {
+    if (selectedCustomerIds.length === 0) return;
+    await batchUpdateCustomerStage(
+      selectedCustomerIds,
+      stage as CustomerRecord["leadStage"]
+    );
+    setSelectedCustomerIds([]);
+  };
+
+  const handleBatchCustomerExportCSV = () => {
+    const selected = customers.filter((c) => selectedCustomerIds.includes(c.id));
+    if (selected.length === 0) return;
+    exportCustomersToCSV(
+      selected,
+      vehicles,
+      `sadozai_crm_leads_batch_${selected.length}.csv`
+    );
+    addToast(`Exported ${selected.length} selected CRM lead(s) to CSV`, "success");
+  };
+
+  // Admin Inventory Batch Selection Handlers
+  const handleToggleAdminVehicleSelect = (vehicleId: string) => {
+    setSelectedAdminVehicleIds((prev) =>
+      prev.includes(vehicleId)
+        ? prev.filter((id) => id !== vehicleId)
+        : [...prev, vehicleId]
+    );
+  };
+
+  const handleSelectAllAdminVehicles = () => {
+    if (
+      filteredInventory.length > 0 &&
+      filteredInventory.every((v) => selectedAdminVehicleIds.includes(v.id))
+    ) {
+      setSelectedAdminVehicleIds([]);
+    } else {
+      setSelectedAdminVehicleIds(filteredInventory.map((v) => v.id));
+    }
+  };
+
+  const handleBatchAdminVehicleStatus = async (status: string) => {
+    if (selectedAdminVehicleIds.length === 0) return;
+    await batchUpdateVehicleStatus(
+      selectedAdminVehicleIds,
+      status as VehicleItem["status"]
+    );
+    setSelectedAdminVehicleIds([]);
+  };
+
+  const handleBatchAdminVehiclePrice = async (percentDelta: number) => {
+    if (selectedAdminVehicleIds.length === 0) return;
+    await batchAdjustVehiclePrice(selectedAdminVehicleIds, percentDelta);
+  };
+
+  const handleBatchAdminVehicleExportCSV = () => {
+    const selected = vehicles.filter((v) => selectedAdminVehicleIds.includes(v.id));
+    if (selected.length === 0) return;
+    exportInventoryToCSV(selected, `sadozai_lot_batch_${selected.length}.csv`);
+    addToast(`Exported ${selected.length} selected vehicle(s) to CSV`, "success");
+  };
 
   // Filtered sales records
   const filteredSales = sales.filter((s) => {
@@ -581,7 +685,22 @@ export default function AdminDashboardPage() {
           <MuiButton
             variant="outlined"
             size="small"
-            onClick={() => exportInventoryToCSV(vehicles)}
+            onClick={() => {
+              exportCustomersToCSV(customers, vehicles);
+              addToast(`Exported ${customers.length} CRM leads to CSV`, "success");
+            }}
+            startIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-[#1A73E8]" />}
+          >
+            CRM CSV
+          </MuiButton>
+
+          <MuiButton
+            variant="outlined"
+            size="small"
+            onClick={() => {
+              exportInventoryToCSV(vehicles);
+              addToast(`Exported ${vehicles.length} vehicles to CSV`, "success");
+            }}
             startIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />}
           >
             Lot CSV
@@ -590,7 +709,10 @@ export default function AdminDashboardPage() {
           <MuiButton
             variant="outlined"
             size="small"
-            onClick={() => exportSalesLedgerToCSV(sales)}
+            onClick={() => {
+              exportSalesLedgerToCSV(sales);
+              addToast(`Exported ${sales.length} sales records to CSV`, "success");
+            }}
             startIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-[#D97706]" />}
           >
             Sales CSV
@@ -672,6 +794,20 @@ export default function AdminDashboardPage() {
               <MuiTable dense size="small" className="w-full">
                 <MuiTableHead>
                   <MuiTableRow hover={false}>
+                    <MuiTableCell header className="w-8 !px-2.5 text-center">
+                      <input
+                        type="checkbox"
+                        aria-label="Select all filtered vehicles"
+                        checked={
+                          filteredInventory.length > 0 &&
+                          filteredInventory.every((v) =>
+                            selectedAdminVehicleIds.includes(v.id)
+                          )
+                        }
+                        onChange={handleSelectAllAdminVehicles}
+                        className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                      />
+                    </MuiTableCell>
                     <MuiTableCell header>Stock ID, Vehicle & VIN</MuiTableCell>
                     <MuiTableCell header>Status</MuiTableCell>
                     <MuiTableCell header>Gomrok Customs</MuiTableCell>
@@ -685,8 +821,26 @@ export default function AdminDashboardPage() {
                   </MuiTableRow>
                 </MuiTableHead>
                 <MuiTableBody>
-                  {filteredInventory.map((veh) => (
-                    <MuiTableRow key={veh.id}>
+                  {filteredInventory.map((veh) => {
+                    const isSelected = selectedAdminVehicleIds.includes(veh.id);
+                    return (
+                    <MuiTableRow
+                      key={veh.id}
+                      className={
+                        isSelected
+                          ? "bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.08]"
+                          : undefined
+                      }
+                    >
+                      <MuiTableCell className="w-8 !px-2.5 text-center py-1.5">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${veh.year} ${veh.make} ${veh.model}`}
+                          checked={isSelected}
+                          onChange={() => handleToggleAdminVehicleSelect(veh.id)}
+                          className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                        />
+                      </MuiTableCell>
                       <MuiTableCell className="py-1.5">
                         <div className="font-bold text-xs text-slate-900 dark:text-white leading-tight">
                           {veh.year} {veh.make} {veh.model}
@@ -722,7 +876,7 @@ export default function AdminDashboardPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
-                            onClick={() => setInspectedVehicle(veh.id)}
+                            onClick={() => setInspectedVehicleId(veh.id)}
                             className="px-2 py-0.5 rounded text-[11px] font-semibold border border-[#E2E8F0] dark:border-[#262F40] text-[#1A73E8] dark:text-[#8AB4F8] hover:bg-[#1A73E8]/10 transition-colors cursor-pointer"
                             title="Open Slide-Over Inspector"
                           >
@@ -762,7 +916,8 @@ export default function AdminDashboardPage() {
                         </div>
                       </MuiTableCell>
                     </MuiTableRow>
-                  ))}
+                    );
+                  })}
                 </MuiTableBody>
               </MuiTable>
             </div>
@@ -928,17 +1083,30 @@ export default function AdminDashboardPage() {
                           return (
                             <div
                               key={cust.id}
-                              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151D2A] p-3 shadow-xs hover:shadow-md transition-all space-y-2.5"
+                              className={`rounded-xl border p-3 shadow-xs hover:shadow-md transition-all space-y-2.5 ${
+                                selectedCustomerIds.includes(cust.id)
+                                  ? "border-[#1A73E8] bg-[#1A73E8]/[0.05] dark:bg-[#8AB4F8]/[0.08]"
+                                  : "border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151D2A]"
+                              }`}
                             >
-                              {/* Top Name & City */}
+                              {/* Top Name & City with Batch Checkbox */}
                               <div className="flex items-start justify-between gap-1">
-                                <div>
-                                  <span className="font-bold text-xs text-slate-900 dark:text-white block leading-tight">
-                                    {cust.fullName}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">
-                                    {cust.city} • {cust.tazkiraNumber}
-                                  </span>
+                                <div className="flex items-start gap-2 min-w-0">
+                                  <input
+                                    type="checkbox"
+                                    aria-label={`Select ${cust.fullName}`}
+                                    checked={selectedCustomerIds.includes(cust.id)}
+                                    onChange={() => handleToggleCustomerSelect(cust.id)}
+                                    className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer shrink-0"
+                                  />
+                                  <div className="min-w-0">
+                                    <span className="font-bold text-xs text-slate-900 dark:text-white block leading-tight truncate">
+                                      {cust.fullName}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400">
+                                      {cust.city} • {cust.tazkiraNumber}
+                                    </span>
+                                  </div>
                                 </div>
                                 <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0">
                                   ${cust.budget.toLocaleString()}
@@ -1040,6 +1208,20 @@ export default function AdminDashboardPage() {
                 <MuiTable dense size="small" className="w-full">
                   <MuiTableHead>
                     <MuiTableRow hover={false}>
+                      <MuiTableCell header className="w-8 !px-2.5 text-center">
+                        <input
+                          type="checkbox"
+                          aria-label="Select all CRM leads"
+                          checked={
+                            filteredCustomers.length > 0 &&
+                            filteredCustomers.every((c) =>
+                              selectedCustomerIds.includes(c.id)
+                            )
+                          }
+                          onChange={handleSelectAllCustomers}
+                          className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                        />
+                      </MuiTableCell>
                       <MuiTableCell header>Customer & Tazkira</MuiTableCell>
                       <MuiTableCell header>Contact & Location</MuiTableCell>
                       <MuiTableCell header>Vehicle of Interest</MuiTableCell>
@@ -1050,28 +1232,34 @@ export default function AdminDashboardPage() {
                     </MuiTableRow>
                   </MuiTableHead>
                   <MuiTableBody>
-                    {customers
-                      .filter((c) => {
-                        if (!crmSearchQuery.trim()) return true;
-                        const q = crmSearchQuery.toLowerCase();
-                        return (
-                          c.fullName.toLowerCase().includes(q) ||
-                          c.phone.includes(q) ||
-                          c.tazkiraNumber.toLowerCase().includes(q) ||
-                          c.city.toLowerCase().includes(q)
-                        );
-                      })
-                      .map((cust) => {
-                        const matchedVehicle = vehicles.find(
-                          (v) => v.id === cust.interestedInVehicleId
-                        );
-                        const whatsappUrl = `https://wa.me/${cust.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                          `Salam ${cust.fullName}! Regarding your inquiry at Sadozai Motors Herat...`
-                        )}`;
+                    {filteredCustomers.map((cust) => {
+                      const isSelected = selectedCustomerIds.includes(cust.id);
+                      const matchedVehicle = vehicles.find(
+                        (v) => v.id === cust.interestedInVehicleId
+                      );
+                      const whatsappUrl = `https://wa.me/${cust.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                        `Salam ${cust.fullName}! Regarding your inquiry at Sadozai Motors Herat...`
+                      )}`;
 
-                        return (
-                          <MuiTableRow key={cust.id}>
-                            <MuiTableCell className="py-2">
+                      return (
+                        <MuiTableRow
+                          key={cust.id}
+                          className={
+                            isSelected
+                              ? "bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.08]"
+                              : undefined
+                          }
+                        >
+                          <MuiTableCell className="w-8 !px-2.5 text-center py-2">
+                            <input
+                              type="checkbox"
+                              aria-label={`Select ${cust.fullName}`}
+                              checked={isSelected}
+                              onChange={() => handleToggleCustomerSelect(cust.id)}
+                              className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                            />
+                          </MuiTableCell>
+                          <MuiTableCell className="py-2">
                               <span className="font-bold text-xs text-slate-900 dark:text-white block">
                                 {cust.fullName}
                               </span>
@@ -1694,6 +1882,46 @@ export default function AdminDashboardPage() {
           </MuiButton>
         </DialogActions>
       </Dialog>
+
+      {/* Floating Batch Action Toolbar for CRM Leads */}
+      {activeTab === "crm" && (
+        <FloatingBatchToolbar
+          selectedCount={selectedCustomerIds.length}
+          entityLabel="CRM leads"
+          statusLabel="Move Stage"
+          statusOptions={[
+            { label: "New Inquiry", value: "New Inquiry" },
+            { label: "Follow-Up", value: "Follow-Up" },
+            { label: "Test Drive", value: "Test Drive" },
+            { label: "Negotiation", value: "Negotiation" },
+            { label: "Closed/Won", value: "Closed/Won" },
+            { label: "Lost", value: "Lost" },
+          ]}
+          onApplyStatus={(stage) => void handleBatchCustomerStage(stage)}
+          onExportCSV={handleBatchCustomerExportCSV}
+          onClearSelection={() => setSelectedCustomerIds([])}
+        />
+      )}
+
+      {/* Floating Batch Action Toolbar for Quick Lot Inventory */}
+      {activeTab === "inventory" && (
+        <FloatingBatchToolbar
+          selectedCount={selectedAdminVehicleIds.length}
+          entityLabel="vehicles"
+          statusLabel="Set Status"
+          statusOptions={[
+            { label: "On Lot", value: "Available on Lot" },
+            { label: "In Transit", value: "In Transit" },
+            { label: "Reserved", value: "Reserved/Deposit Paid" },
+            { label: "Prep", value: "Under Prep/Maintenance" },
+            { label: "Sold", value: "Sold" },
+          ]}
+          onApplyStatus={(status) => void handleBatchAdminVehicleStatus(status)}
+          onAdjustPrice={handleBatchAdminVehiclePrice}
+          onExportCSV={handleBatchAdminVehicleExportCSV}
+          onClearSelection={() => setSelectedAdminVehicleIds([])}
+        />
+      )}
     </div>
   );
 }

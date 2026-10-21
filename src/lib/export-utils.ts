@@ -4,7 +4,58 @@
  * to ensure Dari/Pashto Arabic script renders properly in Microsoft Excel.
  */
 
-import { VehicleItem, SaleRecord } from "./mock-data";
+import { VehicleItem, SaleRecord, CustomerRecord } from "./mock-data";
+
+export function exportCustomersToCSV(
+  customers: CustomerRecord[],
+  vehicles: VehicleItem[] = [],
+  filename = "sadozai_crm_leads.csv"
+) {
+  const headers = [
+    "Customer ID",
+    "Full Name (نام مشتری)",
+    "Tazkira Number (نمبر تذکره)",
+    "Phone (شماره تماس)",
+    "WhatsApp (واتساپ)",
+    "City (ولایت)",
+    "Lead Stage (مرحله پیگیری)",
+    "Budget USD (بودجه دالر)",
+    "Budget AFN (بودجه افغانی)",
+    "Interested Vehicle (موتر مورد نظر)",
+    "Trade-In Record (موتر تبادله)",
+    "Notes (یادداشت)",
+    "Created Date (تاریخ ثبت)",
+  ];
+
+  const exchangeRate = 70.5;
+
+  const rows = customers.map((c) => {
+    const matchedVehicle = vehicles.find((v) => v.id === c.interestedInVehicleId);
+    const vehicleLabel = matchedVehicle
+      ? `${matchedVehicle.year} ${matchedVehicle.make} ${matchedVehicle.model} (#${matchedVehicle.stockNumber})`
+      : "General Inquiry";
+    const budgetAfn = Math.round((c.budget || 0) * exchangeRate);
+
+    return [
+      `"${c.id}"`,
+      `"${(c.fullName || "").replace(/"/g, '""')}"`,
+      `"${(c.tazkiraNumber || "").replace(/"/g, '""')}"`,
+      `"${(c.phone || "").replace(/"/g, '""')}"`,
+      `"${(c.whatsapp || c.phone || "").replace(/"/g, '""')}"`,
+      `"${(c.city || "").replace(/"/g, '""')}"`,
+      `"${c.leadStage}"`,
+      c.budget || 0,
+      budgetAfn,
+      `"${vehicleLabel.replace(/"/g, '""')}"`,
+      `"${(c.tradeInRecord || "").replace(/"/g, '""')}"`,
+      `"${(c.notes || "").replace(/"/g, '""')}"`,
+      `"${c.createdAt || ""}"`,
+    ].join(",");
+  });
+
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+  downloadBlob(csvContent, filename, "text/csv;charset=utf-8;");
+}
 
 export function exportInventoryToCSV(vehicles: VehicleItem[], filename = "sadozai_lot_inventory.csv") {
   const headers = [

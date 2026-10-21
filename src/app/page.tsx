@@ -7,6 +7,7 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import { formatCurrency } from "@/lib/utils";
 import { CompareBar } from "@/components/CompareBar";
+import { FloatingBatchToolbar } from "@/components/FloatingBatchToolbar";
 import { PinnedViewsBar } from "@/components/PinnedViewsBar";
 import { LookerAnalyticsStrip } from "@/components/LookerAnalyticsStrip";
 import { VehicleItem } from "@/lib/mock-data";
@@ -868,6 +869,23 @@ export default function ErpOperationsCockpit() {
           </MuiButton>
         </DialogActions>
       </Dialog>
+
+      <FloatingBatchToolbar
+        selectedCount={selectedVehicleIds.length}
+        entityLabel="vehicles"
+        statusLabel="Set Status"
+        statusOptions={[
+          { label: "On Lot", value: "Available on Lot" },
+          { label: "In Transit", value: "In Transit" },
+          { label: "Reserved", value: "Reserved/Deposit Paid" },
+          { label: "Prep", value: "Under Prep/Maintenance" },
+          { label: "Sold", value: "Sold" },
+        ]}
+        onApplyStatus={(status) => void handleBatchStatus(status as VehicleItem["status"])}
+        onAdjustPrice={handleBatchPriceAdjust}
+        onExportCSV={handleBatchExport}
+        onClearSelection={() => setSelectedVehicleIds([])}
+      />
 
       <CompareBar />
     </div>

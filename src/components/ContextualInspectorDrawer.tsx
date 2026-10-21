@@ -85,13 +85,7 @@ export function ContextualInspectorDrawer() {
     }
   };
 
-  const handlePaintChange = async (nextMap: Record<string, string>) => {
-    await updateVehicle(vehicle.id, {
-      conditionNotes: {
-        ...vehicle.conditionNotes,
-        ...nextMap,
-      },
-    });
+  const handlePaintChange = () => {
     addToast("Saved ultrasonic chassis inspection map", "info");
   };
 
@@ -309,7 +303,7 @@ export function ContextualInspectorDrawer() {
                     <div>
                       <span className="text-[10px] text-slate-400 block">PURCHASE + PORT</span>
                       <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-300">
-                        ${(vehicle.purchasePrice + vehicle.shippingCost).toLocaleString()}
+                        ${(vehicle.purchasePrice + vehicle.freightCost).toLocaleString()}
                       </span>
                     </div>
                     <div>
@@ -342,7 +336,7 @@ export function ContextualInspectorDrawer() {
                   },
                   {
                     label: "Powertrain & Engine",
-                    value: `${vehicle.engine} · ${vehicle.fuelType} · ${vehicle.transmission}`,
+                    value: `${vehicle.conditionNotes.engine || "Factory Certified"} · ${vehicle.fuelType} · ${vehicle.transmission}`,
                   },
                   {
                     label: "Drivetrain & Steering",
@@ -355,11 +349,11 @@ export function ContextualInspectorDrawer() {
                   },
                   {
                     label: "Exterior / Interior",
-                    value: `${vehicle.exteriorColor} / ${vehicle.interiorColor}`,
+                    value: `${vehicle.color} / ${vehicle.conditionNotes.interior || "OEM Leather"}`,
                   },
                   {
                     label: "Plate & Registration",
-                    value: vehicle.plateType,
+                    value: vehicle.customsClearance.split("-")[0].trim(),
                   },
                   {
                     label: "Yard Slot Location",
@@ -406,8 +400,10 @@ export function ContextualInspectorDrawer() {
                 Click any exterior body zone below to cycle its ultrasonic micrometer status (Original Factory Paint, Cosmetic Repaint, or Replaced Panel).
               </div>
               <PaintInspectionDiagram
-                value={vehicle.conditionNotes}
-                onChange={handlePaintChange}
+                vin={vehicle.vin}
+                cleanTitle={vehicle.cleanTitle}
+                editable={true}
+                onChangeZones={handlePaintChange}
               />
             </div>
           )}
@@ -432,7 +428,7 @@ export function ContextualInspectorDrawer() {
                   <div>
                     <span className="text-[10px] text-slate-400 block">SHIPPING & ESCORT</span>
                     <span className="font-bold tabular-nums text-slate-900 dark:text-white">
-                      ${vehicle.shippingCost.toLocaleString()} USD
+                      ${vehicle.freightCost.toLocaleString()} USD
                     </span>
                   </div>
                 </div>

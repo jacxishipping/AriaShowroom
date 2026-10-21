@@ -9,6 +9,7 @@ import { VehicleFilters } from "@/components/VehicleFilters";
 import { PinnedViewsBar } from "@/components/PinnedViewsBar";
 import { LookerAnalyticsStrip } from "@/components/LookerAnalyticsStrip";
 import { CompareBar } from "@/components/CompareBar";
+import { FloatingBatchToolbar } from "@/components/FloatingBatchToolbar";
 import { translations } from "@/lib/translations";
 import { VehicleItem } from "@/lib/mock-data";
 import { exportInventoryToCSV } from "@/lib/export-utils";
@@ -60,13 +61,16 @@ export default function InventoryPage() {
     setInspectedVehicleId,
     deleteVehicle,
     setVehicleStatus,
+    batchUpdateVehicleStatus,
+    batchAdjustVehiclePrice,
     addToast,
   } = useShowroomStore();
 
   const t = translations[language];
   const hideFinancialMargins = clientPresentationMode || currentRole === "SalesAgent";
 
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
+  const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
   const [showLookerAnalytics, setShowLookerAnalytics] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(12);
@@ -135,6 +139,43 @@ export default function InventoryPage() {
   const paginatedVehicles = useMemo(() => {
     return filteredVehicles.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
   }, [filteredVehicles, page, rowsPerPage]);
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedVehicleIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (
+      paginatedVehicles.length > 0 &&
+      paginatedVehicles.every((v) => selectedVehicleIds.includes(v.id))
+    ) {
+      const pageIds = new Set(paginatedVehicles.map((v) => v.id));
+      setSelectedVehicleIds((prev) => prev.filter((id) => !pageIds.has(id)));
+    } else {
+      const combined = new Set([...selectedVehicleIds, ...paginatedVehicles.map((v) => v.id)]);
+      setSelectedVehicleIds(Array.from(combined));
+    }
+  };
+
+  const handleBatchStatusUpdate = async (status: string) => {
+    if (selectedVehicleIds.length === 0) return;
+    await batchUpdateVehicleStatus(selectedVehicleIds, status as VehicleItem["status"]);
+    setSelectedVehicleIds([]);
+  };
+
+  const handleBatchPriceAdjust = async (percentDelta: number) => {
+    if (selectedVehicleIds.length === 0) return;
+    await batchAdjustVehiclePrice(selectedVehicleIds, percentDelta);
+  };
+
+  const handleBatchExportCSV = () => {
+    const selected = vehicles.filter((v) => selectedVehicleIds.includes(v.id));
+    if (selected.length === 0) return;
+    exportInventoryToCSV(selected, `sadozai_inventory_batch_${selected.length}.csv`);
+    addToast(`Exported ${selected.length} selected vehicle(s) to CSV`, "success");
+  };
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
@@ -278,6 +319,18 @@ export default function InventoryPage() {
             <MuiTable dense size="small" className="w-full">
               <MuiTableHead>
                 <MuiTableRow hover={false}>
+                  <MuiTableCell header className="w-8 !px-2.5 text-center">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all vehicles on page"
+                      checked={
+                        paginatedVehicles.length > 0 &&
+                        paginatedVehicles.every((v) => selectedVehicleIds.includes(v.id))
+                      }
+                      onChange={handleSelectAll}
+                      className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                    />
+                  </MuiTableCell>
                   <MuiTableCell
                     header
                     onClick={() => handleSort("stockNumber")}
@@ -350,6 +403,7 @@ export default function InventoryPage() {
               </MuiTableHead>
               <MuiTableBody>
                 {paginatedVehicles.map((veh) => {
+                  const isSelected = selectedVehicleIds.includes(veh.id);
                   const isInspected = inspectedVehicleId === veh.id;
                   const marginAmount = veh.sellingPrice - veh.landedCost;
                   const marginPercent =
@@ -361,11 +415,20 @@ export default function InventoryPage() {
                     <MuiTableRow
                       key={veh.id}
                       className={
-                        isInspected
+                        isSelected || isInspected
                           ? "bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.08]"
                           : undefined
                       }
                     >
+                      <MuiTableCell className="w-8 !px-2.5 text-center py-1.5">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${veh.year} ${veh.make} ${veh.model}`}
+                          checked={isSelected}
+                          onChange={() => handleToggleSelect(veh.id)}
+                          className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                        />
+                      </MuiTableCell>
                       <MuiTableCell className="py-1.5">
                         <div className="flex items-center gap-2.5">
                           <button
@@ -539,6 +602,23 @@ export default function InventoryPage() {
           </p>
         </div>
       )}
+
+      <FloatingBatchToolbar
+        selectedCount={selectedVehicleIds.length}
+        entityLabel="vehicles"
+        statusLabel="Set Status"
+        statusOptions={[
+          { label: "On Lot", value: "Available on Lot" },
+          { label: "In Transit", value: "In Transit" },
+          { label: "Reserved", value: "Reserved/Deposit Paid" },
+          { label: "Prep", value: "Under Prep/Maintenance" },
+          { label: "Sold", value: "Sold" },
+        ]}
+        onApplyStatus={handleBatchStatusUpdate}
+        onAdjustPrice={handleBatchPriceAdjust}
+        onExportCSV={handleBatchExportCSV}
+        onClearSelection={() => setSelectedVehicleIds([])}
+      />
 
       <CompareBar />
 

@@ -104,6 +104,7 @@ interface ShowroomStore {
   customers: CustomerRecord[];
   addCustomer: (customer: Omit<CustomerRecord, "id" | "createdAt">) => Promise<void>;
   updateCustomerStage: (customerId: string, stage: CustomerRecord["leadStage"]) => Promise<void>;
+  batchUpdateCustomerStage: (customerIds: string[], stage: CustomerRecord["leadStage"]) => Promise<void>;
 
   // Sales & Transactions
   sales: SaleRecord[];
@@ -442,6 +443,31 @@ export const useShowroomStore = create<ShowroomStore>()(
           leadStage: customerStageToDatabase[stage],
         }, "PATCH");
         await get().fetchDatabaseRecords();
+      },
+
+      batchUpdateCustomerStage: async (customerIds, stage) => {
+        set((state) => ({
+          customers: state.customers.map((c) =>
+            customerIds.includes(c.id) ? { ...c, leadStage: stage } : c
+          ),
+        }));
+        await Promise.all(
+          customerIds.map((customerId) =>
+            writeRecord(
+              "/api/customers",
+              {
+                customerId,
+                leadStage: customerStageToDatabase[stage],
+              },
+              "PATCH"
+            )
+          )
+        );
+        await get().fetchDatabaseRecords();
+        get().addToast(
+          `Updated ${customerIds.length} CRM lead(s) to "${stage}"`,
+          "success"
+        );
       },
 
       sales: INITIAL_SALES,

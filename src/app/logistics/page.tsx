@@ -107,6 +107,7 @@ export default function LogisticsAndCustomsPage() {
     currency,
     exchangeRate,
     language,
+    setInspectedVehicleId,
   } = useShowroomStore();
 
   const t = translations[language];
@@ -639,15 +640,24 @@ export default function LogisticsAndCustomsPage() {
 
                       {/* Action Buttons */}
                       <div className="flex items-center sm:flex-col sm:items-end gap-1.5 shrink-0">
-                        <Link href={`/vehicles/${veh.id}`}>
-                          <MuiButton
-                            variant="outlined"
-                            size="small"
-                            sx={{ fontSize: "11px", py: "2px", px: "8px" }}
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setInspectedVehicleId(veh.id)}
+                            className="px-2.5 py-1 rounded text-[11px] font-semibold border border-[#E2E8F0] dark:border-[#262F40] text-[#1A73E8] dark:text-[#8AB4F8] hover:bg-[#1A73E8]/10 transition-colors cursor-pointer"
                           >
-                            Dossier
-                          </MuiButton>
-                        </Link>
+                            Inspect
+                          </button>
+                          <Link href={`/vehicles/${veh.id}`}>
+                            <MuiButton
+                              variant="outlined"
+                              size="small"
+                              sx={{ fontSize: "11px", py: "2px", px: "8px" }}
+                            >
+                              Dossier
+                            </MuiButton>
+                          </Link>
+                        </div>
                         {veh.status === "In Transit" && (
                           <MuiButton
                             variant="contained"
