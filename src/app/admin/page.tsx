@@ -1786,7 +1786,7 @@ export default function AdminDashboardPage() {
                               <IconButton
                                 size="small"
                                 color="primary"
-                                title="Download Commercial Invoice as PDF (دانلود فاکتور PDF)"
+                                title={t.buttonDownloadInvoice}
                                 onClick={() => handleDownloadSaleInvoicePDF(s)}
                                 disabled={isDownloadingThis}
                                 sx={{ p: "3px" }}

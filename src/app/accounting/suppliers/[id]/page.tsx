@@ -183,7 +183,7 @@ export default function SupplierLedgerPage() {
             onClick={handlePrint}
             startIcon={<Printer className="h-4 w-4" />}
           >
-            Print Statement (چاپ صورتحساب)
+            {t.buttonPrintStatement}
           </MuiButton>
         </div>
       </div>

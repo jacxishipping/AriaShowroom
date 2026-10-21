@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { VehicleItem } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/utils";
 import { useShowroomStore } from "@/store/useShowroomStore";
+import { translations } from "@/lib/translations";
 import { Printer, X, ShieldCheck, FileCheck, Stamp, CheckCircle2, QrCode } from "lucide-react";
 import { MuiButton, MuiTextField, MuiChip, IconButton } from "@/components/mui";
 
@@ -17,6 +18,7 @@ interface VehicleDeedModalProps {
 export function VehicleDeedModal({ vehicle, isOpen, onClose }: VehicleDeedModalProps) {
   const deedRef = useRef<HTMLDivElement>(null);
   const { language, exchangeRate } = useShowroomStore();
+  const t = translations[language];
 
   const [buyerName, setBuyerName] = useState("Haji Abdul Qadir Karimi");
   const [buyerTazkira, setBuyerTazkira] = useState("HRT-1402-984210");
@@ -88,7 +90,7 @@ export function VehicleDeedModal({ vehicle, isOpen, onClose }: VehicleDeedModalP
               onClick={handlePrint}
               startIcon={<Printer className="h-4 w-4" />}
             >
-              Print / Save PDF (چاپ قباله)
+              {t.downloadPdf}
             </MuiButton>
             <IconButton size="small" onClick={onClose}>
               <X className="h-5 w-5" />

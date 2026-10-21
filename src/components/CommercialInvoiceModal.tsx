@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import QRCode from "qrcode";
 import { InvoiceRecord } from "@/lib/mock-data";
 import { useShowroomStore } from "@/store/useShowroomStore";
+import { translations } from "@/lib/translations";
 import { formatCurrency } from "@/lib/utils";
 import { MuiButton, MuiChip, IconButton } from "@/components/mui";
 import {
@@ -32,7 +33,8 @@ export function CommercialInvoiceModal({
   isOpen,
   onClose,
 }: CommercialInvoiceModalProps) {
-  const { exchangeRate, addToast } = useShowroomStore();
+  const { exchangeRate, language, addToast } = useShowroomStore();
+  const t = translations[language];
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [isDownloadingPDF, setIsDownloadingPDF] = useState<boolean>(false);
 
@@ -95,7 +97,7 @@ export function CommercialInvoiceModal({
               onClick={handlePrint}
               startIcon={<Printer className="h-3.5 w-3.5" />}
             >
-              Print (چاپ)
+              {t.buttonPrint}
             </MuiButton>
             <MuiButton
               variant="contained"
@@ -111,7 +113,7 @@ export function CommercialInvoiceModal({
                 )
               }
             >
-              {isDownloadingPDF ? "Generating PDF..." : "Download PDF (دانلود PDF)"}
+              {isDownloadingPDF ? t.buttonGeneratingPdf : t.buttonDownloadPdf}
             </MuiButton>
             <IconButton size="small" onClick={onClose}>
               <X className="h-5 w-5" />

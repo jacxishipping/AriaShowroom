@@ -275,7 +275,7 @@ export default function VehicleDeedPage() {
                   : "text-slate-600 dark:text-slate-400"
               }`}
             >
-              Bilingual Split
+              {t.buttonBilingualLayout}
             </button>
             <button
               type="button"
@@ -286,7 +286,7 @@ export default function VehicleDeedPage() {
                   : "text-slate-600 dark:text-slate-400"
               }`}
             >
-              RTL Qabala (قباله دری/پشتو)
+              {t.buttonRtlDeedLayout}
             </button>
           </div>
 

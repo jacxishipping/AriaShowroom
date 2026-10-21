@@ -286,7 +286,7 @@ export default function ErpOperationsCockpit() {
           <div className="flex items-center justify-between w-full text-xs font-semibold text-slate-500 dark:text-slate-400">
             <span>01. {t.totalActiveValue}</span>
             <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
-              {activeLotVehicles.length} units
+              {activeLotVehicles.length} {t.units}
             </span>
           </div>
           <div className="my-2.5 text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight leading-none">
@@ -300,10 +300,10 @@ export default function ErpOperationsCockpit() {
             </span>
             {showFinancialMargins ? (
               <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                +${totalProjectedProfit.toLocaleString()} net
+                +${totalProjectedProfit.toLocaleString()} {t.dashboardNet}
               </span>
             ) : (
-              <span className="text-slate-400">Lot valuation</span>
+              <span className="text-slate-400">{t.dashboardLotValuation}</span>
             )}
           </div>
         </button>
@@ -315,17 +315,17 @@ export default function ErpOperationsCockpit() {
           className="p-4 sm:p-5 bg-white dark:bg-[#161B26] hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors text-start flex flex-col justify-between cursor-pointer"
         >
           <div className="flex items-center justify-between w-full text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>02. Executed Contracts</span>
+            <span>02. {t.dashboardExecutedContracts}</span>
             <span className="font-mono text-[11px] text-[#1A73E8] dark:text-[#8AB4F8]">
-              {sales.length} deeds
+              {sales.length} {t.dashboardDeeds}
             </span>
           </div>
           <div className="my-2.5 text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight leading-none">
             {formatCurrency(totalMonthlySales, currency, exchangeRate)}
           </div>
           <div className="pt-2 border-t border-slate-100 dark:border-[#262F40] w-full flex items-center justify-between text-[11px] font-mono tabular-nums text-slate-500">
-            <span>{soldCount} units transferred</span>
-            <span>Sarrafi settled</span>
+            <span>{soldCount} {t.dashboardUnitsTransferred}</span>
+            <span>{t.dashboardSarrafiSettled}</span>
           </div>
         </button>
 
@@ -336,26 +336,26 @@ export default function ErpOperationsCockpit() {
           className="p-4 sm:p-5 bg-white dark:bg-[#161B26] hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors text-start flex flex-col justify-between cursor-pointer"
         >
           <div className="flex items-center justify-between w-full text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>03. Fleet Allocation</span>
+            <span>03. {t.dashboardFleetAllocation}</span>
             <span className="font-mono text-[11px]">UAE · JPN · USA</span>
           </div>
           <div className="my-2.5 flex items-baseline gap-2">
             <span className="text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight leading-none">
               {vehicles.length}
             </span>
-            <span className="text-xs text-slate-500">registered units</span>
+            <span className="text-xs text-slate-500">{t.dashboardRegisteredUnits}</span>
           </div>
           <div className="pt-2 border-t border-slate-100 dark:border-[#262F40] w-full flex items-center justify-between text-[11px] font-mono tabular-nums">
             <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-              {availableCount} Lot
+              {availableCount} {t.dashboardAvailable}
             </span>
             <span className="text-slate-300">·</span>
             <span className="text-amber-600 dark:text-amber-400 font-semibold">
-              {inTransitCount} Transit
+              {inTransitCount} {t.dashboardTransit}
             </span>
             <span className="text-slate-300">·</span>
             <span className="text-slate-600 dark:text-slate-300">
-              {reservedCount} Reserved
+              {reservedCount} {t.dashboardReserved}
             </span>
           </div>
         </button>
@@ -363,9 +363,9 @@ export default function ErpOperationsCockpit() {
         {/* Cell 04: Islam Qala Dry Port Clearance */}
         <div className="p-4 sm:p-5 bg-white dark:bg-[#161B26] flex flex-col justify-between">
           <div className="flex items-center justify-between w-full text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>04. Gomrok Clearance</span>
+            <span>04. {t.dashboardGomrokClearance}</span>
             <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
-              Verified
+              {t.dashboardVerified}
             </span>
           </div>
           <div className="my-2.5 text-2xl sm:text-[26px] font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight leading-none">
@@ -377,7 +377,7 @@ export default function ErpOperationsCockpit() {
               href="/logistics"
               className="text-[#1A73E8] dark:text-[#8AB4F8] font-semibold hover:underline"
             >
-              Port Vault →
+              {t.dashboardPortVault} →
             </Link>
           </div>
         </div>

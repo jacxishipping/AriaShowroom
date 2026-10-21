@@ -151,7 +151,7 @@ export default function CommercialInvoicePage() {
             onClick={handlePrint}
             startIcon={<Printer className="h-4 w-4" />}
           >
-            Print (چاپ)
+            {t.buttonPrint}
           </MuiButton>
           <MuiButton
             variant="contained"
@@ -167,7 +167,7 @@ export default function CommercialInvoicePage() {
               )
             }
           >
-            {isDownloadingPDF ? "Generating PDF..." : "Download PDF (دانلود PDF)"}
+            {isDownloadingPDF ? t.buttonGeneratingPdf : t.buttonDownloadPdf}
           </MuiButton>
         </div>
       </div>

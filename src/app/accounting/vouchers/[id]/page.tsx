@@ -137,7 +137,7 @@ export default function PaymentVoucherPage() {
             onClick={handlePrint}
             startIcon={<Printer className="h-4 w-4" />}
           >
-            Print Voucher (چاپ سند)
+            {t.buttonPrintVoucher}
           </MuiButton>
         </div>
       </div>

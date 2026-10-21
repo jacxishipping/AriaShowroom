@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { InvoiceRecord } from "@/lib/mock-data";
+import { translations } from "@/lib/translations";
 import {
   MuiCard,
   MuiButton,
@@ -40,7 +41,8 @@ interface InvoicesTabProps {
 }
 
 export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
-  const { invoices, vehicles, exchangeRate, addInvoice, addToast } = useShowroomStore();
+  const { invoices, vehicles, exchangeRate, language, addInvoice, addToast } = useShowroomStore();
+  const t = translations[language];
   const [search, setSearch] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceRecord | null>(null);
@@ -445,7 +447,7 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                       <IconButton
                         size="small"
                         color="primary"
-                        title="Download Commercial Invoice as PDF (دانلود PDF)"
+                        title={t.buttonDownloadInvoice}
                         onClick={() => handleDownloadInvoicePDF(inv)}
                         disabled={downloadingInvoiceId === inv.id}
                         sx={{ p: "3px" }}

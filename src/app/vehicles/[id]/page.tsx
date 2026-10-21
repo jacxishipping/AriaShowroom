@@ -766,7 +766,7 @@ Please schedule a viewing or share more photos.`
                 size="medium"
                 startIcon={<FileText className="h-4 w-4" />}
               >
-                {t.generateDeed} (قباله رسمی با QR کد)
+                {t.generateDeed}
               </MuiButton>
 
               <MuiButton
@@ -780,7 +780,7 @@ Please schedule a viewing or share more photos.`
                 size="medium"
                 startIcon={<Send className="h-4 w-4" />}
               >
-                Inquire directly on WhatsApp (واتساپ)
+                {t.buttonInquireWhatsApp}
               </MuiButton>
 
               <div className="grid grid-cols-2 gap-2 pt-1">

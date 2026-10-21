@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import QRCode from "qrcode";
 import { PaymentVoucherRecord } from "@/lib/mock-data";
+import { useShowroomStore } from "@/store/useShowroomStore";
+import { translations } from "@/lib/translations";
 import { MuiButton, IconButton } from "@/components/mui";
 import {
   X,
@@ -26,6 +28,8 @@ export function PaymentVoucherModal({
   isOpen,
   onClose,
 }: PaymentVoucherModalProps) {
+  const { language } = useShowroomStore();
+  const t = translations[language];
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
 
   React.useEffect(() => {
@@ -77,7 +81,7 @@ export function PaymentVoucherModal({
               onClick={handlePrint}
               startIcon={<Printer className="h-3.5 w-3.5" />}
             >
-              Print Voucher (چاپ سند)
+              {t.buttonPrintVoucher}
             </MuiButton>
             <IconButton size="small" onClick={onClose}>
               <X className="h-5 w-5" />

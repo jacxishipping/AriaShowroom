@@ -192,7 +192,7 @@ function VerifyContent() {
                   : "bg-[#FAF9F6] dark:bg-[#161B24] text-slate-600 dark:text-slate-300 border border-[#D8D5CD] dark:border-[#242A38]"
               }`}
             >
-              Chamber Certificate & Gomrok (سند اصالت و گمرک)
+              {t.buttonChamberCertificate}
             </button>
             <button
               onClick={() => setSelectedDocType("MAKTOUB")}
@@ -202,7 +202,7 @@ function VerifyContent() {
                   : "bg-[#FAF9F6] dark:bg-[#161B24] text-slate-600 dark:text-slate-300 border border-[#D8D5CD] dark:border-[#242A38]"
               }`}
             >
-              Islam Qala Customs Maktoub (مکتوب گمرک اسلام قلعه)
+              {t.buttonCustomsMaktoub}
             </button>
             <button
               onClick={() => setSelectedDocType("DEED")}
@@ -212,7 +212,7 @@ function VerifyContent() {
                   : "bg-[#FAF9F6] dark:bg-[#161B24] text-slate-600 dark:text-slate-300 border border-[#D8D5CD] dark:border-[#242A38]"
               }`}
             >
-              Dealership Sales Deed (سند بیع قطعی)
+              {t.buttonSalesDeed}
             </button>
           </div>
         </div>

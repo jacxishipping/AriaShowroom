@@ -693,7 +693,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                 ? "bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8]"
                 : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.03]"
             }`}
-            title="Toggle Client Presentation Privacy Mode"
+            title={t.buttonToggleClientPrivacy}
           >
             {clientPresentationMode ? (
               <EyeOff className="h-3.5 w-3.5 text-[#1A73E8] dark:text-[#8AB4F8]" />
@@ -701,7 +701,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
               <Eye className="h-3.5 w-3.5 text-slate-400" />
             )}
             <span className="hidden xl:inline">
-              {clientPresentationMode ? "Client View" : "Hide Costs"}
+              {clientPresentationMode ? t.buttonClientView : t.buttonHideCosts}
             </span>
           </button>
 

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { VehicleItem } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/utils";
 import { useShowroomStore } from "@/store/useShowroomStore";
+import { translations } from "@/lib/translations";
 import {
   Banknote,
   Building2,
@@ -44,6 +45,7 @@ export function SarrafiSettlementModal({
   onClose,
 }: SarrafiSettlementModalProps) {
   const { language, exchangeRate } = useShowroomStore();
+  const t = translations[language];
 
   const [paymentChannel, setPaymentChannel] = useState<
     "SARRAFI" | "CASH_SHOWROOM" | "BANK_TRANSFER" | "INSTALLMENT_PLAN"
@@ -155,7 +157,7 @@ export function SarrafiSettlementModal({
               onClick={handlePrint}
               startIcon={<Printer className="h-4 w-4" />}
             >
-              Print Settlement Slip (چاپ رسید)
+              {t.buttonPrintSettlement}
             </MuiButton>
             <IconButton size="small" onClick={onClose}>
               <X className="h-5 w-5" />
@@ -330,12 +332,12 @@ export function SarrafiSettlementModal({
                           {m.status === "PAID" ? (
                             <>
                               <CheckCircle2 className="h-3 w-3" />
-                              <span>PAID (پرداخت شد)</span>
+                              <span>{t.buttonPaid}</span>
                             </>
                           ) : (
                             <>
                               <Clock className="h-3 w-3" />
-                              <span>PENDING (باقی‌مانده)</span>
+                              <span>{t.buttonPending}</span>
                             </>
                           )}
                         </button>
