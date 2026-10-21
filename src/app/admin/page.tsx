@@ -1978,15 +1978,15 @@ export default function AdminDashboardPage() {
       {activeTab === "crm" && (
         <FloatingBatchToolbar
           selectedCount={selectedCustomerIds.length}
-          entityLabel="CRM leads"
-          statusLabel="Move Stage"
+          entityLabel={t.crmLeads}
+          statusLabel={t.crmMoveStage}
           statusOptions={[
-            { label: "New Inquiry", value: "New Inquiry" },
-            { label: "Follow-Up", value: "Follow-Up" },
-            { label: "Test Drive", value: "Test Drive" },
-            { label: "Negotiation", value: "Negotiation" },
-            { label: "Closed/Won", value: "Closed/Won" },
-            { label: "Lost", value: "Lost" },
+            { label: t.crmNewInquiry, value: "New Inquiry" },
+            { label: t.crmFollowUp, value: "Follow-Up" },
+            { label: t.crmTestDrive, value: "Test Drive" },
+            { label: t.crmNegotiation, value: "Negotiation" },
+            { label: t.crmClosedWon, value: "Closed/Won" },
+            { label: t.crmLost, value: "Lost" },
           ]}
           onApplyStatus={(stage) => void handleBatchCustomerStage(stage)}
           onExportCSV={handleBatchCustomerExportCSV}
@@ -1998,14 +1998,14 @@ export default function AdminDashboardPage() {
       {activeTab === "inventory" && (
         <FloatingBatchToolbar
           selectedCount={selectedAdminVehicleIds.length}
-          entityLabel="vehicles"
-          statusLabel="Set Status"
+          entityLabel={t.inventoryResources}
+          statusLabel={t.inventorySetStatus}
           statusOptions={[
-            { label: "On Lot", value: "Available on Lot" },
-            { label: "In Transit", value: "In Transit" },
-            { label: "Reserved", value: "Reserved/Deposit Paid" },
-            { label: "Prep", value: "Under Prep/Maintenance" },
-            { label: "Sold", value: "Sold" },
+            { label: t.inventoryOnLot, value: "Available on Lot" },
+            { label: t.inventoryInTransit, value: "In Transit" },
+            { label: t.inventoryReserved, value: "Reserved/Deposit Paid" },
+            { label: t.inventoryPrep, value: "Under Prep/Maintenance" },
+            { label: t.inventorySold, value: "Sold" },
           ]}
           onApplyStatus={(status) => void handleBatchAdminVehicleStatus(status)}
           onAdjustPrice={handleBatchAdminVehiclePrice}

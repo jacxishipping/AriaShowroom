@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useShowroomStore } from "@/store/useShowroomStore";
+import { translations } from "@/lib/translations";
 import { Bookmark, Plus, X, Check, RotateCcw } from "lucide-react";
 
 export function PinnedViewsBar() {
@@ -14,6 +15,7 @@ export function PinnedViewsBar() {
     resetFilters,
     language,
   } = useShowroomStore();
+  const t = translations[language];
 
   const [isSaving, setIsSaving] = useState(false);
   const [viewName, setViewName] = useState("");
@@ -31,7 +33,7 @@ export function PinnedViewsBar() {
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none max-w-full">
         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 pe-1 shrink-0">
           <Bookmark className="h-3.5 w-3.5 text-[#1A73E8] dark:text-[#8AB4F8]" />
-          <span>Pinned Views:</span>
+          <span>{t.pinnedViewsLabel}:</span>
         </span>
 
         {pinnedViews.map((view) => {
@@ -61,7 +63,7 @@ export function PinnedViewsBar() {
                   type="button"
                   onClick={() => deletePinnedView(view.id)}
                   className="ms-0.5 p-1 text-slate-400 hover:text-rose-600 rounded"
-                  title="Remove custom pinned view"
+                  title={t.pinnedRemoveCustom}
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -77,7 +79,7 @@ export function PinnedViewsBar() {
           <form onSubmit={handleSave} className="flex items-center gap-1.5">
             <input
               type="text"
-              placeholder="View name (e.g. White Land Cruisers)..."
+              placeholder={t.pinnedViewPlaceholder}
               value={viewName}
               onChange={(e) => setViewName(e.target.value)}
               className="h-7 w-48 rounded border border-[#1A73E8] bg-slate-50 dark:bg-[#0F141C] px-2 text-xs text-slate-900 dark:text-white outline-none"
@@ -87,12 +89,13 @@ export function PinnedViewsBar() {
               type="submit"
               className="h-7 px-2 rounded bg-[#1A73E8] text-white text-xs font-semibold flex items-center gap-1"
             >
-              <Check className="h-3 w-3" /> Save
+              <Check className="h-3 w-3" /> {t.pinnedSave}
             </button>
             <button
               type="button"
               onClick={() => setIsSaving(false)}
               className="h-7 px-1.5 rounded text-slate-400 hover:text-slate-700"
+              title={t.pinnedCancelSave}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -105,17 +108,17 @@ export function PinnedViewsBar() {
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-[#262F40] text-xs font-semibold text-[#1A73E8] dark:text-[#8AB4F8] hover:bg-[#1A73E8]/[0.05] whitespace-nowrap cursor-pointer"
             >
               <Plus className="h-3 w-3" />
-              <span>Pin Current Filter</span>
+              <span>{t.pinnedCurrentFilter}</span>
             </button>
             {activePinnedViewId !== "all-fleet" && (
               <button
                 type="button"
                 onClick={resetFilters}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white whitespace-nowrap cursor-pointer"
-                title="Reset to All Fleet"
+                title={t.pinnedResetTitle}
               >
                 <RotateCcw className="h-3 w-3" />
-                <span>Reset</span>
+                <span>{t.pinnedReset}</span>
               </button>
             )}
           </>

@@ -174,7 +174,10 @@ export default function InventoryPage() {
     const selected = vehicles.filter((v) => selectedVehicleIds.includes(v.id));
     if (selected.length === 0) return;
     exportInventoryToCSV(selected, `sadozai_inventory_batch_${selected.length}.csv`);
-    addToast(`Exported ${selected.length} selected vehicle(s) to CSV`, "success");
+    addToast(
+      t.inventoryExportedSelected.replace("{count}", String(selected.length)),
+      "success"
+    );
   };
 
   return (
@@ -183,21 +186,17 @@ export default function InventoryPage() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-3 border-b border-slate-200 dark:border-[#262F40]">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
-            <span>Herat Customs Lot #04</span>
+            <span>{t.inventoryLotLabel}</span>
             <span>·</span>
             <span className="font-mono text-[#1A73E8] dark:text-[#8AB4F8] font-semibold">
-              {filteredVehicles.length} verified chassis
+              {filteredVehicles.length} {t.inventoryVerifiedChassis}
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            {language === "ps"
-              ? "د موجودو موټرونو ګودام او سټاک"
-              : language === "fa"
-              ? "گدام و موجودی موترها"
-              : "Vehicle Inventory & Fleet Registry"}
+            {t.inventoryTitle}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Browse verified stock · Landed cost, Islam Qala clearance & real-time Afghan market valuation
+            {t.inventorySubtitle}
           </p>
         </div>
 
@@ -212,7 +211,7 @@ export default function InventoryPage() {
             }`}
           >
             <BarChart3 className="h-3.5 w-3.5" />
-            <span>Looker Cohorts</span>
+            <span>{t.inventoryLookerCohorts}</span>
           </button>
 
           <ButtonGroup size="small" variant="outlined">
@@ -223,7 +222,7 @@ export default function InventoryPage() {
               onClick={() => setViewMode("grid")}
               startIcon={<LayoutGrid className="h-3.5 w-3.5" />}
             >
-              Cards
+              {t.inventoryCardsView}
             </MuiButton>
             <MuiButton
               variant={viewMode === "table" ? "contained" : "outlined"}
@@ -232,7 +231,7 @@ export default function InventoryPage() {
               onClick={() => setViewMode("table")}
               startIcon={<Table className="h-3.5 w-3.5" />}
             >
-              Table
+              {t.inventoryTableView}
             </MuiButton>
           </ButtonGroup>
 
@@ -242,11 +241,14 @@ export default function InventoryPage() {
             size="small"
             onClick={() => {
               exportInventoryToCSV(filteredVehicles);
-              addToast(`Exported ${filteredVehicles.length} vehicles to CSV`, "success");
+              addToast(
+                t.inventoryExportedVehicles.replace("{count}", String(filteredVehicles.length)),
+                "success"
+              );
             }}
             startIcon={<Download className="h-3.5 w-3.5" />}
           >
-            Export CSV
+            {t.inventoryExportCsv}
           </MuiButton>
 
           <MuiButton
@@ -288,9 +290,13 @@ export default function InventoryPage() {
             {/* Pagination Strip */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-xs font-mono text-slate-500 dark:text-slate-400">
               <div>
-                Showing {page * rowsPerPage + 1}–
-                {Math.min((page + 1) * rowsPerPage, filteredVehicles.length)} of{" "}
-                {filteredVehicles.length} units
+                {t.inventoryShowing
+                  .replace("{start}", String(page * rowsPerPage + 1))
+                  .replace(
+                    "{end}",
+                    String(Math.min((page + 1) * rowsPerPage, filteredVehicles.length))
+                  )
+                  .replace("{total}", String(filteredVehicles.length))}
               </div>
 
               <div className="flex items-center gap-2">
@@ -302,7 +308,7 @@ export default function InventoryPage() {
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <span className="font-semibold px-2 tabular-nums text-slate-900 dark:text-white">
-                  Page {page + 1} / {totalPages}
+                  {t.inventoryPage} {page + 1} / {totalPages}
                 </span>
                 <button
                   disabled={page >= totalPages - 1}
@@ -322,7 +328,7 @@ export default function InventoryPage() {
                   <MuiTableCell header className="w-8 !px-2.5 text-center">
                     <input
                       type="checkbox"
-                      aria-label="Select all vehicles on page"
+                      aria-label={t.inventorySelectAll}
                       checked={
                         paginatedVehicles.length > 0 &&
                         paginatedVehicles.every((v) => selectedVehicleIds.includes(v.id))
@@ -337,7 +343,7 @@ export default function InventoryPage() {
                     className="cursor-pointer select-none"
                   >
                     <div className="flex items-center gap-1.5">
-                      <span>Vehicle, Stock & VIN</span>
+                      <span>{t.inventoryVehicleStockVin}</span>
                       {sortField === "stockNumber" ? (
                         sortDir === "asc" ? (
                           <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
@@ -349,8 +355,8 @@ export default function InventoryPage() {
                       )}
                     </div>
                   </MuiTableCell>
-                  <MuiTableCell header>Status</MuiTableCell>
-                  <MuiTableCell header>Customs</MuiTableCell>
+                  <MuiTableCell header>{t.inventoryStatus}</MuiTableCell>
+                  <MuiTableCell header>{t.inventoryCustoms}</MuiTableCell>
                   {!hideFinancialMargins && (
                     <MuiTableCell
                       header
@@ -359,7 +365,7 @@ export default function InventoryPage() {
                       className="cursor-pointer select-none"
                     >
                       <div className="flex items-center justify-end gap-1.5">
-                        <span>Landed Cost</span>
+                        <span>{t.inventoryLandedCost}</span>
                         {sortField === "landedCost" ? (
                           sortDir === "asc" ? (
                             <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
@@ -379,7 +385,7 @@ export default function InventoryPage() {
                     className="cursor-pointer select-none"
                   >
                     <div className="flex items-center justify-end gap-1.5">
-                      <span>Selling Price</span>
+                      <span>{t.inventorySellingPrice}</span>
                       {sortField === "sellingPrice" ? (
                         sortDir === "asc" ? (
                           <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
@@ -393,11 +399,11 @@ export default function InventoryPage() {
                   </MuiTableCell>
                   {!hideFinancialMargins && (
                     <MuiTableCell header align="right">
-                      Target Margin
+                      {t.inventoryTargetMargin}
                     </MuiTableCell>
                   )}
                   <MuiTableCell header align="right" className="!pe-3">
-                    Actions
+                    {t.inventoryActions}
                   </MuiTableCell>
                 </MuiTableRow>
               </MuiTableHead>
@@ -423,7 +429,7 @@ export default function InventoryPage() {
                       <MuiTableCell className="w-8 !px-2.5 text-center py-1.5">
                         <input
                           type="checkbox"
-                          aria-label={`Select ${veh.year} ${veh.make} ${veh.model}`}
+                          aria-label={`${t.inventorySelectVehicles}: ${veh.year} ${veh.make} ${veh.model}`}
                           checked={isSelected}
                           onChange={() => handleToggleSelect(veh.id)}
                           className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
@@ -435,7 +441,7 @@ export default function InventoryPage() {
                             type="button"
                             onClick={() => setInspectedVehicleId(veh.id)}
                             className="relative h-8 w-11 shrink-0 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer block"
-                            title="Inspect in drawer"
+                            title={t.inventoryInspectTitle}
                           >
                             <Image
                               src={veh.images[0]}
@@ -489,11 +495,11 @@ export default function InventoryPage() {
                                 : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700"
                             }`}
                           >
-                            <option value="Available on Lot">ON LOT</option>
-                            <option value="In Transit">IN TRANSIT</option>
-                            <option value="Reserved/Deposit Paid">RESERVED</option>
-                            <option value="Under Prep/Maintenance">PREP</option>
-                            <option value="Sold">SOLD</option>
+                            <option value="Available on Lot">{t.inventoryOnLotShort}</option>
+                            <option value="In Transit">{t.inventoryInTransitShort}</option>
+                            <option value="Reserved/Deposit Paid">{t.inventoryReservedShort}</option>
+                            <option value="Under Prep/Maintenance">{t.inventoryPrepShort}</option>
+                            <option value="Sold">{t.inventorySoldShort}</option>
                           </select>
                           <ChevronDown className="h-2.5 w-2.5 text-current opacity-60 absolute end-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         </div>
@@ -546,16 +552,16 @@ export default function InventoryPage() {
                             type="button"
                             onClick={() => setInspectedVehicleId(veh.id)}
                             className="px-2 py-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-[11px] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1 cursor-pointer"
-                            title="Open Contextual Inspector Drawer"
+                            title={t.inventoryInspectorTitle}
                           >
                             <PanelRightOpen className="h-3 w-3" />
-                            <span>Inspect</span>
+                            <span>{t.inventoryInspect}</span>
                           </button>
 
                           <Link
                             href={`/vehicles/${veh.id}/deed`}
                             className="p-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-slate-600 dark:text-slate-300"
-                            title="Print legal deed"
+                            title={t.inventoryPrintDeed}
                           >
                             <FileText className="h-3.5 w-3.5" />
                           </Link>
@@ -564,7 +570,7 @@ export default function InventoryPage() {
                             <button
                               onClick={() => setVehicleToDelete(veh)}
                               className="p-1 rounded text-slate-400 hover:text-rose-600"
-                              title="Delete vehicle"
+                              title={t.inventoryDeleteVehicle}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -588,6 +594,16 @@ export default function InventoryPage() {
                 setPage(0);
               }}
               rowsPerPageOptions={[6, 12, 24, 48]}
+              labelRowsPerPage={t.inventoryRowsPerPage}
+              labelDisplayedRows={({ from, to, count }) =>
+                t.inventoryDisplayedRows
+                  .replace("{from}", String(from))
+                  .replace("{to}", String(to))
+                  .replace("{count}", String(count))
+              }
+              getItemAriaLabel={(type) =>
+                type === "previous" ? t.inventoryPreviousPage : t.inventoryNextPage
+              }
             />
           </MuiTableContainer>
         )
@@ -595,24 +611,24 @@ export default function InventoryPage() {
         <div className="rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-12 text-center text-slate-400 space-y-3">
           <Car className="h-10 w-10 mx-auto text-slate-300 dark:text-slate-700" />
           <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">
-            No Matching Fleet Resources
+            {t.inventoryEmptyTitle}
           </h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Try adjusting your search query, Looker chart filter, or pinned view preset.
+            {t.inventoryEmptyDescription}
           </p>
         </div>
       )}
 
       <FloatingBatchToolbar
         selectedCount={selectedVehicleIds.length}
-        entityLabel="vehicles"
-        statusLabel="Set Status"
+        entityLabel={t.inventoryResources}
+        statusLabel={t.inventorySetStatus}
         statusOptions={[
-          { label: "On Lot", value: "Available on Lot" },
-          { label: "In Transit", value: "In Transit" },
-          { label: "Reserved", value: "Reserved/Deposit Paid" },
-          { label: "Prep", value: "Under Prep/Maintenance" },
-          { label: "Sold", value: "Sold" },
+          { label: t.inventoryOnLot, value: "Available on Lot" },
+          { label: t.inventoryInTransit, value: "In Transit" },
+          { label: t.inventoryReserved, value: "Reserved/Deposit Paid" },
+          { label: t.inventoryPrep, value: "Under Prep/Maintenance" },
+          { label: t.inventorySold, value: "Sold" },
         ]}
         onApplyStatus={handleBatchStatusUpdate}
         onAdjustPrice={handleBatchPriceAdjust}
@@ -630,16 +646,18 @@ export default function InventoryPage() {
         fullWidth
       >
         <DialogTitle className="font-bold text-slate-900 dark:text-white">
-          Confirm Vehicle Removal
+          {t.inventoryDeleteTitle}
         </DialogTitle>
         <DialogContent>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
-            Are you sure you want to permanently remove{" "}
-            <strong className="text-slate-900 dark:text-white">
-              {vehicleToDelete?.year} {vehicleToDelete?.make} {vehicleToDelete?.model}
-            </strong>{" "}
-            (Stock <span className="font-mono font-semibold">{vehicleToDelete?.stockNumber}</span>)
-            from the showroom registry?
+            {t.inventoryDeletePrompt
+              .replace(
+                "{vehicle}",
+                `${vehicleToDelete?.year ?? ""} ${vehicleToDelete?.make ?? ""} ${
+                  vehicleToDelete?.model ?? ""
+                }`.trim()
+              )
+              .replace("{stock}", vehicleToDelete?.stockNumber ?? "")}
           </p>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
@@ -649,7 +667,7 @@ export default function InventoryPage() {
             size="small"
             onClick={() => setVehicleToDelete(null)}
           >
-            Cancel
+            {t.inventoryCancel}
           </MuiButton>
           <MuiButton
             variant="contained"
@@ -661,16 +679,19 @@ export default function InventoryPage() {
               setVehicleToDelete(null);
               try {
                 await deleteVehicle(target.id);
-                addToast(`Removed vehicle ${target.stockNumber}`, "info");
+                addToast(
+                  t.inventoryRemovedVehicle.replace("{stock}", target.stockNumber),
+                  "info"
+                );
               } catch (error) {
                 addToast(
-                  error instanceof Error ? error.message : "Unable to delete vehicle",
+                  error instanceof Error ? error.message : t.inventoryDeleteVehicle,
                   "error"
                 );
               }
             }}
           >
-            Delete Permanently
+            {t.inventoryDeletePermanently}
           </MuiButton>
         </DialogActions>
       </Dialog>

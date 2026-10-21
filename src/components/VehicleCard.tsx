@@ -70,8 +70,8 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
     toggleFavorite(vehicle.id);
     addToast(
       isFavorite
-        ? `Removed ${vehicle.model} from saved`
-        : `Saved ${vehicle.model} to bookmarks`,
+        ? t.cardRemovedSaved.replace("{vehicle}", vehicle.model)
+        : t.cardSavedBookmark.replace("{vehicle}", vehicle.model),
       "info"
     );
   };
@@ -80,7 +80,7 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
     e.preventDefault();
     e.stopPropagation();
     if (!isCompared && compareIds.length >= 3) {
-      addToast("You can compare up to 3 vehicles at a time", "warning");
+      addToast(t.cardCompareLimit, "warning");
       return;
     }
     toggleCompare(vehicle.id);
@@ -92,13 +92,17 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
       ? `${window.location.origin}/vehicles/${vehicle.id}`
       : `/vehicles/${vehicle.id}`;
 
+  const whatsappMessage = t.cardWhatsAppMessage
+    .replace(
+      "{vehicle}",
+      `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.trim})`
+    )
+    .replace("{stock}", vehicle.stockNumber)
+    .replace("{vin}", vehicle.vin)
+    .replace("{price}", vehicle.sellingPrice.toLocaleString())
+    .replace("{url}", originUrl);
   const whatsappUrl = `https://wa.me/93799102030?text=${encodeURIComponent(
-    `Hello Sadozai Motors Herat! I am inquiring about:
-${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.trim})
-Stock ID: ${vehicle.stockNumber}
-VIN: ${vehicle.vin}
-Listed Price: $${vehicle.sellingPrice.toLocaleString()} USD
-Details: ${originUrl}`
+    whatsappMessage
   )}`;
 
   return (
@@ -126,9 +130,15 @@ Details: ${originUrl}`
             }
           >
             {vehicle.status === "Available on Lot"
-              ? "On Lot"
+              ? t.dashboardAvailable
+              : vehicle.status === "In Transit"
+              ? t.dashboardTransit
               : vehicle.status === "Reserved/Deposit Paid"
-              ? "Reserved"
+              ? t.dashboardReserved
+              : vehicle.status === "Under Prep/Maintenance"
+              ? t.underPrepTag
+              : vehicle.status === "Sold"
+              ? t.soldTag
               : vehicle.status}
           </span>
         </div>
@@ -141,7 +151,7 @@ Details: ${originUrl}`
                 ? "bg-[#1A73E8] text-white border-[#1A73E8]"
                 : "border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
-            title={isCompared ? "Remove from comparison" : "Add to comparison"}
+            title={isCompared ? t.cardRemoveComparison : t.cardAddComparison}
           >
             <Layers className="h-3 w-3" />
           </button>
@@ -153,7 +163,7 @@ Details: ${originUrl}`
                 ? "bg-rose-600 text-white border-rose-600"
                 : "border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-rose-600"
             }`}
-            title={isFavorite ? "Remove from saved" : "Save vehicle"}
+            title={isFavorite ? t.cardRemoveSaved : t.cardSaveVehicle}
           >
             <Heart className={`h-3 w-3 ${isFavorite ? "fill-white" : ""}`} />
           </button>
@@ -183,14 +193,14 @@ Details: ${originUrl}`
             <button
               onClick={handlePrevPhoto}
               className="pointer-events-auto h-7 w-7 rounded bg-black/75 text-white hover:bg-black flex items-center justify-center transition-colors"
-              aria-label="Previous photo"
+              aria-label={t.cardPreviousPhoto}
             >
               <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
             </button>
             <button
               onClick={handleNextPhoto}
               className="pointer-events-auto h-7 w-7 rounded bg-black/75 text-white hover:bg-black flex items-center justify-center transition-colors"
-              aria-label="Next photo"
+              aria-label={t.cardNextPhoto}
             >
               <ChevronRight className="h-4 w-4 rtl:rotate-180" />
             </button>
@@ -223,7 +233,9 @@ Details: ${originUrl}`
           <span>·</span>
           <span>{vehicle.driveType}</span>
           <span>·</span>
-          <span className="text-emerald-600 dark:text-emerald-400">Cleared</span>
+          <span className="text-emerald-600 dark:text-emerald-400">
+            {t.dashboardVerified}
+          </span>
         </div>
       </div>
 
@@ -246,7 +258,7 @@ Details: ${originUrl}`
               <span className="text-xs tabular-nums font-bold text-emerald-600 dark:text-emerald-400 block">
                 +${marginAmount.toLocaleString()}
               </span>
-              <span className="text-[10px] text-slate-400 block">Net margin</span>
+              <span className="text-[10px] text-slate-400 block">{t.cardNetMargin}</span>
             </div>
           )}
         </div>
@@ -259,17 +271,17 @@ Details: ${originUrl}`
               else setInspectedVehicleId(vehicle.id);
             }}
             className="inline-flex items-center justify-center gap-1 h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] hover:border-[#1A73E8] text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors whitespace-nowrap cursor-pointer"
-            title="Open in right-hand Inspector Drawer"
+            title={t.inventoryInspectorTitle}
           >
             <PanelRightOpen className="h-3 w-3 text-[#1A73E8] dark:text-[#8AB4F8]" />
-            <span>Inspect</span>
+            <span>{t.inventoryInspect}</span>
           </button>
 
           <Link
             href={`/vehicles/${vehicle.id}`}
             className="inline-flex items-center justify-center h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors whitespace-nowrap"
           >
-            <span>Dossier</span>
+            <span>{t.viewDetails}</span>
           </Link>
 
           <a
@@ -279,7 +291,7 @@ Details: ${originUrl}`
             className="inline-flex items-center justify-center gap-1 h-8 px-2.5 rounded-md bg-[#1A73E8] hover:bg-[#1557B0] text-xs font-semibold text-white transition-colors whitespace-nowrap"
           >
             <Send className="h-3 w-3" />
-            <span>WhatsApp</span>
+            <span>{t.buttonInquireWhatsApp}</span>
           </a>
         </div>
       </div>

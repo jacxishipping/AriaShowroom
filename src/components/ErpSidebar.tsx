@@ -191,7 +191,7 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
                 Sadozai Motors
               </div>
               <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
-                Cloud Console · Herat
+                {t.sidebarCloudConsole} · Herat
               </div>
             </div>
           </Link>
@@ -210,7 +210,7 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
           <button
             onClick={() => setMobileDrawerOpen(false)}
             className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
-            title="Close Drawer"
+            title={t.sidebarCloseDrawer}
           >
             <X className="h-4 w-4" />
           </button>
@@ -218,7 +218,9 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
-            title={collapsed ? "Expand Navigation Rail" : "Collapse Navigation Rail"}
+            title={
+              collapsed ? t.sidebarExpandNavigation : t.sidebarCollapseNavigation
+            }
           >
             {collapsed ? (
               <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
@@ -305,7 +307,7 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
         {(!collapsed || isMobile) && (
           <div className="space-y-0.5 pt-2 border-t border-slate-200 dark:border-[#262F40]">
             <div className="px-2.5 pb-1 flex items-center justify-between text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-              <span>Pinned Views</span>
+              <span>{t.sidebarPinnedViews}</span>
               <Bookmark className="h-3 w-3 text-[#1A73E8] dark:text-[#8AB4F8]" />
             </div>
             {pinnedViews.slice(0, 5).map((view) => {
@@ -346,14 +348,16 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
         {(!collapsed || isMobile) && (
           <div className="rounded-md border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] px-2.5 py-2 font-mono text-[11px]">
             <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-              <span>Sarrafi FX</span>
+              <span>{t.sidebarSarrafiFx}</span>
               <span className="text-[#1A73E8] dark:text-[#8AB4F8] font-bold tabular-nums">
                 1 USD = {exchangeRate} AFN
               </span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
               <span>Islam Qala Port</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Cleared</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                {t.dashboardVerified}
+              </span>
             </div>
           </div>
         )}
@@ -382,7 +386,11 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
                     : "Mirwais Saljuqi"}
                 </div>
                 <div className="truncate font-mono text-[10px] text-slate-400">
-                  {currentRole}
+                  {currentRole === "SuperAdmin"
+                    ? t.sidebarSuperAdmin
+                    : currentRole === "SalesAgent"
+                    ? t.sidebarSalesAgent
+                    : t.sidebarAccountant}
                 </div>
               </div>
             )}
@@ -393,7 +401,7 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
               type="button"
               onClick={() => setIsShortcutsModalOpen(true)}
               className="p-1.5 rounded-md border border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] bg-white dark:bg-[#161B26]"
-              title="Keyboard Shortcuts (?)"
+              title={t.sidebarKeyboardShortcuts}
             >
               <Keyboard className="h-3.5 w-3.5" />
             </button>

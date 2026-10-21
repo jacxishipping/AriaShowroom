@@ -177,7 +177,7 @@ export default function ErpOperationsCockpit() {
       await batchUpdateVehicleStatus(selectedVehicleIds, newStatus);
     } catch (error) {
       addToast(
-        error instanceof Error ? error.message : "Unable to update vehicle statuses",
+        error instanceof Error ? error.message : t.inventoryUpdateStatusesError,
         "error"
       );
       return;
@@ -194,7 +194,10 @@ export default function ErpOperationsCockpit() {
     const selected = vehicles.filter((v) => selectedVehicleIds.includes(v.id));
     exportInventoryToCSV(selected.length > 0 ? selected : processedVehicles);
     addToast(
-      `Exported ${selected.length || processedVehicles.length} vehicle records to CSV`,
+      t.inventoryExportedVehicles.replace(
+        "{count}",
+        String(selected.length || processedVehicles.length)
+      ),
       "success"
     );
   };
@@ -210,7 +213,7 @@ export default function ErpOperationsCockpit() {
             <span>Bagh-e-Azadi Showroom</span>
             <span>·</span>
             <span className="font-mono text-[#1A73E8] dark:text-[#8AB4F8] font-semibold">
-              License #49912
+              {t.dashboardLicense} #49912
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
@@ -233,17 +236,17 @@ export default function ErpOperationsCockpit() {
             }`}
           >
             <BarChart3 className="h-3.5 w-3.5" />
-            <span>Looker Cohorts</span>
+            <span>{t.dashboardLookerCohorts}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsShortcutsModalOpen(true)}
             className="hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-xs font-semibold text-slate-600 dark:text-slate-300 hover:border-[#1A73E8]"
-            title="View Keyboard Shortcuts (?)"
+            title={t.dashboardKeyboardShortcutsTitle}
           >
             <Keyboard className="h-3.5 w-3.5" />
-            <span>Shortcuts</span>
+            <span>{t.dashboardKeyboardShortcuts}</span>
           </button>
 
           <MuiButton
@@ -252,11 +255,14 @@ export default function ErpOperationsCockpit() {
             size="small"
             onClick={() => {
               exportInventoryToCSV(processedVehicles);
-              addToast("Exported fleet inventory to CSV", "success");
+              addToast(
+                t.dashboardExportedFleet.replace("{count}", String(processedVehicles.length)),
+                "success"
+              );
             }}
             startIcon={<Download className="h-3.5 w-3.5" />}
           >
-            Export CSV
+            {t.inventoryExportCsv}
           </MuiButton>
 
           <MuiButton
@@ -392,11 +398,11 @@ export default function ErpOperationsCockpit() {
         <div className="px-4 border-b border-slate-200 dark:border-[#262F40] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70 dark:bg-[#121722]">
           <div className="flex items-center gap-5 overflow-x-auto scrollbar-none -mb-px">
             {[
-              { id: "ALL", name: "All Fleet", count: vehicles.length },
-              { id: "Available on Lot", name: "On Lot", count: availableCount },
-              { id: "In Transit", name: "In Transit", count: inTransitCount },
-              { id: "Reserved/Deposit Paid", name: "Reserved", count: reservedCount },
-              { id: "Sold", name: "Sold", count: soldCount },
+              { id: "ALL", name: t.dashboardAllFleet, count: vehicles.length },
+              { id: "Available on Lot", name: t.inventoryOnLot, count: availableCount },
+              { id: "In Transit", name: t.inventoryInTransit, count: inTransitCount },
+              { id: "Reserved/Deposit Paid", name: t.inventoryReserved, count: reservedCount },
+              { id: "Sold", name: t.inventorySold, count: soldCount },
             ].map((tab) => {
               const isActive = filters.status === tab.id;
               return (
@@ -441,12 +447,12 @@ export default function ErpOperationsCockpit() {
                 }}
                 className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline px-1 cursor-pointer"
               >
-                Reset filters
+                {t.dashboardResetFilters}
               </button>
             )}
 
             <span className="text-[11px] font-mono tabular-nums text-slate-400">
-              {processedVehicles.length} / {vehicles.length} resources
+              {processedVehicles.length} / {vehicles.length} {t.inventoryResources}
             </span>
           </div>
         </div>
@@ -456,54 +462,57 @@ export default function ErpOperationsCockpit() {
           <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-[#1A73E8] text-white text-xs">
             <div className="flex items-center gap-3">
               <span className="font-mono font-bold">
-                {selectedVehicleIds.length} selected
+                {t.dashboardSelectedCount.replace(
+                  "{count}",
+                  String(selectedVehicleIds.length)
+                )}
               </span>
               <button
                 onClick={() => setSelectedVehicleIds([])}
                 className="text-[11px] text-white/80 underline hover:text-white"
               >
-                Deselect all
+                {t.inventoryDeselectAll}
               </button>
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-[11px] text-white/80 hidden md:inline me-1">
-                Status:
+                {t.dashboardStatus}:
               </span>
               <button
                 onClick={() => handleBatchStatus("Available on Lot")}
                 className="px-2.5 py-1 rounded bg-white/15 hover:bg-white/25 font-semibold text-[11px] whitespace-nowrap"
               >
-                Set On Lot
+                {t.dashboardSet} {t.inventoryOnLot}
               </button>
               <button
                 onClick={() => handleBatchStatus("In Transit")}
                 className="px-2.5 py-1 rounded bg-white/15 hover:bg-white/25 font-semibold text-[11px] whitespace-nowrap"
               >
-                Set In Transit
+                {t.dashboardSet} {t.inventoryInTransit}
               </button>
               <button
                 onClick={() => handleBatchStatus("Reserved/Deposit Paid")}
                 className="px-2.5 py-1 rounded bg-white/15 hover:bg-white/25 font-semibold text-[11px] whitespace-nowrap"
               >
-                Set Reserved
+                {t.dashboardSet} {t.inventoryReserved}
               </button>
 
               <span className="mx-1 text-white/40">|</span>
               <span className="text-[11px] text-white/80 hidden md:inline">
-                Price repricing:
+                {t.dashboardRepricing}:
               </span>
               <button
                 onClick={() => handleBatchPriceAdjust(-2)}
                 className="px-2 py-1 rounded bg-white/15 hover:bg-white/25 font-mono font-semibold text-[11px]"
-                title="Reduce selling price by 2%"
+                title={t.dashboardReducePrice}
               >
                 -2%
               </button>
               <button
                 onClick={() => handleBatchPriceAdjust(2)}
                 className="px-2 py-1 rounded bg-white/15 hover:bg-white/25 font-mono font-semibold text-[11px]"
-                title="Increase selling price by 2%"
+                title={t.dashboardIncreasePrice}
               >
                 +2%
               </button>
@@ -513,7 +522,7 @@ export default function ErpOperationsCockpit() {
                 onClick={handleBatchExport}
                 className="px-2.5 py-1 rounded bg-white text-[#1A73E8] font-semibold text-[11px] hover:bg-slate-100 whitespace-nowrap"
               >
-                Export Selected CSV
+                {t.dashboardExportSelectedCsv}
               </button>
             </div>
           </div>
@@ -541,7 +550,7 @@ export default function ErpOperationsCockpit() {
                   className="cursor-pointer select-none hover:text-slate-900 dark:hover:text-white"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span>Resource / Stock & VIN</span>
+                    <span>{t.dashboardResourceStockVin}</span>
                     {sortField === "stockNumber" ? (
                       sortDir === "asc" ? (
                         <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
@@ -553,8 +562,8 @@ export default function ErpOperationsCockpit() {
                     )}
                   </div>
                 </MuiTableCell>
-                <MuiTableCell header>Status</MuiTableCell>
-                <MuiTableCell header>Customs & Origin</MuiTableCell>
+                <MuiTableCell header>{t.dashboardStatus}</MuiTableCell>
+                <MuiTableCell header>{t.dashboardCustomsOrigin}</MuiTableCell>
                 {showFinancialMargins && (
                   <MuiTableCell
                     header
@@ -601,7 +610,7 @@ export default function ErpOperationsCockpit() {
                   </MuiTableCell>
                 )}
                 <MuiTableCell header align="right" className="!pe-3">
-                  Actions
+                  {t.inventoryActions}
                 </MuiTableCell>
               </MuiTableRow>
             </MuiTableHead>
@@ -652,7 +661,7 @@ export default function ErpOperationsCockpit() {
                             type="button"
                             onClick={() => setInspectedVehicleId(veh.id)}
                             className="relative h-8 w-12 shrink-0 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-[#262F40] block group/thumb cursor-pointer"
-                            title="Quick inspect in right-hand drawer"
+                            title={t.dashboardQuickInspect}
                           >
                             <Image
                               src={veh.images[0]}
@@ -708,11 +717,11 @@ export default function ErpOperationsCockpit() {
                                 : "bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                             }`}
                           >
-                            <option value="Available on Lot">ON LOT</option>
-                            <option value="In Transit">IN TRANSIT</option>
-                            <option value="Reserved/Deposit Paid">RESERVED</option>
-                            <option value="Under Prep/Maintenance">PREP</option>
-                            <option value="Sold">SOLD</option>
+                            <option value="Available on Lot">{t.inventoryOnLotShort}</option>
+                            <option value="In Transit">{t.inventoryInTransitShort}</option>
+                            <option value="Reserved/Deposit Paid">{t.inventoryReservedShort}</option>
+                            <option value="Under Prep/Maintenance">{t.inventoryPrepShort}</option>
+                            <option value="Sold">{t.inventorySoldShort}</option>
                           </select>
                           <ChevronDown className="h-2.5 w-2.5 text-current opacity-60 absolute end-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         </div>
@@ -768,16 +777,16 @@ export default function ErpOperationsCockpit() {
                                 ? "border-[#1A73E8] bg-[#1A73E8] text-white"
                                 : "border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-slate-700 dark:text-slate-200"
                             }`}
-                            title="Open Contextual Inspector Drawer"
+                            title={t.inventoryInspectorTitle}
                           >
                             <PanelRightOpen className="h-3 w-3" />
-                            <span>Inspect</span>
+                            <span>{t.inventoryInspect}</span>
                           </button>
 
                           <Link
                             href={`/vehicles/${veh.id}/deed`}
                             className="p-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-slate-600 dark:text-slate-300 hover:text-[#1A73E8] transition-colors"
-                            title="Generate Official Bilingual Deed"
+                            title={t.dashboardGenerateDeed}
                           >
                             <FileText className="h-3.5 w-3.5" />
                           </Link>
@@ -786,7 +795,7 @@ export default function ErpOperationsCockpit() {
                             <button
                               onClick={() => setVehicleToDelete(veh)}
                               className="p-1 rounded border border-transparent hover:border-rose-500/40 text-slate-400 hover:text-rose-600 transition-colors"
-                              title="Delete vehicle"
+                              title={t.inventoryDeleteVehicle}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -804,7 +813,10 @@ export default function ErpOperationsCockpit() {
         {/* Table Footer */}
         <div className="px-4 py-2.5 border-t border-slate-200 dark:border-[#262F40] bg-slate-50/70 dark:bg-[#121722] text-[11px] font-mono text-slate-500 flex flex-wrap items-center justify-between gap-2">
           <span>
-            Showing {processedVehicles.length} of {vehicles.length} registered resources · Press{" "}
+            {t.dashboardShowingResources
+              .replace("{visible}", String(processedVehicles.length))
+              .replace("{total}", String(vehicles.length))} ·{" "}
+            {t.dashboardPressToCycleInspector}{" "}
             <kbd className="px-1 py-0.2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
               j
             </kbd>{" "}
@@ -812,9 +824,10 @@ export default function ErpOperationsCockpit() {
             <kbd className="px-1 py-0.2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
               k
             </kbd>{" "}
-            to cycle inspector
           </span>
-          <span>Sarrafi Spot: 1 USD = {exchangeRate} AFN</span>
+          <span>
+            {t.dashboardSarrafiSpot.replace("{rate}", String(exchangeRate))}
+          </span>
         </div>
       </div>
 
@@ -826,15 +839,18 @@ export default function ErpOperationsCockpit() {
         fullWidth
       >
         <DialogTitle className="text-sm font-bold text-slate-900 dark:text-white">
-          Confirm Vehicle Removal
+          {t.inventoryDeleteTitle}
         </DialogTitle>
         <DialogContent className="text-xs text-slate-600 dark:text-slate-300 space-y-2">
           <p>
-            Are you sure you want to permanently remove{" "}
-            <strong className="text-slate-900 dark:text-white">
-              {vehicleToDelete?.year} {vehicleToDelete?.make} {vehicleToDelete?.model}
-            </strong>{" "}
-            (Stock #{vehicleToDelete?.stockNumber}) from the showroom registry?
+            {t.inventoryDeletePrompt
+              .replace(
+                "{vehicle}",
+                `${vehicleToDelete?.year ?? ""} ${vehicleToDelete?.make ?? ""} ${
+                  vehicleToDelete?.model ?? ""
+                }`.trim()
+              )
+              .replace("{stock}", vehicleToDelete?.stockNumber ?? "")}
           </p>
         </DialogContent>
         <DialogActions className="p-3 border-t border-slate-100 dark:border-slate-800">
@@ -844,7 +860,7 @@ export default function ErpOperationsCockpit() {
             size="small"
             onClick={() => setVehicleToDelete(null)}
           >
-            Cancel
+            {t.inventoryCancel}
           </MuiButton>
           <MuiButton
             variant="contained"
@@ -856,30 +872,33 @@ export default function ErpOperationsCockpit() {
               setVehicleToDelete(null);
               try {
                 await deleteVehicle(target.id);
-                addToast(`Deleted vehicle ${target.stockNumber}`, "info");
+                addToast(
+                  t.inventoryRemovedVehicle.replace("{stock}", target.stockNumber),
+                  "info"
+                );
               } catch (error) {
                 addToast(
-                  error instanceof Error ? error.message : "Unable to delete vehicle",
+                  error instanceof Error ? error.message : t.inventoryDeleteVehicle,
                   "error"
                 );
               }
             }}
           >
-            Delete Vehicle
+            {t.inventoryDeleteVehicle}
           </MuiButton>
         </DialogActions>
       </Dialog>
 
       <FloatingBatchToolbar
         selectedCount={selectedVehicleIds.length}
-        entityLabel="vehicles"
-        statusLabel="Set Status"
+        entityLabel={t.inventoryResources}
+        statusLabel={t.inventorySetStatus}
         statusOptions={[
-          { label: "On Lot", value: "Available on Lot" },
-          { label: "In Transit", value: "In Transit" },
-          { label: "Reserved", value: "Reserved/Deposit Paid" },
-          { label: "Prep", value: "Under Prep/Maintenance" },
-          { label: "Sold", value: "Sold" },
+          { label: t.inventoryOnLot, value: "Available on Lot" },
+          { label: t.inventoryInTransit, value: "In Transit" },
+          { label: t.inventoryReserved, value: "Reserved/Deposit Paid" },
+          { label: t.inventoryPrep, value: "Under Prep/Maintenance" },
+          { label: t.inventorySold, value: "Sold" },
         ]}
         onApplyStatus={(status) => void handleBatchStatus(status as VehicleItem["status"])}
         onAdjustPrice={handleBatchPriceAdjust}
