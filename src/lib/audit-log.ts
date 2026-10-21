@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -27,9 +28,10 @@ export async function recordSessionAuditEvent(
 }
 
 export async function recordAuditEvent(client: AuditSqlClient, event: AuditEvent) {
+  const id = randomUUID();
   const changes = event.changes ? JSON.stringify(event.changes) : null;
   await client.$executeRaw`
-    INSERT INTO "AuditLog" ("actorId", "actorEmail", "action", "entityType", "entityId", "changes")
-    VALUES (${event.actorId}, ${event.actorEmail}, ${event.action}, ${event.entityType}, ${event.entityId}, ${changes}::jsonb)
+    INSERT INTO "AuditLog" (id, "actorId", "actorEmail", "action", "entityType", "entityId", "changes")
+    VALUES (${id}, ${event.actorId}, ${event.actorEmail}, ${event.action}, ${event.entityType}, ${event.entityId}, ${changes}::jsonb)
   `;
 }
