@@ -1,8 +1,33 @@
 import { PrismaClient, UserRole, VehicleStatus, FuelType, TransmissionType, SteeringSide, PaymentType, InstallmentStatus, LeadStage } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  if (process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
+    throw new Error("Seeding deletes existing sample data. Set ALLOW_DESTRUCTIVE_SEED=true to confirm.");
+  }
+
+  const adminSeedPassword = process.env.SEED_ADMIN_PASSWORD;
+  const salesSeedPassword = process.env.SEED_SALES_PASSWORD;
+  const accountantSeedPassword = process.env.SEED_ACCOUNTANT_PASSWORD;
+  if (
+    !adminSeedPassword ||
+    adminSeedPassword.length < 12 ||
+    !salesSeedPassword ||
+    salesSeedPassword.length < 12 ||
+    !accountantSeedPassword ||
+    accountantSeedPassword.length < 12 ||
+    new Set([adminSeedPassword, salesSeedPassword, accountantSeedPassword]).size !== 3
+  ) {
+    throw new Error("Set separate, unique SEED_ADMIN_PASSWORD, SEED_SALES_PASSWORD, and SEED_ACCOUNTANT_PASSWORD values of at least 12 characters.");
+  }
+  const [adminPasswordHash, salesPasswordHash, accountantPasswordHash] = await Promise.all([
+    bcrypt.hash(adminSeedPassword, 12),
+    bcrypt.hash(salesSeedPassword, 12),
+    bcrypt.hash(accountantSeedPassword, 12),
+  ]);
+
   console.log("🌱 Seeding Sadozai Motors (Herat Showroom) database...");
 
   // 1. Clean existing data
@@ -20,7 +45,7 @@ async function main() {
     data: {
       name: "Haji Ahmad Shah Sadozai",
       email: "admin@sadozaimotors.af",
-      passwordHash: "$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm",
+      passwordHash: adminPasswordHash,
       role: UserRole.ADMIN,
       phone: "+93 79 910 2030",
     },
@@ -30,7 +55,7 @@ async function main() {
     data: {
       name: "Farhad Timori",
       email: "sales@sadozaimotors.af",
-      passwordHash: "$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm",
+      passwordHash: salesPasswordHash,
       role: UserRole.SALES,
       phone: "+93 70 245 8890",
     },
@@ -40,7 +65,7 @@ async function main() {
     data: {
       name: "Mirwais Saljuqi",
       email: "finance@sadozaimotors.af",
-      passwordHash: "$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm",
+      passwordHash: accountantPasswordHash,
       role: UserRole.ACCOUNTANT,
       phone: "+93 78 611 4400",
     },

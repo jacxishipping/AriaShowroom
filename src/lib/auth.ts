@@ -8,7 +8,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET || "sadozai-motors-herat-erp-secret-key-2026",
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "Sadozai Dealership Credentials",
@@ -23,64 +23,27 @@ export const authOptions: NextAuthOptions = {
 
         const email = credentials.email.toLowerCase().trim();
 
-        // 1. Check in PostgreSQL database via Prisma if configured
-        if (isDatabaseConfigured()) {
-          try {
-            const user = await prisma.user.findUnique({
-              where: { email },
-            });
-
-            if (user) {
-              const isValid = await bcrypt.compare(credentials.password, user.passwordHash).catch(() => false);
-
-              if (!isValid) {
-                return null;
-              }
-
-              return {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                phone: user.phone || undefined,
-              };
-            }
-          } catch {
-            // Fall back to verified seed profiles when database is unreachable
-          }
+        if (!isDatabaseConfigured()) {
+          throw new Error("Database authentication is unavailable");
         }
 
-        // 2. Demo fallback accounts for immediate offline/test access
-        const demoUsers = [
-          {
-            id: "usr-admin-01",
-            name: "Haji Ahmad Shah Sadozai",
-            email: "admin@sadozaimotors.af",
-            role: "ADMIN",
-            phone: "+93 79 910 2030",
-          },
-          {
-            id: "usr-sales-02",
-            name: "Farhad Timori",
-            email: "sales@sadozaimotors.af",
-            role: "SALES",
-            phone: "+93 70 245 8890",
-          },
-          {
-            id: "usr-acct-03",
-            name: "Mirwais Saljuqi",
-            email: "finance@sadozaimotors.af",
-            role: "ACCOUNTANT",
-            phone: "+93 78 611 4400",
-          },
-        ];
-
-        const demoUser = demoUsers.find((u) => u.email === email);
-        if (demoUser && (credentials.password === "password123" || credentials.password === "admin123")) {
-          return demoUser;
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (
+          !user ||
+          credentials.password === "password123" ||
+          credentials.password === "admin123" ||
+          !(await bcrypt.compare(credentials.password, user.passwordHash))
+        ) {
+          return null;
         }
 
-        throw new Error("Invalid email or password");
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone || undefined,
+        };
       },
     }),
   ],

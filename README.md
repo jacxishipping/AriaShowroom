@@ -123,9 +123,17 @@ cp .env.example .env
 # Push schema to PostgreSQL
 npm run db:push
 
-# Populate sample Herat vehicles, customers, and sales
+# Only run against a disposable database: this resets seeded users, vehicles,
+# customers, sales, and expenses. Set these values in .env first:
+# ALLOW_DESTRUCTIVE_SEED=true
+# SEED_ADMIN_PASSWORD, SEED_SALES_PASSWORD, SEED_ACCOUNTANT_PASSWORD
+# Each seed password must be unique and at least 12 characters.
 npm run db:seed
 ```
+
+`NEXTAUTH_SECRET` must be set to a strong random value before starting the application.
+The operations cockpit (`/`), inventory console (`/inventory`), and financial vehicle comparison (`/compare`) require authentication.
+Accounts created by older demo seeds must have their passwords reset; the old shared demo passwords are no longer accepted.
 
 ### 5. Media & Cloud Storage (Vercel Blob)
 The application utilizes **Vercel Blob Storage** (`@vercel/blob`) for permanent edge storage of 40+ vehicle photo albums and customs document scans:

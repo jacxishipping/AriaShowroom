@@ -18,11 +18,9 @@ import {
   ShieldCheck,
   Lock,
   Mail,
-  User,
   ArrowRight,
   Sparkles,
   AlertCircle,
-  CheckCircle2,
   Globe,
   Building2,
 } from "lucide-react";
@@ -41,43 +39,6 @@ function LoginContent() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Quick switch demo accounts
-  const demoAccounts = [
-    {
-      title: language === "ps" ? "عمومي مدیر (مالک)" : language === "fa" ? "مدیر ارشد (حاجی)" : "Super Admin",
-      role: "SuperAdmin" as RoleType,
-      authRole: "ADMIN",
-      name: "Haji Ahmad Shah Sadozai",
-      email: "admin@sadozaimotors.af",
-      badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
-      description: language === "ps" ? "د ټولو مالي او ګټې ډیټا بشپړ لاسرسی" : language === "fa" ? "دسترسی کامل به سود، قیمت خرید و تنظیمات" : "Full access to P&L, landed costs & settings",
-    },
-    {
-      title: language === "ps" ? "د پلور مشاور" : language === "fa" ? "کارشناس فروش" : "Sales Consultant",
-      role: "SalesAgent" as RoleType,
-      authRole: "SALES",
-      name: "Farhad Timori",
-      email: "sales@sadozaimotors.af",
-      badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30",
-      description: language === "ps" ? "د نندارتون موجودي، CRM او سندونه" : language === "fa" ? "موجودی موترها، مشتریان و ثبت قرارداد" : "Inventory, CRM leads & deed execution",
-    },
-    {
-      title: language === "ps" ? "سرمحاسب" : language === "fa" ? "مدیر مالی و صرافی" : "Chief Accountant",
-      role: "Accountant" as RoleType,
-      authRole: "ACCOUNTANT",
-      name: "Mirwais Saljuqi",
-      email: "finance@sadozaimotors.af",
-      badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
-      description: language === "ps" ? "صرافي حوالې، فاکتورونه او ګمرکي تادیات" : language === "fa" ? "حواله های صرافی، فاکتور و اسناد گمرک" : "Sarrafi Hawala vouchers, bills & Gomrok fees",
-    },
-  ];
-
-  const handleDemoSelect = (account: typeof demoAccounts[0]) => {
-    setEmail(account.email);
-    setPassword("password123");
-    setErrorMessage(null);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,7 +199,6 @@ function LoginContent() {
                   <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-300">
                     {language === "ps" ? "پټ نوم (رمز)" : language === "fa" ? "رمز عبور" : "Password"}
                   </label>
-                  <span className="text-[10px] text-slate-400 font-mono">Passkey: password123</span>
                 </div>
                 <MuiTextField
                   fullWidth
@@ -270,43 +230,6 @@ function LoginContent() {
               </button>
             </form>
 
-            {/* Quick Demo Switcher in 1px Hairline Matrix */}
-            <div className="pt-4 border-t border-[#242A38] space-y-2.5">
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-slate-400 block">
-                {language === "ps" ? "یو کلیک آزمایښتي حسابونه" : language === "fa" ? "ورود سریع با حساب‌های نمونه" : "One-Click Desk Role Credentials"}
-              </span>
-
-              <div className="grid grid-cols-1 gap-px bg-[#242A38] border border-[#242A38] rounded overflow-hidden">
-                {demoAccounts.map((account) => (
-                  <button
-                    key={account.email}
-                    type="button"
-                    onClick={() => handleDemoSelect(account)}
-                    className="flex items-center justify-between p-3 bg-[#141821] hover:bg-[#191F2C] transition-colors text-left group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded bg-[#0A0C10] flex items-center justify-center border border-[#242A38] text-slate-400 group-hover:text-[#D4AF37] group-hover:border-[#C59B27]/50">
-                        <User className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-slate-200 group-hover:text-white">
-                            {account.name}
-                          </span>
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded border font-mono uppercase ${account.badgeColor}`}>
-                            {account.title}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-slate-400 block font-mono">
-                          {account.email}
-                        </span>
-                      </div>
-                    </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-[#D4AF37] group-hover:translate-x-0.5 transition-all" />
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 

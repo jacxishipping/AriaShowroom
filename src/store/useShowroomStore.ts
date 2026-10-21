@@ -235,22 +235,22 @@ export const DEFAULT_PINNED_VIEWS: PinnedView[] = [
 ];
 
 async function writeRecord(path: string, data: unknown, method = "POST") {
-  try {
-    const response = await fetch(path, {
-      method,
-      ...(data === undefined ? {} : {
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }),
-    });
-    const result = await response.json().catch(() => null);
-    if (result?.fallback) {
-      return null;
-    }
-    return result?.data ?? null;
-  } catch {
-    return null;
+  const response = await fetch(path, {
+    method,
+    ...(data === undefined ? {} : {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  });
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || !result?.success) {
+    throw new Error(
+      result?.error || `Request to ${path} failed (${response.status})`
+    );
   }
+
+  return result.data ?? null;
 }
 
 const vehicleStatusToDatabase = {
@@ -289,7 +289,7 @@ export const useShowroomStore = create<ShowroomStore>()(
       currency: "USD",
       exchangeRate: 70.5,
       language: "en",
-      currentRole: "SuperAdmin",
+      currentRole: "SalesAgent",
       darkMode: false,
       mobileDrawerOpen: false,
       clientPresentationMode: false,
@@ -380,29 +380,29 @@ export const useShowroomStore = create<ShowroomStore>()(
           viewsCount: 1,
           inquiriesCount: 0,
         };
+        await writeRecord("/api/vehicles", vehicleToDatabase(vehicleData));
         set((state) => ({
           vehicles: [newVehicle, ...state.vehicles],
         }));
-        await writeRecord("/api/vehicles", vehicleToDatabase(vehicleData));
         await get().fetchDatabaseRecords();
         return get().vehicles.find((item) => item.stockNumber === vehicleData.stockNumber) || newVehicle;
       },
 
       updateVehicle: async (id, updates) => {
+        await writeRecord(`/api/vehicles/${encodeURIComponent(id)}`, vehicleToDatabase(updates), "PATCH");
         set((state) => ({
           vehicles: state.vehicles.map((v) =>
             v.id === id || v.stockNumber === id ? { ...v, ...updates } : v
           ),
         }));
-        await writeRecord(`/api/vehicles/${encodeURIComponent(id)}`, vehicleToDatabase(updates), "PATCH");
         await get().fetchDatabaseRecords();
       },
 
       deleteVehicle: async (id) => {
+        await writeRecord(`/api/vehicles/${encodeURIComponent(id)}`, undefined, "DELETE");
         set((state) => ({
           vehicles: state.vehicles.filter((v) => v.id !== id && v.stockNumber !== id),
         }));
-        await writeRecord(`/api/vehicles/${encodeURIComponent(id)}`, undefined, "DELETE");
         await get().fetchDatabaseRecords();
       },
 
@@ -413,9 +413,6 @@ export const useShowroomStore = create<ShowroomStore>()(
           id: `cust-${Date.now()}`,
           createdAt: new Date().toISOString().split("T")[0],
         };
-        set((state) => ({
-          customers: [newCustomer, ...state.customers],
-        }));
         await writeRecord("/api/customers", {
           fullName: customerData.fullName,
           phone: customerData.phone,
@@ -429,29 +426,27 @@ export const useShowroomStore = create<ShowroomStore>()(
           notes: customerData.notes,
           leadStage: customerStageToDatabase[customerData.leadStage],
         });
+        set((state) => ({
+          customers: [newCustomer, ...state.customers],
+        }));
         await get().fetchDatabaseRecords();
       },
 
       updateCustomerStage: async (customerId, stage) => {
+        await writeRecord("/api/customers", {
+          customerId,
+          leadStage: customerStageToDatabase[stage],
+        }, "PATCH");
         set((state) => ({
           customers: state.customers.map((c) =>
             c.id === customerId ? { ...c, leadStage: stage } : c
           ),
         }));
-        await writeRecord("/api/customers", {
-          customerId,
-          leadStage: customerStageToDatabase[stage],
-        }, "PATCH");
         await get().fetchDatabaseRecords();
       },
 
       batchUpdateCustomerStage: async (customerIds, stage) => {
-        set((state) => ({
-          customers: state.customers.map((c) =>
-            customerIds.includes(c.id) ? { ...c, leadStage: stage } : c
-          ),
-        }));
-        await Promise.all(
+        const results = await Promise.allSettled(
           customerIds.map((customerId) =>
             writeRecord(
               "/api/customers",
@@ -464,6 +459,13 @@ export const useShowroomStore = create<ShowroomStore>()(
           )
         );
         await get().fetchDatabaseRecords();
+        const failed = results.find((result) => result.status === "rejected");
+        if (failed?.status === "rejected") throw failed.reason;
+        set((state) => ({
+          customers: state.customers.map((c) =>
+            customerIds.includes(c.id) ? { ...c, leadStage: stage } : c
+          ),
+        }));
         get().addToast(
           `Updated ${customerIds.length} CRM lead(s) to "${stage}"`,
           "success"
@@ -473,18 +475,14 @@ export const useShowroomStore = create<ShowroomStore>()(
       sales: INITIAL_SALES,
       addSale: async (saleData) => {
         const vehicle = get().vehicles.find((item) => item.stockNumber === saleData.stockNumber);
+        if (!vehicle) throw new Error("Vehicle not found in the current inventory");
         const newSale: SaleRecord = {
           ...saleData,
           id: `sale-${Date.now()}`,
           contractNumber: `SM-DEED-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
           saleDate: new Date().toISOString().split("T")[0],
         };
-        set((state) => ({
-          sales: [newSale, ...state.sales],
-        }));
-
-        if (vehicle) {
-          await writeRecord("/api/sales", {
+        await writeRecord("/api/sales", {
             vehicleId: vehicle.id,
             customerName: saleData.customerName,
             customerPhone: saleData.customerPhone,
@@ -499,9 +497,11 @@ export const useShowroomStore = create<ShowroomStore>()(
               : "CASH",
             downPaymentUSD: saleData.downPaymentUSD,
             installmentsRemaining: saleData.installmentsRemaining,
-          });
-          await get().fetchDatabaseRecords();
-        }
+        });
+        set((state) => ({
+          sales: [newSale, ...state.sales],
+        }));
+        await get().fetchDatabaseRecords();
       },
 
       expenses: INITIAL_EXPENSES,
@@ -515,10 +515,6 @@ export const useShowroomStore = create<ShowroomStore>()(
           id: `exp-${Date.now()}`,
           date: new Date().toISOString().split("T")[0],
         };
-        set((curr) => ({
-          expenses: [newExpense, ...curr.expenses],
-        }));
-
         await writeRecord("/api/expenses", {
           category: expenseData.category,
           amount: expenseData.amountUSD,
@@ -529,6 +525,9 @@ export const useShowroomStore = create<ShowroomStore>()(
           vehicleId: vehicle?.id,
           exchangeRate: state.exchangeRate,
         });
+        set((curr) => ({
+          expenses: [newExpense, ...curr.expenses],
+        }));
         await get().fetchDatabaseRecords();
       },
 
@@ -543,10 +542,10 @@ export const useShowroomStore = create<ShowroomStore>()(
           balanceUSD: 0,
           bills: [],
         };
+        await writeRecord("/api/suppliers", supplierData);
         set((state) => ({
           suppliers: [newSupplier, ...state.suppliers],
         }));
-        await writeRecord("/api/suppliers", supplierData);
         await get().fetchDatabaseRecords();
       },
 
@@ -555,6 +554,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           ...billData,
           id: `bill-${Date.now()}`,
         };
+        await writeRecord(`/api/suppliers/${encodeURIComponent(billData.supplierId)}/bills`, billData);
         set((state) => ({
           suppliers: state.suppliers.map((s) =>
             s.id === billData.supplierId
@@ -567,7 +567,6 @@ export const useShowroomStore = create<ShowroomStore>()(
               : s
           ),
         }));
-        await writeRecord(`/api/suppliers/${encodeURIComponent(billData.supplierId)}/bills`, billData);
         await get().fetchDatabaseRecords();
       },
 
@@ -575,18 +574,6 @@ export const useShowroomStore = create<ShowroomStore>()(
         const state = get();
         const supplier = state.suppliers.find((item) => item.id === supplierId);
         if (!supplier) return;
-
-        set((curr) => ({
-          suppliers: curr.suppliers.map((s) =>
-            s.id === supplierId
-              ? {
-                  ...s,
-                  totalPaidUSD: s.totalPaidUSD + amountUSD,
-                  balanceUSD: Math.max(0, s.balanceUSD - amountUSD),
-                }
-              : s
-          ),
-        }));
 
         await writeRecord("/api/vouchers", {
           voucherType: "SUPPLIER_PAYMENT",
@@ -602,6 +589,17 @@ export const useShowroomStore = create<ShowroomStore>()(
           purpose: "Supplier account payoff",
           recordedBy: state.currentRole,
         });
+        set((curr) => ({
+          suppliers: curr.suppliers.map((s) =>
+            s.id === supplierId
+              ? {
+                  ...s,
+                  totalPaidUSD: s.totalPaidUSD + amountUSD,
+                  balanceUSD: Math.max(0, s.balanceUSD - amountUSD),
+                }
+              : s
+          ),
+        }));
         await get().fetchDatabaseRecords();
       },
 
@@ -613,20 +611,20 @@ export const useShowroomStore = create<ShowroomStore>()(
           id: `inv-${Date.now()}`,
           invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
         };
+        await writeRecord("/api/invoices", invoiceData);
         set((state) => ({
           invoices: [newInvoice, ...state.invoices],
         }));
-        await writeRecord("/api/invoices", invoiceData);
         await get().fetchDatabaseRecords();
       },
 
       updateInvoiceStatus: async (invoiceId, status) => {
+        await writeRecord("/api/invoices", { invoiceId, status }, "PATCH");
         set((state) => ({
           invoices: state.invoices.map((inv) =>
             inv.id === invoiceId ? { ...inv, status } : inv
           ),
         }));
-        await writeRecord("/api/invoices", { invoiceId, status }, "PATCH");
         await get().fetchDatabaseRecords();
       },
 
@@ -644,10 +642,10 @@ export const useShowroomStore = create<ShowroomStore>()(
           id: `pv-${Date.now()}`,
           voucherNumber: `${prefix}-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
         };
+        await writeRecord("/api/vouchers", voucherData);
         set((state) => ({
           payments: [newVoucher, ...state.payments],
         }));
-        await writeRecord("/api/vouchers", voucherData);
         await get().fetchDatabaseRecords();
       },
 
@@ -660,10 +658,10 @@ export const useShowroomStore = create<ShowroomStore>()(
           id: `je-${Date.now()}`,
           entryNumber: `JE-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
         };
+        await writeRecord("/api/journal-entries", entryData);
         set((state) => ({
           journalEntries: [newEntry, ...state.journalEntries],
         }));
-        await writeRecord("/api/journal-entries", entryData);
         await get().fetchDatabaseRecords();
       },
 
@@ -705,27 +703,49 @@ export const useShowroomStore = create<ShowroomStore>()(
       },
 
       batchUpdateVehicleStatus: async (ids, status) => {
-        set((state) => ({
-          vehicles: state.vehicles.map((v) =>
-            ids.includes(v.id) ? { ...v, status } : v
-          ),
-        }));
-        await Promise.all(ids.map((id) => writeRecord(
+        const results = await Promise.allSettled(ids.map((id) => writeRecord(
           `/api/vehicles/${encodeURIComponent(id)}`,
           vehicleToDatabase({ status }),
           "PATCH"
         )));
         await get().fetchDatabaseRecords();
+        const failed = results.find((result) => result.status === "rejected");
+        if (failed?.status === "rejected") throw failed.reason;
+        set((state) => ({
+          vehicles: state.vehicles.map((v) =>
+            ids.includes(v.id) ? { ...v, status } : v
+          ),
+        }));
         get().addToast(`Updated status for ${ids.length} vehicle(s) to "${status}"`, "success");
       },
 
       batchAdjustVehiclePrice: async (ids, percentDelta) => {
         const factor = 1 + percentDelta / 100;
+        const updates = get().vehicles
+          .filter((vehicle) => ids.includes(vehicle.id))
+          .map((vehicle) => ({
+            vehicle,
+            sellingPrice: Math.max(
+              1000,
+              Math.round((vehicle.sellingPrice * factor) / 100) * 100
+            ),
+          }));
+        const results = await Promise.allSettled(
+          updates.map(({ vehicle, sellingPrice }) =>
+            writeRecord(
+              `/api/vehicles/${encodeURIComponent(vehicle.id)}`,
+              { sellingPrice },
+              "PATCH"
+            )
+          )
+        );
+        await get().fetchDatabaseRecords();
+        const failed = results.find((result) => result.status === "rejected");
+        if (failed?.status === "rejected") throw failed.reason;
         set((state) => ({
-          vehicles: state.vehicles.map((v) => {
-            if (!ids.includes(v.id)) return v;
-            const nextPrice = Math.round((v.sellingPrice * factor) / 100) * 100;
-            return { ...v, sellingPrice: Math.max(1000, nextPrice) };
+          vehicles: state.vehicles.map((vehicle) => {
+            const update = updates.find((item) => item.vehicle.id === vehicle.id);
+            return update ? { ...vehicle, sellingPrice: update.sellingPrice } : vehicle;
           }),
         }));
         const sign = percentDelta > 0 ? `+${percentDelta}%` : `${percentDelta}%`;
@@ -810,7 +830,7 @@ export const useShowroomStore = create<ShowroomStore>()(
             fetch("/api/accounts").then((r) => r.json()).catch(() => null),
           ]);
 
-          if (vehRes?.success && Array.isArray(vehRes.data) && vehRes.data.length > 0) {
+          if (vehRes?.success && Array.isArray(vehRes.data)) {
             const statusMap: Record<string, VehicleItem["status"]> = {
               AVAILABLE: "Available on Lot",
               IN_TRANSIT: "In Transit",
@@ -893,7 +913,7 @@ export const useShowroomStore = create<ShowroomStore>()(
             set({ vehicles: mappedVehicles });
           }
 
-          if (custRes?.success && Array.isArray(custRes.data) && custRes.data.length > 0) {
+          if (custRes?.success && Array.isArray(custRes.data)) {
             const leadMap: Record<string, CustomerRecord["leadStage"]> = {
               NEW_INQUIRY: "New Inquiry",
               FOLLOW_UP: "Follow-Up",
@@ -922,7 +942,7 @@ export const useShowroomStore = create<ShowroomStore>()(
             set({ customers: mappedCusts });
           }
 
-          if (saleRes?.success && Array.isArray(saleRes.data) && saleRes.data.length > 0) {
+          if (saleRes?.success && Array.isArray(saleRes.data)) {
             const paymentTypeMap: Record<string, SaleRecord["paymentType"]> = {
               CASH: "Full Cash",
               INSTALLMENT: "Installment Plan",
@@ -964,7 +984,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           }
 
           // Live Invoices Sync
-          if (invRes?.success && Array.isArray(invRes.data) && invRes.data.length > 0) {
+          if (invRes?.success && Array.isArray(invRes.data)) {
             set({
               invoices: invRes.data.map((invoice: any) => ({
                 ...invoice,
@@ -975,7 +995,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           }
 
           // Live Payment Vouchers Sync
-          if (vouchRes?.success && Array.isArray(vouchRes.data) && vouchRes.data.length > 0) {
+          if (vouchRes?.success && Array.isArray(vouchRes.data)) {
             set({
               payments: vouchRes.data.map((payment: any) => ({
                 ...payment,
@@ -985,7 +1005,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           }
 
           // Live Suppliers Sync
-          if (suppRes?.success && Array.isArray(suppRes.data) && suppRes.data.length > 0) {
+          if (suppRes?.success && Array.isArray(suppRes.data)) {
             set({
               suppliers: suppRes.data.map((supplier: any) => ({
                 ...supplier,
@@ -999,7 +1019,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           }
 
           // Live Expenses Sync
-          if (expRes?.success && Array.isArray(expRes.data) && expRes.data.length > 0) {
+          if (expRes?.success && Array.isArray(expRes.data)) {
             set({
               expenses: expRes.data.map((e: any) => ({
                 id: e.id,
@@ -1016,7 +1036,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           }
 
           // Live Journal Entries Sync
-          if (jeRes?.success && Array.isArray(jeRes.data) && jeRes.data.length > 0) {
+          if (jeRes?.success && Array.isArray(jeRes.data)) {
             set({
               journalEntries: jeRes.data.map((entry: any) => ({
                 ...entry,
@@ -1025,7 +1045,7 @@ export const useShowroomStore = create<ShowroomStore>()(
             });
           }
 
-          if (acctRes?.success && Array.isArray(acctRes.data) && acctRes.data.length > 0) {
+          if (acctRes?.success && Array.isArray(acctRes.data)) {
             set({ accounts: acctRes.data });
           }
         } catch {

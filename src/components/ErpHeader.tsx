@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { useShowroomStore, RoleType } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import { Dialog, DialogContent } from "@/components/mui";
@@ -18,10 +19,8 @@ import {
   Plus,
   Car,
   Users,
-  ShieldCheck,
   X,
   TrendingUp,
-  ExternalLink,
   Menu,
   Globe,
   Banknote,
@@ -31,6 +30,7 @@ import {
   Keyboard,
   Calculator,
   PanelRightOpen,
+  LogOut,
 } from "lucide-react";
 
 interface ErpHeaderProps {
@@ -67,7 +67,6 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
     darkMode,
     toggleDarkMode,
     currentRole,
-    setCurrentRole,
     filters,
     setFilter,
     resetFilters,
@@ -89,7 +88,6 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
   const [tempRate, setTempRate] = useState(exchangeRate.toString());
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   // Spotlight Command Palette State
@@ -102,12 +100,12 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
   const branchMenuRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
-  const roleMenuRef = useRef<HTMLDivElement>(null);
   const langMenuRef = useRef<HTMLDivElement>(null);
   const rateEditRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const t = translations[language];
+  const { data: session } = useSession();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -125,9 +123,6 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
         !notificationsRef.current.contains(event.target as Node)
       ) {
         setIsNotificationsOpen(false);
-      }
-      if (roleMenuRef.current && !roleMenuRef.current.contains(event.target as Node)) {
-        setIsRoleMenuOpen(false);
       }
       if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
         setIsLangMenuOpen(false);
@@ -160,17 +155,6 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
       setIsRateEditOpen(false);
       addToast(`Herat Sarrafi rate updated to $1 = ${parsed} AFN`, "success");
     }
-  };
-
-  const handleRoleChange = (newRole: RoleType) => {
-    setCurrentRole(newRole);
-    setIsRoleMenuOpen(false);
-    const names = {
-      SuperAdmin: "Haji Ahmad Shah (SuperAdmin)",
-      SalesAgent: "Farhad Timori (Sales Agent)",
-      Accountant: "Mirwais Saljuqi (Accountant)",
-    };
-    addToast(`Switched active profile to ${names[newRole]}`, "info");
   };
 
   // Parse structured Omnibox input tokens (e.g. "origin:Japan", "fuel:Hybrid", "make:Toyota")
@@ -923,71 +907,22 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
             )}
           </button>
 
-          {/* Operator Role Switcher */}
-          <div ref={roleMenuRef} className="relative">
+          <div className="flex items-center gap-2 px-2">
+            <div className="flex h-5 w-5 items-center justify-center rounded bg-[#1A73E8] font-mono text-[10px] font-bold text-white">
+              {activeProfile.avatar}
+            </div>
+            <span className="hidden font-mono text-[11px] font-semibold text-slate-800 dark:text-slate-200 md:inline">
+              {session?.user?.name || activeProfile.name} · {currentRole}
+            </span>
             <button
-              onClick={() => setIsRoleMenuOpen(!isRoleMenuOpen)}
-              className="flex h-8 items-center gap-2 px-2.5 transition hover:bg-slate-50 dark:hover:bg-white/[0.03]"
+              type="button"
+              onClick={() => void signOut({ callbackUrl: "/login" })}
+              className="flex h-8 w-8 items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.03]"
+              title="Sign out"
+              aria-label="Sign out"
             >
-              <div className="flex h-5 w-5 items-center justify-center rounded bg-[#1A73E8] font-mono text-[10px] font-bold text-white">
-                {activeProfile.avatar}
-              </div>
-              <span className="hidden font-mono text-[11px] font-semibold text-slate-800 dark:text-slate-200 md:inline">
-                {currentRole}
-              </span>
-              <ChevronDown className="h-3 w-3 text-slate-400" />
+              <LogOut className="h-3.5 w-3.5" />
             </button>
-
-            {isRoleMenuOpen && (
-              <div className="absolute end-0 top-10 z-50 w-60 rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl dark:border-[#262F40] dark:bg-[#161B26]">
-                <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  Authorized Workspace Role
-                </div>
-                <div className="space-y-0.5">
-                  {(Object.keys(roleProfiles) as RoleType[]).map((r) => {
-                    const p = roleProfiles[r];
-                    const isActive = currentRole === r;
-                    return (
-                      <button
-                        key={r}
-                        onClick={() => handleRoleChange(r)}
-                        className={`flex w-full items-center justify-between rounded-md p-2 text-start transition ${
-                          isActive
-                            ? "bg-[#1A73E8]/10 font-semibold text-[#1A73E8] dark:text-[#8AB4F8]"
-                            : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/[0.03]"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex h-6 w-6 items-center justify-center rounded bg-[#1A73E8] font-mono text-[10px] font-bold text-white">
-                            {p.avatar}
-                          </div>
-                          <div>
-                            <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                              {p.name}
-                            </div>
-                            <div className="font-mono text-[10px] text-slate-400">{p.title}</div>
-                          </div>
-                        </div>
-                        {isActive && <Check className="h-3.5 w-3.5 text-[#1A73E8]" />}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-1.5 border-t border-slate-100 pt-1.5 dark:border-[#262F40]">
-                  <Link
-                    href="/login"
-                    onClick={() => setIsRoleMenuOpen(false)}
-                    className="flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.04]"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <ShieldCheck className="h-3.5 w-3.5 text-[#1A73E8]" /> Staff Sign-In
-                    </span>
-                    <ExternalLink className="h-3 w-3 text-slate-400" />
-                  </Link>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

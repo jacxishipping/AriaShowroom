@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { getMuiTheme } from "@/theme/muiTheme";
@@ -14,7 +15,8 @@ import { ContextualInspectorDrawer } from "./ContextualInspectorDrawer";
 import { KeyboardShortcutManager } from "./KeyboardShortcutManager";
 
 export function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
-  const { language, darkMode, fetchDatabaseRecords } = useShowroomStore();
+  const { language, darkMode, fetchDatabaseRecords, setCurrentRole } = useShowroomStore();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const isRtl = language === "fa" || language === "ps";
 
@@ -42,6 +44,21 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
   useEffect(() => {
     fetchDatabaseRecords();
   }, [fetchDatabaseRecords]);
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    const roleMap = {
+      ADMIN: "SuperAdmin",
+      SALES: "SalesAgent",
+      ACCOUNTANT: "Accountant",
+    } as const;
+    const role = session?.user
+      ? (session.user as typeof session.user & { role?: keyof typeof roleMap }).role
+      : undefined;
+
+    setCurrentRole(role && role in roleMap ? roleMap[role] : "SalesAgent");
+  }, [session, setCurrentRole, status]);
 
   if (isStandaloneRoute) {
     return (

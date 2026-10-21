@@ -2,7 +2,7 @@ import { withAuth } from "next-auth/middleware";
 
 export default withAuth({
   pages: { signIn: "/login" },
-  secret: process.env.NEXTAUTH_SECRET || "sadozai-motors-herat-erp-secret-key-2026",
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     authorized: ({ req, token }) => {
       if (!token) return false;
@@ -16,6 +16,9 @@ export default withAuth({
 
 export const config = {
   matcher: [
+    "/",
+    "/inventory/:path*",
+    "/compare/:path*",
     "/accounting/:path*",
     "/admin/:path*",
     "/intake/:path*",
