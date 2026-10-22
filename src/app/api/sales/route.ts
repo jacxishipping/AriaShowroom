@@ -175,11 +175,25 @@ export async function POST(request: Request) {
 
       const outstanding = Math.max(price - downPayment, 0);
       if (paymentTypeValue === PaymentType.INSTALLMENT && outstanding > 0) {
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 30);
-        await tx.installmentPayment.create({
-          data: { saleId: sale.id, dueDate, amount: outstanding },
-        });
+        const installmentMonths = Math.max(1, Math.min(60, Number(body.installmentsRemaining) || 6));
+        const baseAmount = Math.round((outstanding / installmentMonths) * 100) / 100;
+        let scheduledTotal = 0;
+
+        for (let i = 1; i <= installmentMonths; i++) {
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + 30 * i);
+          const isLast = i === installmentMonths;
+          const currentAmount = isLast ? Math.round((outstanding - scheduledTotal) * 100) / 100 : baseAmount;
+          scheduledTotal += currentAmount;
+
+          await tx.installmentPayment.create({
+            data: {
+              saleId: sale.id,
+              dueDate,
+              amount: currentAmount,
+            },
+          });
+        }
         journalEntries.push(await createLedgerEntry(tx, {
             entryNumber: `JE-AR-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
             description: `Installment receivable for ${contractNumber}`,

@@ -101,7 +101,8 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
     .replace("{vin}", vehicle.vin)
     .replace("{price}", vehicle.sellingPrice.toLocaleString())
     .replace("{url}", originUrl);
-  const whatsappUrl = `https://wa.me/93799102030?text=${encodeURIComponent(
+  const waNumber = (useShowroomStore.getState().branding?.whatsapp || "93799102030").replace(/[^0-9]/g, "");
+  const whatsappUrl = `https://wa.me/${waNumber || "93799102030"}?text=${encodeURIComponent(
     whatsappMessage
   )}`;
 

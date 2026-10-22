@@ -26,8 +26,13 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
     pathname?.startsWith("/verify") || pathname?.startsWith("/login");
 
   const muiTheme = useMemo(
-    () => getMuiTheme(darkMode ? "dark" : "light"),
-    [darkMode]
+    () =>
+      getMuiTheme(
+        darkMode ? "dark" : "light",
+        theming?.primaryColor,
+        theming?.borderRadius
+      ),
+    [darkMode, theming?.primaryColor, theming?.borderRadius]
   );
 
   useEffect(() => {
@@ -39,7 +44,10 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
     }
     html.dir = isRtl ? "rtl" : "ltr";
     html.lang = language;
-  }, [darkMode, isRtl, language]);
+    if (theming?.primaryColor) {
+      html.style.setProperty("--primary-color", theming.primaryColor);
+    }
+  }, [darkMode, isRtl, language, theming?.primaryColor]);
 
   // Synchronize live PostgreSQL database state via Next.js API routes on mount
   useEffect(() => {

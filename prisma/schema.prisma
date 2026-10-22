@@ -93,6 +93,9 @@ model Vehicle {
   color            String
   status           VehicleStatus     @default(AVAILABLE)
   statusChangedAt  DateTime          @default(now())
+  yardLocation     String?           @default("Main Showroom - Bagh-e-Azadi")
+  viewsCount       Int               @default(0)
+  inquiriesCount   Int               @default(0)
   purchasePrice    Float
   freightCost      Float             @default(0)
   customsDuty      Float             @default(0)

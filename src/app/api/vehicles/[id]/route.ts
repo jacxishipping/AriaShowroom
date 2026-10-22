@@ -89,7 +89,7 @@ export async function PATCH(
       "fuelType", "transmission", "driveType", "color", "status", "purchasePrice",
       "freightCost", "customsDuty", "repairCost", "landedCost", "minTargetPrice",
       "sellingPrice", "currency", "features", "description", "descriptionDari",
-      "conditionNotes",
+      "conditionNotes", "yardLocation", "viewsCount", "inquiriesCount",
     ];
     const data = Object.fromEntries(
       allowedFields

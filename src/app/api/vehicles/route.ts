@@ -140,6 +140,9 @@ export async function POST(request: Request) {
         features: Array.isArray(features) ? features : [],
         description,
         descriptionDari,
+        yardLocation: yardLocation || "Main Showroom - Bagh-e-Azadi",
+        viewsCount: Number(body.viewsCount) || 0,
+        inquiriesCount: Number(body.inquiriesCount) || 0,
         conditionNotes: conditionNotes || (yardLocation ? { yardLocation } : undefined),
         images: {
           create: images.map((img: { url: string; isPrimary?: boolean }, idx: number) => ({

@@ -69,24 +69,24 @@ export interface ThemePreset {
 }
 
 export const DEFAULT_BRANDING: BrandingSettings = {
-  dealershipName: "Sadozai Motors",
-  dealershipNameFa: "موتر فروشی سدوزی",
-  dealershipNamePs: "سدوزی موټرز",
+  dealershipName: "Aria Motors",
+  dealershipNameFa: "نمایشگاه موتر آریا",
+  dealershipNamePs: "د آریا موټر نندارتون",
   dealershipTagline: "Premier Luxury Automotive Showroom & Import Agency",
-  dealershipShortCode: "SM",
+  dealershipShortCode: "ARI",
   licenseNumber: "Herat Dealership License #49912",
   tinNumber: "TIN-98234-AF",
   phone: "+93 79 910 2030",
   whatsapp: "+93 79 910 2030",
-  email: "info@sadozaimotors.af",
+  email: "info@ariamotors.af",
   address: "Bagh-e-Azadi Boulevard, Herat, Afghanistan",
   customsTerminalBranch: "Islam Qala Dry Port Customs Terminal #3",
-  authorizedSignatory: "Haji Ahmad Shah Sadozai",
+  authorizedSignatory: "Haji Ahmad Shah Aria",
   signatoryTitle: "President & Managing Director",
   sealStyle: "official_gold",
   logoPreset: "luxury_crest",
   customLogoUrl: "",
-  watermarkText: "SADOZAI MOTORS HERAT · OFFICIAL INVENTORY",
+  watermarkText: "ARIA MOTORS HERAT · OFFICIAL INVENTORY",
   watermarkPosition: "bottom-right",
   watermarkOpacity: 0.35,
 };
@@ -411,6 +411,10 @@ async function writeRecord(path: string, data: unknown, method = "POST") {
   });
   const result = await response.json().catch(() => null);
 
+  if (result?.fallback) {
+    return null;
+  }
+
   if (!response.ok || !result?.success) {
     throw new Error(
       result?.error || `Request to ${path} failed (${response.status})`
@@ -443,6 +447,9 @@ function vehicleToDatabase(vehicle: Partial<VehicleItem>) {
     status: vehicle.status ? vehicleStatusToDatabase[vehicle.status] : undefined,
     steering: vehicle.steering === "Right-Hand Drive (RHD Converted)" ? "RIGHT_HAND_CONVERTED" : vehicle.steering ? "LEFT_HAND" : undefined,
     fuelType: vehicle.fuelType?.toUpperCase(),
+    yardLocation: vehicle.yardLocation || "Main Showroom - Bagh-e-Azadi",
+    viewsCount: vehicle.viewsCount ?? 0,
+    inquiriesCount: vehicle.inquiriesCount ?? 0,
     transmission: vehicle.transmission?.toUpperCase(),
     conditionNotes: vehicle.conditionNotes || vehicle.yardLocation
       ? { ...vehicle.conditionNotes, ...(vehicle.yardLocation ? { yardLocation: vehicle.yardLocation } : {}) }
@@ -1086,13 +1093,13 @@ export const useShowroomStore = create<ShowroomStore>()(
                   tires: "Good condition",
                   accidentHistory: "Clean Title",
                 },
-                yardLocation: v.conditionNotes && typeof v.conditionNotes === "object"
+                yardLocation: v.yardLocation || (v.conditionNotes && typeof v.conditionNotes === "object"
                   ? (v.conditionNotes as Record<string, string>).yardLocation
-                  : undefined,
+                  : "Main Showroom - Bagh-e-Azadi"),
                 images: imageUrls,
                 documents: v.documents || [],
-                viewsCount: 0,
-                inquiriesCount: 0,
+                viewsCount: Number(v.viewsCount) || 0,
+                inquiriesCount: Number(v.inquiriesCount) || 0,
               };
             });
 

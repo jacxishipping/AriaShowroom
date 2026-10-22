@@ -4,7 +4,7 @@ import { ClientLayoutWrapper } from "@/components/ClientLayoutWrapper";
 import { NextAuthProvider } from "@/components/NextAuthProvider";
 
 export const metadata: Metadata = {
-  title: "Sadozai Motors Platform | Cloud Fleet & Dealership Console",
+  title: "Aria Motors Herat | Cloud Fleet & Dealership Console",
   description:
     "Enterprise automotive dealership and customs ERP platform in Herat, Afghanistan. Real-time fleet inventory, Islam Qala customs clearance, and Sarrafi treasury management.",
   keywords: [

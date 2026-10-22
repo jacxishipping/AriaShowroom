@@ -63,6 +63,7 @@ export default function ErpOperationsCockpit() {
     batchUpdateVehicleStatus,
     batchAdjustVehiclePrice,
     addToast,
+    branding,
   } = useShowroomStore();
 
   const t = translations[language];
@@ -839,6 +840,79 @@ export default function ErpOperationsCockpit() {
           </span>
         </div>
       </div>
+
+      
+      {/* About Showroom & Customs Terminal Overview Section */}
+      <section
+        id="about"
+        className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#121722] p-6 shadow-xs scroll-mt-20 space-y-4"
+      >
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 dark:border-[#262F40] pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="h-6 w-6 rounded bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-xs">
+                ★
+              </span>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                About {branding?.dealershipName || "Aria Motors"} Herat
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {branding?.dealershipTagline || "Premier Luxury Automotive Showroom & Import Agency"}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-1 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold">
+              License #49912
+            </span>
+            <span className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+              Islam Qala Verified Customs
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 dark:text-slate-300">
+          <div className="p-4 rounded-lg bg-slate-50/70 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#262F40] space-y-1.5">
+            <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>📍</span>
+              <span>Central Showroom Lot</span>
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400">
+              {branding?.address || "Bagh-e-Azadi Boulevard, Herat, Afghanistan"}
+            </p>
+            <p className="text-[11px] text-slate-400">
+              Mon – Sat: 8:00 AM – 7:30 PM (Friday by Appointment)
+            </p>
+          </div>
+
+          <div className="p-4 rounded-lg bg-slate-50/70 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#262F40] space-y-1.5">
+            <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>🛡️</span>
+              <span>Import Corridor & Customs</span>
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400">
+              {branding?.customsTerminalBranch || "Islam Qala Dry Port Customs Terminal #3"}
+            </p>
+            <p className="text-[11px] text-slate-400">
+              Direct Gulf & Dubai Jebel Ali transit, bonded escort clearance & Maktoub inspection.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-lg bg-slate-50/70 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#262F40] space-y-1.5">
+            <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>🏛️</span>
+              <span>Sarrafi & Legal Transfers</span>
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400">
+              Official legal deeds (قواله شرعی/عرفی), court notary seals, and Hawala settlement via Saray-e-Sarrafan Herat.
+            </p>
+            <p className="text-[11px] text-slate-400">
+              TIN: {branding?.tinNumber || "TIN-98234-AF"}
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Delete Confirmation Dialog */}
       <Dialog

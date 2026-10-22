@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useShowroomStore } from "@/store/useShowroomStore";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { translations } from "@/lib/translations";
 import { MuiButton, IconButton } from "@/components/mui";
 import {
@@ -29,6 +30,7 @@ export function Navbar() {
     darkMode,
     toggleDarkMode,
     currentRole,
+    branding,
   } = useShowroomStore();
 
   const t = translations[language];
@@ -55,13 +57,13 @@ export function Navbar() {
               {t.exchangeRateLabel}
             </span>
             <a
-              href="https://wa.me/93799102030"
+              href={buildWhatsAppUrl(branding?.whatsapp || "93799102030")}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-gold-light hover:text-white transition-colors"
             >
               <PhoneCall className="h-3 w-3" />
-              <span>+93 79 910 2030</span>
+              <span>{branding?.phone || "+93 79 910 2030"}</span>
             </a>
           </div>
         </div>
@@ -77,14 +79,14 @@ export function Navbar() {
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {t.brandName}
+                {branding?.dealershipName || t.brandName}
               </span>
               <span className="rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-gold dark:text-gold-light uppercase tracking-wider">
                 Herat
               </span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              {t.tagline}
+              {branding?.dealershipTagline || t.tagline}
             </p>
           </div>
         </Link>

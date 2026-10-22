@@ -16,13 +16,19 @@ export interface WhatsAppReminderParams {
   language?: "fa" | "ps" | "en";
 }
 
-export function formatWhatsAppPhone(phone: string): string {
-  // Cleans Afghan numbers (+93 79 910 2030 -> 93799102030) or UAE (+971 50 ...)
-  let cleaned = phone.replace(/[^0-9]/g, "");
+export function formatWhatsAppPhone(phone?: string): string {
+  let cleaned = (phone || "").replace(/[^0-9]/g, "");
   if (cleaned.startsWith("0")) {
     cleaned = "93" + cleaned.slice(1);
   }
-  return cleaned;
+  return cleaned || "93799102030";
+}
+
+export function buildWhatsAppUrl(phone?: string, text?: string): string {
+  const cleanPhone = formatWhatsAppPhone(phone || "93799102030");
+  return text
+    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
+    : `https://wa.me/${cleanPhone}`;
 }
 
 export function createInstallmentReminderLink({
@@ -40,24 +46,24 @@ export function createInstallmentReminderLink({
 
   if (language === "ps") {
     message = `محترم ${customerName} صاحب، سلامونه او نېکې هیلې!
-دا د سدوزي موټرو شرکت (هرات) لخوا ستاسو د موټر (${vehicleName}) د ${installmentNumber}مې برخې قسط یادونه ده.
+دا د آریا موټرو شرکت (هرات) لخوا ستاسو د موټر (${vehicleName}) د ${installmentNumber}مې برخې قسط یادونه ده.
 
 💵 د تادیې وړ مبلغ: $${amountUSD.toLocaleString()} ډالره (معادل ${amountAFN.toLocaleString()} افغانۍ)
 📅 د سررسید نېټه: ${dueDate || "روان میاشت"}
 
 مهرباني وکړئ د هرات خراسان صرافۍ یا زموږ د نندارتون دفتر له لارې خپله تادیه بشپړه کړئ.
 له موږ سره د باور له امله مننه!
-د سدوزي موټرو هرات اداره`;
+د آریا موټرو هرات اداره`;
   } else if (language === "en") {
     message = `Dear ${customerName},
-This is a courteous payment notice from Sadozai Motors Herat regarding Installment #${installmentNumber} for your ${vehicleName}.
+This is a courteous payment notice from Aria Motors Herat regarding Installment #${installmentNumber} for your ${vehicleName}.
 
 💵 Due Amount: $${amountUSD.toLocaleString()} USD (≈ ${amountAFN.toLocaleString()} AFN)
 📅 Due Date: ${dueDate || "Current Cycle"}
 
 Please arrange settlement via Khorasan Sarrafi Exchange or visit our main showroom lot on Bagh-e-Azadi, Herat.
 Thank you for your business!
-Sadozai Motors Afghanistan`;
+Aria Motors Afghanistan`;
   } else {
     // Default: Dari (Farsi)
     message = `محترم ${customerName} گرامی، سلام علیکم و وقت شما بخیر!
@@ -68,7 +74,7 @@ Sadozai Motors Afghanistan`;
 
 لطفاً جهت تسویه حساب به حساب صرافی خراسان در سرای صرافان هرات و یا دفتر مرکزی نندارتون مراجعه فرمایید.
 با تشکر و احترام،
-مدیریت مالی نندارتون موتر سدوزی هرات`;
+مدیریت مالی نمایشگاه موتر آریا هرات`;
   }
 
   const cleanPhone = formatWhatsAppPhone(phone);

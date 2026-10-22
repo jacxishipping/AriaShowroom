@@ -144,7 +144,8 @@ export default function VehicleDetailsPage() {
   const monthlyPaymentAFN = Math.round(monthlyPaymentUSD * exchangeRate);
 
   // Pre-filled WhatsApp message
-  const whatsappUrl = `https://wa.me/93799102030?text=${encodeURIComponent(
+  const waNumber = (useShowroomStore.getState().branding?.whatsapp || "93799102030").replace(/[^0-9]/g, "");
+  const whatsappUrl = `https://wa.me/${waNumber || "93799102030"}?text=${encodeURIComponent(
     `Hello Sadozai Motors Herat! I am interested in inspecting the following vehicle:
 🚗 ${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.trim})
 🏷️ Stock ID: ${vehicle.stockNumber}

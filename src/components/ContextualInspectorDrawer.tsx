@@ -89,7 +89,8 @@ export function ContextualInspectorDrawer() {
     addToast("Saved ultrasonic chassis inspection map", "info");
   };
 
-  const whatsappUrl = `https://wa.me/93799102030?text=${encodeURIComponent(
+  const waNumber = (useShowroomStore.getState().branding?.whatsapp || "93799102030").replace(/[^0-9]/g, "");
+  const whatsappUrl = `https://wa.me/${waNumber || "93799102030"}?text=${encodeURIComponent(
     `Sadozai Motors Herat — Vehicle Dossier:\n${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.trim})\nStock: ${vehicle.stockNumber} · VIN: ${vehicle.vin}\nPrice: $${vehicle.sellingPrice.toLocaleString()} USD`
   )}`;
 
