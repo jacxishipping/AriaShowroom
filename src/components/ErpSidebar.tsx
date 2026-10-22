@@ -232,6 +232,29 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
     });
   }
 
+  navSections.push({
+    label:
+      language === "ps"
+        ? "سیسټم او ترتیبات"
+        : language === "fa"
+        ? "تنظیمات و سیستم"
+        : "System & Settings",
+    items: [
+      {
+        title:
+          language === "ps"
+            ? "د نندارتون ترتیبات او رنګونه"
+            : language === "fa"
+            ? "تنظیمات و برندینگ نمایشگاه"
+            : "Settings & Theming",
+        href: "/settings",
+        icon: SlidersHorizontal,
+        count: null,
+        shortcut: "g s",
+      },
+    ],
+  });
+
   const renderSidebarContent = (isMobile = false) => (
     <>
       {/* Google Cloud Console Brand Header */}
@@ -452,14 +475,24 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
           </div>
 
           {(!collapsed || isMobile) && (
-            <button
-              type="button"
-              onClick={() => setIsShortcutsModalOpen(true)}
-              className="p-1.5 rounded-md border border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] bg-white dark:bg-[#161B26]"
-              title={t.sidebarKeyboardShortcuts}
-            >
-              <Keyboard className="h-3.5 w-3.5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setIsTutorialOpen(true)}
+                className="p-1.5 rounded-md border border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] bg-white dark:bg-[#161B26]"
+                title={language === "fa" ? "راهنمای برنامه" : language === "ps" ? "د اپلیکیشن لارښود" : "Showroom Tutorial & Tour"}
+              >
+                <HelpCircle className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsShortcutsModalOpen(true)}
+                className="p-1.5 rounded-md border border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] bg-white dark:bg-[#161B26]"
+                title={t.sidebarKeyboardShortcuts}
+              >
+                <Keyboard className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
         </div>
       </div>

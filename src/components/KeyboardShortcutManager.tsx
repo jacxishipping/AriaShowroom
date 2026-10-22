@@ -118,6 +118,18 @@ export function KeyboardShortcutManager() {
           addToast("Navigated to Vehicle Intake Studio (g + n)", "info");
           return;
         }
+        if (dest === "s") {
+          e.preventDefault();
+          router.push("/settings");
+          addToast("Navigated to Showroom Settings & Theming (g + s)", "info");
+          return;
+        }
+        if (dest === "t") {
+          e.preventDefault();
+          setIsTutorialOpen(true);
+          addToast("Opened First-Time Tutorial & Tour (g + t)", "info");
+          return;
+        }
       }
 
       // "j" / "k" cycles through vehicles in the Contextual Inspector Drawer

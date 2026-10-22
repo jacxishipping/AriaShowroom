@@ -13,23 +13,11 @@ import {
   MuiButton,
   MuiTextField,
   MuiChip,
-  MuiCard,
-  MuiCardContent,
   MenuItem,
   IconButton,
-  Stepper,
-  Step,
-  StepLabel,
-  StepButton,
-  Box,
-  Typography,
   Switch,
   FormControlLabel,
   InputAdornment,
-  Alert,
-  AlertTitle,
-  LinearProgress,
-  Divider,
 } from "@/components/mui";
 import {
   ArrowLeft,
@@ -42,7 +30,6 @@ import {
   Link as LinkIcon,
   ShieldCheck,
   CheckCircle2,
-  Car,
   DollarSign,
   Truck,
   Building2,
@@ -50,12 +37,9 @@ import {
   Check,
   FileText,
   RotateCcw,
-  Gauge,
   Fuel,
-  Compass,
   AlertCircle,
   Key,
-  Globe,
   Languages,
   Info,
   Layers,
@@ -220,62 +204,57 @@ export default function VehicleIntakePage() {
     addToast(`Generated stock ID: ${newStock}`, "info");
   };
 
-
-  // Photo Upload Handler with Watermarking
+  // File Upload Handlers
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawFiles = e.target.files;
-    if (!rawFiles || rawFiles.length === 0) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setIsUploading(true);
-    setUploadNotice(`Watermarking & processing ${rawFiles.length} photos...`);
+    setUploadNotice(`Processing ${files.length} vehicle showcase photos with Herat notary watermarks...`);
 
     try {
-      const processedFiles: File[] = [];
-      for (const file of Array.from(rawFiles)) {
+      const newUrls: string[] = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
         if (applyWatermark) {
           const stamped = await processAndWatermarkImage(file, {
             stockNumber: formData.stockNumber,
+            showroomName: "SADOZAI MOTORS • HERAT",
             applyWatermark: true,
           });
-          processedFiles.push(stamped);
+          const url = URL.createObjectURL(stamped);
+          newUrls.push(url);
         } else {
-          processedFiles.push(file);
+          const url = URL.createObjectURL(file);
+          newUrls.push(url);
         }
       }
 
-      const localPreviews: string[] = [];
-      processedFiles.forEach((file) => {
-        localPreviews.push(URL.createObjectURL(file));
-      });
-      setImages((prev) => [...prev, ...localPreviews]);
-
-      const formDataUpload = new FormData();
-      processedFiles.forEach((file) => formDataUpload.append("files", file));
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formDataUpload,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.urls && data.urls.length > 0) {
-          setUploadNotice(`✓ Stored ${data.urls.length} watermarked photos on CDN`);
-        }
-      }
+      setImages((prev) => [...prev, ...newUrls]);
+      addToast(`Added ${newUrls.length} high-resolution photos to vehicle vault`, "success");
     } catch (err) {
-      console.warn("Upload notice:", err);
+      console.error("Image watermark processing failed:", err);
+      const localPreviews: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        localPreviews.push(URL.createObjectURL(files[i]));
+      }
+      setImages((prev) => [...prev, ...localPreviews]);
+      addToast("Added photos (client-side fallback)", "info");
     } finally {
       setIsUploading(false);
+      setUploadNotice(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   const handleAddBulkUrls = () => {
     if (!bulkUrlInput.trim()) return;
     const urls = bulkUrlInput
-      .split(/[\n,]+/)
+      .split(/\r?\n|,/)
       .map((u) => u.trim())
-      .filter((u) => u.startsWith("http://") || u.startsWith("https://") || u.startsWith("data:"));
+      .filter((u) => u.startsWith("http://") || u.startsWith("https://"));
 
     if (urls.length > 0) {
       setImages((prev) => [...prev, ...urls]);
@@ -284,7 +263,6 @@ export default function VehicleIntakePage() {
       addToast(`Added ${urls.length} vehicle photo URLs to vault`, "success");
     }
   };
-
 
   const handleSetPrimaryPhoto = (index: number) => {
     if (index === 0) return;
@@ -299,110 +277,110 @@ export default function VehicleIntakePage() {
     addToast("Photo removed from vehicle vault", "info");
   };
 
-  // Step Validation Logic
-  const validateStep = (stepIndex: number): boolean => {
-    if (stepIndex === 0) {
-      if (!formData.stockNumber.trim()) {
-        addToast("Stock ID is required", "error");
-        return false;
-      }
-      if (!formData.vin.trim() || formData.vin.length < 11) {
-        addToast("A valid 17-character VIN is required", "error");
+  // Step Validation & Navigation
+  const validateCurrentStep = () => {
+    if (activeStep === 0) {
+      if (!formData.vin.trim()) {
+        addToast("Please provide a valid 17-digit Chassis VIN", "warning");
         return false;
       }
       if (!formData.make.trim() || !formData.model.trim()) {
-        addToast("Vehicle Make and Model are required", "error");
+        addToast("Make and Model fields are required", "warning");
         return false;
       }
-      return true;
+      if (!formData.color.trim()) {
+        addToast("Exterior Paint Color is required", "warning");
+        return false;
+      }
     }
-    if (stepIndex === 1) {
+
+    if (activeStep === 1) {
       if (formData.mileage < 0) {
-        addToast("Mileage must be a positive number", "error");
+        addToast("Please provide a valid odometer mileage reading", "warning");
         return false;
       }
       if (!formData.customsClearance.trim()) {
-        addToast("Customs clearance reference is required", "error");
+        addToast("Customs clearance / Islam Qala Gomrok documentation is required", "warning");
         return false;
       }
-      return true;
     }
-    if (stepIndex === 2) {
-      if (!formData.purchasePrice || formData.purchasePrice <= 0) {
-        addToast("Purchase FOB Cost is required", "error");
+
+    if (activeStep === 2) {
+      if (formData.sellingPrice <= 0) {
+        addToast("Please specify an intended target selling price in USD", "warning");
         return false;
       }
-      if (!formData.sellingPrice || formData.sellingPrice <= 0) {
-        addToast("Target Selling Price is required", "error");
-        return false;
-      }
-      return true;
     }
+
     return true;
   };
 
   const handleNext = () => {
-    if (validateStep(activeStep)) {
-      setActiveStep((prev) => Math.min(steps.length - 1, prev + 1));
+    if (validateCurrentStep()) {
+      setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleBack = () => {
-    setActiveStep((prev) => Math.max(0, prev - 1));
+    setActiveStep((prev) => Math.max(prev - 1, 0));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleStepClick = (stepIndex: number) => {
-    if (stepIndex < activeStep || validateStep(activeStep)) {
-      setActiveStep(stepIndex);
+  const handleStepClick = (index: number) => {
+    if (index < activeStep) {
+      setActiveStep(index);
+    } else if (index > activeStep) {
+      if (validateCurrentStep()) {
+        setActiveStep(index);
+      }
     }
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-
-    if (!validateStep(0) || !validateStep(1) || !validateStep(2)) {
-      return;
-    }
+  // Final Submission Handler
+  const handleSubmit = async () => {
+    if (!validateCurrentStep()) return;
 
     try {
       await addVehicle({
-      stockNumber: formData.stockNumber,
-      vin: formData.vin,
-      make: formData.make,
-      model: formData.model,
-      year: Number(formData.year),
-      trim: formData.trim,
-      bodyType: formData.bodyType,
-      originCountry: formData.originCountry,
-      steering: formData.steering,
-      customsClearance: formData.customsClearance,
-      cleanTitle: formData.cleanTitle,
-      mileage: Number(formData.mileage),
-      fuelType: formData.fuelType,
-      transmission: formData.transmission,
-      driveType: formData.driveType,
-      color: formData.color,
-      status: formData.status,
-      purchasePrice: Number(formData.purchasePrice),
-      freightCost: Number(formData.freightCost),
-      customsDuty: Number(formData.customsDuty),
-      repairCost: Number(formData.repairCost),
-      landedCost: totalLandedCost,
-      minTargetPrice: totalLandedCost + 2000,
-      sellingPrice: Number(formData.sellingPrice),
-      features: formData.features.split(",").map((f) => f.trim()).filter(Boolean),
-      description: formData.description,
-      descriptionDari: formData.descriptionDari,
-      descriptionPashto: formData.descriptionPashto,
-      conditionNotes: {
-        exterior: "10/10 - Inspected on Herat Showroom Lot",
-        interior: "Pristine Factory Leather & Upholstery",
-        engine: "Zero-Hour Certified Powertrain Diagnostic",
-        tires: "Original Factory Tires (95% Tread)",
-        accidentHistory: "Clean Title Guaranteed (No Accidents)",
-      },
-      images: images,
-      documents: [],
+        stockNumber: formData.stockNumber,
+        vin: formData.vin,
+        make: formData.make,
+        model: formData.model,
+        year: Number(formData.year),
+        trim: formData.trim,
+        bodyType: formData.bodyType,
+        originCountry: formData.originCountry,
+        steering: formData.steering,
+        customsClearance: formData.customsClearance,
+        cleanTitle: formData.cleanTitle,
+        mileage: Number(formData.mileage),
+        fuelType: formData.fuelType,
+        transmission: formData.transmission,
+        driveType: formData.driveType,
+        color: formData.color,
+        status: formData.status,
+        yardLocation: formData.yardLocation,
+        purchasePrice: Number(formData.purchasePrice),
+        freightCost: Number(formData.freightCost),
+        customsDuty: Number(formData.customsDuty),
+        repairCost: Number(formData.repairCost),
+        landedCost: totalLandedCost,
+        minTargetPrice: totalLandedCost + 2000,
+        sellingPrice: Number(formData.sellingPrice),
+        features: currentFeaturesArray,
+        description: formData.description,
+        descriptionDari: formData.descriptionDari,
+        descriptionPashto: formData.descriptionPashto,
+        conditionNotes: {
+          exterior: "10/10 - Inspected on Herat Showroom Lot",
+          interior: "Pristine Factory Leather & Upholstery",
+          engine: "Zero-Hour Certified Powertrain Diagnostic",
+          tires: "Original Factory Tires (95% Tread)",
+          accidentHistory: "Clean Title Guaranteed (No Accidents)",
+        },
+        images: images,
+        documents: [],
       });
     } catch (error) {
       addToast(error instanceof Error ? error.message : "Unable to save vehicle intake", "error");
@@ -419,30 +397,30 @@ export default function VehicleIntakePage() {
   // Stepper Step configuration
   const steps = [
     {
-      title: "Identification & VIN",
-      desc: "Stock ID, VIN & Origin",
-      icon: <Key className="h-4 w-4" />,
+      title: "Chassis & Identification",
+      desc: "Stock code, VIN chassis & basic model classification",
+      icon: <Building2 className="h-4 w-4" />,
     },
     {
-      title: "Technical Specs & Customs",
-      desc: "Powertrain, Gomrok & Options",
-      icon: <Truck className="h-4 w-4" />,
+      title: "Condition & Diagnostics",
+      desc: "Powertrain, customs maktoub, ultrasonic paint & options",
+      icon: <ShieldCheck className="h-4 w-4" />,
     },
     {
-      title: "Landed Cost & Margins",
-      desc: "FOB, Tariffs, Duties & Retail",
+      title: "Landed Tariffs & Pricing",
+      desc: "FOB purchase, Islam Qala tariffs & profit margins",
       icon: <DollarSign className="h-4 w-4" />,
     },
     {
-      title: "Photo Vault & Final Dossier",
-      desc: "40+ Gallery & Pre-Commit Review",
+      title: "Photography & Vault",
+      desc: "Multi-angle photo album & final dossier verification",
       icon: <ImageIcon className="h-4 w-4" />,
     },
   ];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 space-y-5 pb-16">
-      {/* Architectural Header & Breadcrumbs */}
+      {/* Top Header & Breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-3 border-b border-[#D8D5CD] dark:border-[#242A38]">
         <div>
           <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-[#9A7515] dark:text-[#D4AF37] mb-1">
@@ -465,7 +443,6 @@ export default function VehicleIntakePage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          
           <Link
             href="/inventory"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#141821] text-[11px] font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:border-slate-400 transition-colors"
@@ -476,8 +453,8 @@ export default function VehicleIntakePage() {
         </div>
       </div>
 
-      {/* Architectural 1px Hairline 4-Step Progress Matrix */}
-      <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-[#D8D5CD] dark:bg-[#242A38] grid grid-cols-1 sm:grid-cols-4 gap-px overflow-hidden">
+      {/* 4-Step Stepper Progress Bar */}
+      <div className="rounded-xl border border-[#D8D5CD] dark:border-[#242A38] bg-[#D8D5CD] dark:bg-[#242A38] grid grid-cols-1 sm:grid-cols-4 gap-px overflow-hidden shadow-xs">
         {steps.map((step, index) => {
           const isCompleted = index < activeStep;
           const isCurrent = index === activeStep;
@@ -506,7 +483,7 @@ export default function VehicleIntakePage() {
                         : "text-slate-400"
                     }`}
                   >
-                    STEP 0{index + 1}
+                    STEP 0${index + 1}
                   </span>
                   {isCompleted && <Check className="h-3 w-3 text-emerald-500 shrink-0" />}
                 </div>
@@ -530,7 +507,7 @@ export default function VehicleIntakePage() {
                 </div>
               </div>
               <div
-                className={`h-7 w-7 rounded flex items-center justify-center font-mono text-xs font-bold shrink-0 border ${
+                className={`h-7 w-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold shrink-0 border ${
                   isCurrent
                     ? "bg-[#C59B27] text-[#0A0C10] border-[#C59B27]"
                     : isCompleted
@@ -545,40 +522,41 @@ export default function VehicleIntakePage() {
         })}
       </div>
 
-      {/* Main Step Content Form Container */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Column: Active Step Form (8 cols) */}
-        <div className="lg:col-span-8 space-y-5">
-          {/* STEP 0: Vehicle Identification & Auto-VIN Decoder */}
-          {activeStep === 0 && (
-            <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#E6E4DD] dark:border-[#1E2330]">
+      {/* Main Step Content: Organized in Clean Modular Cards */}
+      <div className="space-y-5">
+        {/* ========================================================================= */}
+        {/* STEP 0: Vehicle Identification & Classification Cards                     */}
+        {/* ========================================================================= */}
+        {activeStep === 0 && (
+          <div className="space-y-5">
+            {/* Card 1: Chassis & Stock Allocation */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
                 <div className="flex items-center gap-2.5">
-                  <span className="h-6 w-6 rounded bg-[#111318] text-[#D4AF37] dark:bg-[#C59B27] dark:text-[#0A0C10] flex items-center justify-center font-mono font-bold text-xs">
+                  <span className="h-7 w-7 rounded-lg bg-[#111318] text-[#D4AF37] dark:bg-[#C59B27] dark:text-[#0A0C10] flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs">
                     01
                   </span>
                   <div>
                     <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                      Vehicle Identification & Optical VIN Decoder
+                      Chassis & Stock Identification
                     </h3>
                     <p className="text-[11px] text-slate-500">
-                      Chassis verification, stock allocation, and showroom lot registry.
+                      Chassis verification, automated VIN decoding, inventory status, and parking bay.
                     </p>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[#F4F3EF] dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-[#D8D5CD] dark:border-[#242A38]">
-                  Step 01 / 04
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                  Identity
                 </span>
               </div>
 
-              {/* Stock ID, VIN & Yard Location */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MuiTextField
                   label="Stock Inventory ID"
                   sizeVariant="small"
                   value={formData.stockNumber}
                   onChange={(e) => setFormData({ ...formData, stockNumber: e.target.value })}
-                  helperText="Showroom internal tracking code"
+                  helperText="Internal showroom tracking code"
                   endAdornment={
                     <IconButton
                       size="small"
@@ -619,7 +597,7 @@ export default function VehicleIntakePage() {
                   sizeVariant="small"
                   value={formData.yardLocation}
                   onChange={(e) => setFormData({ ...formData, yardLocation: e.target.value })}
-                  helperText="Current physical parking position"
+                  helperText="Physical lot position in Herat"
                 >
                   <MenuItem value="Main Showroom - Bagh-e-Azadi">Main Showroom - Bagh-e-Azadi</MenuItem>
                   <MenuItem value="VIP Covered Bay - Showroom 1">VIP Covered Bay - Showroom 1</MenuItem>
@@ -627,10 +605,45 @@ export default function VehicleIntakePage() {
                   <MenuItem value="Herat Customs Dry Port (Gomrok)">Herat Customs Dry Port (Gomrok)</MenuItem>
                   <MenuItem value="Detailing & PDI Wash Bay">Detailing & PDI Wash Bay</MenuItem>
                 </MuiTextField>
+
+                <MuiTextField
+                  select
+                  label="Inventory Status"
+                  sizeVariant="small"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  helperText="Current commercial availability"
+                >
+                  <MenuItem value="Available on Lot">Available on Lot</MenuItem>
+                  <MenuItem value="In Transit">In Transit to Herat</MenuItem>
+                  <MenuItem value="Under Prep/Maintenance">Under Prep</MenuItem>
+                  <MenuItem value="Reserved/Deposit Paid">Reserved</MenuItem>
+                </MuiTextField>
+              </div>
+            </div>
+
+            {/* Card 2: Vehicle Make, Model & Styling */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-7 w-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-blue-500/20">
+                    <Layers className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                      Make, Model & Classification
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Brand manufacturer, model line, trim level, and body classification.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                  Specifications
+                </span>
               </div>
 
-              {/* Make, Model, Year, Trim */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MuiTextField
                   select
                   label="Make / Manufacturer"
@@ -677,8 +690,7 @@ export default function VehicleIntakePage() {
                 />
               </div>
 
-              {/* Body Style, Origin Country, Paint Color, Initial Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
                 <MuiTextField
                   select
                   label="Body Style"
@@ -713,229 +725,248 @@ export default function VehicleIntakePage() {
                   sizeVariant="small"
                   value={formData.color}
                   onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                  placeholder="e.g. Pearl White"
+                  placeholder="e.g. Pearl White Metallic"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* STEP 1: Powertrain, Customs Maktoub, Options & Inspection Cards            */}
+        {/* ========================================================================= */}
+        {activeStep === 1 && (
+          <div className="space-y-5">
+            {/* Card 1: Powertrain & Mechanical Configuration */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-amber-500/20">
+                    <Fuel className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                      Powertrain & Mechanical Configuration
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Odometer reading, transmission, fuel, drivetrain, and steering configuration.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                  Mechanical
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <MuiTextField
+                  label="Odometer Mileage"
+                  type="number"
+                  sizeVariant="small"
+                  value={formData.mileage}
+                  onChange={(e) => setFormData({ ...formData, mileage: Number(e.target.value) })}
+                  endAdornment={<InputAdornment position="end">KM</InputAdornment>}
                   required
                 />
 
                 <MuiTextField
                   select
-                  label="Inventory Status"
+                  label="Steering Configuration"
                   sizeVariant="small"
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  value={formData.steering}
+                  onChange={(e) => setFormData({ ...formData, steering: e.target.value as any })}
                 >
-                  <MenuItem value="Available on Lot">Available on Lot</MenuItem>
-                  <MenuItem value="In Transit">In Transit</MenuItem>
-                  <MenuItem value="Under Prep/Maintenance">Under Prep</MenuItem>
-                  <MenuItem value="Reserved/Deposit Paid">Reserved</MenuItem>
+                  <MenuItem value="Left-Hand Drive (LHD)">Left-Hand Drive (دست چپ)</MenuItem>
+                  <MenuItem value="Right-Hand Drive (RHD Converted)">RHD Converted</MenuItem>
+                </MuiTextField>
+
+                <MuiTextField
+                  select
+                  label="Fuel Type"
+                  sizeVariant="small"
+                  value={formData.fuelType}
+                  onChange={(e) => setFormData({ ...formData, fuelType: e.target.value as any })}
+                >
+                  <MenuItem value="Petrol">Petrol (بنزین)</MenuItem>
+                  <MenuItem value="Diesel">Diesel (دیزل)</MenuItem>
+                  <MenuItem value="Hybrid">Hybrid (هایبرید - ۳۰٪ تخفیف)</MenuItem>
+                  <MenuItem value="Electric">Electric (برقی)</MenuItem>
+                </MuiTextField>
+
+                <MuiTextField
+                  select
+                  label="Transmission"
+                  sizeVariant="small"
+                  value={formData.transmission}
+                  onChange={(e) => setFormData({ ...formData, transmission: e.target.value as any })}
+                >
+                  <MenuItem value="Automatic">Automatic (اتومات)</MenuItem>
+                  <MenuItem value="Manual">Manual (دستی)</MenuItem>
                 </MuiTextField>
               </div>
-            </div>
-          )}
 
-          {/* STEP 1: Technical Specs, Customs Maktoub, Ultrasonic Paint & Bilingual Descriptions */}
-          {activeStep === 1 && (
-            <div className="space-y-4">
-              <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[#E6E4DD] dark:border-[#1E2330]">
-                  <div className="flex items-center gap-2.5">
-                    <span className="h-6 w-6 rounded bg-[#111318] text-[#D4AF37] dark:bg-[#C59B27] dark:text-[#0A0C10] flex items-center justify-center font-mono font-bold text-xs">
-                      02
-                    </span>
-                    <div>
-                      <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                        Technical Specs, Customs Maktoub & Descriptions
-                      </h3>
-                      <p className="text-[11px] text-slate-500">
-                        Powertrain specifications, Islam Qala clearance documents, and multilingual descriptions.
-                      </p>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[#F4F3EF] dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-[#D8D5CD] dark:border-[#242A38]">
-                    Step 02 / 04
-                  </span>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <MuiTextField
+                  select
+                  label="Drivetrain"
+                  sizeVariant="small"
+                  value={formData.driveType}
+                  onChange={(e) => setFormData({ ...formData, driveType: e.target.value as any })}
+                >
+                  <MenuItem value="4WD">4WD (چهار چرخ محرک)</MenuItem>
+                  <MenuItem value="AWD">AWD (تمام چرخ محرک)</MenuItem>
+                  <MenuItem value="RWD">RWD (دیفرنسیال عقب)</MenuItem>
+                  <MenuItem value="FWD">FWD (دیفرنسیال جلو)</MenuItem>
+                </MuiTextField>
 
-                {/* Powertrain Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
-                  <MuiTextField
-                    label="Odometer Mileage"
-                    type="number"
-                    sizeVariant="small"
-                    value={formData.mileage}
-                    onChange={(e) => setFormData({ ...formData, mileage: Number(e.target.value) })}
-                    endAdornment={<InputAdornment position="end">KM</InputAdornment>}
-                    required
-                  />
-
-                  <MuiTextField
-                    select
-                    label="Steering Configuration"
-                    sizeVariant="small"
-                    value={formData.steering}
-                    onChange={(e) => setFormData({ ...formData, steering: e.target.value as any })}
-                  >
-                    <MenuItem value="Left-Hand Drive (LHD)">Left-Hand Drive (دست چپ)</MenuItem>
-                    <MenuItem value="Right-Hand Drive (RHD Converted)">RHD Converted</MenuItem>
-                  </MuiTextField>
-
-                  <MuiTextField
-                    select
-                    label="Fuel Type"
-                    sizeVariant="small"
-                    value={formData.fuelType}
-                    onChange={(e) => setFormData({ ...formData, fuelType: e.target.value as any })}
-                  >
-                    <MenuItem value="Petrol">Petrol (بنزین)</MenuItem>
-                    <MenuItem value="Diesel">Diesel (دیزل)</MenuItem>
-                    <MenuItem value="Hybrid">Hybrid (هایبرید - ۳۰٪ تخفیف)</MenuItem>
-                    <MenuItem value="Electric">Electric (برقی)</MenuItem>
-                  </MuiTextField>
-
-                  <MuiTextField
-                    select
-                    label="Transmission"
-                    sizeVariant="small"
-                    value={formData.transmission}
-                    onChange={(e) => setFormData({ ...formData, transmission: e.target.value as any })}
-                  >
-                    <MenuItem value="Automatic">Automatic (اتومات)</MenuItem>
-                    <MenuItem value="Manual">Manual (دستی)</MenuItem>
-                  </MuiTextField>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                  <MuiTextField
-                    select
-                    label="Drivetrain"
-                    sizeVariant="small"
-                    value={formData.driveType}
-                    onChange={(e) => setFormData({ ...formData, driveType: e.target.value as any })}
-                  >
-                    <MenuItem value="4WD">4WD (چهار چرخ محرک)</MenuItem>
-                    <MenuItem value="AWD">AWD (تمام چرخ محرک)</MenuItem>
-                    <MenuItem value="RWD">RWD (دیفرنسیال عقب)</MenuItem>
-                    <MenuItem value="FWD">FWD (دیفرنسیال جلو)</MenuItem>
-                  </MuiTextField>
-
-                  <div className="sm:col-span-2">
-                    <MuiTextField
-                      label="Islam Qala Customs Clearance Maktoub"
-                      sizeVariant="small"
-                      value={formData.customsClearance}
-                      onChange={(e) => setFormData({ ...formData, customsClearance: e.target.value })}
-                      helperText="Official Afghan MoF customs clearance document / maktoub ID"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Interactive Features Chips */}
-                <div className="space-y-2 pt-2 border-t border-[#E6E4DD] dark:border-[#1E2330]">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      Equipped Factory Features & Options:
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-400">
-                      Click tag to toggle feature
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {PRESET_VEHICLE_FEATURES.map((feat) => {
-                      const isSelected = currentFeaturesArray.includes(feat);
-                      return (
-                        <button
-                          key={feat}
-                          type="button"
-                          onClick={() => toggleFeature(feat)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
-                            isSelected
-                              ? "bg-[#111318] text-white border-[#111318] dark:bg-[#C59B27] dark:text-[#0A0C10] dark:border-[#C59B27] font-bold"
-                              : "bg-[#FAF9F6] dark:bg-[#141821] text-slate-600 dark:text-slate-400 border-[#D8D5CD] dark:border-[#242A38] hover:border-slate-400"
-                          }`}
-                        >
-                          {isSelected && <Check className="h-3 w-3 shrink-0" />}
-                          <span>{feat}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Trilingual Afghan Descriptions */}
-                <div className="space-y-3 pt-3 border-t border-[#E6E4DD] dark:border-[#1E2330]">
-                  <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500">
-                    <Languages className="h-4 w-4 text-[#C59B27]" />
-                    <span>Trilingual Afghan Showroom Descriptions</span>
-                  </div>
-
-                  <MuiTextField
-                    label="English Commercial Description"
-                    sizeVariant="small"
-                    multiline
-                    rows={2}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Official showroom catalog description..."
-                  />
-
-                  <MuiTextField
-                    label="توضیحات موتر به زبان دری (جهت درج در قباله و استعلامات)"
-                    sizeVariant="small"
-                    multiline
-                    rows={2}
-                    dir="rtl"
-                    value={formData.descriptionDari}
-                    onChange={(e) => setFormData({ ...formData, descriptionDari: e.target.value })}
-                    placeholder="مشخصات و آپشن‌ها به زبان دری..."
-                  />
-
-                  <MuiTextField
-                    label="د موټر بشپړ معلومات په پښتو ژبه"
-                    sizeVariant="small"
-                    multiline
-                    rows={2}
-                    dir="rtl"
-                    value={formData.descriptionPashto}
-                    onChange={(e) => setFormData({ ...formData, descriptionPashto: e.target.value })}
-                    placeholder="د موټر مشخصات په پښتو ژبه..."
-                  />
-                </div>
+                <MuiTextField
+                  label="Islam Qala Customs Clearance Maktoub"
+                  sizeVariant="small"
+                  value={formData.customsClearance}
+                  onChange={(e) => setFormData({ ...formData, customsClearance: e.target.value })}
+                  helperText="Official Afghan MoF customs clearance document / maktoub ID"
+                  placeholder="e.g. Maktoub #IQ-2026-9902"
+                  required
+                />
               </div>
-
-              {/* Ultrasonic Paint & Body-Panel Inspection Diagram during Intake */}
-              <PaintInspectionDiagram
-                vin={formData.vin}
-                cleanTitle={formData.cleanTitle}
-                editable={true}
-              />
             </div>
-          )}
 
-          {/* STEP 2: Landed Cost & Profit Margin Engine */}
-          {activeStep === 2 && (
-            <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#E6E4DD] dark:border-[#1E2330]">
+            {/* Card 2: Factory Equipment & Features */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
                 <div className="flex items-center gap-2.5">
-                  <span className="h-6 w-6 rounded bg-[#111318] text-[#D4AF37] dark:bg-[#C59B27] dark:text-[#0A0C10] flex items-center justify-center font-mono font-bold text-xs">
-                    03
+                  <span className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-emerald-500/20">
+                    <Sparkles className="h-4 w-4" />
                   </span>
                   <div>
                     <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                      Landed Cost & Profit Margin Engine
+                      Equipped Factory Features & Options
                     </h3>
                     <p className="text-[11px] text-slate-500">
-                      FOB purchase costs, ocean freight, customs tariffs, and target dealership margins.
+                      Select all factory luxury packages and 4WD equipment included with this unit.
                     </p>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[#F4F3EF] dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-[#D8D5CD] dark:border-[#242A38]">
-                  Step 03 / 04
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                  Equipment
                 </span>
               </div>
 
-              {/* 4 Cost Components Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="flex flex-wrap gap-2 pt-1">
+                {PRESET_VEHICLE_FEATURES.map((feat) => {
+                  const isSelected = currentFeaturesArray.includes(feat);
+                  return (
+                    <button
+                      key={feat}
+                      type="button"
+                      onClick={() => toggleFeature(feat)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer border ${
+                        isSelected
+                          ? "bg-[#111318] text-white border-[#111318] dark:bg-[#C59B27] dark:text-[#0A0C10] dark:border-[#C59B27] font-bold shadow-xs"
+                          : "bg-slate-50/80 dark:bg-[#141821] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#242A38] hover:border-slate-400"
+                      }`}
+                    >
+                      {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
+                      <span>{feat}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Card 3: Trilingual Showroom Descriptions */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-7 w-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-indigo-500/20">
+                    <Languages className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                      Trilingual Showroom Descriptions
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Catalog and official deed (Qabala) vehicle descriptions in English, Dari, and Pashto.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                  Multilingual
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <MuiTextField
+                  label="English Commercial Catalog Description"
+                  sizeVariant="small"
+                  multiline
+                  rows={2}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Official showroom catalog description..."
+                />
+
+                <MuiTextField
+                  label="توضیحات موتر به زبان دری (جهت درج در قباله و استعلامات)"
+                  sizeVariant="small"
+                  multiline
+                  rows={2}
+                  dir="rtl"
+                  value={formData.descriptionDari}
+                  onChange={(e) => setFormData({ ...formData, descriptionDari: e.target.value })}
+                  placeholder="مشخصات و آپشن‌ها به زبان دری..."
+                />
+
+                <MuiTextField
+                  label="د موټر بشپړ معلومات په پښتو ژبه"
+                  sizeVariant="small"
+                  multiline
+                  rows={2}
+                  dir="rtl"
+                  value={formData.descriptionPashto}
+                  onChange={(e) => setFormData({ ...formData, descriptionPashto: e.target.value })}
+                  placeholder="د موټر مشخصات په پښتو ژبه..."
+                />
+              </div>
+            </div>
+
+            {/* Card 4: Ultrasonic Paint & Body Diagnostics */}
+            <PaintInspectionDiagram
+              vin={formData.vin}
+              cleanTitle={formData.cleanTitle}
+              editable={true}
+            />
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* STEP 2: Landed Cost & Target Pricing Cards                                 */}
+        {/* ========================================================================= */}
+        {activeStep === 2 && (
+          <div className="space-y-5">
+            {/* Card 1: Import Costs & Tariffs */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-amber-500/20">
+                    <DollarSign className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                      Landed Cost Components (USD)
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      FOB purchase costs, ocean freight, customs tariffs, and preparation expenses.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                  Cost Accounting
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <MuiTextField
                   label="FOB Purchase Price (USD Port)"
                   type="number"
@@ -980,9 +1011,30 @@ export default function VehicleIntakePage() {
                   required
                 />
               </div>
+            </div>
 
-              {/* Selling Price Box */}
-              <div className="p-4 rounded border border-[#D8D5CD] dark:border-[#242A38] bg-[#FAF9F6] dark:bg-[#141821] space-y-3">
+            {/* Card 2: Showroom Selling Price & Profit Margins */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-emerald-500/20">
+                    <TrendingUp className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                      Target Selling Price & Real-Time Margins
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Determine showroom retail price and verify gross profitability.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                  Valuation
+                </span>
+              </div>
+
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-[#242A38] bg-slate-50/70 dark:bg-[#141821] space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <label className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block mb-0.5">
@@ -992,7 +1044,7 @@ export default function VehicleIntakePage() {
                       Equivalent to: ؋ {Math.round(formData.sellingPrice * exchangeRate).toLocaleString()} AFN
                     </span>
                   </div>
-                  <div className="w-full sm:w-64">
+                  <div className="w-full sm:w-72">
                     <MuiTextField
                       type="number"
                       sizeVariant="small"
@@ -1005,22 +1057,22 @@ export default function VehicleIntakePage() {
                 </div>
 
                 {/* Live Margin & Landed 1px Hairline Breakdown */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-[#D8D5CD] dark:bg-[#242A38] border border-[#D8D5CD] dark:border-[#242A38] rounded overflow-hidden text-xs">
-                  <div className="p-3 bg-white dark:bg-[#11141B]">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-slate-200 dark:bg-[#242A38] border border-slate-200 dark:border-[#242A38] rounded-lg overflow-hidden text-xs">
+                  <div className="p-3.5 bg-white dark:bg-[#11141B]">
                     <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
                       Total Landed Cost
                     </span>
-                    <span className="font-mono font-bold text-sm text-slate-900 dark:text-white tabular-nums mt-0.5 block">
+                    <span className="font-mono font-bold text-base text-slate-900 dark:text-white tabular-nums mt-0.5 block">
                       ${totalLandedCost.toLocaleString()}
                     </span>
                   </div>
 
-                  <div className="p-3 bg-white dark:bg-[#11141B]">
+                  <div className="p-3.5 bg-white dark:bg-[#11141B]">
                     <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
                       Projected Profit
                     </span>
                     <span
-                      className={`font-mono font-bold text-sm tabular-nums mt-0.5 block ${
+                      className={`font-mono font-bold text-base tabular-nums mt-0.5 block ${
                         estimatedProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600"
                       }`}
                     >
@@ -1028,12 +1080,12 @@ export default function VehicleIntakePage() {
                     </span>
                   </div>
 
-                  <div className="p-3 bg-white dark:bg-[#11141B]">
+                  <div className="p-3.5 bg-white dark:bg-[#11141B]">
                     <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
                       Gross Margin (%)
                     </span>
                     <span
-                      className={`font-mono font-bold text-sm tabular-nums mt-0.5 block ${
+                      className={`font-mono font-bold text-base tabular-nums mt-0.5 block ${
                         Number(marginPercent) >= 15
                           ? "text-emerald-600 dark:text-emerald-400"
                           : Number(marginPercent) > 0
@@ -1047,57 +1099,71 @@ export default function VehicleIntakePage() {
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* STEP 3: 40+ Photo Vault & Final Dossier Review */}
-          {activeStep === 3 && (
-            <div className="space-y-5">
-              {/* Photo Vault Card */}
-              <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[#E6E4DD] dark:border-[#1E2330]">
-                  <div className="flex items-center gap-2.5">
-                    <span className="h-6 w-6 rounded bg-[#111318] text-[#D4AF37] dark:bg-[#C59B27] dark:text-[#0A0C10] flex items-center justify-center font-mono font-bold text-xs">
-                      04
-                    </span>
-                    <div>
-                      <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                        40+ Vehicle Photo Vault ({images.length} Loaded)
-                      </h3>
-                      <p className="text-[11px] text-slate-500">
-                        Upload high-resolution photography with automatic dealer watermarks.
-                      </p>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                    Final Step
+        {/* ========================================================================= */}
+        {/* STEP 3: Photography Vault & Final Dossier Verification Cards              */}
+        {/* ========================================================================= */}
+        {activeStep === 3 && (
+          <div className="space-y-5">
+            {/* Card 1: Photo Vault Card */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-7 w-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-blue-500/20">
+                    <ImageIcon className="h-4 w-4" />
                   </span>
+                  <div>
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                      Vehicle Photo Vault ({images.length} Loaded)
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Upload high-resolution photography with automatic dealer watermarks.
+                    </p>
+                  </div>
                 </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                  Photography
+                </span>
+              </div>
 
-                {/* Upload Toolbar */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                  />
-                  
-                  <MuiButton
-                    type="button"
-                    variant="text"
-                    color="inherit"
-                    size="small"
-                    onClick={() => setIsBulkOpen(!isBulkOpen)}
-                    startIcon={<LinkIcon className="h-3.5 w-3.5" />}
-                    sx={{ fontSize: "11px", py: "4px" }}
-                  >
-                    Bulk URLs
-                  </MuiButton>
-                </div>
+              {/* Upload Toolbar */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
 
-                {/* Watermark toggle */}
+                <MuiButton
+                  type="button"
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  startIcon={<Upload className="h-3.5 w-3.5" />}
+                  sx={{ fontSize: "11px", py: "5px", px: "14px" }}
+                >
+                  Upload Files
+                </MuiButton>
+
+                <MuiButton
+                  type="button"
+                  variant="outlined"
+                  color="inherit"
+                  size="small"
+                  onClick={() => setIsBulkOpen(!isBulkOpen)}
+                  startIcon={<LinkIcon className="h-3.5 w-3.5" />}
+                  sx={{ fontSize: "11px", py: "4px" }}
+                >
+                  Bulk URLs
+                </MuiButton>
+
                 <FormControlLabel
                   control={
                     <Switch
@@ -1108,260 +1174,205 @@ export default function VehicleIntakePage() {
                     />
                   }
                   label={
-                    <Typography variant="body2" sx={{ fontSize: "12px", color: "text.secondary" }}>
-                      Watermark &apos;Sadozai Motors Herat&apos; showroom stamp on uploaded photos
-                    </Typography>
+                    <span className="text-xs text-slate-600 dark:text-slate-300">
+                      Auto-apply Notary Watermark
+                    </span>
                   }
+                  sx={{ ml: 1 }}
                 />
+              </div>
 
-                {uploadNotice && (
-                  <Alert severity="info" sx={{ py: 0.5, fontSize: "11px" }}>
-                    {uploadNotice}
-                  </Alert>
-                )}
-
-                {/* Bulk URL Panel */}
-                {isBulkOpen && (
-                  <div className="p-3 rounded bg-[#FAF9F6] dark:bg-[#141821] border border-[#D8D5CD] dark:border-[#242A38] space-y-2">
-                    <MuiTextField
-                      label="Paste photo image URLs (one per line)"
-                      multiline
-                      rows={3}
-                      sizeVariant="small"
-                      value={bulkUrlInput}
-                      onChange={(e) => setBulkUrlInput(e.target.value)}
-                    />
-                    <div className="flex justify-end gap-2">
-                      <MuiButton
-                        variant="contained"
-                        size="small"
-                        onClick={handleAddBulkUrls}
-                        sx={{ fontSize: "11px", py: "2px" }}
-                      >
-                        Append URLs
-                      </MuiButton>
-                    </div>
+              {/* Bulk URL Accordion */}
+              {isBulkOpen && (
+                <div className="p-3.5 rounded-lg border border-slate-200 dark:border-[#242A38] bg-slate-50 dark:bg-[#141821] space-y-2">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+                    Paste Direct Image URLs (separated by newlines or commas):
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={bulkUrlInput}
+                    onChange={(e) => setBulkUrlInput(e.target.value)}
+                    placeholder="https://images.unsplash.com/photo-1...&#10;https://images.unsplash.com/photo-2..."
+                    className="w-full text-xs font-mono p-2.5 rounded border border-slate-300 dark:border-[#262F40] bg-white dark:bg-[#0A0C10] text-slate-900 dark:text-white outline-none focus:border-[#C59B27]"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <MuiButton
+                      type="button"
+                      variant="text"
+                      size="small"
+                      onClick={() => setIsBulkOpen(false)}
+                      sx={{ fontSize: "10px" }}
+                    >
+                      Cancel
+                    </MuiButton>
+                    <MuiButton
+                      type="button"
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      onClick={handleAddBulkUrls}
+                      sx={{ fontSize: "10px" }}
+                    >
+                      Add URLs to Vault
+                    </MuiButton>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Photo Grid Gallery */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-80 overflow-y-auto p-1">
+              {/* Upload Notice */}
+              {uploadNotice && (
+                <div className="p-2.5 rounded bg-blue-500/10 border border-blue-500/20 text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                  <div className="animate-spin h-3.5 w-3.5 border-2 border-blue-600 border-t-transparent rounded-full shrink-0" />
+                  <span>{uploadNotice}</span>
+                </div>
+              )}
+
+              {/* Photos Grid */}
+              {images.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5 pt-2">
                   {images.map((img, idx) => (
                     <div
                       key={idx}
-                      className={`relative aspect-[16/10] rounded overflow-hidden border group ${
-                        idx === 0
-                          ? "border-[#C59B27] ring-2 ring-[#C59B27]/30"
-                          : "border-[#D8D5CD] dark:border-[#242A38]"
-                      }`}
+                      className="group relative aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 dark:border-[#242A38] bg-slate-100 dark:bg-slate-800"
                     >
                       <Image src={img} alt={`Photo ${idx + 1}`} fill className="object-cover" />
 
                       {idx === 0 && (
-                        <div className="absolute top-1 left-1 bg-[#111318] text-[#D4AF37] px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase">
-                          Cover
+                        <div className="absolute top-1 left-1 bg-[#111318]/90 text-[#D4AF37] px-1.5 py-0.5 rounded text-[9px] font-mono font-bold flex items-center gap-1">
+                          <Star className="h-2.5 w-2.5 fill-[#D4AF37]" />
+                          Primary
                         </div>
                       )}
 
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleSetPrimaryPhoto(idx)}
-                          className="!text-white hover:!bg-white/20"
-                          title="Set as Cover"
-                        >
-                          <Star className={`h-3.5 w-3.5 ${idx === 0 ? "fill-amber-400 text-amber-400" : ""}`} />
-                        </IconButton>
-                        <IconButton
-                          size="small"
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
+                        {idx !== 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetPrimaryPhoto(idx)}
+                            className="p-1 rounded bg-white text-slate-900 hover:bg-slate-200"
+                            title="Set as primary showcase photo"
+                          >
+                            <Star className="h-3 w-3" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
                           onClick={() => handleRemovePhoto(idx)}
-                          className="!text-white hover:!bg-red-500/50"
-                          title="Remove Photo"
+                          className="p-1 rounded bg-rose-600 text-white hover:bg-rose-700"
+                          title="Remove photo"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </IconButton>
+                          <Trash2 className="h-3 w-3" />
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Pre-Submission Final Dossier Audit Card */}
-              <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
-                <div className="px-4 py-2.5 bg-[#FAF9F6] dark:bg-[#141821] border-b border-[#D8D5CD] dark:border-[#242A38] flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    <h4 className="text-[11px] font-mono font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Pre-Submission Dossier Audit
-                    </h4>
-                  </div>
-                  <span className="text-[10px] font-mono text-slate-400">Ready for catalog publication</span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#D8D5CD] dark:bg-[#242A38] text-xs">
-                  <div className="p-3 bg-white dark:bg-[#11141B]">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Vehicle</span>
-                    <span className="font-bold text-slate-900 dark:text-white truncate block mt-0.5">
-                      {formData.year} {formData.make} {formData.model}
-                    </span>
-                  </div>
-                  <div className="p-3 bg-white dark:bg-[#11141B]">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Chassis / VIN</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white truncate block mt-0.5">
-                      {formData.vin}
-                    </span>
-                  </div>
-                  <div className="p-3 bg-white dark:bg-[#11141B]">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Landed Cost</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white block mt-0.5 tabular-nums">
-                      ${totalLandedCost.toLocaleString()} USD
-                    </span>
-                  </div>
-                  <div className="p-3 bg-white dark:bg-[#11141B]">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Retail Price</span>
-                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5 tabular-nums">
-                      ${formData.sellingPrice.toLocaleString()} USD
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Stepper Navigation Buttons Strip */}
-          <div className="flex items-center justify-between pt-2">
-            <MuiButton
-              type="button"
-              variant="outlined"
-              color="inherit"
-              size="small"
-              onClick={handleBack}
-              disabled={activeStep === 0}
-              startIcon={<ArrowLeft className="h-4 w-4" />}
-              sx={{ fontSize: "11px", py: "4px" }}
-            >
-              Back
-            </MuiButton>
-
-            {activeStep < steps.length - 1 ? (
-              <MuiButton
-                type="button"
-                variant="contained"
-                color="primary"
-                size="small"
-                onClick={handleNext}
-                endIcon={<ArrowRight className="h-4 w-4" />}
-                sx={{ fontSize: "11px", py: "4px", px: "16px" }}
-              >
-                Continue to {steps[activeStep + 1].title.split("&")[0]}
-              </MuiButton>
-            ) : (
-              <MuiButton
-                type="button"
-                variant="contained"
-                color="success"
-                size="small"
-                onClick={() => handleSubmit()}
-                startIcon={<CheckCircle2 className="h-4 w-4" />}
-                sx={{ fontSize: "11px", py: "5px", px: "20px" }}
-              >
-                Register Vehicle & Commit to Lot
-              </MuiButton>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: Sticky Live Dossier Card (4 cols) */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-4 space-y-3 sticky top-4">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E6E4DD] dark:border-[#1E2330]">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                Live Preview Dossier
-              </span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                {formData.status}
-              </span>
-            </div>
-
-            {/* Thumbnail */}
-            <div className="relative aspect-[16/10] w-full rounded overflow-hidden border border-[#D8D5CD] dark:border-[#242A38] bg-slate-100 dark:bg-slate-800">
-              {images[0] ? (
-                <Image
-                  src={images[0]}
-                  alt={formData.model || "Vehicle photo"}
-                  fill
-                  className="object-cover"
-                />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                  <Car className="h-10 w-10 opacity-40 mb-1" />
-                  <span className="text-[10px] font-mono">No Photos Uploaded</span>
+                <div className="p-8 text-center rounded-xl border border-dashed border-slate-300 dark:border-[#242A38] bg-slate-50/50 dark:bg-[#141821] text-slate-400">
+                  <ImageIcon className="h-10 w-10 mx-auto opacity-30 mb-2" />
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    No Showcase Photos Uploaded Yet
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Click &ldquo;Upload Files&rdquo; to add high-resolution vehicle photos with automated notary watermarks.
+                  </p>
                 </div>
               )}
-              <div className="absolute bottom-1.5 left-1.5 bg-[#0D0F14]/85 text-white px-2 py-0.5 rounded text-[9px] font-mono font-bold">
-                {formData.stockNumber}
-              </div>
-              <div className="absolute top-1.5 right-1.5 bg-[#0D0F14]/85 text-[#D4AF37] px-2 py-0.5 rounded text-[9px] font-mono font-bold">
-                {images.length} Photos
-              </div>
             </div>
 
-            {/* Vehicle Title & Trim */}
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                {formData.year} {formData.make} {formData.model}
-              </h3>
-              <p className="text-[11px] text-slate-500 truncate">{formData.trim}</p>
-            </div>
-
-            {/* 1px Hairline Spec Matrix */}
-            <div className="grid grid-cols-2 gap-px bg-[#D8D5CD] dark:bg-[#242A38] border border-[#D8D5CD] dark:border-[#242A38] rounded overflow-hidden text-[11px] font-mono">
-              <div className="p-2 bg-[#FAF9F6] dark:bg-[#141821] flex items-center gap-1.5 truncate text-slate-700 dark:text-slate-300">
-                <Gauge className="h-3 w-3 text-[#C59B27] shrink-0" />
-                <span>{formData.mileage.toLocaleString()} KM</span>
-              </div>
-              <div className="p-2 bg-[#FAF9F6] dark:bg-[#141821] flex items-center gap-1.5 truncate text-slate-700 dark:text-slate-300">
-                <Fuel className="h-3 w-3 text-[#C59B27] shrink-0" />
-                <span>{formData.fuelType}</span>
-              </div>
-              <div className="p-2 bg-[#FAF9F6] dark:bg-[#141821] flex items-center gap-1.5 truncate text-slate-700 dark:text-slate-300">
-                <Compass className="h-3 w-3 text-[#C59B27] shrink-0" />
-                <span>{formData.driveType}</span>
-              </div>
-              <div className="p-2 bg-[#FAF9F6] dark:bg-[#141821] flex items-center gap-1.5 truncate text-slate-700 dark:text-slate-300">
-                <Globe className="h-3 w-3 text-[#C59B27] shrink-0" />
-                <span>{formData.originCountry}</span>
-              </div>
-            </div>
-
-            {/* Financial Summary */}
-            <div className="p-3 rounded bg-[#FAF9F6] dark:bg-[#141821] border border-[#D8D5CD] dark:border-[#242A38] space-y-1.5">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Retail Selling Price:</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-white tabular-nums">
-                  ${formData.sellingPrice.toLocaleString()} USD
+            {/* Card 2: Final Pre-Submission Dossier Review */}
+            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-emerald-500/20">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                      Pre-Submission Dossier Audit & Commitment
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Verify entered specifications before committing this vehicle into live showroom inventory.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                  Commitment
                 </span>
               </div>
-              <div className="flex justify-between text-[11px] font-mono text-emerald-700 dark:text-emerald-400 tabular-nums">
-                <span>Sarrafi Price:</span>
-                <span>؋ {(formData.sellingPrice * exchangeRate).toLocaleString()} AFN</span>
-              </div>
-              <div className="flex justify-between text-[11px] text-slate-500 tabular-nums">
-                <span>Total Landed:</span>
-                <span className="font-mono">${totalLandedCost.toLocaleString()}</span>
-              </div>
-              <div className="pt-1.5 border-t border-[#E6E4DD] dark:border-[#1E2330] flex justify-between text-xs font-bold tabular-nums">
-                <span className="text-slate-700 dark:text-slate-300">Projected Margin:</span>
-                <span
-                  className={`font-mono ${
-                    estimatedProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600"
-                  }`}
-                >
-                  +${estimatedProfit.toLocaleString()} ({marginPercent}%)
-                </span>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#242A38] bg-slate-50/60 dark:bg-[#141821]">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">Vehicle Unit</span>
+                  <span className="font-bold text-slate-900 dark:text-white mt-0.5 block truncate">
+                    {formData.year} {formData.make} {formData.model}
+                  </span>
+                </div>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#242A38] bg-slate-50/60 dark:bg-[#141821]">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">Stock & VIN</span>
+                  <span className="font-mono font-bold text-blue-600 dark:text-blue-400 mt-0.5 block truncate">
+                    {formData.stockNumber}
+                  </span>
+                </div>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#242A38] bg-slate-50/60 dark:bg-[#141821]">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">Landed Cost</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white mt-0.5 block">
+                    ${totalLandedCost.toLocaleString()} USD
+                  </span>
+                </div>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#242A38] bg-slate-50/60 dark:bg-[#141821]">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">Target Retail</span>
+                  <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+                    ${formData.sellingPrice.toLocaleString()} USD
+                  </span>
+                </div>
               </div>
             </div>
           </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* Navigation Toolbar Card                                                  */}
+        {/* ========================================================================= */}
+        <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-4 shadow-xs flex items-center justify-between">
+          <MuiButton
+            type="button"
+            variant="outlined"
+            color="inherit"
+            size="small"
+            onClick={handleBack}
+            disabled={activeStep === 0}
+            startIcon={<ArrowLeft className="h-4 w-4" />}
+            sx={{ fontSize: "11px", py: "5px", px: "16px" }}
+          >
+            Back
+          </MuiButton>
+
+          {activeStep < steps.length - 1 ? (
+            <MuiButton
+              type="button"
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={handleNext}
+              endIcon={<ArrowRight className="h-4 w-4" />}
+              sx={{ fontSize: "11px", py: "5px", px: "18px" }}
+            >
+              Continue to {steps[activeStep + 1].title.split("&")[0]}
+            </MuiButton>
+          ) : (
+            <MuiButton
+              type="button"
+              variant="contained"
+              color="success"
+              size="small"
+              onClick={() => handleSubmit()}
+              startIcon={<CheckCircle2 className="h-4 w-4" />}
+              sx={{ fontSize: "11px", py: "6px", px: "22px" }}
+            >
+              Register Vehicle & Commit to Lot
+            </MuiButton>
+          )}
         </div>
       </div>
     </div>

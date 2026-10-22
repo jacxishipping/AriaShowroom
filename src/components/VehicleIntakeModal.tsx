@@ -36,37 +36,35 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
   const [formData, setFormData] = useState({
     stockNumber: `SM-HRT-${Math.floor(110 + Math.random() * 890)}`,
     vin: "JTMCY" + Math.random().toString(36).substring(2, 10).toUpperCase(),
-    make: "Toyota",
-    model: "Land Cruiser Prado",
-    year: 2022,
-    trim: "TXL V6 4.0L",
+    make: "",
+    model: "",
+    year: new Date().getFullYear(),
+    trim: "",
     bodyType: "SUV" as const,
     originCountry: "UAE" as const,
     steering: "Left-Hand Drive (LHD)" as const,
-    customsClearance: "Gomrok Herat (Islam Qala) - Cleared",
+    customsClearance: "",
     cleanTitle: true,
-    mileage: 26000,
+    mileage: 0,
     fuelType: "Petrol" as const,
     transmission: "Automatic" as const,
     driveType: "4WD" as const,
-    color: "Pearl White",
+    color: "",
     status: "Available on Lot" as const,
     yardLocation: "Main Showroom - Bagh-e-Azadi",
-    purchasePrice: 42000,
-    freightCost: 1500,
-    customsDuty: 4500,
-    repairCost: 400,
-    sellingPrice: 53500,
-    features: "Cool Box, 4WD Diff-Lock, Sunroof, Leather Seats, Push Start",
-    description: "Direct import GCC spec in immaculate condition with clean title.",
-    descriptionDari: "وارداتی خلیج بدون رنگ و خط و خش، محصول شده گمرک اسلام قلعه.",
-    descriptionPashto: "خلیجي واردات، بې رنګه او بې ټکره د هرات اسلام قلعه ګمرک محصول شوی.",
+    purchasePrice: 0,
+    freightCost: 0,
+    customsDuty: 0,
+    repairCost: 0,
+    sellingPrice: 0,
+    features: "",
+    description: "",
+    descriptionDari: "",
+    descriptionPashto: "",
   });
 
   // State to hold 40+ vehicle images
-  const [images, setImages] = useState<string[]>([
-    "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=1400&q=85",
-  ]);
+  const [images, setImages] = useState<string[]>([]);
   const [bulkUrlInput, setBulkUrlInput] = useState("");
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -235,10 +233,11 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
         </div>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-5">
-          {/* Section 1: Identification & General Info */}
-          <div>
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-              1. Basic Vehicle Identification
+          {/* Section 1: Identification & General Info Card */}
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 p-4 space-y-3">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pb-2 border-b border-slate-200/60 dark:border-slate-800/60">
+              <span className="h-5 w-5 rounded bg-blue-500/10 text-blue-600 flex items-center justify-center font-mono text-[10px] font-bold">01</span>
+              <span>Basic Vehicle Identification</span>
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <MuiTextField

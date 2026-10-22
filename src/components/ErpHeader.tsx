@@ -306,6 +306,18 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
         },
       },
       {
+        id: "settings",
+        title: "Showroom Settings, Theming & Branding",
+        desc: "Visual themes, luxury presets, logo, seals & contact info",
+        icon: SlidersHorizontal,
+        color: "text-purple-600 bg-purple-500/10",
+        action: () => {
+          setIsCommandPaletteOpen(false);
+          router.push("/settings");
+        },
+      },
+
+      {
         id: "switchCurrency",
         title: `Switch Display Currency to ${currency === "USD" ? "AFN (؋)" : "USD ($)"}`,
         desc: `Current base rate: $1 USD = ؋${exchangeRate} AFN`,
@@ -918,6 +930,16 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
               <Moon className="h-3.5 w-3.5" />
             )}
           </button>
+
+          {/* Showroom Settings & Theming */}
+          <Link
+            href="/settings"
+            className="flex h-8 w-8 items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.03]"
+            title={t.settingsTitle || "Settings & Theming"}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+          </Link>
+
 
           <div className="flex items-center gap-2 px-2">
             <div className="flex h-5 w-5 items-center justify-center rounded bg-[#1A73E8] font-mono text-[10px] font-bold text-white">
