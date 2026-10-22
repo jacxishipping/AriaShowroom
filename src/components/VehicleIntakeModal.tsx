@@ -34,8 +34,8 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    stockNumber: `SM-HRT-${Math.floor(110 + Math.random() * 890)}`,
-    vin: "JTMCY" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+    stockNumber: `ARI-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+    vin: "",
     make: "",
     model: "",
     year: new Date().getFullYear(),

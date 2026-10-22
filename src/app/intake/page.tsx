@@ -18,6 +18,11 @@ import {
   Switch,
   FormControlLabel,
   InputAdornment,
+  Stepper,
+  Step,
+  StepLabel,
+  StepButton,
+  Box,
 } from "@/components/mui";
 import {
   ArrowLeft,
@@ -68,7 +73,7 @@ const PRESET_VEHICLE_FEATURES = [
 
 export default function VehicleIntakePage() {
   const router = useRouter();
-  const { addVehicle, addToast, language, exchangeRate } = useShowroomStore();
+  const { addVehicle, addToast, language, exchangeRate, theming } = useShowroomStore();
   const t = translations[language];
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -453,73 +458,87 @@ export default function VehicleIntakePage() {
         </div>
       </div>
 
-      {/* 4-Step Stepper Progress Bar */}
-      <div className="rounded-xl border border-[#D8D5CD] dark:border-[#242A38] bg-[#D8D5CD] dark:bg-[#242A38] grid grid-cols-1 sm:grid-cols-4 gap-px overflow-hidden shadow-xs">
-        {steps.map((step, index) => {
-          const isCompleted = index < activeStep;
-          const isCurrent = index === activeStep;
-
-          return (
-            <button
-              key={step.title}
-              type="button"
-              onClick={() => handleStepClick(index)}
-              className={`p-3.5 text-left transition-colors flex items-center justify-between cursor-pointer ${
-                isCurrent
-                  ? "bg-[#111318] text-white dark:bg-[#181D28]"
-                  : isCompleted
-                  ? "bg-[#FAF9F6] dark:bg-[#141821] text-slate-900 dark:text-white hover:bg-white"
-                  : "bg-white dark:bg-[#11141B] text-slate-400 hover:bg-[#FAF9F6] dark:hover:bg-[#141821]"
-              }`}
-            >
-              <div className="min-w-0 pr-2">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={`text-[10px] font-mono font-bold uppercase tracking-widest ${
-                      isCurrent
-                        ? "text-[#D4AF37]"
-                        : isCompleted
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-slate-400"
-                    }`}
+      {/* MUI Stepper Form Progress Header */}
+      <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-4 sm:p-6 shadow-xs">
+        <Stepper
+          activeStep={activeStep}
+          nonLinear
+          alternativeLabel
+          sx={{
+            "& .MuiStepConnector-line": {
+              borderColor: "divider",
+              borderTopWidth: 2,
+            },
+            "& .MuiStepConnector-root.Mui-active .MuiStepConnector-line": {
+              borderColor: theming?.primaryColor || "#1A73E8",
+            },
+            "& .MuiStepConnector-root.Mui-completed .MuiStepConnector-line": {
+              borderColor: "#16A34A",
+            },
+            "& .MuiStepIcon-root": {
+              width: 34,
+              height: 34,
+              color: "action.disabledBackground",
+              "&.Mui-active": {
+                color: theming?.primaryColor || "#1A73E8",
+              },
+              "&.Mui-completed": {
+                color: "#16A34A",
+              },
+            },
+            "& .MuiStepIcon-text": {
+              fontWeight: 700,
+              fontSize: "0.85rem",
+              fill: "#FFFFFF",
+            },
+            "& .MuiStepButton-root": {
+              p: 0.5,
+              borderRadius: 2,
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                bgcolor: "action.hover",
+              },
+            },
+            "& .MuiStepLabel-label": {
+              mt: 1,
+              fontWeight: 600,
+              fontSize: "0.8125rem",
+              letterSpacing: "-0.01em",
+              "&.Mui-active": {
+                color: "text.primary",
+                fontWeight: 700,
+              },
+              "&.Mui-completed": {
+                color: "text.secondary",
+                fontWeight: 600,
+              },
+            },
+          }}
+        >
+          {steps.map((step, index) => {
+            const isCompleted = index < activeStep;
+            return (
+              <Step key={step.title} completed={isCompleted}>
+                <StepButton
+                  onClick={() => handleStepClick(index)}
+                  title={`Step ${index + 1}: ${step.title}`}
+                >
+                  <StepLabel
+                    optional={
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden md:block mt-0.5 line-clamp-1">
+                        {step.desc}
+                      </span>
+                    }
                   >
-                    STEP 0${index + 1}
-                  </span>
-                  {isCompleted && <Check className="h-3 w-3 text-emerald-500 shrink-0" />}
-                </div>
-                <div
-                  className={`text-xs font-bold truncate mt-0.5 ${
-                    isCurrent
-                      ? "text-white"
-                      : isCompleted
-                      ? "text-slate-900 dark:text-white"
-                      : "text-slate-500"
-                  }`}
-                >
-                  {step.title}
-                </div>
-                <div
-                  className={`text-[10px] truncate ${
-                    isCurrent ? "text-slate-300" : "text-slate-400"
-                  }`}
-                >
-                  {step.desc}
-                </div>
-              </div>
-              <div
-                className={`h-7 w-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold shrink-0 border ${
-                  isCurrent
-                    ? "bg-[#C59B27] text-[#0A0C10] border-[#C59B27]"
-                    : isCompleted
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                    : "bg-[#F4F3EF] dark:bg-[#161B24] text-slate-400 border-[#D8D5CD] dark:border-[#242A38]"
-                }`}
-              >
-                {isCompleted ? <Check className="h-3.5 w-3.5" /> : `0${index + 1}`}
-              </div>
-            </button>
-          );
-        })}
+                    <span className="block font-bold text-slate-900 dark:text-white text-xs sm:text-[13px]">
+                      {step.title}
+                    </span>
+                  </StepLabel>
+                </StepButton>
+              </Step>
+            );
+          })}
+        </Stepper>
       </div>
 
       {/* Main Step Content: Organized in Clean Modular Cards */}
