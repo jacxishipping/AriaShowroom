@@ -1,3 +1,4 @@
+import { useShowroomStore } from "@/store/useShowroomStore";
 /**
  * Client-Side Image Watermarking & WebP Optimization
  * Stamped onto vehicle inspection photos before uploading to Vercel Blob.

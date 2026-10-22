@@ -47,9 +47,7 @@ function VerifyContent() {
   const { vehicles, sales, invoices, language, exchangeRate } = useShowroomStore();
   const t = translations[language];
 
-  const [query, setQuery] = useState(
-    contractParam || vinParam || (vehicles[0]?.vin || "JTMBW0RJ3R0123456")
-  );
+  const [query, setQuery] = useState(contractParam || vinParam || "");
   const [selectedDocType, setSelectedDocType] = useState<CertificateType>("CLEARANCE");
 
   // Search through sales contracts, invoices, and vehicles
@@ -70,6 +68,7 @@ function VerifyContent() {
   }, [invoices, query]);
 
   const matchedVehicle = useMemo(() => {
+    if (!query.trim()) return null;
     return (
       vehicles.find(
         (v) =>
@@ -77,19 +76,13 @@ function VerifyContent() {
           v.stockNumber.toLowerCase() === query.toLowerCase().trim() ||
           (matchedSale && matchedSale.stockNumber === v.stockNumber) ||
           (matchedInvoice && matchedInvoice.vehicleStock === v.stockNumber)
-      ) || vehicles[0]
+      ) || null
     );
   }, [vehicles, query, matchedSale, matchedInvoice]);
 
   const isVerified = Boolean(matchedVehicle || matchedSale || matchedInvoice);
 
-  // Quick sample queries
-  const sampleQueries = [
-    { label: "Land Cruiser LC300 VIN", value: vehicles[0]?.vin || "JTMBW0RJ3R0123456" },
-    { label: "Contract Deed #", value: "SM-DEED-2026-902" },
-    { label: "Stock #001", value: vehicles[0]?.stockNumber || "ARI-2026-001" },
-    { label: "Invoice #104", value: "INV-2026-104" },
-  ];
+
 
   return (
     <div className="min-h-screen bg-[#F4F3EF] dark:bg-[#0A0C10] py-6 px-4 sm:px-6 lg:px-8 print:p-0 print:bg-white text-slate-900 dark:text-slate-100">
@@ -163,21 +156,23 @@ function VerifyContent() {
             </MuiButton>
           </form>
 
-          {/* Quick Sample Queries */}
-          <div className="flex items-center gap-1.5 flex-wrap pt-1">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-              SAMPLE INQUIRIES:
-            </span>
-            {sampleQueries.map((s, idx) => (
-              <button
-                key={idx}
-                onClick={() => setQuery(s.value)}
-                className="text-[11px] px-2 py-0.5 rounded bg-[#FAF9F6] hover:bg-[#F4F3EF] dark:bg-[#161B24] dark:hover:bg-[#1E2433] text-slate-700 dark:text-slate-300 font-mono transition-colors cursor-pointer border border-[#D8D5CD] dark:border-[#242A38]"
-              >
-                {s.label}: <span className="font-bold text-[#9A7515] dark:text-[#D4AF37]">{s.value}</span>
-              </button>
-            ))}
-          </div>
+          {/* Active Showroom Vehicles (If Any) */}
+          {vehicles.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap pt-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                ACTIVE VEHICLES:
+              </span>
+              {vehicles.slice(0, 3).map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => setQuery(v.vin)}
+                  className="text-[11px] px-2 py-0.5 rounded bg-[#FAF9F6] hover:bg-[#F4F3EF] dark:bg-[#161B24] dark:hover:bg-[#1E2433] text-slate-700 dark:text-slate-300 font-mono transition-colors cursor-pointer border border-[#D8D5CD] dark:border-[#242A38]"
+                >
+                  {v.make} {v.model}: <span className="font-bold text-[#9A7515] dark:text-[#D4AF37]">{v.vin}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Certificate Type Switcher Tabs (Hidden in Print) */}
           <div className="pt-2.5 border-t border-[#E6E4DD] dark:border-[#1E2330] flex items-center gap-1.5 overflow-x-auto">
@@ -314,9 +309,7 @@ function VerifyContent() {
                   Vehicle Make & Model
                 </span>
                 <span className="text-sm font-bold text-slate-900 dark:text-white mt-0.5 block">
-                  {matchedVehicle
-                    ? `${matchedVehicle.year} ${matchedVehicle.make} ${matchedVehicle.model} (${matchedVehicle.trim || "Full Option"})`
-                    : "2024 Toyota Land Cruiser 300 VXR"}
+                  {matchedVehicle ? `${matchedVehicle.year} ${matchedVehicle.make} ${matchedVehicle.model} (${matchedVehicle.trim || "Standard"})` : "—"}
                 </span>
               </div>
 
@@ -334,7 +327,7 @@ function VerifyContent() {
                   Customs Maktoub Clearance
                 </span>
                 <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 mt-0.5 block">
-                  {matchedVehicle?.customsClearance || "Islam Qala Gomrok - Verified & Cleared (Doc #MK-8819)"}
+                  {matchedVehicle?.customsClearance || "—"}
                 </span>
               </div>
 
@@ -343,7 +336,7 @@ function VerifyContent() {
                   Origin Country & Steering
                 </span>
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                  {matchedVehicle?.originCountry || "UAE / Dubai"} • {matchedVehicle?.steering || "Left-Hand Drive (LHD)"}
+                  {matchedVehicle ? `${matchedVehicle.originCountry} • ${matchedVehicle.steering}` : "—"}
                 </span>
               </div>
 
@@ -352,7 +345,7 @@ function VerifyContent() {
                   Odometer Mileage Record
                 </span>
                 <span className="text-xs font-bold font-mono text-slate-800 dark:text-slate-200 mt-0.5 block tabular-nums">
-                  {matchedVehicle ? `${matchedVehicle.mileage.toLocaleString()} KM` : "18,400 KM"} (Audited)
+                  {matchedVehicle ? `${matchedVehicle.mileage.toLocaleString()} KM (Audited)` : "—"}
                 </span>
               </div>
 
@@ -361,7 +354,7 @@ function VerifyContent() {
                   Registered Dealership & Lot Bay
                 </span>
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                  Sadozai Motors Herat • {matchedVehicle?.yardLocation || "Bagh-e-Azadi Central Lot"}
+                  {matchedVehicle ? `Sadozai Motors Herat • ${matchedVehicle.yardLocation || "Main Lot"}` : "—"}
                 </span>
               </div>
             </div>

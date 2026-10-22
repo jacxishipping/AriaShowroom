@@ -192,10 +192,10 @@ export default function AdminDashboardPage() {
     tazkiraNumber: "",
     city: "Herat",
     address: "",
-    budget: 35000,
+    budget: 0,
     interestedInVehicleId: vehicles[0]?.id || "",
     tradeInRecord: "",
-    notes: "Herat showroom inquiry.",
+    notes: "",
     leadStage: "New Inquiry" as CustomerRecord["leadStage"],
   });
 
@@ -344,11 +344,11 @@ export default function AdminDashboardPage() {
     customerPhone: "",
     customerTazkira: "",
     salesAgent: "Farhad Timori",
-    salePriceUSD: vehicles[0]?.sellingPrice || 35000,
+    salePriceUSD: vehicles[0]?.sellingPrice || 0,
     paymentType: "Full Cash" as "Full Cash" | "Installment Plan" | "Hawala / Bank Transfer",
-    downPaymentUSD: vehicles[0]?.sellingPrice || 35000,
+    downPaymentUSD: vehicles[0]?.sellingPrice || 0,
     installmentsRemaining: 0,
-    notes: "Herat showroom transaction settlement.",
+    notes: "",
   });
 
   // Filtered vehicles for inventory tab
@@ -514,7 +514,7 @@ export default function AdminDashboardPage() {
         amountAFN: Math.round(installmentAmountUSD * exchangeRate),
         exchangeRate,
         paymentMethod: "Sarrafi Hawala (حواله صرافی)",
-        sarrafiAccount: "Haji Noorzai Sarrafi Desk #14 - Khorasan Market",
+        sarrafiAccount: "",
         referenceNumber: `QIST-${sale.contractNumber}-${Date.now().toString().slice(-4)}`,
         vehicleStock: sale.stockNumber,
         purpose: `Installment (Qist) collection for ${sale.vehicleName} (${sale.contractNumber})`,
@@ -607,7 +607,7 @@ export default function AdminDashboardPage() {
             saleForm.paymentType === "Full Cash"
               ? "Cash (صندوق)"
               : "Sarrafi Hawala (حواله صرافی)",
-          sarrafiAccount: "Haji Noorzai Sarrafi Desk #14 - Khorasan Market",
+          sarrafiAccount: "",
           referenceNumber: `HAW-${Date.now().toString().slice(-5)}`,
           vehicleStock: vehicleObj.stockNumber,
           purpose: `${isInstallment ? "Down payment" : "Full settlement"} for ${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model}`,

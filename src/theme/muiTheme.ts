@@ -2,16 +2,18 @@
 
 import { createTheme, ThemeOptions } from "@mui/material/styles";
 
-export function getMuiTheme(mode: "light" | "dark") {
+export function getMuiTheme(mode: "light" | "dark", customPrimary?: string, customRadius?: number) {
   const isDark = mode === "dark";
+  const primaryColor = customPrimary || (isDark ? "#8AB4F8" : "#1A73E8");
+  const radius = customRadius ?? 6;
 
   const themeOptions: ThemeOptions = {
     palette: {
       mode,
       primary: {
-        main: isDark ? "#8AB4F8" : "#1A73E8",
-        light: isDark ? "#AECBFA" : "#4285F4",
-        dark: isDark ? "#669DF6" : "#1557B0",
+        main: primaryColor,
+        light: primaryColor,
+        dark: primaryColor,
         contrastText: isDark ? "#0F141C" : "#ffffff",
       },
       secondary: {
@@ -55,7 +57,7 @@ export function getMuiTheme(mode: "light" | "dark") {
       divider: isDark ? "#262F40" : "#E2E8F0",
     },
     shape: {
-      borderRadius: 6,
+      borderRadius: radius,
     },
     typography: {
       fontFamily: "var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif",
@@ -71,7 +73,7 @@ export function getMuiTheme(mode: "light" | "dark") {
         },
         styleOverrides: {
           root: {
-            borderRadius: 6,
+            borderRadius: radius,
             fontSize: "0.78rem",
             padding: "6px 14px",
             fontWeight: 600,

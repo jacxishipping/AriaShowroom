@@ -60,22 +60,20 @@ export default function SarrafiSettlementPage() {
   const { vehicles, exchangeRate, language, addToast } = useShowroomStore();
   const t = translations[language];
 
-  const vehicle = vehicles.find((v) => v.id === vehicleId) || vehicles[0];
+  const vehicle = vehicles.find((v) => v.id === vehicleId);
 
   const [paymentChannel, setPaymentChannel] = useState<
     "SARRAFI" | "CASH_SHOWROOM" | "BANK_TRANSFER" | "INSTALLMENT_PLAN"
   >("SARRAFI");
 
-  const [sarrafName, setSarrafName] = useState(
-    "Sarrafi Haji Mohammad & Sons (صرافی حاجی محمد و پسران)"
-  );
-  const [sarrafMarket, setSarrafMarket] = useState("Khorasan Market, Shop 42, Herat");
+  const [sarrafName, setSarrafName] = useState("");
+  const [sarrafMarket, setSarrafMarket] = useState("");
   const [hawalaVoucherNumber, setHawalaVoucherNumber] = useState(
     `HWL-KHR-2026-${(vehicle?.stockNumber || "SM-HRT-882").replace("SM-HRT-", "")}77`
   );
-  const [customerName, setCustomerName] = useState("Haji Abdul Qadir Karimi");
-  const [customerPhone, setCustomerPhone] = useState("+93799887766");
-  const [customerTazkira, setCustomerTazkira] = useState("HRT-1402-984210");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerTazkira, setCustomerTazkira] = useState("");
   const [lockedRate, setLockedRate] = useState(exchangeRate || 70.5);
 
   const totalAmount = vehicle?.sellingPrice || 45000;

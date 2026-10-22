@@ -13,9 +13,10 @@ import { Footer } from "./Footer";
 import { ToastContainer } from "./ToastContainer";
 import { ContextualInspectorDrawer } from "./ContextualInspectorDrawer";
 import { KeyboardShortcutManager } from "./KeyboardShortcutManager";
+import { FirstTimeTutorialModal } from "./FirstTimeTutorialModal";
 
 export function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
-  const { language, darkMode, fetchDatabaseRecords, setCurrentRole } = useShowroomStore();
+  const { language, darkMode, fetchDatabaseRecords, setCurrentRole, theming, branding } = useShowroomStore();
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const isRtl = language === "fa" || language === "ps";
@@ -99,6 +100,7 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
         {/* Global Google Platform Overlays */}
         <ContextualInspectorDrawer />
         <KeyboardShortcutManager />
+        <FirstTimeTutorialModal />
         <ToastContainer />
       </div>
     </ThemeProvider>

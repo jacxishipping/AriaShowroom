@@ -14,6 +14,7 @@ export function KeyboardShortcutManager() {
     setInspectedVehicleId,
     isShortcutsModalOpen,
     setIsShortcutsModalOpen,
+    setIsTutorialOpen,
     addToast,
   } = useShowroomStore();
 
@@ -183,6 +184,8 @@ export function KeyboardShortcutManager() {
               { keys: ["g", "a"], label: "Go to Accounting & Sarrafi" },
               { keys: ["g", "l"], label: "Go to Customs & Port Logistics" },
               { keys: ["g", "n"], label: "Register New Vehicle Intake" },
+              { keys: ["g", "s"], label: "Go to Settings & Theming" },
+              { keys: ["g", "t"], label: "Open First-Time Tutorial & Tour" },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-slate-600 dark:text-slate-300">{item.label}</span>

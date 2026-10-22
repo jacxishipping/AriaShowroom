@@ -19,6 +19,8 @@ import {
   X,
   Bookmark,
   Keyboard,
+  HelpCircle,
+  SlidersHorizontal,
 } from "lucide-react";
 
 interface ErpSidebarProps {
@@ -42,6 +44,9 @@ export function ErpSidebar({ onOpenIntake }: ErpSidebarProps) {
     activePinnedViewId,
     applyPinnedView,
     setIsShortcutsModalOpen,
+    setIsTutorialOpen,
+    branding,
+    theming,
   } = useShowroomStore();
   const [collapsed, setCollapsed] = useState(false);
 

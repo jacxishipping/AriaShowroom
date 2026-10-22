@@ -44,12 +44,12 @@ export default function VehicleDeedPage() {
   const { vehicles, invoices, exchangeRate, language, addToast } = useShowroomStore();
   const t = translations[language];
 
-  const vehicle = vehicles.find((v) => v.id === vehicleId) || vehicles[0];
+  const vehicle = vehicles.find((v) => v.id === vehicleId);
 
-  const [buyerName, setBuyerName] = useState("Haji Abdul Qadir Karimi");
-  const [buyerTazkira, setBuyerTazkira] = useState("HRT-1402-984210");
-  const [buyerPhone, setBuyerPhone] = useState("+93 79 988 7766");
-  const [downPaymentUSD, setDownPaymentUSD] = useState<number>(10000);
+  const [buyerName, setBuyerName] = useState("");
+  const [buyerTazkira, setBuyerTazkira] = useState("");
+  const [buyerPhone, setBuyerPhone] = useState("");
+  const [downPaymentUSD, setDownPaymentUSD] = useState<number>(0);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
   const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
 
@@ -175,6 +175,7 @@ export default function VehicleDeedPage() {
   };
 
   const handleDownloadInvoice = async () => {
+    if (!vehicle) return;
     setIsDownloadingInvoice(true);
     addToast("Generating commercial invoice PDF for vehicle...", "info");
     try {

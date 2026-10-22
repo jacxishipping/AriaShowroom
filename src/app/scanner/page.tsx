@@ -493,7 +493,7 @@ export default function LotBarcodeScannerPage() {
                       Optical Laser Scanner Active
                     </h4>
                     <p className="text-[10px] text-slate-400 max-w-xs mt-0.5">
-                      {cameraError || "Point webcam or phone at vehicle VIN tag. Click sample vehicles below to simulate instant scan."}
+                      {cameraError || "Point webcam or phone at vehicle VIN tag. Click registered vehicles below to simulate instant scan."}
                     </p>
                   </div>
                 </div>
@@ -550,7 +550,7 @@ export default function LotBarcodeScannerPage() {
             {/* Quick 1-Click Scan Chips */}
             <div className="pt-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                ⚡ Quick Scan Sample Barcodes:
+                ⚡ Quick Scan Vehicle Barcodes:
               </span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {vehicles.slice(0, 4).map((v) => (
@@ -819,7 +819,7 @@ export default function LotBarcodeScannerPage() {
                 Awaiting VIN Scan or Selection
               </h4>
               <p className="text-[11px] text-slate-400 leading-relaxed max-w-xs mx-auto">
-                Scan a barcode with your camera, use a handheld laser gun, or click any sample vehicle above.
+                Scan a barcode with your camera, use a handheld laser gun, or select any vehicle from the list.
               </p>
             </div>
           )}

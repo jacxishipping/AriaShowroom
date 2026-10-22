@@ -8,6 +8,7 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { formatMileage } from "@/lib/utils";
 import { translations } from "@/lib/translations";
 import {
+  Car,
   X,
   ChevronLeft,
   ChevronRight,
@@ -99,12 +100,19 @@ Please schedule a viewing or share more photos.`
           {/* Photo Gallery Column (7 cols) */}
           <div className="md:col-span-7 space-y-3">
             <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-black border border-slate-200 dark:border-slate-800">
-              <Image
-                src={primaryImage}
-                alt={`${vehicle.make} ${vehicle.model}`}
-                fill
-                className="object-cover"
-              />
+              {primaryImage ? (
+                <Image
+                  src={primaryImage}
+                  alt={`${vehicle.make} ${vehicle.model}`}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-slate-400">
+                  <Car className="h-12 w-12 opacity-30 mb-2" />
+                  <span className="text-xs font-mono">No Photo Available</span>
+                </div>
+              )}
               <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
                 <MuiChip
                   label={vehicle.status}

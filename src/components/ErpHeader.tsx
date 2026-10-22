@@ -31,6 +31,10 @@ import {
   Calculator,
   PanelRightOpen,
   LogOut,
+  HelpCircle,
+  Compass,
+  SlidersHorizontal,
+  Palette,
 } from "lucide-react";
 
 interface ErpHeaderProps {
@@ -81,6 +85,8 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
     setActiveBranch,
     setInspectedVehicleId,
     setIsShortcutsModalOpen,
+    setIsTutorialOpen,
+    hasCompletedTutorial,
   } = useShowroomStore();
 
   const [isBranchMenuOpen, setIsBranchMenuOpen] = useState(false);
@@ -592,13 +598,19 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                               className="flex items-center gap-2.5 overflow-hidden flex-1"
                             >
                               <div className="relative h-8 w-11 overflow-hidden rounded bg-slate-100 dark:bg-slate-800 shrink-0">
-                                <Image
-                                  src={v.images[0]}
-                                  alt={v.model}
-                                  fill
-                                  referrerPolicy="no-referrer"
-                                  className="object-cover"
-                                />
+                                {v.images[0] ? (
+                                  <Image
+                                    src={v.images[0]}
+                                    alt={v.model}
+                                    fill
+                                    referrerPolicy="no-referrer"
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                    <Car className="h-4 w-4 opacity-50" />
+                                  </div>
+                                )}
                               </div>
                               <div className="min-w-0">
                                 <div className="truncate text-xs font-semibold text-slate-900 dark:text-white">
@@ -1046,13 +1058,19 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                           className="flex items-center gap-3 overflow-hidden flex-1 cursor-pointer"
                         >
                           <div className="relative h-10 w-14 shrink-0 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                            <Image
-                              src={v.images[0]}
-                              alt={v.model}
-                              fill
-                              referrerPolicy="no-referrer"
-                              className="object-cover"
-                            />
+                            {v.images[0] ? (
+                              <Image
+                                src={v.images[0]}
+                                alt={v.model}
+                                fill
+                                referrerPolicy="no-referrer"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                <Car className="h-4 w-4 opacity-50" />
+                              </div>
+                            )}
                           </div>
                           <div className="truncate">
                             <div className="text-xs font-bold text-slate-900 dark:text-white hover:text-[#1A73E8] transition-colors truncate">

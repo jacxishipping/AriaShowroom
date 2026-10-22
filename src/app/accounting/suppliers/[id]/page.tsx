@@ -42,15 +42,13 @@ export default function SupplierLedgerPage() {
     useShowroomStore();
   const t = translations[language];
 
-  const supplier =
-    suppliers.find((s) => s.id === supplierId || s.id.toLowerCase() === supplierId?.toLowerCase()) ||
-    suppliers[0];
+  const supplier = suppliers.find((s) => s.id === supplierId || s.id.toLowerCase() === supplierId?.toLowerCase());
 
   const [isPaying, setIsPaying] = useState(false);
   const [payAmount, setPayAmount] = useState<number>(0);
   const [payMethod, setPayMethod] = useState("Sarrafi Hawala (حواله صرافی)");
   const [payRef, setPayRef] = useState("");
-  const [paySarrafi, setPaySarrafi] = useState("Sarrafi Haji Qayoum Khorasan Market");
+  const [paySarrafi, setPaySarrafi] = useState("");
 
   const [isBilling, setIsBilling] = useState(false);
   const [billStock, setBillStock] = useState("");

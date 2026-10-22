@@ -17,12 +17,12 @@ interface VehicleDeedModalProps {
 
 export function VehicleDeedModal({ vehicle, isOpen, onClose }: VehicleDeedModalProps) {
   const deedRef = useRef<HTMLDivElement>(null);
-  const { language, exchangeRate } = useShowroomStore();
+  const { language, exchangeRate, branding } = useShowroomStore();
   const t = translations[language];
 
-  const [buyerName, setBuyerName] = useState("Haji Abdul Qadir Karimi");
-  const [buyerTazkira, setBuyerTazkira] = useState("HRT-1402-984210");
-  const [buyerPhone, setBuyerPhone] = useState("+93 79 988 7766");
+  const [buyerName, setBuyerName] = useState("");
+  const [buyerTazkira, setBuyerTazkira] = useState("");
+  const [buyerPhone, setBuyerPhone] = useState("");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
 
   const priceAfn = Math.round(vehicle.sellingPrice * exchangeRate);
@@ -39,7 +39,7 @@ export function VehicleDeedModal({ vehicle, isOpen, onClose }: VehicleDeedModalP
 
     const origin = typeof window !== "undefined" ? window.location.origin : "https://sadozaimotors.af";
     const payload = JSON.stringify({
-      issuer: "Sadozai Motors Herat",
+      issuer: branding?.dealershipName || "Sadozai Motors Herat",
       contract: contractNumber,
       stockNumber: vehicle.stockNumber,
       vin: vehicle.vin,

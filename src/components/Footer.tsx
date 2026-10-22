@@ -4,10 +4,10 @@ import React from "react";
 import Link from "next/link";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
-import { ShieldCheck, ExternalLink, Keyboard } from "lucide-react";
+import { ShieldCheck, ExternalLink, Keyboard, HelpCircle } from "lucide-react";
 
 export function Footer() {
-  const { language, setIsShortcutsModalOpen } = useShowroomStore();
+  const { language, setIsShortcutsModalOpen, setIsTutorialOpen, branding } = useShowroomStore();
   const t = translations[language];
 
   return (

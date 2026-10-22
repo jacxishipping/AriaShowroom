@@ -27,6 +27,7 @@ import {
   DialogActions,
 } from "@/components/mui";
 import {
+  Car,
   Plus,
   Trash2,
   FileText,
@@ -665,13 +666,19 @@ export default function ErpOperationsCockpit() {
                             className="relative h-8 w-12 shrink-0 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-[#262F40] block group/thumb cursor-pointer"
                             title={t.dashboardQuickInspect}
                           >
-                            <Image
-                              src={veh.images[0]}
-                              alt={veh.model}
-                              fill
-                              referrerPolicy="no-referrer"
-                              className="object-cover group-hover/thumb:scale-105 transition-transform"
-                            />
+                            {veh.images[0] ? (
+                              <Image
+                                src={veh.images[0]}
+                                alt={veh.model}
+                                fill
+                                referrerPolicy="no-referrer"
+                                className="object-cover group-hover/thumb:scale-105 transition-transform"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                <Car className="h-4 w-4 opacity-50" />
+                              </div>
+                            )}
                           </button>
 
                           <div className="min-w-0">

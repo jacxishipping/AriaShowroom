@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useShowroomStore } from "@/store/useShowroomStore";
-import { SAMPLE_VEHICLE_PHOTOS_40 } from "@/lib/sample-photos";
 import { processAndWatermarkImage } from "@/lib/watermark-utils";
 import { translations } from "@/lib/translations";
 import { decodeVin } from "@/lib/vin-decoder";
@@ -96,43 +95,36 @@ export default function VehicleIntakePage() {
   // Core vehicle form data state
   const [formData, setFormData] = useState({
     stockNumber: `ARI-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
-    vin: "JTMBW0RJ" + Math.random().toString(36).substring(2, 11).toUpperCase(),
-    make: "Toyota",
-    model: "Land Cruiser 300",
-    year: 2024,
-    trim: "GR-Sport Twin-Turbo 3.5L V6",
+    vin: "",
+    make: "",
+    model: "",
+    year: new Date().getFullYear(),
+    trim: "",
     bodyType: "SUV" as const,
     originCountry: "UAE" as const,
     steering: "Left-Hand Drive (LHD)" as const,
-    customsClearance: "Islam Qala Gomrok - Cleared via Maktoub #IQ-2026-9902",
+    customsClearance: "",
     cleanTitle: true,
-    mileage: 12500,
+    mileage: 0,
     fuelType: "Petrol" as const,
     transmission: "Automatic" as const,
     driveType: "4WD" as const,
-    color: "Pearl White Metallic",
+    color: "",
     status: "Available on Lot" as const,
     yardLocation: "Main Showroom - Bagh-e-Azadi",
-    purchasePrice: 72000,
-    freightCost: 2400,
-    customsDuty: 8200,
-    repairCost: 400,
-    sellingPrice: 94500,
-    features:
-      "Center Console Cool Box, Front & Rear Diff-Lock, Panoramic Sunroof, Premium Leather Seats, 360° Surround View Camera, Adaptive Radar Cruise Control",
-    description:
-      "2024 Toyota Land Cruiser 300 GR-Sport GCC specification. Direct Jebel Ali Port import, fully cleared at Islam Qala Dry Port. Pristine condition with zero accident history.",
-    descriptionDari:
-      "تویوتا لندکروزر ۳۰۰ مدل ۲۰۲۴ جی‌آر اسپورت فول آپشن وارداتی مستقیم دبی، محصول شده کامل گمرک اسلام قلعه هرات، بدون رنگ و خط و خش.",
-    descriptionPashto:
-      "تویوټا لینډکروزر ۳۰۰ ماډل ۲۰۲۴ جی آر سپورټ د دوبۍ مستقیم واردات، د هرات اسلام قلعه ګمرک محصول شوی او په بشپړ ډول پاک.",
+    purchasePrice: 0,
+    freightCost: 0,
+    customsDuty: 0,
+    repairCost: 0,
+    sellingPrice: 0,
+    features: "",
+    description: "",
+    descriptionDari: "",
+    descriptionPashto: "",
   });
 
   // Images state
-  const [images, setImages] = useState<string[]>([
-    "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=1400&q=85",
-    "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80",
-  ]);
+  const [images, setImages] = useState<string[]>([]);
   const [bulkUrlInput, setBulkUrlInput] = useState("");
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -228,44 +220,6 @@ export default function VehicleIntakePage() {
     addToast(`Generated stock ID: ${newStock}`, "info");
   };
 
-  // Quick Demo Auto-Fill
-  const handleQuickPopulateSample = () => {
-    setFormData({
-      stockNumber: `ARI-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
-      vin: "JTMBW0RJ3R" + Math.random().toString(36).substring(2, 9).toUpperCase(),
-      make: "Toyota",
-      model: "Land Cruiser 300",
-      year: 2024,
-      trim: "VXR Twin-Turbo 3.5L V6 Full Option",
-      bodyType: "SUV",
-      originCountry: "UAE",
-      steering: "Left-Hand Drive (LHD)",
-      customsClearance: "Islam Qala Gomrok - Cleared via Maktoub #IQ-2026-9902",
-      cleanTitle: true,
-      mileage: 8200,
-      fuelType: "Petrol",
-      transmission: "Automatic",
-      driveType: "4WD",
-      color: "Pearl White Crystal",
-      status: "Available on Lot",
-      yardLocation: "Main Showroom - Bagh-e-Azadi",
-      purchasePrice: 84000,
-      freightCost: 2600,
-      customsDuty: 9500,
-      repairCost: 500,
-      sellingPrice: 108000,
-      features:
-        "Center Console Cool Box, Front & Rear Diff-Lock, Panoramic Sunroof, Premium Leather Seats, 360° Surround View Camera, Adaptive Radar Cruise Control, Heated & Ventilated Seats, Head-Up Display (HUD), Power Electric Tailgate",
-      description:
-        "2024 Toyota Land Cruiser 300 VXR Twin Turbo direct Dubai import. Immaculate showroom lot condition with verified customs clearance, original paint, and clean title.",
-      descriptionDari:
-        "تویوتا لندکروزر ۳۰۰ مدل ۲۰۲۴ فول آپشن وارداتی خلیج، بدون رنگ و خط و خش، محصول کامل گمرک اسلام قلعه.",
-      descriptionPashto:
-        "تویوټا لینډکروزر ۳۰۰ ماډل ۲۰۲۴ فول آفشن خلیجي واردات، بې رنګه او بې ټکره د هرات اسلام قلعه ګمرک محصول شوی.",
-    });
-    setImages(SAMPLE_VEHICLE_PHOTOS_40);
-    addToast("⚡ Sample 2024 Toyota Land Cruiser 300 VXR loaded into intake dossier!", "success");
-  };
 
   // Photo Upload Handler with Watermarking
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -331,10 +285,6 @@ export default function VehicleIntakePage() {
     }
   };
 
-  const handleLoadSample40Photos = () => {
-    setImages(SAMPLE_VEHICLE_PHOTOS_40);
-    addToast("Loaded 40+ curated high-res showcase photos", "success");
-  };
 
   const handleSetPrimaryPhoto = (index: number) => {
     if (index === 0) return;
@@ -451,7 +401,7 @@ export default function VehicleIntakePage() {
         tires: "Original Factory Tires (95% Tread)",
         accidentHistory: "Clean Title Guaranteed (No Accidents)",
       },
-      images: images.length > 0 ? images : [SAMPLE_VEHICLE_PHOTOS_40[0]],
+      images: images,
       documents: [],
       });
     } catch (error) {
@@ -515,15 +465,7 @@ export default function VehicleIntakePage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <button
-            type="button"
-            onClick={handleQuickPopulateSample}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#C59B27]/50 bg-[#C59B27]/10 hover:bg-[#C59B27]/20 text-[11px] font-mono font-bold uppercase tracking-wider text-[#9A7515] dark:text-[#D4AF37] transition-colors cursor-pointer"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Load Sample LC300 VXR
-          </button>
-
+          
           <Link
             href="/inventory"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#141821] text-[11px] font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:border-slate-400 transition-colors"
@@ -1141,31 +1083,7 @@ export default function VehicleIntakePage() {
                     className="hidden"
                     onChange={handleFileUpload}
                   />
-                  <MuiButton
-                    type="button"
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    startIcon={<Upload className="h-3.5 w-3.5" />}
-                    sx={{ fontSize: "11px", py: "4px" }}
-                  >
-                    Upload Files
-                  </MuiButton>
-
-                  <MuiButton
-                    type="button"
-                    variant="outlined"
-                    color="secondary"
-                    size="small"
-                    onClick={handleLoadSample40Photos}
-                    startIcon={<Sparkles className="h-3.5 w-3.5" />}
-                    sx={{ fontSize: "11px", py: "4px" }}
-                  >
-                    Load 40 Sample Photos
-                  </MuiButton>
-
+                  
                   <MuiButton
                     type="button"
                     variant="text"
@@ -1367,12 +1285,19 @@ export default function VehicleIntakePage() {
 
             {/* Thumbnail */}
             <div className="relative aspect-[16/10] w-full rounded overflow-hidden border border-[#D8D5CD] dark:border-[#242A38] bg-slate-100 dark:bg-slate-800">
-              <Image
-                src={images[0] || SAMPLE_VEHICLE_PHOTOS_40[0]}
-                alt={formData.model}
-                fill
-                className="object-cover"
-              />
+              {images[0] ? (
+                <Image
+                  src={images[0]}
+                  alt={formData.model || "Vehicle photo"}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                  <Car className="h-10 w-10 opacity-40 mb-1" />
+                  <span className="text-[10px] font-mono">No Photos Uploaded</span>
+                </div>
+              )}
               <div className="absolute bottom-1.5 left-1.5 bg-[#0D0F14]/85 text-white px-2 py-0.5 rounded text-[9px] font-mono font-bold">
                 {formData.stockNumber}
               </div>

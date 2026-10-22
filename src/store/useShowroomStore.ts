@@ -22,6 +22,155 @@ import {
   INITIAL_JOURNAL_ENTRIES,
 } from "@/lib/mock-data";
 
+export interface BrandingSettings {
+  dealershipName: string;
+  dealershipNameFa: string;
+  dealershipNamePs: string;
+  dealershipTagline: string;
+  dealershipShortCode: string;
+  licenseNumber: string;
+  tinNumber: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  address: string;
+  customsTerminalBranch: string;
+  authorizedSignatory: string;
+  signatoryTitle: string;
+  sealStyle: "official_gold" | "chamber_blue" | "customs_red" | "minimal_black";
+  logoPreset: "luxury_crest" | "monogram" | "crown" | "shield" | "custom";
+  customLogoUrl: string;
+  watermarkText: string;
+  watermarkPosition: "bottom-right" | "bottom-left" | "center" | "diagonal";
+  watermarkOpacity: number;
+}
+
+export interface ThemingSettings {
+  themeMode: "light" | "dark" | "system";
+  primaryColor: string;
+  accentPresetId: string;
+  borderRadius: number;
+  fontFamily: "inter" | "jakarta" | "system" | "serif-luxury" | "mono";
+  uiDensity: "comfortable" | "compact";
+  glassmorphism: boolean;
+  contrastMode: "standard" | "high-contrast";
+}
+
+export interface ThemePreset {
+  id: string;
+  name: string;
+  nameFa: string;
+  namePs: string;
+  primaryColor: string;
+  borderRadius: number;
+  uiDensity: "comfortable" | "compact";
+  fontFamily: "inter" | "jakarta" | "system" | "serif-luxury" | "mono";
+  description: string;
+}
+
+export const DEFAULT_BRANDING: BrandingSettings = {
+  dealershipName: "Sadozai Motors",
+  dealershipNameFa: "موتر فروشی سدوزی",
+  dealershipNamePs: "سدوزی موټرز",
+  dealershipTagline: "Premier Luxury Automotive Showroom & Import Agency",
+  dealershipShortCode: "SM",
+  licenseNumber: "Herat Dealership License #49912",
+  tinNumber: "TIN-98234-AF",
+  phone: "+93 79 910 2030",
+  whatsapp: "+93 79 910 2030",
+  email: "info@sadozaimotors.af",
+  address: "Bagh-e-Azadi Boulevard, Herat, Afghanistan",
+  customsTerminalBranch: "Islam Qala Dry Port Customs Terminal #3",
+  authorizedSignatory: "Haji Ahmad Shah Sadozai",
+  signatoryTitle: "President & Managing Director",
+  sealStyle: "official_gold",
+  logoPreset: "luxury_crest",
+  customLogoUrl: "",
+  watermarkText: "SADOZAI MOTORS HERAT · OFFICIAL INVENTORY",
+  watermarkPosition: "bottom-right",
+  watermarkOpacity: 0.35,
+};
+
+export const DEFAULT_THEMING: ThemingSettings = {
+  themeMode: "light",
+  primaryColor: "#1A73E8",
+  accentPresetId: "default-blue",
+  borderRadius: 8,
+  fontFamily: "jakarta",
+  uiDensity: "comfortable",
+  glassmorphism: true,
+  contrastMode: "standard",
+};
+
+export const THEME_PRESETS: ThemePreset[] = [
+  {
+    id: "default-blue",
+    name: "Khorasan Google Blue",
+    nameFa: "آبی کلاسیک خراسان",
+    namePs: "د خراسان کلاسیک آبي",
+    primaryColor: "#1A73E8",
+    borderRadius: 8,
+    uiDensity: "comfortable",
+    fontFamily: "jakarta",
+    description: "Modern enterprise Google Cloud console aesthetic with clean blues.",
+  },
+  {
+    id: "royal-gold",
+    name: "Sadozai Royal Gold",
+    nameFa: "طلایی سلطنتی سدوزی",
+    namePs: "د سدوزی شاهي طلايي",
+    primaryColor: "#D97706",
+    borderRadius: 12,
+    uiDensity: "comfortable",
+    fontFamily: "serif-luxury",
+    description: "Prestigious luxury automotive look suited for Land Cruiser & Lexus showrooms.",
+  },
+  {
+    id: "herat-emerald",
+    name: "Herat Oasis Emerald",
+    nameFa: "سبز زمردی هرات",
+    namePs: "د هرات زمرودي شین",
+    primaryColor: "#059669",
+    borderRadius: 8,
+    uiDensity: "comfortable",
+    fontFamily: "inter",
+    description: "Vibrant Afghan emerald green, symbolizing prosperity and trust.",
+  },
+  {
+    id: "midnight-purple",
+    name: "Executive Midnight",
+    nameFa: "بنفش تشریفاتی شب",
+    namePs: "د شپې تشریفاتي بنفش",
+    primaryColor: "#7C3AED",
+    borderRadius: 10,
+    uiDensity: "comfortable",
+    fontFamily: "jakarta",
+    description: "Sophisticated deep violet tone with executive polish.",
+  },
+  {
+    id: "crimson-red",
+    name: "Imperial Crimson",
+    nameFa: "قرمز یاقوتی درباری",
+    namePs: "یاقوتي سور",
+    primaryColor: "#DC2626",
+    borderRadius: 6,
+    uiDensity: "comfortable",
+    fontFamily: "system",
+    description: "High-impact bold crimson for sporty high-performance inventory.",
+  },
+  {
+    id: "stealth-obsidian",
+    name: "Stealth Slate & Steel",
+    nameFa: "فولادی تیره و متالیک",
+    namePs: "فولادي اوسپنیز",
+    primaryColor: "#475569",
+    borderRadius: 4,
+    uiDensity: "compact",
+    fontFamily: "mono",
+    description: "Minimalist industrial precision for dense fleet data analysis.",
+  },
+];
+
 export type RoleType = "SuperAdmin" | "SalesAgent" | "Accountant";
 export type CurrencyType = "USD" | "AFN";
 export type LanguageType = "en" | "fa" | "ps"; // English, Dari (Farsi), or Pashto
@@ -67,11 +216,29 @@ interface ShowroomStore {
   clientPresentationMode: boolean;
   activeBranch: string;
 
+  // Theming & Branding Engine
+  branding: BrandingSettings;
+  theming: ThemingSettings;
+  updateBranding: (branding: Partial<BrandingSettings>) => void;
+  updateTheming: (theming: Partial<ThemingSettings>) => void;
+  applyThemePreset: (presetId: string) => void;
+  resetBrandingToDefault: () => void;
+  resetThemingToDefault: () => void;
+
   // Google Platform Workspace State
   inspectedVehicleId: string | null;
   setInspectedVehicleId: (id: string | null) => void;
   isShortcutsModalOpen: boolean;
   setIsShortcutsModalOpen: (open: boolean) => void;
+
+  // First-Time Tutorial Walkthrough
+  hasCompletedTutorial: boolean;
+  isTutorialOpen: boolean;
+  tutorialStep: number;
+  setIsTutorialOpen: (open: boolean) => void;
+  setTutorialStep: (step: number) => void;
+  completeTutorial: (dontShowAgain?: boolean) => void;
+  resetTutorial: () => void;
   chartFilter: ChartFilterState | null;
   setChartFilter: (filter: ChartFilterState | null) => void;
   pinnedViews: PinnedView[];
@@ -295,10 +462,62 @@ export const useShowroomStore = create<ShowroomStore>()(
       clientPresentationMode: false,
       activeBranch: "Herat HQ · Bagh-e-Azadi",
 
+      // Theming & Branding State
+      branding: DEFAULT_BRANDING,
+      theming: DEFAULT_THEMING,
+
+      updateBranding: (updates) =>
+        set((state) => ({
+          branding: { ...state.branding, ...updates },
+        })),
+
+      updateTheming: (updates) =>
+        set((state) => ({
+          theming: { ...state.theming, ...updates },
+          ...(updates.themeMode ? { darkMode: updates.themeMode === "dark" } : {}),
+        })),
+
+      applyThemePreset: (presetId) => {
+        const preset = THEME_PRESETS.find((p) => p.id === presetId);
+        if (!preset) return;
+        set((state) => ({
+          theming: {
+            ...state.theming,
+            accentPresetId: preset.id,
+            primaryColor: preset.primaryColor,
+            borderRadius: preset.borderRadius,
+            uiDensity: preset.uiDensity,
+            fontFamily: preset.fontFamily,
+          },
+        }));
+      },
+
+      resetBrandingToDefault: () => set({ branding: DEFAULT_BRANDING }),
+      resetThemingToDefault: () => set({ theming: DEFAULT_THEMING }),
+
       inspectedVehicleId: null,
       setInspectedVehicleId: (id) => set({ inspectedVehicleId: id }),
       isShortcutsModalOpen: false,
       setIsShortcutsModalOpen: (open) => set({ isShortcutsModalOpen: open }),
+
+      // First-Time Tutorial State
+      hasCompletedTutorial: false,
+      isTutorialOpen: false,
+      tutorialStep: 0,
+      setIsTutorialOpen: (open) => set({ isTutorialOpen: open }),
+      setTutorialStep: (tutorialStep) => set({ tutorialStep }),
+      completeTutorial: (dontShowAgain = true) => {
+        set({
+          isTutorialOpen: false,
+          hasCompletedTutorial: dontShowAgain ? true : get().hasCompletedTutorial,
+        });
+      },
+      resetTutorial: () => {
+        set({
+          tutorialStep: 0,
+          isTutorialOpen: true,
+        });
+      },
       chartFilter: null,
       setChartFilter: (chartFilter) => set({ chartFilter }),
       pinnedViews: DEFAULT_PINNED_VIEWS,
@@ -770,40 +989,7 @@ export const useShowroomStore = create<ShowroomStore>()(
         })),
 
       // Showroom Activity Notifications
-      notifications: [
-        {
-          id: "notif-1",
-          title: "Customs Clearance Verified",
-          desc: "Toyota Land Cruiser 300 VXR (SM-HRT-101) negative plate papers stamped at Gomrok Herat.",
-          time: "10 mins ago",
-          read: false,
-          type: "customs",
-        },
-        {
-          id: "notif-2",
-          title: "Deposit Paid & Reserved",
-          desc: "Lexus LX 570 Super Sport (SM-HRT-102) reserved by Haji Mohammad Gul. Deposit: $15,000 USD.",
-          time: "45 mins ago",
-          read: false,
-          type: "sale",
-        },
-        {
-          id: "notif-3",
-          title: "New High-Value Inquiry",
-          desc: "Customer inquiry received via WhatsApp for Hilux Revo Rocco (SM-HRT-103).",
-          time: "2 hours ago",
-          read: false,
-          type: "lead",
-        },
-        {
-          id: "notif-4",
-          title: "Sarrafi Exchange Rate Alert",
-          desc: "Herat market rate settled at $1 USD = 70.5 AFN. Accounting ledgers synced.",
-          time: "5 hours ago",
-          read: true,
-          type: "rate",
-        },
-      ],
+      notifications: [],
       markNotificationRead: (id) =>
         set((state) => ({
           notifications: state.notifications.map((n) =>
@@ -1068,6 +1254,7 @@ export const useShowroomStore = create<ShowroomStore>()(
         compareIds: state.compareIds,
         pinnedViews: state.pinnedViews,
         activePinnedViewId: state.activePinnedViewId,
+        hasCompletedTutorial: state.hasCompletedTutorial,
       }),
       migrate: (persistedState) => {
         const state = persistedState as Partial<ShowroomStore> | undefined;
@@ -1083,6 +1270,7 @@ export const useShowroomStore = create<ShowroomStore>()(
           compareIds: state?.compareIds || [],
           pinnedViews: state?.pinnedViews?.length ? state.pinnedViews : DEFAULT_PINNED_VIEWS,
           activePinnedViewId: state?.activePinnedViewId || "all-fleet",
+          hasCompletedTutorial: Boolean(state?.hasCompletedTutorial),
         } as ShowroomStore;
       },
     }

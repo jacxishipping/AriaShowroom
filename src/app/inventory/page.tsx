@@ -454,13 +454,19 @@ export default function InventoryPage() {
                             className="relative h-8 w-11 shrink-0 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer block"
                             title={t.inventoryInspectTitle}
                           >
-                            <Image
-                              src={veh.images[0]}
-                              alt={veh.model}
-                              fill
-                              referrerPolicy="no-referrer"
-                              className="object-cover"
-                            />
+                            {veh.images[0] ? (
+                              <Image
+                                src={veh.images[0]}
+                                alt={veh.model}
+                                fill
+                                referrerPolicy="no-referrer"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                <Car className="h-4 w-4 opacity-50" />
+                              </div>
+                            )}
                           </button>
 
                           <div className="min-w-0">

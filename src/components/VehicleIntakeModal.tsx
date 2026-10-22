@@ -3,7 +3,6 @@
 import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { useShowroomStore } from "@/store/useShowroomStore";
-import { SAMPLE_VEHICLE_PHOTOS_40 } from "@/lib/sample-photos";
 import { processAndWatermarkImage } from "@/lib/watermark-utils";
 import {
   X,
@@ -155,10 +154,6 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
     }
   };
 
-  const handleLoadSample42Photos = () => {
-    setImages(SAMPLE_VEHICLE_PHOTOS_40);
-  };
-
   const handleSetPrimary = (index: number) => {
     setImages((prev) => {
       const selected = prev[index];
@@ -211,7 +206,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
         tires: "90% Tread Depth",
         accidentHistory: "Clean Title Guaranteed",
       },
-      images: images.length > 0 ? images : [SAMPLE_VEHICLE_PHOTOS_40[0]],
+      images: images,
       documents: [],
       });
     } catch (error) {
@@ -441,15 +436,7 @@ export function VehicleIntakeModal({ isOpen, onClose }: VehicleIntakeModalProps)
                   size="small"
                 />
 
-                <MuiButton
-                  variant="outlined"
-                  color="inherit"
-                  size="small"
-                  onClick={handleLoadSample42Photos}
-                  startIcon={<Sparkles className="h-3.5 w-3.5 text-primary" />}
-                >
-                  Load Sample 4K Album
-                </MuiButton>
+
               </div>
             </div>
 

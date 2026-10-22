@@ -51,16 +51,14 @@ export function SarrafiSettlementModal({
     "SARRAFI" | "CASH_SHOWROOM" | "BANK_TRANSFER" | "INSTALLMENT_PLAN"
   >("SARRAFI");
 
-  const [sarrafName, setSarrafName] = useState(
-    "Sarrafi Haji Mohammad & Sons (صرافی حاجی محمد و پسران)"
-  );
-  const [sarrafMarket, setSarrafMarket] = useState("Khorasan Market, Shop 42, Herat");
+  const [sarrafName, setSarrafName] = useState("");
+  const [sarrafMarket, setSarrafMarket] = useState("");
   const [hawalaVoucherNumber, setHawalaVoucherNumber] = useState(
     `HWL-KHR-2026-${vehicle.stockNumber.replace("SM-HRT-", "")}77`
   );
-  const [customerName, setCustomerName] = useState("Haji Abdul Qadir Karimi");
-  const [customerPhone, setCustomerPhone] = useState("+93799887766");
-  const [customerTazkira, setCustomerTazkira] = useState("HRT-1402-984210");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerTazkira, setCustomerTazkira] = useState("");
   const [lockedRate, setLockedRate] = useState(exchangeRate || 70.5);
 
   // Default 3-milestone installment schedule

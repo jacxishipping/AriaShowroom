@@ -79,7 +79,7 @@ export default function VehicleDetailsPage() {
   const t = translations[language];
   const hideFinancialMargins = clientPresentationMode || currentRole === "SalesAgent";
 
-  const vehicle = vehicles.find((v) => v.id === vehicleId) || vehicles[0];
+  const vehicle = vehicles.find((v) => v.id === vehicleId);
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -106,6 +106,7 @@ export default function VehicleDetailsPage() {
   useEffect(() => {
     if (!isLightboxOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!vehicle || !vehicle.images || vehicle.images.length === 0) return;
       if (e.key === "ArrowRight") {
         setActivePhotoIndex((prev) =>
           prev === vehicle.images.length - 1 ? 0 : prev + 1
