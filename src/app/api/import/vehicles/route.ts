@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { FuelType, SteeringSide, TransmissionType, VehicleStatus } from "@prisma/client";
-import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured, ensureDatabaseSchemaSynced } from "@/lib/prisma";
 import { requireApiRole } from "@/lib/api-auth";
 import { parseCsv, parseCsvNumber } from "@/lib/csv";
 import { recordSessionAuditEvent } from "@/lib/audit-log";
@@ -231,6 +231,7 @@ export async function POST(request: Request) {
       );
     }
     if (shouldCommit) {
+      await ensureDatabaseSchemaSynced();
       await prisma.$transaction(async (tx) => {
         for (const vehicle of vehicles) {
           const landedCost = vehicle.purchasePrice + vehicle.freightCost + vehicle.customsDuty + vehicle.repairCost;

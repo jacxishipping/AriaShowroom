@@ -11,6 +11,11 @@ import {
   MuiTableBody,
   MuiTableRow,
   MuiTableCell,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@/components/mui";
 import {
   Landmark,
@@ -24,6 +29,7 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   PieChart,
+  Trash2,
 } from "lucide-react";
 
 export function AccountingTab({
@@ -31,7 +37,8 @@ export function AccountingTab({
 }: {
   initialSubView?: "pnl" | "coa" | "trial" | "journal";
 } = {}) {
-  const { accounts, journalEntries, sales, expenses, vehicles, exchangeRate } = useShowroomStore();
+  const { accounts, journalEntries, sales, expenses, vehicles, exchangeRate, deleteJournalEntry, addToast } = useShowroomStore();
+  const [deletingEntry, setDeletingEntry] = useState<any | null>(null);
   const [subView, setSubView] = useState<"pnl" | "coa" | "trial" | "journal">(initialSubView);
 
   // Calculate live financial statements
@@ -101,6 +108,17 @@ export function AccountingTab({
     sales.length > 0
       ? (sales.reduce((acc, s) => acc + (s.exchangeRate || 70.5), 0) / sales.length).toFixed(2)
       : exchangeRate.toFixed(2);
+
+  const handleDeleteJournalEntry = async () => {
+    if (!deletingEntry) return;
+    try {
+      await deleteJournalEntry(deletingEntry.id);
+      addToast("Journal entry voided and removed", "success");
+      setDeletingEntry(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to void journal entry", "error");
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -383,6 +401,7 @@ export function AccountingTab({
                   <MuiTableCell header>Type</MuiTableCell>
                   <MuiTableCell header align="right">Debit (USD)</MuiTableCell>
                   <MuiTableCell header align="right">Credit (USD)</MuiTableCell>
+                  <MuiTableCell header align="center">Action</MuiTableCell>
                   <MuiTableCell header align="right">Net Balance</MuiTableCell>
                 </MuiTableRow>
               </MuiTableHead>
@@ -597,6 +616,34 @@ export function AccountingTab({
           </div>
         </div>
       )}
+      {/* Delete/Void Journal Entry Dialog */}
+      <Dialog
+        open={Boolean(deletingEntry)}
+        onClose={() => setDeletingEntry(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Void Journal Entry ({deletingEntry?.entryNumber})
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Are you sure you want to void and delete journal entry{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {deletingEntry?.entryNumber}
+            </strong>{" "}
+            ({deletingEntry?.description} — ${deletingEntry?.amountUSD?.toLocaleString()} USD)? This action cannot be undone.
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <MuiButton variant="outlined" color="inherit" onClick={() => setDeletingEntry(null)}>
+            Cancel
+          </MuiButton>
+          <MuiButton variant="contained" color="error" onClick={handleDeleteJournalEntry}>
+            Void Entry
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

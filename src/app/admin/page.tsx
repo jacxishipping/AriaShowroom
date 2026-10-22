@@ -44,6 +44,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Checkbox,
+  FormControlLabel,
 } from "@/components/mui";
 import {
   LayoutDashboard,
@@ -120,6 +122,11 @@ export default function AdminDashboardPage() {
     updateInvoiceStatus,
     addPaymentVoucher,
     addJournalEntry,
+    updateVehicle,
+    updateCustomer,
+    deleteCustomer,
+    updateSale,
+    deleteSale,
     addToast,
   } = useShowroomStore();
 
@@ -131,6 +138,13 @@ export default function AdminDashboardPage() {
     "crm" | "sales" | "invoices" | "inventory" | "suppliers" | "expenses" | "payments" | "accounting"
   >("crm");
   const [vehicleToDelete, setVehicleToDelete] = useState<VehicleItem | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<CustomerRecord | null>(null);
+  const [deletingCustomer, setDeletingCustomer] = useState<CustomerRecord | null>(null);
+  const [editingSale, setEditingSale] = useState<SaleRecord | null>(null);
+  const [deletingSale, setDeletingSale] = useState<SaleRecord | null>(null);
+  const [revertVehicleOnVoid, setRevertVehicleOnVoid] = useState(true);
+  const [editingVehicle, setEditingVehicle] = useState<VehicleItem | null>(null);
+
 
   // CRM Kanban vs Table view mode
   const [crmViewMode, setCrmViewMode] = useState<"kanban" | "table">("table");
@@ -472,6 +486,93 @@ export default function AdminDashboardPage() {
   });
 
   // 1-Click Pre-fill Deal from CRM Lead
+  const handleUpdateCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCustomer) return;
+    try {
+      await updateCustomer(editingCustomer.id, {
+        fullName: editingCustomer.fullName,
+        phone: editingCustomer.phone,
+        whatsapp: editingCustomer.whatsapp || "",
+        tazkiraNumber: editingCustomer.tazkiraNumber,
+        city: editingCustomer.city,
+        address: editingCustomer.address || "",
+        budget: Number(editingCustomer.budget),
+        leadStage: editingCustomer.leadStage,
+        notes: editingCustomer.notes || "",
+        interestedInVehicleId: editingCustomer.interestedInVehicleId || undefined,
+      });
+      addToast("Customer lead updated successfully", "success");
+      setEditingCustomer(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to update customer", "error");
+    }
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (!deletingCustomer) return;
+    try {
+      await deleteCustomer(deletingCustomer.id);
+      addToast("Customer lead deleted successfully", "success");
+      setDeletingCustomer(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to delete customer", "error");
+    }
+  };
+
+  const handleUpdateSale = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSale) return;
+    try {
+      const salePriceUSD = Number(editingSale.salePriceUSD);
+      await updateSale(editingSale.id, {
+        salePriceUSD,
+        paymentType: editingSale.paymentType,
+        downPaymentUSD: Number(editingSale.downPaymentUSD || 0),
+        installmentsRemaining: Number(editingSale.installmentsRemaining || 0),
+        status: editingSale.status,
+      });
+      addToast("Sale contract updated successfully", "success");
+      setEditingSale(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to update sale", "error");
+    }
+  };
+
+  const handleDeleteSale = async () => {
+    if (!deletingSale) return;
+    try {
+      await deleteSale(deletingSale.id, revertVehicleOnVoid);
+      addToast(
+        `Sale contract ${deletingSale.contractNumber} voided${revertVehicleOnVoid ? " and vehicle marked Available on Lot" : ""}`,
+        "success"
+      );
+      setDeletingSale(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to void sale", "error");
+    }
+  };
+
+  const handleUpdateVehicle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingVehicle) return;
+    try {
+      await updateVehicle(editingVehicle.id, {
+        sellingPrice: Number(editingVehicle.sellingPrice),
+        minTargetPrice: Number(editingVehicle.minTargetPrice || editingVehicle.sellingPrice),
+        status: editingVehicle.status,
+        yardLocation: editingVehicle.yardLocation,
+        mileage: Number(editingVehicle.mileage),
+        color: editingVehicle.color,
+        customsClearance: editingVehicle.customsClearance,
+      });
+      addToast(`Vehicle ${editingVehicle.stockNumber} updated successfully`, "success");
+      setEditingVehicle(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to update vehicle", "error");
+    }
+  };
+
   const handleInitiateDealFromLead = (cust: CustomerRecord) => {
     const matchedVeh =
       vehicles.find((v) => v.id === cust.interestedInVehicleId && v.status !== "Sold") ||
@@ -953,6 +1054,15 @@ export default function AdminDashboardPage() {
                           >
                             <FileText className="h-3.5 w-3.5" />
                           </IconButton>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => setEditingVehicle({ ...veh })}
+                            sx={{ padding: "4px" }}
+                            title="Edit Vehicle Details & Pricing"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </IconButton>
                           {currentRole === "SuperAdmin" && (
                             <IconButton
                               size="small"
@@ -1208,6 +1318,20 @@ export default function AdminDashboardPage() {
                                   >
                                     <Phone className="h-3 w-3" />
                                   </a>
+                                  <button
+                                    onClick={() => setEditingCustomer({ ...cust })}
+                                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                    title="Edit Lead Details"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => setDeletingCustomer(cust)}
+                                    className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                                    title="Delete Lead"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
                                 </div>
 
                                 {/* Step Movers & 1-Click Close Deal */}
@@ -1378,6 +1502,24 @@ export default function AdminDashboardPage() {
                                 >
                                   <Phone className="h-3.5 w-3.5" />
                                 </a>
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => setEditingCustomer({ ...cust })}
+                                  title="Edit Lead Details"
+                                  sx={{ p: "3px" }}
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => setDeletingCustomer(cust)}
+                                  title="Delete Lead"
+                                  sx={{ p: "3px" }}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </IconButton>
                               </div>
                             </MuiTableCell>
                           </MuiTableRow>
@@ -1811,6 +1953,27 @@ export default function AdminDashboardPage() {
                               >
                                 <Eye className="h-3.5 w-3.5 text-slate-500" />
                               </IconButton>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                title="Edit Sale Contract"
+                                onClick={() => setEditingSale({ ...s })}
+                                sx={{ p: "3px" }}
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                title="Void / Cancel Sale Contract"
+                                onClick={() => {
+                                  setRevertVehicleOnVoid(true);
+                                  setDeletingSale(s);
+                                }}
+                                sx={{ p: "3px" }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </IconButton>
                             </div>
                           </MuiTableCell>
                         </MuiTableRow>
@@ -1972,6 +2135,375 @@ export default function AdminDashboardPage() {
             Delete Permanently
           </MuiButton>
         </DialogActions>
+      </Dialog>
+
+
+      {/* Edit Customer Dialog */}
+      <Dialog
+        open={Boolean(editingCustomer)}
+        onClose={() => setEditingCustomer(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Edit Customer Lead (ویرایش معلومات مشتری و لید)
+        </DialogTitle>
+        {editingCustomer && (
+          <form onSubmit={handleUpdateCustomer}>
+            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Full Name (نام و تخلص)"
+                  value={editingCustomer.fullName}
+                  onChange={(e) => setEditingCustomer({ ...editingCustomer, fullName: e.target.value })}
+                  required
+                />
+                <MuiTextField
+                  label="Tazkira / Passport (نمبر تذکره)"
+                  value={editingCustomer.tazkiraNumber}
+                  onChange={(e) => setEditingCustomer({ ...editingCustomer, tazkiraNumber: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Phone Number"
+                  value={editingCustomer.phone}
+                  onChange={(e) => setEditingCustomer({ ...editingCustomer, phone: e.target.value })}
+                  required
+                />
+                <MuiTextField
+                  label="WhatsApp"
+                  value={editingCustomer.whatsapp || ""}
+                  onChange={(e) => setEditingCustomer({ ...editingCustomer, whatsapp: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="City (شهر)"
+                  value={editingCustomer.city}
+                  onChange={(e) => setEditingCustomer({ ...editingCustomer, city: e.target.value })}
+                  required
+                />
+                <MuiTextField
+                  label="Street Address / Location"
+                  value={editingCustomer.address || ""}
+                  onChange={(e) => setEditingCustomer({ ...editingCustomer, address: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Budget (USD $)"
+                  type="number"
+                  value={editingCustomer.budget}
+                  onChange={(e) => setEditingCustomer({ ...editingCustomer, budget: Number(e.target.value) })}
+                  required
+                />
+                <MuiTextField
+                  select
+                  label="Funnel Stage"
+                  value={editingCustomer.leadStage}
+                  onChange={(e) => setEditingCustomer({ ...editingCustomer, leadStage: e.target.value as any })}
+                  required
+                >
+                  <MenuItem value="New Inquiry">New Inquiry (استعلام جدید)</MenuItem>
+                  <MenuItem value="Follow-Up">Follow-Up (پیگیری)</MenuItem>
+                  <MenuItem value="Test Drive">Test Drive (تست درایو)</MenuItem>
+                  <MenuItem value="Negotiation">Negotiation (مذاکره قیمت)</MenuItem>
+                  <MenuItem value="Closed/Won">Closed/Won (معامله موفق)</MenuItem>
+                  <MenuItem value="Lost">Lost (منصرف شده)</MenuItem>
+                </MuiTextField>
+              </div>
+
+              <MuiTextField
+                select
+                label="Interested Vehicle (موتر مورد علاقه)"
+                value={editingCustomer.interestedInVehicleId || ""}
+                onChange={(e) => setEditingCustomer({ ...editingCustomer, interestedInVehicleId: e.target.value })}
+              >
+                <MenuItem value="">General Inquiry (No Specific Vehicle)</MenuItem>
+                {vehicles.map((v) => (
+                  <MenuItem key={v.id} value={v.id}>
+                    {v.year} {v.make} {v.model} — Stock #{v.stockNumber} (${v.sellingPrice.toLocaleString()})
+                  </MenuItem>
+                ))}
+              </MuiTextField>
+
+              <MuiTextField
+                label="Lead Notes & Preferences"
+                value={editingCustomer.notes || ""}
+                onChange={(e) => setEditingCustomer({ ...editingCustomer, notes: e.target.value })}
+                multiline
+                rows={2}
+              />
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5 }}>
+              <MuiButton variant="outlined" color="inherit" onClick={() => setEditingCustomer(null)}>
+                Cancel
+              </MuiButton>
+              <MuiButton type="submit" variant="contained" color="primary">
+                Save Changes
+              </MuiButton>
+            </DialogActions>
+          </form>
+        )}
+      </Dialog>
+
+      {/* Delete Customer Dialog */}
+      <Dialog
+        open={Boolean(deletingCustomer)}
+        onClose={() => setDeletingCustomer(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Delete Customer Lead
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Are you sure you want to permanently delete lead record for{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {deletingCustomer?.fullName}
+            </strong>{" "}
+            ({deletingCustomer?.phone})? This action cannot be undone.
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <MuiButton variant="outlined" color="inherit" onClick={() => setDeletingCustomer(null)}>
+            Cancel
+          </MuiButton>
+          <MuiButton variant="contained" color="error" onClick={handleDeleteCustomer}>
+            Delete Lead
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Sale Dialog */}
+      <Dialog
+        open={Boolean(editingSale)}
+        onClose={() => setEditingSale(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Edit Sale Contract ({editingSale?.contractNumber})
+        </DialogTitle>
+        {editingSale && (
+          <form onSubmit={handleUpdateSale}>
+            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-xs">
+                <span className="font-semibold block text-slate-900 dark:text-white">
+                  {editingSale.vehicleName} (Stock #{editingSale.stockNumber})
+                </span>
+                <span className="text-slate-500 font-mono text-[11px]">
+                  Buyer: {editingSale.customerName} • Tazkira: {editingSale.customerTazkira}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Contract Price (USD $)"
+                  type="number"
+                  value={editingSale.salePriceUSD}
+                  onChange={(e) => setEditingSale({ ...editingSale, salePriceUSD: Number(e.target.value) })}
+                  required
+                />
+                <MuiTextField
+                  select
+                  label="Payment Method"
+                  value={editingSale.paymentType}
+                  onChange={(e) => setEditingSale({ ...editingSale, paymentType: e.target.value as any })}
+                  required
+                >
+                  <MenuItem value="Full Cash">Full Cash (نقد کامل)</MenuItem>
+                  <MenuItem value="Installment Plan">Installment Plan (اقساطی)</MenuItem>
+                  <MenuItem value="Hawala / Bank Transfer">Hawala / Bank Transfer (حواله صرافی یا بانک)</MenuItem>
+                </MuiTextField>
+              </div>
+
+              {editingSale.paymentType === "Installment Plan" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <MuiTextField
+                    label="Down Payment ($)"
+                    type="number"
+                    value={editingSale.downPaymentUSD || 0}
+                    onChange={(e) => setEditingSale({ ...editingSale, downPaymentUSD: Number(e.target.value) })}
+                  />
+                  <MuiTextField
+                    label="Remaining Installments (Months)"
+                    type="number"
+                    value={editingSale.installmentsRemaining || 0}
+                    onChange={(e) => setEditingSale({ ...editingSale, installmentsRemaining: Number(e.target.value) })}
+                  />
+                </div>
+              )}
+
+              <MuiTextField
+                select
+                label="Contract Status"
+                value={editingSale.status}
+                onChange={(e) => setEditingSale({ ...editingSale, status: e.target.value as any })}
+                required
+              >
+                <MenuItem value="Completed">Completed (تکمیل شده)</MenuItem>
+                <MenuItem value="Pending Installments">Pending Installments (در حال پرداخت اقساط)</MenuItem>
+              </MuiTextField>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5 }}>
+              <MuiButton variant="outlined" color="inherit" onClick={() => setEditingSale(null)}>
+                Cancel
+              </MuiButton>
+              <MuiButton type="submit" variant="contained" color="primary">
+                Save Changes
+              </MuiButton>
+            </DialogActions>
+          </form>
+        )}
+      </Dialog>
+
+      {/* Delete / Void Sale Dialog */}
+      <Dialog
+        open={Boolean(deletingSale)}
+        onClose={() => setDeletingSale(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Void Sale Contract ({deletingSale?.contractNumber})
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
+            Are you sure you want to void and delete sale contract{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {deletingSale?.contractNumber}
+            </strong>{" "}
+            for vehicle{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {deletingSale?.vehicleName}
+            </strong>{" "}
+            (${deletingSale?.salePriceUSD?.toLocaleString()} USD)?
+          </p>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={revertVehicleOnVoid}
+                onChange={(e) => setRevertVehicleOnVoid(e.target.checked)}
+                color="primary"
+              />
+            }
+            label={
+              <span className="text-xs text-slate-700 dark:text-slate-300">
+                Revert vehicle chassis back to <strong>&apos;Available on Lot&apos;</strong>
+              </span>
+            }
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <MuiButton variant="outlined" color="inherit" onClick={() => setDeletingSale(null)}>
+            Cancel
+          </MuiButton>
+          <MuiButton variant="contained" color="error" onClick={handleDeleteSale}>
+            Void Contract
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Vehicle Dialog */}
+      <Dialog
+        open={Boolean(editingVehicle)}
+        onClose={() => setEditingVehicle(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Edit Vehicle Details & Pricing ({editingVehicle?.stockNumber})
+        </DialogTitle>
+        {editingVehicle && (
+          <form onSubmit={handleUpdateVehicle}>
+            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-xs">
+                <span className="font-semibold block text-slate-900 dark:text-white">
+                  {editingVehicle.year} {editingVehicle.make} {editingVehicle.model} ({editingVehicle.trim})
+                </span>
+                <span className="text-slate-500 font-mono text-[11px]">
+                  VIN: {editingVehicle.vin} • Origin: {editingVehicle.originCountry}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Selling Price (USD $)"
+                  type="number"
+                  value={editingVehicle.sellingPrice}
+                  onChange={(e) => setEditingVehicle({ ...editingVehicle, sellingPrice: Number(e.target.value) })}
+                  required
+                />
+                <MuiTextField
+                  label="Minimum Target / Floor ($)"
+                  type="number"
+                  value={editingVehicle.minTargetPrice || editingVehicle.sellingPrice}
+                  onChange={(e) => setEditingVehicle({ ...editingVehicle, minTargetPrice: Number(e.target.value) })}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  select
+                  label="Vehicle Status"
+                  value={editingVehicle.status}
+                  onChange={(e) => setEditingVehicle({ ...editingVehicle, status: e.target.value as any })}
+                  required
+                >
+                  <MenuItem value="Available on Lot">Available on Lot (موجود در نمایشگاه)</MenuItem>
+                  <MenuItem value="In Transit">In Transit (در حال انتقال/گمرک)</MenuItem>
+                  <MenuItem value="Reserved/Deposit Paid">Reserved / Deposit Paid (رزرو شده / بیعانه)</MenuItem>
+                  <MenuItem value="Under Prep/Maintenance">Under Prep / Maintenance (در حال شستشو یا سرویس)</MenuItem>
+                  <MenuItem value="Sold">Sold (فروخته شده)</MenuItem>
+                </MuiTextField>
+                <MuiTextField
+                  label="Yard Location (موقعیت در محوطه)"
+                  value={editingVehicle.yardLocation || "Main Showroom - Herat"}
+                  onChange={(e) => setEditingVehicle({ ...editingVehicle, yardLocation: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <MuiTextField
+                  label="Mileage (km)"
+                  type="number"
+                  value={editingVehicle.mileage}
+                  onChange={(e) => setEditingVehicle({ ...editingVehicle, mileage: Number(e.target.value) })}
+                  required
+                />
+                <MuiTextField
+                  label="Exterior Color"
+                  value={editingVehicle.color}
+                  onChange={(e) => setEditingVehicle({ ...editingVehicle, color: e.target.value })}
+                  required
+                />
+                <MuiTextField
+                  label="Customs Clearance"
+                  value={editingVehicle.customsClearance}
+                  onChange={(e) => setEditingVehicle({ ...editingVehicle, customsClearance: e.target.value })}
+                  required
+                />
+              </div>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5 }}>
+              <MuiButton variant="outlined" color="inherit" onClick={() => setEditingVehicle(null)}>
+                Cancel
+              </MuiButton>
+              <MuiButton type="submit" variant="contained" color="primary">
+                Save Changes
+              </MuiButton>
+            </DialogActions>
+          </form>
+        )}
       </Dialog>
 
       {/* Floating Batch Action Toolbar for CRM Leads */}

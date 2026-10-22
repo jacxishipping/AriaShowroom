@@ -106,9 +106,17 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const unauthorized = await requireApiRole(["ADMIN", "SALES"]);
   if (unauthorized) return unauthorized;
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true });
+  }
 
   try {
     const body = await request.json();
+    const customerId = body.customerId || body.id;
+    if (!customerId) {
+      return NextResponse.json({ success: false, error: "Customer ID is required" }, { status: 400 });
+    }
+
     const stageMap: Record<string, LeadStage> = {
       "New Inquiry": LeadStage.NEW_INQUIRY,
       "Follow-Up": LeadStage.FOLLOW_UP,
@@ -117,37 +125,50 @@ export async function PATCH(request: Request) {
       "Closed/Won": LeadStage.CLOSED_WON,
       Lost: LeadStage.LOST,
     };
-    const stage = stageMap[body.leadStage] || body.leadStage;
 
-    if (!body.customerId || !Object.values(LeadStage).includes(stage)) {
-      return NextResponse.json(
-        { success: false, error: "Customer ID and a valid lead stage are required" },
-        { status: 400 }
-      );
+    const updateData: any = {};
+    if (body.fullName !== undefined) updateData.fullName = body.fullName;
+    if (body.phone !== undefined) updateData.phone = body.phone;
+    if (body.whatsapp !== undefined) updateData.whatsapp = body.whatsapp;
+    if (body.tazkiraNumber !== undefined) updateData.tazkiraNumber = body.tazkiraNumber?.trim() || null;
+    if (body.city !== undefined) updateData.city = body.city;
+    if (body.address !== undefined) updateData.address = body.address;
+    if (body.budget !== undefined) updateData.budget = Number(body.budget) || 0;
+    if (body.notes !== undefined) updateData.notes = body.notes;
+    if (body.interestedInVehicleId !== undefined) updateData.interestedInVehicleId = body.interestedInVehicleId || null;
+    if (body.leadStage !== undefined) {
+      updateData.leadStage = stageMap[body.leadStage] || body.leadStage;
     }
 
-    const customer = await prisma.$transaction(async (tx) => {
-      const previous = await tx.customer.findUnique({
-        where: { id: body.customerId },
-        select: { leadStage: true },
-      });
-      const updated = await tx.customer.update({
-        where: { id: body.customerId },
-        data: { leadStage: stage },
-      });
-      await recordSessionAuditEvent(tx, {
-        action: "CUSTOMER_STAGE_CHANGED",
-        entityType: "Customer",
-        entityId: updated.id,
-        changes: { leadStage: { from: previous?.leadStage, to: updated.leadStage } },
-      });
-      return updated;
+    const updated = await prisma.customer.update({
+      where: { id: customerId },
+      data: updateData,
     });
-    return NextResponse.json({ success: true, data: customer });
+
+    return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to update customer stage" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message || "Failed to update customer" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  const unauthorized = await requireApiRole(["ADMIN"]);
+  if (unauthorized) return unauthorized;
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const body = await request.json().catch(() => ({}));
+    const customerId = body.customerId || body.id || searchParams.get("id");
+    if (!customerId) {
+      return NextResponse.json({ success: false, error: "Customer ID is required" }, { status: 400 });
+    }
+
+    await prisma.customer.delete({ where: { id: customerId } });
+    return NextResponse.json({ success: true, message: "Customer deleted successfully" });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message || "Failed to delete customer" }, { status: 500 });
   }
 }

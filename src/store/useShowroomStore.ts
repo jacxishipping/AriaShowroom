@@ -270,36 +270,50 @@ interface ShowroomStore {
   // CRM Leads
   customers: CustomerRecord[];
   addCustomer: (customer: Omit<CustomerRecord, "id" | "createdAt">) => Promise<void>;
+  updateCustomer: (customerId: string, updates: Partial<CustomerRecord>) => Promise<void>;
+  deleteCustomer: (customerId: string) => Promise<void>;
   updateCustomerStage: (customerId: string, stage: CustomerRecord["leadStage"]) => Promise<void>;
   batchUpdateCustomerStage: (customerIds: string[], stage: CustomerRecord["leadStage"]) => Promise<void>;
 
   // Sales & Transactions
   sales: SaleRecord[];
   addSale: (sale: Omit<SaleRecord, "id" | "contractNumber" | "saleDate">) => Promise<void>;
+  updateSale: (saleId: string, updates: Partial<SaleRecord>) => Promise<void>;
+  deleteSale: (saleId: string, revertVehicleStatus?: boolean) => Promise<void>;
 
   // Expenses & Vehicle Cost Allocation
   expenses: ExpenseRecord[];
   addExpense: (expense: Omit<ExpenseRecord, "id" | "date">) => Promise<void>;
+  updateExpense: (expenseId: string, updates: Partial<ExpenseRecord>) => Promise<void>;
+  deleteExpense: (expenseId: string) => Promise<void>;
 
   // Suppliers & Supplier Ledger
   suppliers: SupplierRecord[];
   addSupplier: (supplier: Omit<SupplierRecord, "id" | "bills" | "totalPurchasedUSD" | "totalPaidUSD" | "balanceUSD">) => Promise<void>;
+  updateSupplier: (supplierId: string, updates: Partial<SupplierRecord>) => Promise<void>;
+  deleteSupplier: (supplierId: string) => Promise<void>;
   addSupplierBill: (bill: Omit<SupplierBillRecord, "id">) => Promise<void>;
+  deleteSupplierBill: (supplierId: string, billId: string) => Promise<void>;
   recordSupplierPayment: (supplierId: string, amountUSD: number, paymentMethod: any, referenceNumber?: string, sarrafiAccount?: string) => Promise<void>;
 
   // Commercial Invoicing
   invoices: InvoiceRecord[];
   addInvoice: (invoice: Omit<InvoiceRecord, "id" | "invoiceNumber">) => Promise<void>;
+  updateInvoice: (invoiceId: string, updates: Partial<InvoiceRecord>) => Promise<void>;
+  deleteInvoice: (invoiceId: string) => Promise<void>;
   updateInvoiceStatus: (invoiceId: string, status: InvoiceRecord["status"]) => Promise<void>;
 
   // Payment Vouchers Engine
   payments: PaymentVoucherRecord[];
   addPaymentVoucher: (voucher: Omit<PaymentVoucherRecord, "id" | "voucherNumber">) => Promise<void>;
+  updatePaymentVoucher: (voucherId: string, updates: Partial<PaymentVoucherRecord>) => Promise<void>;
+  deletePaymentVoucher: (voucherId: string) => Promise<void>;
 
   // Accounting & Chart of Accounts
   accounts: AccountRecord[];
   journalEntries: JournalEntryRecord[];
   addJournalEntry: (entry: Omit<JournalEntryRecord, "id" | "entryNumber">) => Promise<void>;
+  deleteJournalEntry: (entryId: string) => Promise<void>;
 
   // UI/UX Enhancements: Favorites & Comparison
   favoriteIds: string[];
@@ -658,6 +672,24 @@ export const useShowroomStore = create<ShowroomStore>()(
         await get().fetchDatabaseRecords();
       },
 
+      updateCustomer: async (customerId, updates) => {
+        await writeRecord("/api/customers", { customerId, ...updates }, "PATCH");
+        set((state) => ({
+          customers: state.customers.map((c) =>
+            c.id === customerId ? { ...c, ...updates } : c
+          ),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
+      deleteCustomer: async (customerId) => {
+        await writeRecord("/api/customers", { customerId }, "DELETE");
+        set((state) => ({
+          customers: state.customers.filter((c) => c.id !== customerId),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
       updateCustomerStage: async (customerId, stage) => {
         await writeRecord("/api/customers", {
           customerId,
@@ -730,6 +762,30 @@ export const useShowroomStore = create<ShowroomStore>()(
         await get().fetchDatabaseRecords();
       },
 
+      updateSale: async (saleId, updates) => {
+        await writeRecord("/api/sales", { saleId, ...updates }, "PATCH");
+        set((state) => ({
+          sales: state.sales.map((s) =>
+            s.id === saleId ? { ...s, ...updates } : s
+          ),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
+      deleteSale: async (saleId, revertVehicleStatus = true) => {
+        const sale = get().sales.find((s) => s.id === saleId);
+        await writeRecord("/api/sales", { saleId, revertVehicleStatus }, "DELETE");
+        set((state) => ({
+          sales: state.sales.filter((s) => s.id !== saleId),
+          vehicles: revertVehicleStatus && sale?.stockNumber
+            ? state.vehicles.map((v) =>
+                v.stockNumber === sale.stockNumber ? { ...v, status: "Available on Lot" as const } : v
+              )
+            : state.vehicles,
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
       expenses: INITIAL_EXPENSES,
       addExpense: async (expenseData) => {
         const state = get();
@@ -757,6 +813,24 @@ export const useShowroomStore = create<ShowroomStore>()(
         await get().fetchDatabaseRecords();
       },
 
+      updateExpense: async (expenseId, updates) => {
+        await writeRecord("/api/expenses", { expenseId, ...updates }, "PATCH");
+        set((state) => ({
+          expenses: state.expenses.map((e) =>
+            e.id === expenseId ? { ...e, ...updates } : e
+          ),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
+      deleteExpense: async (expenseId) => {
+        await writeRecord("/api/expenses", { expenseId }, "DELETE");
+        set((state) => ({
+          expenses: state.expenses.filter((e) => e.id !== expenseId),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
       // Suppliers & Supplier Ledger
       suppliers: INITIAL_SUPPLIERS,
       addSupplier: async (supplierData) => {
@@ -771,6 +845,36 @@ export const useShowroomStore = create<ShowroomStore>()(
         await writeRecord("/api/suppliers", supplierData);
         set((state) => ({
           suppliers: [newSupplier, ...state.suppliers],
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
+      updateSupplier: async (supplierId, updates) => {
+        await writeRecord("/api/suppliers", { supplierId, ...updates }, "PATCH");
+        set((state) => ({
+          suppliers: state.suppliers.map((s) =>
+            s.id === supplierId ? { ...s, ...updates } : s
+          ),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
+      deleteSupplier: async (supplierId) => {
+        await writeRecord("/api/suppliers", { supplierId }, "DELETE");
+        set((state) => ({
+          suppliers: state.suppliers.filter((s) => s.id !== supplierId),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
+      deleteSupplierBill: async (supplierId, billId) => {
+        await writeRecord(`/api/suppliers/${encodeURIComponent(supplierId)}/bills`, { billId }, "DELETE");
+        set((state) => ({
+          suppliers: state.suppliers.map((s) =>
+            s.id === supplierId
+              ? { ...s, bills: s.bills.filter((b) => b.id !== billId) }
+              : s
+          ),
         }));
         await get().fetchDatabaseRecords();
       },
@@ -854,6 +958,24 @@ export const useShowroomStore = create<ShowroomStore>()(
         await get().fetchDatabaseRecords();
       },
 
+      updateInvoice: async (invoiceId, updates) => {
+        await writeRecord("/api/invoices", { invoiceId, ...updates }, "PATCH");
+        set((state) => ({
+          invoices: state.invoices.map((inv) =>
+            inv.id === invoiceId ? { ...inv, ...updates } : inv
+          ),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
+      deleteInvoice: async (invoiceId) => {
+        await writeRecord("/api/invoices", { invoiceId }, "DELETE");
+        set((state) => ({
+          invoices: state.invoices.filter((inv) => inv.id !== invoiceId),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
       // Payment Vouchers
       payments: INITIAL_PAYMENTS,
       addPaymentVoucher: async (voucherData) => {
@@ -875,6 +997,24 @@ export const useShowroomStore = create<ShowroomStore>()(
         await get().fetchDatabaseRecords();
       },
 
+      updatePaymentVoucher: async (voucherId, updates) => {
+        await writeRecord("/api/vouchers", { voucherId, ...updates }, "PATCH");
+        set((state) => ({
+          payments: state.payments.map((p) =>
+            p.id === voucherId ? { ...p, ...updates } : p
+          ),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
+      deletePaymentVoucher: async (voucherId) => {
+        await writeRecord("/api/vouchers", { voucherId }, "DELETE");
+        set((state) => ({
+          payments: state.payments.filter((p) => p.id !== voucherId),
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
       // Accounting & Chart of Accounts
       accounts: INITIAL_ACCOUNTS,
       journalEntries: INITIAL_JOURNAL_ENTRIES,
@@ -887,6 +1027,14 @@ export const useShowroomStore = create<ShowroomStore>()(
         await writeRecord("/api/journal-entries", entryData);
         set((state) => ({
           journalEntries: [newEntry, ...state.journalEntries],
+        }));
+        await get().fetchDatabaseRecords();
+      },
+
+      deleteJournalEntry: async (entryId) => {
+        await writeRecord("/api/journal-entries", { entryId }, "DELETE");
+        set((state) => ({
+          journalEntries: state.journalEntries.filter((je) => je.id !== entryId),
         }));
         await get().fetchDatabaseRecords();
       },

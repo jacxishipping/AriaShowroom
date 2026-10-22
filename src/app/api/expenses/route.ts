@@ -95,3 +95,51 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function PATCH(req: Request) {
+  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
+  if (unauthorized) return unauthorized;
+  if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
+
+  try {
+    const body = await req.json();
+    const expenseId = body.expenseId || body.id;
+    if (!expenseId) return NextResponse.json({ success: false, error: "Expense ID is required" }, { status: 400 });
+
+    const updateData: any = {};
+    if (body.category !== undefined) updateData.category = body.category;
+    if (body.amount !== undefined || body.amountUSD !== undefined) {
+      updateData.amount = Number(body.amountUSD ?? body.amount);
+    }
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.payee !== undefined) updateData.payee = body.payee;
+    if (body.receiptNum !== undefined || body.receiptNumber !== undefined) {
+      updateData.receiptNum = body.receiptNum ?? body.receiptNumber;
+    }
+
+    const updated = await prisma.expense.update({
+      where: { id: expenseId },
+      data: updateData,
+    });
+    return NextResponse.json({ success: true, data: updated });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message || "Failed to update expense" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
+  if (unauthorized) return unauthorized;
+  if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const expenseId = body.expenseId || body.id;
+    if (!expenseId) return NextResponse.json({ success: false, error: "Expense ID is required" }, { status: 400 });
+
+    await prisma.expense.delete({ where: { id: expenseId } });
+    return NextResponse.json({ success: true, message: "Expense deleted successfully" });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message || "Failed to delete expense" }, { status: 500 });
+  }
+}

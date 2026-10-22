@@ -216,3 +216,56 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function PATCH(request: Request) {
+  const unauthorized = await requireApiRole(["ADMIN", "SALES"]);
+  if (unauthorized) return unauthorized;
+  if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
+
+  try {
+    const body = await request.json();
+    const saleId = body.saleId || body.id;
+    if (!saleId) return NextResponse.json({ success: false, error: "Sale ID is required" }, { status: 400 });
+
+    const updateData: any = {};
+    if (body.salePrice !== undefined) updateData.salePrice = Number(body.salePrice);
+    if (body.notes !== undefined) updateData.notes = body.notes;
+    if (body.exchangeRate !== undefined) updateData.exchangeRate = Number(body.exchangeRate);
+
+    const updated = await prisma.sale.update({
+      where: { id: saleId },
+      data: updateData,
+    });
+    return NextResponse.json({ success: true, data: updated });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message || "Failed to update sale" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  const unauthorized = await requireApiRole(["ADMIN"]);
+  if (unauthorized) return unauthorized;
+  if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
+
+  try {
+    const body = await request.json().catch(() => ({}));
+    const saleId = body.saleId || body.id;
+    if (!saleId) return NextResponse.json({ success: false, error: "Sale ID is required" }, { status: 400 });
+
+    await prisma.$transaction(async (tx) => {
+      const sale = await tx.sale.findUnique({ where: { id: saleId } });
+      if (sale && body.revertVehicleStatus !== false) {
+        await tx.vehicle.update({
+          where: { id: sale.vehicleId },
+          data: { status: "AVAILABLE" },
+        });
+      }
+      await tx.installmentPayment.deleteMany({ where: { saleId } });
+      await tx.sale.delete({ where: { id: saleId } });
+    });
+
+    return NextResponse.json({ success: true, message: "Sale voided/deleted successfully" });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message || "Failed to delete sale" }, { status: 500 });
+  }
+}

@@ -49,3 +49,20 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function DELETE(req: Request) {
+  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
+  if (unauthorized) return unauthorized;
+  if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const entryId = body.entryId || body.id;
+    if (!entryId) return NextResponse.json({ success: false, error: "Entry ID is required" }, { status: 400 });
+
+    await prisma.journalEntry.delete({ where: { id: entryId } });
+    return NextResponse.json({ success: true, message: "Journal entry deleted successfully" });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message || "Failed to delete journal entry" }, { status: 500 });
+  }
+}

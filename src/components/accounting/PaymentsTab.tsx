@@ -15,6 +15,11 @@ import {
   MuiTableCell,
   MuiTextField,
   MenuItem,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@/components/mui";
 import {
   Banknote,
@@ -30,6 +35,8 @@ import {
   FileCheck2,
   Phone,
   Calendar,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 interface PaymentsTabProps {
@@ -37,7 +44,9 @@ interface PaymentsTabProps {
 }
 
 export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
-  const { payments, suppliers, vehicles, exchangeRate, addPaymentVoucher, addToast } = useShowroomStore();
+  const { payments, suppliers, vehicles, exchangeRate, addPaymentVoucher, updatePaymentVoucher, deletePaymentVoucher, addToast } = useShowroomStore();
+  const [editingVoucher, setEditingVoucher] = useState<PaymentVoucherRecord | null>(null);
+  const [deletingVoucher, setDeletingVoucher] = useState<PaymentVoucherRecord | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [methodFilter, setMethodFilter] = useState("all");
@@ -129,6 +138,41 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
         return { label: "Operational Outlay (مصرفی)", color: "warning" as const, icon: <ArrowUpRight className="h-3 w-3 mr-1 text-amber-600" /> };
       default:
         return { label: type, color: "default" as const, icon: null };
+    }
+  };
+
+  const handleUpdateVoucher = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingVoucher) return;
+    try {
+      const amountUSD = Number(editingVoucher.amountUSD);
+      await updatePaymentVoucher(editingVoucher.id, {
+        partyName: editingVoucher.partyName,
+        partyPhone: editingVoucher.partyPhone,
+        partyTazkira: editingVoucher.partyTazkira,
+        amountUSD,
+        amountAFN: Math.round(amountUSD * exchangeRate),
+        paymentMethod: editingVoucher.paymentMethod,
+        sarrafiAccount: editingVoucher.sarrafiAccount,
+        referenceNumber: editingVoucher.referenceNumber,
+        purpose: editingVoucher.purpose,
+        vehicleStock: editingVoucher.vehicleStock || undefined,
+      });
+      addToast("Payment voucher updated", "success");
+      setEditingVoucher(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to update voucher", "error");
+    }
+  };
+
+  const handleDeleteVoucher = async () => {
+    if (!deletingVoucher) return;
+    try {
+      await deletePaymentVoucher(deletingVoucher.id);
+      addToast("Payment voucher deleted", "success");
+      setDeletingVoucher(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to delete voucher", "error");
     }
   };
 
@@ -509,17 +553,37 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
                     </MuiTableCell>
 
                     <MuiTableCell align="center">
-                      <MuiButton
-                        component={Link}
-                        href={`/accounting/vouchers/${vch.id}`}
-                        variant="outlined"
-                        size="small"
-                        color="primary"
-                        sx={{ fontSize: "10px", py: "2px", px: "6px" }}
-                        startIcon={<Printer className="h-3 w-3" />}
-                      >
-                        Print
-                      </MuiButton>
+                      <div className="flex items-center justify-center gap-1">
+                        <MuiButton
+                          component={Link}
+                          href={`/accounting/vouchers/${vch.id}`}
+                          variant="outlined"
+                          size="small"
+                          color="primary"
+                          sx={{ fontSize: "10px", py: "2px", px: "6px" }}
+                          startIcon={<Printer className="h-3 w-3" />}
+                        >
+                          Print
+                        </MuiButton>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          title="Edit Voucher"
+                          onClick={() => setEditingVoucher({ ...vch })}
+                          sx={{ p: "3px" }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          title="Delete Voucher"
+                          onClick={() => setDeletingVoucher(vch)}
+                          sx={{ p: "3px" }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </IconButton>
+                      </div>
                     </MuiTableCell>
                   </MuiTableRow>
                 );
@@ -528,6 +592,132 @@ export function PaymentsTab({ onSelectVoucher }: PaymentsTabProps) {
           </MuiTable>
         </div>
       </div>
+      {/* Edit Payment Voucher Dialog */}
+      <Dialog
+        open={Boolean(editingVoucher)}
+        onClose={() => setEditingVoucher(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Edit Payment Voucher ({editingVoucher?.voucherNumber})
+        </DialogTitle>
+        {editingVoucher && (
+          <form onSubmit={handleUpdateVoucher}>
+            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Party Name (طرف حساب)"
+                  value={editingVoucher.partyName}
+                  onChange={(e) => setEditingVoucher({ ...editingVoucher, partyName: e.target.value })}
+                  required
+                />
+                <MuiTextField
+                  label="Phone / WhatsApp"
+                  value={editingVoucher.partyPhone || ""}
+                  onChange={(e) => setEditingVoucher({ ...editingVoucher, partyPhone: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Amount (USD $)"
+                  type="number"
+                  value={editingVoucher.amountUSD}
+                  onChange={(e) => setEditingVoucher({ ...editingVoucher, amountUSD: Number(e.target.value) })}
+                  required
+                />
+                <MuiTextField
+                  select
+                  label="Payment Channel"
+                  value={editingVoucher.paymentMethod}
+                  onChange={(e) => setEditingVoucher({ ...editingVoucher, paymentMethod: e.target.value as any })}
+                  required
+                >
+                  <MenuItem value="Cash (صندوق)">Cash (صندوق نقدی)</MenuItem>
+                  <MenuItem value="Sarrafi Hawala (حواله صرافی)">Sarrafi Hawala (حواله صرافی)</MenuItem>
+                  <MenuItem value="Bank Transfer (حساب بانکی)">Bank Transfer (حساب بانکی)</MenuItem>
+                </MuiTextField>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Sarrafi / Vault Account"
+                  value={editingVoucher.sarrafiAccount || ""}
+                  onChange={(e) => setEditingVoucher({ ...editingVoucher, sarrafiAccount: e.target.value })}
+                />
+                <MuiTextField
+                  label="Reference No. / Hawala ID"
+                  value={editingVoucher.referenceNumber || ""}
+                  onChange={(e) => setEditingVoucher({ ...editingVoucher, referenceNumber: e.target.value })}
+                />
+              </div>
+
+              <MuiTextField
+                label="Purpose / Memo (بابت)"
+                value={editingVoucher.purpose}
+                onChange={(e) => setEditingVoucher({ ...editingVoucher, purpose: e.target.value })}
+                required
+              />
+
+              <MuiTextField
+                select
+                label="Vehicle Stock Allocation (Optional)"
+                value={editingVoucher.vehicleStock || ""}
+                onChange={(e) => setEditingVoucher({ ...editingVoucher, vehicleStock: e.target.value })}
+              >
+                <MenuItem value="">None / General Settlement</MenuItem>
+                {vehicles.map((v) => (
+                  <MenuItem key={v.id} value={v.stockNumber}>
+                    {v.stockNumber} — {v.year} {v.make} {v.model}
+                  </MenuItem>
+                ))}
+              </MuiTextField>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5 }}>
+              <MuiButton variant="outlined" color="inherit" onClick={() => setEditingVoucher(null)}>
+                Cancel
+              </MuiButton>
+              <MuiButton type="submit" variant="contained" color="primary">
+                Save Changes
+              </MuiButton>
+            </DialogActions>
+          </form>
+        )}
+      </Dialog>
+
+      {/* Delete Payment Voucher Dialog */}
+      <Dialog
+        open={Boolean(deletingVoucher)}
+        onClose={() => setDeletingVoucher(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Delete Payment Voucher
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Are you sure you want to permanently delete voucher{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {deletingVoucher?.voucherNumber}
+            </strong>{" "}
+            for party{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {deletingVoucher?.partyName}
+            </strong>{" "}
+            (${deletingVoucher?.amountUSD?.toLocaleString()} USD)? This action cannot be undone.
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <MuiButton variant="outlined" color="inherit" onClick={() => setDeletingVoucher(null)}>
+            Cancel
+          </MuiButton>
+          <MuiButton variant="contained" color="error" onClick={handleDeleteVoucher}>
+            Delete Voucher
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

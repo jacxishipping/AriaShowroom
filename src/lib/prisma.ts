@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  schemaSynced: boolean | undefined;
 };
 
 export function isDatabaseConfigured(): boolean {
@@ -16,3 +17,31 @@ export const prisma =
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+/**
+ * Ensures any schema columns added in recent features (such as yardLocation, viewsCount, etc.)
+ * exist in the PostgreSQL database if it was provisioned prior to schema updates.
+ * Safe, non-destructive, idempotent, and runs at most once per application runtime.
+ */
+export async function ensureDatabaseSchemaSynced(): Promise<void> {
+  if (!isDatabaseConfigured() || globalForPrisma.schemaSynced) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      DO $$
+      BEGIN
+        ALTER TABLE "Vehicle" ADD COLUMN IF NOT EXISTS "yardLocation" TEXT DEFAULT 'Main Showroom - Bagh-e-Azadi';
+        ALTER TABLE "Vehicle" ADD COLUMN IF NOT EXISTS "viewsCount" INTEGER DEFAULT 0;
+        ALTER TABLE "Vehicle" ADD COLUMN IF NOT EXISTS "inquiriesCount" INTEGER DEFAULT 0;
+        ALTER TABLE "Vehicle" ADD COLUMN IF NOT EXISTS "statusChangedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+        ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "budget" DOUBLE PRECISION DEFAULT 0;
+        ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "interestedInVehicleId" TEXT;
+        ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "passwordChangeRequired" BOOLEAN DEFAULT false;
+      EXCEPTION
+        WHEN OTHERS THEN NULL;
+      END $$;
+    `);
+    globalForPrisma.schemaSynced = true;
+  } catch {
+    // If database connection is unavailable or DDL permissions restricted, ignore gracefully
+  }
+}

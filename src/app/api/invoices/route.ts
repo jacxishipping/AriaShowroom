@@ -198,3 +198,20 @@ export async function PATCH(req: Request) {
     );
   }
 }
+
+export async function DELETE(req: Request) {
+  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
+  if (unauthorized) return unauthorized;
+  if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const invoiceId = body.invoiceId || body.id;
+    if (!invoiceId) return NextResponse.json({ success: false, error: "Invoice ID is required" }, { status: 400 });
+
+    await prisma.invoice.delete({ where: { id: invoiceId } });
+    return NextResponse.json({ success: true, message: "Invoice deleted successfully" });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message || "Failed to delete invoice" }, { status: 500 });
+  }
+}

@@ -159,3 +159,51 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function PATCH(req: Request) {
+  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
+  if (unauthorized) return unauthorized;
+  if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
+
+  try {
+    const body = await req.json();
+    const voucherId = body.voucherId || body.id;
+    if (!voucherId) return NextResponse.json({ success: false, error: "Voucher ID is required" }, { status: 400 });
+
+    const updateData: any = {};
+    if (body.partyName !== undefined) updateData.partyName = body.partyName;
+    if (body.partyPhone !== undefined) updateData.partyPhone = body.partyPhone;
+    if (body.amountUSD !== undefined) {
+      updateData.amountUSD = Number(body.amountUSD);
+      updateData.amountAFN = Math.round(Number(body.amountUSD) * (Number(body.exchangeRate) || 70.5));
+    }
+    if (body.paymentMethod !== undefined) updateData.paymentMethod = body.paymentMethod;
+    if (body.sarrafiAccount !== undefined) updateData.sarrafiAccount = body.sarrafiAccount;
+    if (body.purpose !== undefined) updateData.purpose = body.purpose;
+
+    const updated = await prisma.payment.update({
+      where: { id: voucherId },
+      data: updateData,
+    });
+    return NextResponse.json({ success: true, data: updated });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message || "Failed to update voucher" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
+  if (unauthorized) return unauthorized;
+  if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const voucherId = body.voucherId || body.id;
+    if (!voucherId) return NextResponse.json({ success: false, error: "Voucher ID is required" }, { status: 400 });
+
+    await prisma.payment.delete({ where: { id: voucherId } });
+    return NextResponse.json({ success: true, message: "Voucher deleted successfully" });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message || "Failed to delete voucher" }, { status: 500 });
+  }
+}

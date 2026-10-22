@@ -13,6 +13,11 @@ import {
   MuiTableCell,
   MuiTextField,
   MenuItem,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@/components/mui";
 import {
   Receipt,
@@ -29,14 +34,18 @@ import {
   TrendingDown,
   Truck,
   Wrench,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 export function ExpensesTab() {
-  const { expenses, vehicles, exchangeRate, addExpense, addToast } = useShowroomStore();
+  const { expenses, vehicles, exchangeRate, addExpense, updateExpense, deleteExpense, addToast } = useShowroomStore();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [vehicleFilter, setVehicleFilter] = useState("all");
   const [isCreating, setIsCreating] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<any | null>(null);
+  const [deletingExpense, setDeletingExpense] = useState<any | null>(null);
 
   // New Expense Form State
   const [category, setCategory] = useState<
@@ -126,6 +135,36 @@ export function ExpensesTab() {
         return "success";
       default:
         return "default";
+    }
+  };
+
+  const handleUpdateExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingExpense) return;
+    try {
+      await updateExpense(editingExpense.id, {
+        category: editingExpense.category,
+        amountUSD: Number(editingExpense.amountUSD),
+        description: editingExpense.description,
+        payee: editingExpense.payee,
+        receiptNumber: editingExpense.receiptNumber,
+        vehicleStock: editingExpense.vehicleStock || undefined,
+      });
+      addToast("Expense record updated", "success");
+      setEditingExpense(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to update expense", "error");
+    }
+  };
+
+  const handleDeleteExpense = async () => {
+    if (!deletingExpense) return;
+    try {
+      await deleteExpense(deletingExpense.id);
+      addToast("Expense record deleted", "success");
+      setDeletingExpense(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to delete expense", "error");
     }
   };
 
@@ -413,6 +452,7 @@ export function ExpensesTab() {
                 <MuiTableCell header>Payee & Ref</MuiTableCell>
                 <MuiTableCell header>Date</MuiTableCell>
                 <MuiTableCell header align="right">Amount (USD / AFN)</MuiTableCell>
+                <MuiTableCell header align="center">Actions</MuiTableCell>
               </MuiTableRow>
             </MuiTableHead>
             <MuiTableBody>
@@ -466,12 +506,142 @@ export function ExpensesTab() {
                       ؋ {Math.round(exp.amountUSD * exchangeRate).toLocaleString()} AFN
                     </div>
                   </MuiTableCell>
+                  <MuiTableCell align="center">
+                    <div className="flex items-center justify-center gap-1">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => setEditingExpense({ ...exp })}
+                        title="Edit expense"
+                        sx={{ p: "3px" }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => setDeletingExpense(exp)}
+                        title="Delete expense"
+                        sx={{ p: "3px" }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </IconButton>
+                    </div>
+                  </MuiTableCell>
                 </MuiTableRow>
               ))}
             </MuiTableBody>
           </MuiTable>
         </div>
       </div>
+      {/* Edit Expense Dialog */}
+      <Dialog
+        open={Boolean(editingExpense)}
+        onClose={() => setEditingExpense(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Edit Expense Record (ویرایش سند مصرف)
+        </DialogTitle>
+        {editingExpense && (
+          <form onSubmit={handleUpdateExpense}>
+            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <MuiTextField
+                select
+                label="Expense Category"
+                value={editingExpense.category}
+                onChange={(e) => setEditingExpense({ ...editingExpense, category: e.target.value })}
+                required
+              >
+                <MenuItem value="Gomrok & Port Tariffs">Gomrok & Port Tariffs (گمرک و محصول)</MenuItem>
+                <MenuItem value="Transit & Ocean Freight">Transit & Ocean Freight (باربری و ترانزیت)</MenuItem>
+                <MenuItem value="Vehicle Maintenance/Detailing">Vehicle Maintenance & Detailing (ترمیم و پولیش)</MenuItem>
+                <MenuItem value="Showroom Overhead & Fuel">Showroom Overhead & Fuel (مصارف عمومی دفتر)</MenuItem>
+                <MenuItem value="Staff Commissions">Staff Commissions (کمیشن کارمندان)</MenuItem>
+              </MuiTextField>
+
+              <MuiTextField
+                label="Amount (USD)"
+                type="number"
+                value={editingExpense.amountUSD}
+                onChange={(e) => setEditingExpense({ ...editingExpense, amountUSD: Number(e.target.value) })}
+                required
+              />
+
+              <MuiTextField
+                label="Expense Description / Reason"
+                value={editingExpense.description}
+                onChange={(e) => setEditingExpense({ ...editingExpense, description: e.target.value })}
+                required
+              />
+
+              <MuiTextField
+                label="Paid To (Payee / Vendor)"
+                value={editingExpense.payee || ""}
+                onChange={(e) => setEditingExpense({ ...editingExpense, payee: e.target.value })}
+              />
+
+              <MuiTextField
+                label="Receipt / Bill Reference No."
+                value={editingExpense.receiptNumber || ""}
+                onChange={(e) => setEditingExpense({ ...editingExpense, receiptNumber: e.target.value })}
+              />
+
+              <MuiTextField
+                select
+                label="Vehicle Allocation (Stock)"
+                value={editingExpense.vehicleStock || ""}
+                onChange={(e) => setEditingExpense({ ...editingExpense, vehicleStock: e.target.value })}
+              >
+                <MenuItem value="">Showroom Overhead (No Car Assigned)</MenuItem>
+                {vehicles.map((v) => (
+                  <MenuItem key={v.id} value={v.stockNumber}>
+                    {v.stockNumber} — {v.year} {v.make} {v.model} ({v.vin})
+                  </MenuItem>
+                ))}
+              </MuiTextField>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5 }}>
+              <MuiButton variant="outlined" color="inherit" onClick={() => setEditingExpense(null)}>
+                Cancel
+              </MuiButton>
+              <MuiButton type="submit" variant="contained" color="primary">
+                Save Changes
+              </MuiButton>
+            </DialogActions>
+          </form>
+        )}
+      </Dialog>
+
+      {/* Delete Expense Dialog */}
+      <Dialog
+        open={Boolean(deletingExpense)}
+        onClose={() => setDeletingExpense(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Delete Expense Record
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Are you sure you want to permanently delete this expense record:{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {deletingExpense?.description} (${deletingExpense?.amountUSD?.toLocaleString()} USD)
+            </strong>
+            ? This action will update financial totals and cannot be undone.
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <MuiButton variant="outlined" color="inherit" onClick={() => setDeletingExpense(null)}>
+            Cancel
+          </MuiButton>
+          <MuiButton variant="contained" color="error" onClick={handleDeleteExpense}>
+            Delete Record
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

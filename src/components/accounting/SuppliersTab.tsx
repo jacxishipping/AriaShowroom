@@ -15,6 +15,11 @@ import {
   MuiTableCell,
   MuiTextField,
   MenuItem,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@/components/mui";
 import {
   Building2,
@@ -31,6 +36,8 @@ import {
   Globe,
   MapPin,
   Landmark,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 interface SuppliersTabProps {
@@ -38,7 +45,9 @@ interface SuppliersTabProps {
 }
 
 export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
-  const { suppliers, exchangeRate, addSupplier, addToast } = useShowroomStore();
+  const { suppliers, exchangeRate, addSupplier, updateSupplier, deleteSupplier, addToast } = useShowroomStore();
+  const [editingSupplier, setEditingSupplier] = useState<SupplierRecord | null>(null);
+  const [deletingSupplier, setDeletingSupplier] = useState<SupplierRecord | null>(null);
   const [search, setSearch] = useState("");
   const [countryFilter, setCountryFilter] = useState("all");
   const [isCreating, setIsCreating] = useState(false);
@@ -106,6 +115,39 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
     setNotes("");
     setIsCreating(false);
     addToast("Supplier added", "success");
+  };
+
+  const handleUpdateSupplier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSupplier) return;
+    try {
+      await updateSupplier(editingSupplier.id, {
+        companyName: editingSupplier.companyName,
+        contactName: editingSupplier.contactName,
+        country: editingSupplier.country,
+        city: editingSupplier.city,
+        phone: editingSupplier.phone,
+        whatsapp: editingSupplier.whatsapp,
+        email: editingSupplier.email,
+        bankOrSarrafiAccount: editingSupplier.bankOrSarrafiAccount,
+        notes: editingSupplier.notes,
+      });
+      addToast("Supplier updated successfully", "success");
+      setEditingSupplier(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to update supplier", "error");
+    }
+  };
+
+  const handleDeleteSupplier = async () => {
+    if (!deletingSupplier) return;
+    try {
+      await deleteSupplier(deletingSupplier.id);
+      addToast("Supplier deleted successfully", "success");
+      setDeletingSupplier(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to delete supplier", "error");
+    }
   };
 
   return (
@@ -451,17 +493,37 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                   </MuiTableCell>
 
                   <MuiTableCell align="center">
-                    <MuiButton
-                      component={Link}
-                      href={`/accounting/suppliers/${sup.id}`}
-                      variant="outlined"
-                      size="small"
-                      color="primary"
-                      sx={{ fontSize: "10px", py: "2px", px: "6px" }}
-                      startIcon={<Eye className="h-3 w-3" />}
-                    >
-                      Statement
-                    </MuiButton>
+                    <div className="flex items-center justify-center gap-1">
+                      <MuiButton
+                        component={Link}
+                        href={`/accounting/suppliers/${sup.id}`}
+                        variant="outlined"
+                        size="small"
+                        color="primary"
+                        sx={{ fontSize: "10px", py: "2px", px: "6px" }}
+                        startIcon={<Eye className="h-3 w-3" />}
+                      >
+                        Statement
+                      </MuiButton>
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        title="Edit Supplier"
+                        onClick={() => setEditingSupplier({ ...sup })}
+                        sx={{ p: "3px" }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        title="Delete Supplier"
+                        onClick={() => setDeletingSupplier(sup)}
+                        sx={{ p: "3px" }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </IconButton>
+                    </div>
                   </MuiTableCell>
                 </MuiTableRow>
               ))}
@@ -469,6 +531,120 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
           </MuiTable>
         </div>
       </div>
+      {/* Edit Supplier Dialog */}
+      <Dialog
+        open={Boolean(editingSupplier)}
+        onClose={() => setEditingSupplier(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Edit Vehicle Supplier / Exporter ({editingSupplier?.companyName})
+        </DialogTitle>
+        {editingSupplier && (
+          <form onSubmit={handleUpdateSupplier}>
+            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <MuiTextField
+                  label="Company Name"
+                  value={editingSupplier.companyName}
+                  onChange={(e) => setEditingSupplier({ ...editingSupplier, companyName: e.target.value })}
+                  required
+                />
+                <MuiTextField
+                  label="Contact Person"
+                  value={editingSupplier.contactName}
+                  onChange={(e) => setEditingSupplier({ ...editingSupplier, contactName: e.target.value })}
+                />
+                <MuiTextField
+                  label="Country & Hub"
+                  value={editingSupplier.country}
+                  onChange={(e) => setEditingSupplier({ ...editingSupplier, country: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <MuiTextField
+                  label="City / Port"
+                  value={editingSupplier.city || ""}
+                  onChange={(e) => setEditingSupplier({ ...editingSupplier, city: e.target.value })}
+                />
+                <MuiTextField
+                  label="Phone"
+                  value={editingSupplier.phone}
+                  onChange={(e) => setEditingSupplier({ ...editingSupplier, phone: e.target.value })}
+                  required
+                />
+                <MuiTextField
+                  label="WhatsApp"
+                  value={editingSupplier.whatsapp || ""}
+                  onChange={(e) => setEditingSupplier({ ...editingSupplier, whatsapp: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Email"
+                  type="email"
+                  value={editingSupplier.email || ""}
+                  onChange={(e) => setEditingSupplier({ ...editingSupplier, email: e.target.value })}
+                />
+                <MuiTextField
+                  label="Sarrafi / Bank Settlement Safe"
+                  value={editingSupplier.bankOrSarrafiAccount || ""}
+                  onChange={(e) => setEditingSupplier({ ...editingSupplier, bankOrSarrafiAccount: e.target.value })}
+                />
+              </div>
+
+              <MuiTextField
+                label="Supplier Notes & Import Terms"
+                value={editingSupplier.notes || ""}
+                onChange={(e) => setEditingSupplier({ ...editingSupplier, notes: e.target.value })}
+                multiline
+                rows={2}
+              />
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5 }}>
+              <MuiButton variant="outlined" color="inherit" onClick={() => setEditingSupplier(null)}>
+                Cancel
+              </MuiButton>
+              <MuiButton type="submit" variant="contained" color="primary">
+                Save Changes
+              </MuiButton>
+            </DialogActions>
+          </form>
+        )}
+      </Dialog>
+
+      {/* Delete Supplier Dialog */}
+      <Dialog
+        open={Boolean(deletingSupplier)}
+        onClose={() => setDeletingSupplier(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Delete Supplier Record
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Are you sure you want to permanently delete supplier{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {deletingSupplier?.companyName}
+            </strong>
+            ? This action cannot be undone.
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <MuiButton variant="outlined" color="inherit" onClick={() => setDeletingSupplier(null)}>
+            Cancel
+          </MuiButton>
+          <MuiButton variant="contained" color="error" onClick={handleDeleteSupplier}>
+            Delete Supplier
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

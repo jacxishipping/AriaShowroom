@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+import { prisma, isDatabaseConfigured, ensureDatabaseSchemaSynced } from "@/lib/prisma";
 import { VehicleStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -17,6 +17,8 @@ export async function GET(
   }
   const unauthorized = await requireApiRole(["ADMIN", "SALES", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
+
+  await ensureDatabaseSchemaSynced();
 
   try {
     const { id } = await params;
@@ -80,6 +82,8 @@ export async function PATCH(
   const unauthorized = await requireApiRole(["ADMIN"]);
   if (unauthorized) return unauthorized;
 
+  await ensureDatabaseSchemaSynced();
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -121,39 +125,93 @@ export async function PATCH(
     if (!previous) {
       return NextResponse.json({ success: false, error: "Vehicle not found" }, { status: 404 });
     }
-    const vehicle = await prisma.$transaction(async (tx) => {
-      const updated = await tx.vehicle.update({
-        where: { id },
-        data,
-        include: {
-          images: true,
-        },
+
+    let vehicle;
+    try {
+      vehicle = await prisma.$transaction(async (tx) => {
+        const updated = await tx.vehicle.update({
+          where: { id },
+          data,
+          include: {
+            images: true,
+          },
+        });
+        if (data.status !== undefined && data.status !== previous.status) {
+          try {
+            await tx.$executeRaw`
+              UPDATE "Vehicle" SET "statusChangedAt" = NOW() WHERE id = ${id}
+            `;
+          } catch {
+            // Ignore if statusChangedAt column is missing
+          }
+        }
+        const trackedFields = ["status", "sellingPrice", "landedCost", "minTargetPrice"];
+        const changes = Object.fromEntries(
+          trackedFields
+            .filter((field) => data[field] !== undefined && data[field] !== previous[field as keyof typeof previous])
+            .map((field) => [
+              field,
+              {
+                from: previous[field as keyof typeof previous],
+                to: data[field],
+              },
+            ])
+        );
+        await recordSessionAuditEvent(tx, {
+          action: "VEHICLE_UPDATED",
+          entityType: "Vehicle",
+          entityId: id,
+          changes: Object.keys(changes).length > 0 ? changes : { fields: Object.keys(data) },
+        });
+        return updated;
       });
-      if (data.status !== undefined && data.status !== previous.status) {
-        await tx.$executeRaw`
-          UPDATE "Vehicle" SET "statusChangedAt" = NOW() WHERE id = ${id}
-        `;
-      }
-      const trackedFields = ["status", "sellingPrice", "landedCost", "minTargetPrice"];
-      const changes = Object.fromEntries(
-        trackedFields
-          .filter((field) => data[field] !== undefined && data[field] !== previous[field as keyof typeof previous])
-          .map((field) => [
-            field,
-            {
-              from: previous[field as keyof typeof previous],
-              to: data[field],
+    } catch (updateError: any) {
+      const errMsg = updateError?.message || "";
+      const isMissingColumn =
+        errMsg.includes("yardLocation") ||
+        errMsg.includes("viewsCount") ||
+        errMsg.includes("inquiriesCount") ||
+        errMsg.includes("does not exist in the current database");
+
+      if (isMissingColumn) {
+        // Fallback for pre-migration schemas: strip physical columns and preserve in conditionNotes
+        const fallbackData = { ...data };
+        delete (fallbackData as any).yardLocation;
+        delete (fallbackData as any).viewsCount;
+        delete (fallbackData as any).inquiriesCount;
+
+        vehicle = await prisma.$transaction(async (tx) => {
+          const updated = await tx.vehicle.update({
+            where: { id },
+            data: fallbackData,
+            include: {
+              images: true,
             },
-          ])
-      );
-      await recordSessionAuditEvent(tx, {
-        action: "VEHICLE_UPDATED",
-        entityType: "Vehicle",
-        entityId: id,
-        changes: Object.keys(changes).length > 0 ? changes : { fields: Object.keys(data) },
-      });
-      return updated;
-    });
+          });
+          const trackedFields = ["status", "sellingPrice", "landedCost", "minTargetPrice"];
+          const changes = Object.fromEntries(
+            trackedFields
+              .filter((field) => fallbackData[field] !== undefined && fallbackData[field] !== previous[field as keyof typeof previous])
+              .map((field) => [
+                field,
+                {
+                  from: previous[field as keyof typeof previous],
+                  to: fallbackData[field],
+                },
+              ])
+          );
+          await recordSessionAuditEvent(tx, {
+            action: "VEHICLE_UPDATED",
+            entityType: "Vehicle",
+            entityId: id,
+            changes: Object.keys(changes).length > 0 ? changes : { fields: Object.keys(fallbackData) },
+          });
+          return updated;
+        });
+      } else {
+        throw updateError;
+      }
+    }
 
     return NextResponse.json({ success: true, data: vehicle });
   } catch (error: any) {
@@ -182,9 +240,28 @@ export async function DELETE(
       if (!vehicle) {
         throw new Error("Vehicle not found");
       }
-      await tx.vehicleImage.deleteMany({ where: { vehicleId: id } });
-      await tx.vehicleDocument.deleteMany({ where: { vehicleId: id } });
-      await tx.vehicle.delete({ where: { id } });
+      await tx.installmentPayment.deleteMany({
+        where: {
+          sale: {
+            vehicleId: id,
+          },
+        },
+      });
+      await tx.sale.deleteMany({
+        where: { vehicleId: id },
+      });
+      await tx.expense.deleteMany({
+        where: { vehicleId: id },
+      });
+      await tx.vehicleDocument.deleteMany({
+        where: { vehicleId: id },
+      });
+      await tx.vehicleImage.deleteMany({
+        where: { vehicleId: id },
+      });
+      await tx.vehicle.delete({
+        where: { id },
+      });
       await recordSessionAuditEvent(tx, {
         action: "VEHICLE_DELETED",
         entityType: "Vehicle",
@@ -193,7 +270,7 @@ export async function DELETE(
       });
     });
 
-    return NextResponse.json({ success: true, message: "Vehicle deleted successfully" });
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || "Failed to delete vehicle" },

@@ -17,6 +17,10 @@ import {
   MuiTextField,
   MenuItem,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@/components/mui";
 import {
   FileCheck2,
@@ -31,6 +35,8 @@ import {
   Download,
   Loader2,
   FileText,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { CommercialInvoiceModal } from "@/components/CommercialInvoiceModal";
 import { downloadCommercialInvoicePDF } from "@/lib/invoice-pdf";
@@ -41,12 +47,14 @@ interface InvoicesTabProps {
 }
 
 export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
-  const { invoices, vehicles, exchangeRate, language, addInvoice, addToast } = useShowroomStore();
+  const { invoices, vehicles, exchangeRate, language, addInvoice, updateInvoice, deleteInvoice, addToast } = useShowroomStore();
   const t = translations[language];
   const [search, setSearch] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceRecord | null>(null);
   const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<any | null>(null);
+  const [deletingInvoice, setDeletingInvoice] = useState<any | null>(null);
 
   const handleDownloadInvoicePDF = async (inv: InvoiceRecord) => {
     setDownloadingInvoiceId(inv.id);
@@ -150,6 +158,40 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
     setCustomerPhone("");
     setCustomerTazkira("");
     addToast("Commercial invoice generated", "success");
+  };
+
+  const handleUpdateInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingInvoice) return;
+    try {
+      const totalUSD = Number(editingInvoice.totalUSD || editingInvoice.subtotalUSD || 0);
+      await updateInvoice(editingInvoice.id, {
+        customerName: editingInvoice.customerName,
+        customerPhone: editingInvoice.customerPhone,
+        customerAddress: editingInvoice.customerAddress,
+        totalUSD,
+        totalAFN: Math.round(totalUSD * exchangeRate),
+        discountUSD: Number(editingInvoice.discountUSD || 0),
+        status: editingInvoice.status,
+        paymentMethod: editingInvoice.paymentMethod,
+        notes: editingInvoice.notes,
+      });
+      addToast("Invoice updated successfully", "success");
+      setEditingInvoice(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to update invoice", "error");
+    }
+  };
+
+  const handleDeleteInvoice = async () => {
+    if (!deletingInvoice) return;
+    try {
+      await deleteInvoice(deletingInvoice.id);
+      addToast("Invoice deleted successfully", "success");
+      setDeletingInvoice(null);
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Failed to delete invoice", "error");
+    }
   };
 
   return (
@@ -477,6 +519,25 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                       >
                         <Eye className="h-3.5 w-3.5" />
                       </IconButton>
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        title="Edit Invoice"
+                        onClick={() => setEditingInvoice({ ...inv })}
+                        sx={{ p: "3px" }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        title="Delete Invoice"
+                        onClick={() => setDeletingInvoice(inv)}
+                        sx={{ p: "3px" }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </IconButton>
+
                     </div>
                   </MuiTableCell>
                 </MuiTableRow>
@@ -492,6 +553,126 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
         isOpen={Boolean(previewInvoice)}
         onClose={() => setPreviewInvoice(null)}
       />
+      {/* Edit Invoice Dialog */}
+      <Dialog
+        open={Boolean(editingInvoice)}
+        onClose={() => setEditingInvoice(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Edit Commercial Invoice ({editingInvoice?.invoiceNumber})
+        </DialogTitle>
+        {editingInvoice && (
+          <form onSubmit={handleUpdateInvoice}>
+            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Customer / Buyer Name"
+                  value={editingInvoice.customerName}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, customerName: e.target.value })}
+                  required
+                />
+                <MuiTextField
+                  label="Customer Phone"
+                  value={editingInvoice.customerPhone || ""}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, customerPhone: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MuiTextField
+                  label="Customer Address / Location"
+                  value={editingInvoice.customerAddress || ""}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, customerAddress: e.target.value })}
+                />
+                <MuiTextField
+                  select
+                  label="Invoice Status"
+                  value={editingInvoice.status}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, status: e.target.value })}
+                  required
+                >
+                  <MenuItem value="Paid">Paid (تسویه کامل)</MenuItem>
+                  <MenuItem value="Partially Paid">Partially Paid (باقیدار)</MenuItem>
+                  <MenuItem value="Draft">Draft (پیش‌نویس)</MenuItem>
+                  <MenuItem value="Overdue">Overdue (به تعویق افتاده)</MenuItem>
+                </MuiTextField>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <MuiTextField
+                  label="Total (USD $)"
+                  type="number"
+                  value={editingInvoice.totalUSD}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, totalUSD: Number(e.target.value) })}
+                  required
+                />
+                <MuiTextField
+                  label="Discount (USD $)"
+                  type="number"
+                  value={editingInvoice.discountUSD || 0}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, discountUSD: Number(e.target.value) })}
+                />
+                <MuiTextField
+                  label="Payment Channel"
+                  value={editingInvoice.paymentMethod || "Cash Safe (کندی)"}
+                  onChange={(e) => setEditingInvoice({ ...editingInvoice, paymentMethod: e.target.value })}
+                />
+              </div>
+
+              <MuiTextField
+                label="Invoice Notes & Terms"
+                value={editingInvoice.notes || ""}
+                onChange={(e) => setEditingInvoice({ ...editingInvoice, notes: e.target.value })}
+                multiline
+                rows={2}
+              />
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5 }}>
+              <MuiButton variant="outlined" color="inherit" onClick={() => setEditingInvoice(null)}>
+                Cancel
+              </MuiButton>
+              <MuiButton type="submit" variant="contained" color="primary">
+                Save Changes
+              </MuiButton>
+            </DialogActions>
+          </form>
+        )}
+      </Dialog>
+
+      {/* Delete Invoice Dialog */}
+      <Dialog
+        open={Boolean(deletingInvoice)}
+        onClose={() => setDeletingInvoice(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Delete Invoice Record
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Are you sure you want to permanently delete invoice{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {deletingInvoice?.invoiceNumber}
+            </strong>{" "}
+            for buyer{" "}
+            <strong className="text-slate-900 dark:text-white">
+              {deletingInvoice?.customerName}
+            </strong>
+            ? This action cannot be undone.
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <MuiButton variant="outlined" color="inherit" onClick={() => setDeletingInvoice(null)}>
+            Cancel
+          </MuiButton>
+          <MuiButton variant="contained" color="error" onClick={handleDeleteInvoice}>
+            Delete Invoice
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
