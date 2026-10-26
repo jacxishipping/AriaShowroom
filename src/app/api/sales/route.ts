@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
-import { PaymentType, VehicleStatus } from "@prisma/client";
+import { PaymentType, VehicleStatus, InstallmentStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireApiRole } from "@/lib/api-auth";
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const contractNumber = `SM-CNT-${new Date().getFullYear()}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const contractNumber = `ARI-CNT-${new Date().getFullYear()}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const result = await prisma.$transaction(async (tx) => {
       const vehicle = await tx.vehicle.findUnique({ where: { id: vehicleId } });
@@ -218,7 +218,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const unauthorized = await requireApiRole(["ADMIN", "SALES"]);
+  const unauthorized = await requireApiRole(["ADMIN", "SALES", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
   if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
 
@@ -227,15 +227,72 @@ export async function PATCH(request: Request) {
     const saleId = body.saleId || body.id;
     if (!saleId) return NextResponse.json({ success: false, error: "Sale ID is required" }, { status: 400 });
 
-    const updateData: any = {};
-    if (body.salePrice !== undefined) updateData.salePrice = Number(body.salePrice);
-    if (body.notes !== undefined) updateData.notes = body.notes;
-    if (body.exchangeRate !== undefined) updateData.exchangeRate = Number(body.exchangeRate);
+    const updated = await prisma.$transaction(async (tx) => {
+      const existingSale = await tx.sale.findUnique({
+        where: { id: saleId },
+        include: { installments: { orderBy: { dueDate: "asc" } }, customer: true },
+      });
+      if (!existingSale) {
+        throw new Error("Sale record not found");
+      }
 
-    const updated = await prisma.sale.update({
-      where: { id: saleId },
-      data: updateData,
+      const updateData: any = {};
+      if (body.salePrice !== undefined) updateData.salePrice = Number(body.salePrice);
+      if (body.salePriceUSD !== undefined) updateData.salePrice = Number(body.salePriceUSD);
+      if (body.notes !== undefined) updateData.notes = body.notes;
+      if (body.exchangeRate !== undefined) updateData.exchangeRate = Number(body.exchangeRate);
+
+      // Update customer details if supplied
+      if (body.customerName || body.customerPhone || body.customerTazkira) {
+        await tx.customer.update({
+          where: { id: existingSale.customerId },
+          data: {
+            ...(body.customerName ? { fullName: body.customerName } : {}),
+            ...(body.customerPhone ? { phone: body.customerPhone } : {}),
+            ...(body.customerTazkira ? { tazkiraNumber: body.customerTazkira } : {}),
+          },
+        });
+      }
+
+      // If downPaymentUSD increased (e.g. installment collected), settle pending installments accordingly
+      if (body.downPaymentUSD !== undefined) {
+        const targetOutstanding = Math.max(
+          0,
+          Number(updateData.salePrice ?? existingSale.salePrice) - Number(body.downPaymentUSD)
+        );
+        const pendingInstallments = existingSale.installments.filter(
+          (inst) => inst.status !== InstallmentStatus.PAID
+        );
+        const currentOutstanding = pendingInstallments.reduce(
+          (sum, inst) => sum + Number(inst.amount || 0),
+          0
+        );
+        let paymentToApply = Math.max(0, currentOutstanding - targetOutstanding);
+
+        for (const inst of pendingInstallments) {
+          if (paymentToApply <= 0) break;
+          if (paymentToApply >= inst.amount - 0.01) {
+            paymentToApply -= inst.amount;
+            await tx.installmentPayment.update({
+              where: { id: inst.id },
+              data: { status: InstallmentStatus.PAID, paidAt: new Date() },
+            });
+          } else {
+            await tx.installmentPayment.update({
+              where: { id: inst.id },
+              data: { amount: Math.max(0, Math.round((inst.amount - paymentToApply) * 100) / 100) },
+            });
+            paymentToApply = 0;
+          }
+        }
+      }
+
+      return tx.sale.update({
+        where: { id: saleId },
+        data: updateData,
+      });
     });
+
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message || "Failed to update sale" }, { status: 500 });

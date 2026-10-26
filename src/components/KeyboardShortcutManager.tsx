@@ -1,15 +1,17 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { Dialog, DialogContent } from "@/components/mui";
 import { Keyboard, X } from "lucide-react";
 
 export function KeyboardShortcutManager() {
   const router = useRouter();
+  const pathname = usePathname();
   const {
     vehicles,
+    currentRole,
     inspectedVehicleId,
     setInspectedVehicleId,
     isShortcutsModalOpen,
@@ -33,14 +35,18 @@ export function KeyboardShortcutManager() {
       );
     }
 
+    function hasActiveDialog(): boolean {
+      return Boolean(document.querySelector('[role="dialog"], .MuiModal-root'));
+    }
+
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        if (inspectedVehicleId) {
-          setInspectedVehicleId(null);
-          return;
-        }
         if (isShortcutsModalOpen) {
           setIsShortcutsModalOpen(false);
+          return;
+        }
+        if (inspectedVehicleId && !hasActiveDialog()) {
+          setInspectedVehicleId(null);
           return;
         }
       }
@@ -48,27 +54,29 @@ export function KeyboardShortcutManager() {
       if (isTypingInInput(e.target)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      // "?" opens Google Workspace Keyboard Shortcuts cheat sheet
-      if (e.key === "?") {
+      // "?" opens Keyboard Shortcuts cheat sheet when no other modal is blocking
+      if (e.key === "?" && (!hasActiveDialog() || isShortcutsModalOpen)) {
         e.preventDefault();
         setIsShortcutsModalOpen(!isShortcutsModalOpen);
         return;
       }
 
+      if (hasActiveDialog()) return;
+
       // "/" focuses the top bar Omnibox search input
       if (e.key === "/") {
-        e.preventDefault();
         const searchInput = document.querySelector<HTMLInputElement>(
           'input[data-omnibox="true"]'
         );
         if (searchInput) {
+          e.preventDefault();
           searchInput.focus();
           searchInput.select();
         }
         return;
       }
 
-      // Two-key "g" navigation chords (like Gmail / Google Cloud Console)
+      // Two-key "g" navigation chords
       if (e.key.toLowerCase() === "g" && !gChordRef.current) {
         gChordRef.current = true;
         if (gTimeoutRef.current) clearTimeout(gTimeoutRef.current);
@@ -94,7 +102,7 @@ export function KeyboardShortcutManager() {
           addToast("Navigated to Vehicle Inventory (g + i)", "info");
           return;
         }
-        if (dest === "a") {
+        if (dest === "a" && (currentRole === "SuperAdmin" || currentRole === "Accountant")) {
           e.preventDefault();
           router.push("/accounting");
           addToast("Navigated to Accounting & Sarrafi Hub (g + a)", "info");
@@ -112,7 +120,7 @@ export function KeyboardShortcutManager() {
           addToast("Navigated to Customs & Port Logistics (g + l)", "info");
           return;
         }
-        if (dest === "n") {
+        if (dest === "n" && currentRole === "SuperAdmin") {
           e.preventDefault();
           router.push("/intake");
           addToast("Navigated to Vehicle Intake Studio (g + n)", "info");
@@ -132,8 +140,8 @@ export function KeyboardShortcutManager() {
         }
       }
 
-      // "j" / "k" cycles through vehicles in the Contextual Inspector Drawer
-      if (e.key === "j" || e.key === "k") {
+      // "j" / "k" cycles through vehicles in the Contextual Inspector Drawer ONLY on fleet pages
+      if ((e.key === "j" || e.key === "k") && (pathname === "/" || pathname === "/inventory")) {
         if (vehicles.length === 0) return;
         e.preventDefault();
         const currentIdx = vehicles.findIndex((v) => v.id === inspectedVehicleId);
@@ -153,10 +161,13 @@ export function KeyboardShortcutManager() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     vehicles,
+    currentRole,
+    pathname,
     inspectedVehicleId,
     isShortcutsModalOpen,
     setInspectedVehicleId,
     setIsShortcutsModalOpen,
+    setIsTutorialOpen,
     router,
     addToast,
   ]);
@@ -171,14 +182,15 @@ export function KeyboardShortcutManager() {
       <DialogContent className="p-0 overflow-hidden bg-white dark:bg-[#161B26]">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722]">
           <div className="flex items-center gap-2">
-            <Keyboard className="h-4 w-4 text-[#1A73E8] dark:text-[#8AB4F8]" />
+            <Keyboard className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Google Workspace & Console Keyboard Shortcuts
+              Enterprise Console Keyboard Shortcuts
             </h3>
           </div>
           <button
             onClick={() => setIsShortcutsModalOpen(false)}
             className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white"
+            aria-label="Close keyboard shortcuts"
           >
             <X className="h-4 w-4" />
           </button>
@@ -224,8 +236,8 @@ export function KeyboardShortcutManager() {
             {[
               { keys: ["⌘K"], label: "Open Command Palette & FX" },
               { keys: ["/"], label: "Focus Top Bar Omnibox Search" },
-              { keys: ["j"], label: "Inspect Next Vehicle in Drawer" },
-              { keys: ["k"], label: "Inspect Previous Vehicle" },
+              { keys: ["j"], label: "Inspect Next Vehicle (Fleet)" },
+              { keys: ["k"], label: "Inspect Previous Vehicle (Fleet)" },
               { keys: ["?"], label: "Toggle Shortcut Cheat Sheet" },
               { keys: ["Esc"], label: "Close Inspector or Dialog" },
             ].map((item) => (

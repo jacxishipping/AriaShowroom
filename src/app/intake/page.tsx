@@ -8,11 +8,14 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { processAndWatermarkImage } from "@/lib/watermark-utils";
 import { translations } from "@/lib/translations";
 import { decodeVin } from "@/lib/vin-decoder";
-import { PaintInspectionDiagram } from "@/components/PaintInspectionDiagram";
+import {
+  PaintInspectionDiagram,
+  StoredPaintCondition,
+} from "@/components/PaintInspectionDiagram";
+import { VehicleItem } from "@/lib/mock-data";
 import {
   MuiButton,
   MuiTextField,
-  MuiChip,
   MenuItem,
   IconButton,
   Switch,
@@ -22,7 +25,6 @@ import {
   Step,
   StepLabel,
   StepButton,
-  Box,
 } from "@/components/mui";
 import {
   ArrowLeft,
@@ -36,22 +38,18 @@ import {
   ShieldCheck,
   CheckCircle2,
   DollarSign,
-  Truck,
   Building2,
   Zap,
   Check,
-  FileText,
   RotateCcw,
   Fuel,
   AlertCircle,
   Key,
   Languages,
-  Info,
   Layers,
   TrendingUp,
 } from "lucide-react";
 
-// Predefined available luxury and 4WD options for Afghan market
 const PRESET_VEHICLE_FEATURES = [
   "Center Console Cool Box",
   "Front & Rear Diff-Lock",
@@ -71,35 +69,84 @@ const PRESET_VEHICLE_FEATURES = [
   "Active Height Control (AHC) Suspension",
 ];
 
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function VehicleIntakePage() {
   const router = useRouter();
-  const { addVehicle, addToast, language, exchangeRate, theming } = useShowroomStore();
+  const {
+    addVehicle,
+    addToast,
+    language,
+    exchangeRate,
+    theming,
+    branding,
+    currentRole,
+  } = useShowroomStore();
   const t = translations[language];
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const shortCode = branding?.dealershipShortCode || "ARI";
 
   // Stepper state
   const [activeStep, setActiveStep] = useState(0);
   const [isDecoding, setIsDecoding] = useState(false);
 
   // Core vehicle form data state
-  const [formData, setFormData] = useState({
-    stockNumber: `ARI-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+  const [formData, setFormData] = useState<{
+    stockNumber: string;
+    vin: string;
+    make: string;
+    model: string;
+    year: number;
+    trim: string;
+    bodyType: VehicleItem["bodyType"];
+    originCountry: VehicleItem["originCountry"];
+    steering: VehicleItem["steering"];
+    customsClearance: string;
+    cleanTitle: boolean;
+    mileage: number;
+    fuelType: VehicleItem["fuelType"];
+    transmission: VehicleItem["transmission"];
+    driveType: VehicleItem["driveType"];
+    color: string;
+    status: VehicleItem["status"];
+    yardLocation: string;
+    purchasePrice: number;
+    freightCost: number;
+    customsDuty: number;
+    repairCost: number;
+    sellingPrice: number;
+    features: string;
+    description: string;
+    descriptionDari: string;
+    descriptionPashto: string;
+  }>({
+    stockNumber: `${shortCode}-${new Date().getFullYear()}-${Math.floor(
+      100 + Math.random() * 900
+    )}`,
     vin: "",
     make: "",
     model: "",
     year: new Date().getFullYear(),
     trim: "",
-    bodyType: "SUV" as const,
-    originCountry: "UAE" as const,
-    steering: "Left-Hand Drive (LHD)" as const,
+    bodyType: "SUV",
+    originCountry: "UAE",
+    steering: "Left-Hand Drive (LHD)",
     customsClearance: "",
     cleanTitle: true,
     mileage: 0,
-    fuelType: "Petrol" as const,
-    transmission: "Automatic" as const,
-    driveType: "4WD" as const,
+    fuelType: "Petrol",
+    transmission: "Automatic",
+    driveType: "4WD",
     color: "",
-    status: "Available on Lot" as const,
+    status: "Available on Lot",
     yardLocation: "Main Showroom - Bagh-e-Azadi",
     purchasePrice: 0,
     freightCost: 0,
@@ -112,6 +159,11 @@ export default function VehicleIntakePage() {
     descriptionPashto: "",
   });
 
+  // Paint map state persisted to conditionNotes.paintZones
+  const [paintZones, setPaintZones] = useState<
+    Record<string, StoredPaintCondition> | undefined
+  >(undefined);
+
   // Images state
   const [images, setImages] = useState<string[]>([]);
   const [bulkUrlInput, setBulkUrlInput] = useState("");
@@ -120,7 +172,6 @@ export default function VehicleIntakePage() {
   const [applyWatermark, setApplyWatermark] = useState(true);
   const [uploadNotice, setUploadNotice] = useState<string | null>(null);
 
-  // Features parsing
   const currentFeaturesArray = useMemo(() => {
     return formData.features
       .split(",")
@@ -146,7 +197,12 @@ export default function VehicleIntakePage() {
       Number(formData.customsDuty || 0) +
       Number(formData.repairCost || 0)
     );
-  }, [formData.purchasePrice, formData.freightCost, formData.customsDuty, formData.repairCost]);
+  }, [
+    formData.purchasePrice,
+    formData.freightCost,
+    formData.customsDuty,
+    formData.repairCost,
+  ]);
 
   const estimatedProfit = useMemo(() => {
     return Number(formData.sellingPrice || 0) - totalLandedCost;
@@ -174,22 +230,30 @@ export default function VehicleIntakePage() {
           make: decoded.make || prev.make,
           model: decoded.model || prev.model,
           year: decoded.year || prev.year,
-          bodyType: (decoded.bodyType as any) || prev.bodyType,
-          fuelType: (decoded.fuelType as any) || prev.fuelType,
-          transmission: (decoded.transmission as any) || prev.transmission,
-          driveType: (decoded.driveType as any) || prev.driveType,
+          bodyType: (decoded.bodyType as VehicleItem["bodyType"]) || prev.bodyType,
+          fuelType: (decoded.fuelType as VehicleItem["fuelType"]) || prev.fuelType,
+          transmission:
+            (decoded.transmission as VehicleItem["transmission"]) || prev.transmission,
+          driveType: (decoded.driveType as VehicleItem["driveType"]) || prev.driveType,
           trim: decoded.trim || prev.trim,
         }));
         addToast(
-          `⚡ Decoded ${decoded.year || ""} ${decoded.make || ""} ${decoded.model || ""} (${decoded.bodyType || ""})`,
+          `Decoded ${decoded.year || ""} ${decoded.make || ""} ${decoded.model || ""} (${
+            decoded.bodyType || ""
+          })`,
           "success"
         );
       } else {
-        addToast("VIN not found in online decoder database. Manual entry is supported.", "info");
+        addToast(
+          "VIN not found in online decoder database. Manual entry is supported.",
+          "info"
+        );
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addToast(
-        err?.message || "Could not automatically decode this VIN. Manual entry is supported.",
+        err instanceof Error
+          ? err.message
+          : "Could not automatically decode this VIN. Manual entry is supported.",
         "error"
       );
     } finally {
@@ -201,7 +265,7 @@ export default function VehicleIntakePage() {
   const handleGenerateStockNumber = () => {
     const year = new Date().getFullYear();
     const randomNum = Math.floor(100 + Math.random() * 900);
-    const newStock = `ARI-${year}-${randomNum}`;
+    const newStock = `${shortCode}-${year}-${randomNum}`;
     setFormData((prev) => ({
       ...prev,
       stockNumber: newStock,
@@ -209,44 +273,73 @@ export default function VehicleIntakePage() {
     addToast(`Generated stock ID: ${newStock}`, "info");
   };
 
-  // File Upload Handlers
+  // Durable Photo Upload Handler (/api/upload + Base64 Data URL fallback — no ephemeral blob: URLs)
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
-    setUploadNotice(`Processing ${files.length} vehicle showcase photos with Herat notary watermarks...`);
+    setUploadNotice(
+      `Processing ${files.length} vehicle showcase photo(s) with ${
+        branding?.dealershipName || "Aria Motors"
+      } watermarks...`
+    );
+
+    const processedFiles: File[] = [];
 
     try {
-      const newUrls: string[] = [];
+      const watermarkLabel =
+        branding?.watermarkText ||
+        `${(branding?.dealershipName || "ARIA MOTORS").toUpperCase()} • HERAT`;
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-
         if (applyWatermark) {
           const stamped = await processAndWatermarkImage(file, {
             stockNumber: formData.stockNumber,
-            showroomName: "SADOZAI MOTORS • HERAT",
+            showroomName: watermarkLabel,
             applyWatermark: true,
           });
-          const url = URL.createObjectURL(stamped);
-          newUrls.push(url);
+          processedFiles.push(stamped);
         } else {
-          const url = URL.createObjectURL(file);
-          newUrls.push(url);
+          processedFiles.push(file);
         }
       }
 
-      setImages((prev) => [...prev, ...newUrls]);
-      addToast(`Added ${newUrls.length} high-resolution photos to vehicle vault`, "success");
-    } catch (err) {
-      console.error("Image watermark processing failed:", err);
-      const localPreviews: string[] = [];
-      for (let i = 0; i < files.length; i++) {
-        localPreviews.push(URL.createObjectURL(files[i]));
+      let persistedUrls: string[] = [];
+      try {
+        const uploadData = new FormData();
+        processedFiles.forEach((pf) => uploadData.append("files", pf));
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadData,
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          if (Array.isArray(payload.urls) && payload.urls.length > 0) {
+            persistedUrls = payload.urls;
+          }
+        }
+      } catch {
+        // Fallback to durable Base64 Data URLs below
       }
-      setImages((prev) => [...prev, ...localPreviews]);
-      addToast("Added photos (client-side fallback)", "info");
+
+      if (persistedUrls.length === 0) {
+        persistedUrls = await Promise.all(processedFiles.map((pf) => fileToDataUrl(pf)));
+      }
+
+      setImages((prev) => [...prev, ...persistedUrls]);
+      addToast(
+        `Added ${persistedUrls.length} persistent photo(s) to vehicle vault`,
+        "success"
+      );
+    } catch (err) {
+      console.error("Image upload processing failed:", err);
+      const fallbackUrls = await Promise.all(
+        Array.from(files).map((f) => fileToDataUrl(f))
+      );
+      setImages((prev) => [...prev, ...fallbackUrls]);
+      addToast("Added photos via local data persistence", "info");
     } finally {
       setIsUploading(false);
       setUploadNotice(null);
@@ -282,9 +375,9 @@ export default function VehicleIntakePage() {
     addToast("Photo removed from vehicle vault", "info");
   };
 
-  // Step Validation & Navigation
-  const validateCurrentStep = () => {
-    if (activeStep === 0) {
+  // Step-specific Validation
+  const validateStep = (stepIndex: number): boolean => {
+    if (stepIndex === 0) {
       if (!formData.vin.trim()) {
         addToast("Please provide a valid 17-digit Chassis VIN", "warning");
         return false;
@@ -299,18 +392,21 @@ export default function VehicleIntakePage() {
       }
     }
 
-    if (activeStep === 1) {
+    if (stepIndex === 1) {
       if (formData.mileage < 0) {
         addToast("Please provide a valid odometer mileage reading", "warning");
         return false;
       }
       if (!formData.customsClearance.trim()) {
-        addToast("Customs clearance / Islam Qala Gomrok documentation is required", "warning");
+        addToast(
+          "Customs clearance / Islam Qala Gomrok documentation is required",
+          "warning"
+        );
         return false;
       }
     }
 
-    if (activeStep === 2) {
+    if (stepIndex === 2) {
       if (formData.sellingPrice <= 0) {
         addToast("Please specify an intended target selling price in USD", "warning");
         return false;
@@ -321,7 +417,7 @@ export default function VehicleIntakePage() {
   };
 
   const handleNext = () => {
-    if (validateCurrentStep()) {
+    if (validateStep(activeStep)) {
       setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -335,16 +431,32 @@ export default function VehicleIntakePage() {
   const handleStepClick = (index: number) => {
     if (index < activeStep) {
       setActiveStep(index);
-    } else if (index > activeStep) {
-      if (validateCurrentStep()) {
-        setActiveStep(index);
+      return;
+    }
+    if (index > activeStep) {
+      for (let s = activeStep; s < index; s++) {
+        if (!validateStep(s)) {
+          setActiveStep(s);
+          return;
+        }
       }
+      setActiveStep(index);
     }
   };
 
   // Final Submission Handler
   const handleSubmit = async () => {
-    if (!validateCurrentStep()) return;
+    if (currentRole !== "SuperAdmin") {
+      addToast("Only SuperAdmin can commit new vehicle stock to inventory.", "error");
+      return;
+    }
+
+    for (let s = 0; s <= 2; s++) {
+      if (!validateStep(s)) {
+        setActiveStep(s);
+        return;
+      }
+    }
 
     try {
       await addVehicle({
@@ -378,46 +490,72 @@ export default function VehicleIntakePage() {
         descriptionDari: formData.descriptionDari,
         descriptionPashto: formData.descriptionPashto,
         conditionNotes: {
-          exterior: "10/10 - Inspected on Herat Showroom Lot",
+          exterior: "10/10 - Inspected on Showroom Lot",
           interior: "Pristine Factory Leather & Upholstery",
           engine: "Zero-Hour Certified Powertrain Diagnostic",
           tires: "Original Factory Tires (95% Tread)",
-          accidentHistory: "Clean Title Guaranteed (No Accidents)",
+          accidentHistory: formData.cleanTitle
+            ? "Clean Title Guaranteed (No Accidents)"
+            : "Disclosed Cosmetic Reconditioning",
+          yardLocation: formData.yardLocation,
+          paintZones,
         },
         images: images,
         documents: [],
       });
     } catch (error) {
-      addToast(error instanceof Error ? error.message : "Unable to save vehicle intake", "error");
+      addToast(
+        error instanceof Error ? error.message : "Unable to save vehicle intake",
+        "error"
+      );
       return;
     }
 
     addToast(
-      `✓ Successfully registered ${formData.make} ${formData.model} (${formData.stockNumber}) into showroom inventory!`,
+      `Successfully registered ${formData.make} ${formData.model} (${formData.stockNumber}) into showroom inventory!`,
       "success"
     );
     router.push("/inventory");
   };
 
-  // Stepper Step configuration
   const steps = [
     {
-      title: "Chassis & Identification",
+      title:
+        language === "ps"
+          ? "شاسي او پیژندنه"
+          : language === "fa"
+          ? "شاسی و مشخصات پایه"
+          : "Chassis & Identification",
       desc: "Stock code, VIN chassis & basic model classification",
       icon: <Building2 className="h-4 w-4" />,
     },
     {
-      title: "Condition & Diagnostics",
+      title:
+        language === "ps"
+          ? "تخنیکي معاینه او رنګ"
+          : language === "fa"
+          ? "معاینه فنی، رنگ و گمرک"
+          : "Condition & Diagnostics",
       desc: "Powertrain, customs maktoub, ultrasonic paint & options",
       icon: <ShieldCheck className="h-4 w-4" />,
     },
     {
-      title: "Landed Tariffs & Pricing",
+      title:
+        language === "ps"
+          ? "تمام شوی لګښت او بیه"
+          : language === "fa"
+          ? "هزینه تمام‌شده و قیمت‌گذاری"
+          : "Landed Tariffs & Pricing",
       desc: "FOB purchase, Islam Qala tariffs & profit margins",
       icon: <DollarSign className="h-4 w-4" />,
     },
     {
-      title: "Photography & Vault",
+      title:
+        language === "ps"
+          ? "تصویرونه او ثبت"
+          : language === "fa"
+          ? "گالری تصاویر و ثبت نهایی"
+          : "Photography & Vault",
       desc: "Multi-angle photo album & final dossier verification",
       icon: <ImageIcon className="h-4 w-4" />,
     },
@@ -426,21 +564,25 @@ export default function VehicleIntakePage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 space-y-5 pb-16">
       {/* Top Header & Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-3 border-b border-[#D8D5CD] dark:border-[#242A38]">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-3 border-b border-slate-200 dark:border-[#262F40]">
         <div>
-          <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-[#9A7515] dark:text-[#D4AF37] mb-1">
+          <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-[var(--theme-primary)] mb-1">
             <Link href="/" className="hover:underline">
-              COCKPIT
+              {t.tabShowroom}
             </Link>
             <span>/</span>
             <Link href="/inventory" className="hover:underline">
-              INVENTORY
+              {t.tabInventory}
             </Link>
             <span>/</span>
-            <span>NEW CHASSIS INTAKE</span>
+            <span>{t.addNewVehicle}</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            Vehicle Stock Intake & 4-Step Dossier Studio
+            {language === "ps"
+              ? "د نوي موټر ثبت او ۴-مرحله‌یی دوسیه"
+              : language === "fa"
+              ? "ثبت موتر جدید و تشکیل پرونده ۴ مرحله‌ای"
+              : "Vehicle Stock Intake & 4-Step Dossier Studio"}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Register new arrivals, run ultrasonic paint & chassis diagnostics, calculate landed Gomrok tariffs, and attach watermarked showroom photography.
@@ -450,16 +592,29 @@ export default function VehicleIntakePage() {
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <Link
             href="/inventory"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#141821] text-[11px] font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:border-slate-400 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-[var(--theme-primary)] transition-colors"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Cancel
+            <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
+            <span>{t.inventoryCancel}</span>
           </Link>
         </div>
       </div>
 
+      {/* Role Notice if not SuperAdmin */}
+      {currentRole !== "SuperAdmin" && (
+        <div
+          role="alert"
+          className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 flex items-center gap-3 text-xs text-amber-800 dark:text-amber-300"
+        >
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>
+            {t.importNotAuthorized} — Only SuperAdmin accounts can commit new vehicle stock to inventory.
+          </span>
+        </div>
+      )}
+
       {/* MUI Stepper Form Progress Header */}
-      <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-4 sm:p-6 shadow-xs">
+      <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-4 sm:p-6 shadow-xs">
         <Stepper
           activeStep={activeStep}
           nonLinear
@@ -541,18 +696,15 @@ export default function VehicleIntakePage() {
         </Stepper>
       </div>
 
-      {/* Main Step Content: Organized in Clean Modular Cards */}
+      {/* Main Step Content */}
       <div className="space-y-5">
-        {/* ========================================================================= */}
-        {/* STEP 0: Vehicle Identification & Classification Cards                     */}
-        {/* ========================================================================= */}
+        {/* STEP 0: Vehicle Identification & Classification */}
         {activeStep === 0 && (
           <div className="space-y-5">
-            {/* Card 1: Chassis & Stock Allocation */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+            <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#262F40]">
                 <div className="flex items-center gap-2.5">
-                  <span className="h-7 w-7 rounded-lg bg-[#111318] text-[#D4AF37] dark:bg-[#C59B27] dark:text-[#0A0C10] flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs">
+                  <span className="h-7 w-7 rounded-lg bg-[var(--theme-primary)] text-white flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs">
                     01
                   </span>
                   <div>
@@ -564,7 +716,7 @@ export default function VehicleIntakePage() {
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#121722] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#262F40]">
                   Identity
                 </span>
               </div>
@@ -579,11 +731,12 @@ export default function VehicleIntakePage() {
                   endAdornment={
                     <IconButton
                       size="small"
+                      aria-label="Generate new stock ID"
                       onClick={handleGenerateStockNumber}
                       title="Generate new stock ID"
                       sx={{ p: 0.5 }}
                     >
-                      <RotateCcw className="h-3.5 w-3.5 text-blue-600" />
+                      <RotateCcw className="h-3.5 w-3.5 text-[var(--theme-primary)]" />
                     </IconButton>
                   }
                   required
@@ -593,7 +746,9 @@ export default function VehicleIntakePage() {
                   label="Chassis VIN Number"
                   sizeVariant="small"
                   value={formData.vin}
-                  onChange={(e) => setFormData({ ...formData, vin: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, vin: e.target.value.toUpperCase() })
+                  }
                   helperText="17-character ISO chassis number"
                   startAdornment={<Key className="h-3.5 w-3.5 text-slate-400" />}
                   endAdornment={
@@ -601,7 +756,7 @@ export default function VehicleIntakePage() {
                       type="button"
                       onClick={handleAutoDecode}
                       disabled={isDecoding}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 cursor-pointer disabled:opacity-50"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--theme-primary)] cursor-pointer disabled:opacity-50"
                     >
                       <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
                       {isDecoding ? "..." : "Decode"}
@@ -618,11 +773,21 @@ export default function VehicleIntakePage() {
                   onChange={(e) => setFormData({ ...formData, yardLocation: e.target.value })}
                   helperText="Physical lot position in Herat"
                 >
-                  <MenuItem value="Main Showroom - Bagh-e-Azadi">Main Showroom - Bagh-e-Azadi</MenuItem>
-                  <MenuItem value="VIP Covered Bay - Showroom 1">VIP Covered Bay - Showroom 1</MenuItem>
-                  <MenuItem value="Holding Yard - Islam Qala Border">Holding Yard - Islam Qala Border</MenuItem>
-                  <MenuItem value="Herat Customs Dry Port (Gomrok)">Herat Customs Dry Port (Gomrok)</MenuItem>
-                  <MenuItem value="Detailing & PDI Wash Bay">Detailing & PDI Wash Bay</MenuItem>
+                  <MenuItem value="Main Showroom - Bagh-e-Azadi">
+                    Main Showroom - Bagh-e-Azadi
+                  </MenuItem>
+                  <MenuItem value="VIP Covered Bay - Showroom 1">
+                    VIP Covered Bay - Showroom 1
+                  </MenuItem>
+                  <MenuItem value="Holding Yard - Islam Qala Border">
+                    Holding Yard - Islam Qala Border
+                  </MenuItem>
+                  <MenuItem value="Herat Customs Dry Port (Gomrok)">
+                    Herat Customs Dry Port (Gomrok)
+                  </MenuItem>
+                  <MenuItem value="Detailing & PDI Wash Bay">
+                    Detailing & PDI Wash Bay
+                  </MenuItem>
                 </MuiTextField>
 
                 <MuiTextField
@@ -630,7 +795,12 @@ export default function VehicleIntakePage() {
                   label="Inventory Status"
                   sizeVariant="small"
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      status: e.target.value as VehicleItem["status"],
+                    })
+                  }
                   helperText="Current commercial availability"
                 >
                   <MenuItem value="Available on Lot">Available on Lot</MenuItem>
@@ -641,11 +811,10 @@ export default function VehicleIntakePage() {
               </div>
             </div>
 
-            {/* Card 2: Vehicle Make, Model & Styling */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+            <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#262F40]">
                 <div className="flex items-center gap-2.5">
-                  <span className="h-7 w-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-blue-500/20">
+                  <span className="h-7 w-7 rounded-lg bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-[var(--theme-primary)]/20">
                     <Layers className="h-4 w-4" />
                   </span>
                   <div>
@@ -657,7 +826,7 @@ export default function VehicleIntakePage() {
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#121722] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#262F40]">
                   Specifications
                 </span>
               </div>
@@ -715,13 +884,17 @@ export default function VehicleIntakePage() {
                   label="Body Style"
                   sizeVariant="small"
                   value={formData.bodyType}
-                  onChange={(e) => setFormData({ ...formData, bodyType: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      bodyType: e.target.value as VehicleItem["bodyType"],
+                    })
+                  }
                 >
                   <MenuItem value="SUV">SUV (شاسی بلند)</MenuItem>
                   <MenuItem value="Sedan">Sedan (سدان)</MenuItem>
-                  <MenuItem value="Pickup Truck">Pickup Truck (پیک‌آپ)</MenuItem>
-                  <MenuItem value="Coupe">Coupe (کوپه)</MenuItem>
-                  <MenuItem value="Van">Van / Microbus</MenuItem>
+                  <MenuItem value="Pickup">Pickup (پیک‌آپ)</MenuItem>
+                  <MenuItem value="Crossover">Crossover (کراس‌اوور)</MenuItem>
                 </MuiTextField>
 
                 <MuiTextField
@@ -729,14 +902,18 @@ export default function VehicleIntakePage() {
                   label="Country of Origin"
                   sizeVariant="small"
                   value={formData.originCountry}
-                  onChange={(e) => setFormData({ ...formData, originCountry: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      originCountry: e.target.value as VehicleItem["originCountry"],
+                    })
+                  }
                 >
-                  <MenuItem value="UAE">🇦🇪 UAE / Dubai (Jebel Ali)</MenuItem>
-                  <MenuItem value="Japan">🇯🇵 Japan (Yokohama)</MenuItem>
-                  <MenuItem value="USA">🇺🇸 USA (Houston/Savannah)</MenuItem>
-                  <MenuItem value="Canada">🇨🇦 Canada</MenuItem>
-                  <MenuItem value="Germany">🇩🇪 Germany (Hamburg)</MenuItem>
-                  <MenuItem value="Korea">🇰🇷 South Korea (Incheon)</MenuItem>
+                  <MenuItem value="UAE">UAE / Dubai (Jebel Ali)</MenuItem>
+                  <MenuItem value="Japan">Japan (Yokohama)</MenuItem>
+                  <MenuItem value="USA">USA (Houston/Savannah)</MenuItem>
+                  <MenuItem value="Canada">Canada</MenuItem>
+                  <MenuItem value="Europe">Europe (Hamburg/Bremerhaven)</MenuItem>
                 </MuiTextField>
 
                 <MuiTextField
@@ -752,14 +929,11 @@ export default function VehicleIntakePage() {
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* STEP 1: Powertrain, Customs Maktoub, Options & Inspection Cards            */}
-        {/* ========================================================================= */}
+        {/* STEP 1: Powertrain, Customs Maktoub, Options & Paint Inspection */}
         {activeStep === 1 && (
           <div className="space-y-5">
-            {/* Card 1: Powertrain & Mechanical Configuration */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+            <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#262F40]">
                 <div className="flex items-center gap-2.5">
                   <span className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-amber-500/20">
                     <Fuel className="h-4 w-4" />
@@ -773,7 +947,7 @@ export default function VehicleIntakePage() {
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#121722] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#262F40]">
                   Mechanical
                 </span>
               </div>
@@ -794,7 +968,12 @@ export default function VehicleIntakePage() {
                   label="Steering Configuration"
                   sizeVariant="small"
                   value={formData.steering}
-                  onChange={(e) => setFormData({ ...formData, steering: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      steering: e.target.value as VehicleItem["steering"],
+                    })
+                  }
                 >
                   <MenuItem value="Left-Hand Drive (LHD)">Left-Hand Drive (دست چپ)</MenuItem>
                   <MenuItem value="Right-Hand Drive (RHD Converted)">RHD Converted</MenuItem>
@@ -805,7 +984,12 @@ export default function VehicleIntakePage() {
                   label="Fuel Type"
                   sizeVariant="small"
                   value={formData.fuelType}
-                  onChange={(e) => setFormData({ ...formData, fuelType: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      fuelType: e.target.value as VehicleItem["fuelType"],
+                    })
+                  }
                 >
                   <MenuItem value="Petrol">Petrol (بنزین)</MenuItem>
                   <MenuItem value="Diesel">Diesel (دیزل)</MenuItem>
@@ -818,7 +1002,12 @@ export default function VehicleIntakePage() {
                   label="Transmission"
                   sizeVariant="small"
                   value={formData.transmission}
-                  onChange={(e) => setFormData({ ...formData, transmission: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      transmission: e.target.value as VehicleItem["transmission"],
+                    })
+                  }
                 >
                   <MenuItem value="Automatic">Automatic (اتومات)</MenuItem>
                   <MenuItem value="Manual">Manual (دستی)</MenuItem>
@@ -831,7 +1020,12 @@ export default function VehicleIntakePage() {
                   label="Drivetrain"
                   sizeVariant="small"
                   value={formData.driveType}
-                  onChange={(e) => setFormData({ ...formData, driveType: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      driveType: e.target.value as VehicleItem["driveType"],
+                    })
+                  }
                 >
                   <MenuItem value="4WD">4WD (چهار چرخ محرک)</MenuItem>
                   <MenuItem value="AWD">AWD (تمام چرخ محرک)</MenuItem>
@@ -843,7 +1037,9 @@ export default function VehicleIntakePage() {
                   label="Islam Qala Customs Clearance Maktoub"
                   sizeVariant="small"
                   value={formData.customsClearance}
-                  onChange={(e) => setFormData({ ...formData, customsClearance: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, customsClearance: e.target.value })
+                  }
                   helperText="Official Afghan MoF customs clearance document / maktoub ID"
                   placeholder="e.g. Maktoub #IQ-2026-9902"
                   required
@@ -851,9 +1047,8 @@ export default function VehicleIntakePage() {
               </div>
             </div>
 
-            {/* Card 2: Factory Equipment & Features */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+            <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#262F40]">
                 <div className="flex items-center gap-2.5">
                   <span className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-emerald-500/20">
                     <Sparkles className="h-4 w-4" />
@@ -867,7 +1062,7 @@ export default function VehicleIntakePage() {
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#121722] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#262F40]">
                   Equipment
                 </span>
               </div>
@@ -882,8 +1077,8 @@ export default function VehicleIntakePage() {
                       onClick={() => toggleFeature(feat)}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer border ${
                         isSelected
-                          ? "bg-[#111318] text-white border-[#111318] dark:bg-[#C59B27] dark:text-[#0A0C10] dark:border-[#C59B27] font-bold shadow-xs"
-                          : "bg-slate-50/80 dark:bg-[#141821] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#242A38] hover:border-slate-400"
+                          ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)] font-bold shadow-xs"
+                          : "bg-slate-50/80 dark:bg-[#121722] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#262F40] hover:border-slate-400"
                       }`}
                     >
                       {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
@@ -894,9 +1089,8 @@ export default function VehicleIntakePage() {
               </div>
             </div>
 
-            {/* Card 3: Trilingual Showroom Descriptions */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+            <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#262F40]">
                 <div className="flex items-center gap-2.5">
                   <span className="h-7 w-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-indigo-500/20">
                     <Languages className="h-4 w-4" />
@@ -910,7 +1104,7 @@ export default function VehicleIntakePage() {
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#121722] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#262F40]">
                   Multilingual
                 </span>
               </div>
@@ -933,7 +1127,9 @@ export default function VehicleIntakePage() {
                   rows={2}
                   dir="rtl"
                   value={formData.descriptionDari}
-                  onChange={(e) => setFormData({ ...formData, descriptionDari: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, descriptionDari: e.target.value })
+                  }
                   placeholder="مشخصات و آپشن‌ها به زبان دری..."
                 />
 
@@ -944,29 +1140,30 @@ export default function VehicleIntakePage() {
                   rows={2}
                   dir="rtl"
                   value={formData.descriptionPashto}
-                  onChange={(e) => setFormData({ ...formData, descriptionPashto: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, descriptionPashto: e.target.value })
+                  }
                   placeholder="د موټر مشخصات په پښتو ژبه..."
                 />
               </div>
             </div>
 
-            {/* Card 4: Ultrasonic Paint & Body Diagnostics */}
+            {/* Persisted Ultrasonic Paint & Body Diagnostics */}
             <PaintInspectionDiagram
               vin={formData.vin}
               cleanTitle={formData.cleanTitle}
               editable={true}
+              savedZoneMap={paintZones}
+              onChangeZones={(_zones, map) => setPaintZones(map)}
             />
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* STEP 2: Landed Cost & Target Pricing Cards                                 */}
-        {/* ========================================================================= */}
+        {/* STEP 2: Landed Cost & Target Pricing */}
         {activeStep === 2 && (
           <div className="space-y-5">
-            {/* Card 1: Import Costs & Tariffs */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+            <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#262F40]">
                 <div className="flex items-center gap-2.5">
                   <span className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-amber-500/20">
                     <DollarSign className="h-4 w-4" />
@@ -980,7 +1177,7 @@ export default function VehicleIntakePage() {
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#181D28] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242A38]">
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-[#121722] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#262F40]">
                   Cost Accounting
                 </span>
               </div>
@@ -991,7 +1188,9 @@ export default function VehicleIntakePage() {
                   type="number"
                   sizeVariant="small"
                   value={formData.purchasePrice}
-                  onChange={(e) => setFormData({ ...formData, purchasePrice: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, purchasePrice: Number(e.target.value) })
+                  }
                   startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
                   helperText={`≈ ${(formData.purchasePrice * exchangeRate).toLocaleString()} AFN`}
                   required
@@ -1002,7 +1201,9 @@ export default function VehicleIntakePage() {
                   type="number"
                   sizeVariant="small"
                   value={formData.freightCost}
-                  onChange={(e) => setFormData({ ...formData, freightCost: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, freightCost: Number(e.target.value) })
+                  }
                   startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
                   helperText={`≈ ${(formData.freightCost * exchangeRate).toLocaleString()} AFN`}
                   required
@@ -1013,7 +1214,9 @@ export default function VehicleIntakePage() {
                   type="number"
                   sizeVariant="small"
                   value={formData.customsDuty}
-                  onChange={(e) => setFormData({ ...formData, customsDuty: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, customsDuty: Number(e.target.value) })
+                  }
                   startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
                   helperText={`≈ ${(formData.customsDuty * exchangeRate).toLocaleString()} AFN`}
                   required
@@ -1024,7 +1227,9 @@ export default function VehicleIntakePage() {
                   type="number"
                   sizeVariant="small"
                   value={formData.repairCost}
-                  onChange={(e) => setFormData({ ...formData, repairCost: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, repairCost: Number(e.target.value) })
+                  }
                   startAdornment={<DollarSign className="h-3.5 w-3.5 text-slate-400" />}
                   helperText={`≈ ${(formData.repairCost * exchangeRate).toLocaleString()} AFN`}
                   required
@@ -1032,9 +1237,8 @@ export default function VehicleIntakePage() {
               </div>
             </div>
 
-            {/* Card 2: Showroom Selling Price & Profit Margins */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+            <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#262F40]">
                 <div className="flex items-center gap-2.5">
                   <span className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-emerald-500/20">
                     <TrendingUp className="h-4 w-4" />
@@ -1053,31 +1257,36 @@ export default function VehicleIntakePage() {
                 </span>
               </div>
 
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-[#242A38] bg-slate-50/70 dark:bg-[#141821] space-y-4">
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-[#262F40] bg-slate-50/70 dark:bg-[#121722] space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <label className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block mb-0.5">
+                    <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block mb-0.5">
                       Target Showroom Selling Price (USD)
-                    </label>
-                    <span className="text-[11px] text-slate-500 font-mono">
-                      Equivalent to: ؋ {Math.round(formData.sellingPrice * exchangeRate).toLocaleString()} AFN
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-mono tabular-nums">
+                      Equivalent to: ؋{" "}
+                      {Math.round(formData.sellingPrice * exchangeRate).toLocaleString()} AFN
                     </span>
                   </div>
                   <div className="w-full sm:w-72">
                     <MuiTextField
                       type="number"
                       sizeVariant="small"
+                      aria-label="Target Showroom Selling Price"
                       value={formData.sellingPrice}
-                      onChange={(e) => setFormData({ ...formData, sellingPrice: Number(e.target.value) })}
-                      startAdornment={<DollarSign className="h-4 w-4 text-emerald-600 font-bold" />}
+                      onChange={(e) =>
+                        setFormData({ ...formData, sellingPrice: Number(e.target.value) })
+                      }
+                      startAdornment={
+                        <DollarSign className="h-4 w-4 text-emerald-600 font-bold" />
+                      }
                       required
                     />
                   </div>
                 </div>
 
-                {/* Live Margin & Landed 1px Hairline Breakdown */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-slate-200 dark:bg-[#242A38] border border-slate-200 dark:border-[#242A38] rounded-lg overflow-hidden text-xs">
-                  <div className="p-3.5 bg-white dark:bg-[#11141B]">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-slate-200 dark:bg-[#262F40] border border-slate-200 dark:border-[#262F40] rounded-lg overflow-hidden text-xs">
+                  <div className="p-3.5 bg-white dark:bg-[#161B26]">
                     <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
                       Total Landed Cost
                     </span>
@@ -1086,20 +1295,22 @@ export default function VehicleIntakePage() {
                     </span>
                   </div>
 
-                  <div className="p-3.5 bg-white dark:bg-[#11141B]">
+                  <div className="p-3.5 bg-white dark:bg-[#161B26]">
                     <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
                       Projected Profit
                     </span>
                     <span
                       className={`font-mono font-bold text-base tabular-nums mt-0.5 block ${
-                        estimatedProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600"
+                        estimatedProfit >= 0
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-rose-600"
                       }`}
                     >
                       {estimatedProfit >= 0 ? "+" : ""}${estimatedProfit.toLocaleString()} USD
                     </span>
                   </div>
 
-                  <div className="p-3.5 bg-white dark:bg-[#11141B]">
+                  <div className="p-3.5 bg-white dark:bg-[#161B26]">
                     <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
                       Gross Margin (%)
                     </span>
@@ -1121,16 +1332,13 @@ export default function VehicleIntakePage() {
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* STEP 3: Photography Vault & Final Dossier Verification Cards              */}
-        {/* ========================================================================= */}
+        {/* STEP 3: Photography Vault & Final Dossier Verification */}
         {activeStep === 3 && (
           <div className="space-y-5">
-            {/* Card 1: Photo Vault Card */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+            <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#262F40]">
                 <div className="flex items-center gap-2.5">
-                  <span className="h-7 w-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-blue-500/20">
+                  <span className="h-7 w-7 rounded-lg bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-[var(--theme-primary)]/20">
                     <ImageIcon className="h-4 w-4" />
                   </span>
                   <div>
@@ -1138,7 +1346,8 @@ export default function VehicleIntakePage() {
                       Vehicle Photo Vault ({images.length} Loaded)
                     </h3>
                     <p className="text-[11px] text-slate-500">
-                      Upload high-resolution photography with automatic dealer watermarks.
+                      Upload high-resolution photography with automatic{" "}
+                      {branding?.dealershipName || "Aria Motors"} dealer watermarks.
                     </p>
                   </div>
                 </div>
@@ -1194,25 +1403,28 @@ export default function VehicleIntakePage() {
                   }
                   label={
                     <span className="text-xs text-slate-600 dark:text-slate-300">
-                      Auto-apply Notary Watermark
+                      Auto-apply {branding?.dealershipName || "Aria Motors"} Watermark
                     </span>
                   }
-                  sx={{ ml: 1 }}
+                  sx={{ ms: 1 }}
                 />
               </div>
 
-              {/* Bulk URL Accordion */}
               {isBulkOpen && (
-                <div className="p-3.5 rounded-lg border border-slate-200 dark:border-[#242A38] bg-slate-50 dark:bg-[#141821] space-y-2">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+                <div className="p-3.5 rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] space-y-2">
+                  <label
+                    htmlFor="intake-bulk-urls"
+                    className="text-xs font-semibold text-slate-700 dark:text-slate-300 block"
+                  >
                     Paste Direct Image URLs (separated by newlines or commas):
                   </label>
                   <textarea
+                    id="intake-bulk-urls"
                     rows={3}
                     value={bulkUrlInput}
                     onChange={(e) => setBulkUrlInput(e.target.value)}
-                    placeholder="https://images.unsplash.com/photo-1...&#10;https://images.unsplash.com/photo-2..."
-                    className="w-full text-xs font-mono p-2.5 rounded border border-slate-300 dark:border-[#262F40] bg-white dark:bg-[#0A0C10] text-slate-900 dark:text-white outline-none focus:border-[#C59B27]"
+                    placeholder="https://images.unsplash.com/photo-1..."
+                    className="w-full text-xs font-mono p-2.5 rounded border border-slate-300 dark:border-[#262F40] bg-white dark:bg-[#0F141C] text-slate-900 dark:text-white outline-none focus:border-[var(--theme-primary)]"
                   />
                   <div className="flex justify-end gap-2">
                     <MuiButton
@@ -1222,7 +1434,7 @@ export default function VehicleIntakePage() {
                       onClick={() => setIsBulkOpen(false)}
                       sx={{ fontSize: "10px" }}
                     >
-                      Cancel
+                      {t.inventoryCancel}
                     </MuiButton>
                     <MuiButton
                       type="button"
@@ -1238,27 +1450,31 @@ export default function VehicleIntakePage() {
                 </div>
               )}
 
-              {/* Upload Notice */}
               {uploadNotice && (
-                <div className="p-2.5 rounded bg-blue-500/10 border border-blue-500/20 text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                  <div className="animate-spin h-3.5 w-3.5 border-2 border-blue-600 border-t-transparent rounded-full shrink-0" />
+                <div className="p-2.5 rounded bg-[var(--theme-primary)]/10 border border-[var(--theme-primary)]/20 text-xs text-[var(--theme-primary)] flex items-center gap-2">
+                  <div className="animate-spin h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full shrink-0" />
                   <span>{uploadNotice}</span>
                 </div>
               )}
 
-              {/* Photos Grid */}
               {images.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5 pt-2">
                   {images.map((img, idx) => (
                     <div
                       key={idx}
-                      className="group relative aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 dark:border-[#242A38] bg-slate-100 dark:bg-slate-800"
+                      className="group relative aspect-[4/3] rounded-lg overflow-hidden border border-slate-200 dark:border-[#262F40] bg-slate-100 dark:bg-slate-800"
                     >
-                      <Image src={img} alt={`Photo ${idx + 1}`} fill className="object-cover" />
+                      <Image
+                        src={img}
+                        alt={`Photo ${idx + 1}`}
+                        fill
+                        unoptimized={img.startsWith("data:")}
+                        className="object-cover"
+                      />
 
                       {idx === 0 && (
-                        <div className="absolute top-1 left-1 bg-[#111318]/90 text-[#D4AF37] px-1.5 py-0.5 rounded text-[9px] font-mono font-bold flex items-center gap-1">
-                          <Star className="h-2.5 w-2.5 fill-[#D4AF37]" />
+                        <div className="absolute top-1 start-1 bg-slate-900/90 text-amber-400 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold flex items-center gap-1">
+                          <Star className="h-2.5 w-2.5 fill-amber-400" />
                           Primary
                         </div>
                       )}
@@ -1267,8 +1483,9 @@ export default function VehicleIntakePage() {
                         {idx !== 0 && (
                           <button
                             type="button"
+                            aria-label="Set as primary showcase photo"
                             onClick={() => handleSetPrimaryPhoto(idx)}
-                            className="p-1 rounded bg-white text-slate-900 hover:bg-slate-200"
+                            className="p-1 rounded bg-white text-slate-900 hover:bg-slate-200 cursor-pointer"
                             title="Set as primary showcase photo"
                           >
                             <Star className="h-3 w-3" />
@@ -1276,8 +1493,9 @@ export default function VehicleIntakePage() {
                         )}
                         <button
                           type="button"
+                          aria-label="Remove photo"
                           onClick={() => handleRemovePhoto(idx)}
-                          className="p-1 rounded bg-rose-600 text-white hover:bg-rose-700"
+                          className="p-1 rounded bg-rose-600 text-white hover:bg-rose-700 cursor-pointer"
                           title="Remove photo"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -1287,21 +1505,20 @@ export default function VehicleIntakePage() {
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center rounded-xl border border-dashed border-slate-300 dark:border-[#242A38] bg-slate-50/50 dark:bg-[#141821] text-slate-400">
+                <div className="p-8 text-center rounded-xl border border-dashed border-slate-300 dark:border-[#262F40] bg-slate-50/50 dark:bg-[#121722] text-slate-400">
                   <ImageIcon className="h-10 w-10 mx-auto opacity-30 mb-2" />
                   <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                     No Showcase Photos Uploaded Yet
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
-                    Click &ldquo;Upload Files&rdquo; to add high-resolution vehicle photos with automated notary watermarks.
+                    Click &ldquo;Upload Files&rdquo; to add high-resolution vehicle photos with automated dealer watermarks.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Card 2: Final Pre-Submission Dossier Review */}
-            <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E2330]">
+            <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#262F40]">
                 <div className="flex items-center gap-2.5">
                   <span className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs border border-emerald-500/20">
                     <CheckCircle2 className="h-4 w-4" />
@@ -1321,27 +1538,35 @@ export default function VehicleIntakePage() {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#242A38] bg-slate-50/60 dark:bg-[#141821]">
-                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">Vehicle Unit</span>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50/60 dark:bg-[#121722]">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
+                    Vehicle Unit
+                  </span>
                   <span className="font-bold text-slate-900 dark:text-white mt-0.5 block truncate">
                     {formData.year} {formData.make} {formData.model}
                   </span>
                 </div>
-                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#242A38] bg-slate-50/60 dark:bg-[#141821]">
-                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">Stock & VIN</span>
-                  <span className="font-mono font-bold text-blue-600 dark:text-blue-400 mt-0.5 block truncate">
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50/60 dark:bg-[#121722]">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
+                    Stock & VIN
+                  </span>
+                  <span className="font-mono font-bold text-[var(--theme-primary)] mt-0.5 block truncate">
                     {formData.stockNumber}
                   </span>
                 </div>
-                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#242A38] bg-slate-50/60 dark:bg-[#141821]">
-                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">Landed Cost</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white mt-0.5 block">
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50/60 dark:bg-[#121722]">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
+                    Landed Cost
+                  </span>
+                  <span className="font-mono tabular-nums font-bold text-slate-900 dark:text-white mt-0.5 block">
                     ${totalLandedCost.toLocaleString()} USD
                   </span>
                 </div>
-                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#242A38] bg-slate-50/60 dark:bg-[#141821]">
-                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">Target Retail</span>
-                  <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50/60 dark:bg-[#121722]">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">
+                    Target Retail
+                  </span>
+                  <span className="font-mono tabular-nums font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
                     ${formData.sellingPrice.toLocaleString()} USD
                   </span>
                 </div>
@@ -1350,10 +1575,8 @@ export default function VehicleIntakePage() {
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* Navigation Toolbar Card                                                  */}
-        {/* ========================================================================= */}
-        <div className="rounded-xl border border-slate-200/90 dark:border-[#242A38] bg-white dark:bg-[#11141B] p-4 shadow-xs flex items-center justify-between">
+        {/* Navigation Toolbar Card */}
+        <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-4 shadow-xs flex items-center justify-between">
           <MuiButton
             type="button"
             variant="outlined"
@@ -1361,10 +1584,10 @@ export default function VehicleIntakePage() {
             size="small"
             onClick={handleBack}
             disabled={activeStep === 0}
-            startIcon={<ArrowLeft className="h-4 w-4" />}
+            startIcon={<ArrowLeft className="h-4 w-4 rtl:rotate-180" />}
             sx={{ fontSize: "11px", py: "5px", px: "16px" }}
           >
-            Back
+            {language === "ps" ? "شاته" : language === "fa" ? "مرحله قبل" : "Back"}
           </MuiButton>
 
           {activeStep < steps.length - 1 ? (
@@ -1374,10 +1597,14 @@ export default function VehicleIntakePage() {
               color="primary"
               size="small"
               onClick={handleNext}
-              endIcon={<ArrowRight className="h-4 w-4" />}
+              endIcon={<ArrowRight className="h-4 w-4 rtl:rotate-180" />}
               sx={{ fontSize: "11px", py: "5px", px: "18px" }}
             >
-              Continue to {steps[activeStep + 1].title.split("&")[0]}
+              {language === "ps"
+                ? "بل ګام"
+                : language === "fa"
+                ? "ادامه به مرحله بعد"
+                : `Continue to ${steps[activeStep + 1].title.split("&")[0]}`}
             </MuiButton>
           ) : (
             <MuiButton
@@ -1385,11 +1612,16 @@ export default function VehicleIntakePage() {
               variant="contained"
               color="success"
               size="small"
-              onClick={() => handleSubmit()}
+              disabled={currentRole !== "SuperAdmin"}
+              onClick={() => void handleSubmit()}
               startIcon={<CheckCircle2 className="h-4 w-4" />}
               sx={{ fontSize: "11px", py: "6px", px: "22px" }}
             >
-              Register Vehicle & Commit to Lot
+              {language === "ps"
+                ? "موټر په موجودۍ کې ثبت کړئ"
+                : language === "fa"
+                ? "ثبت نهایی موتر در موجودی"
+                : "Register Vehicle & Commit to Lot"}
             </MuiButton>
           )}
         </div>

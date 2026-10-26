@@ -3,7 +3,8 @@
 import React, { useMemo } from "react";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { formatCurrency } from "@/lib/utils";
-import { BarChart3, Filter, X, Globe2, Fuel, Layers } from "lucide-react";
+import { translations } from "@/lib/translations";
+import { Filter, X, Globe2, Fuel, Layers } from "lucide-react";
 
 export function LookerAnalyticsStrip() {
   const {
@@ -12,15 +13,16 @@ export function LookerAnalyticsStrip() {
     setChartFilter,
     currency,
     exchangeRate,
+    language,
     clientPresentationMode,
     currentRole,
   } = useShowroomStore();
+  const t = translations[language];
 
   const showMargins =
     !clientPresentationMode &&
     (currentRole === "SuperAdmin" || currentRole === "Accountant");
 
-  // 1. Origin Country Breakdown
   const originStats = useMemo(() => {
     const map = new Map<string, { count: number; value: number; margin: number }>();
     vehicles.forEach((v) => {
@@ -40,7 +42,6 @@ export function LookerAnalyticsStrip() {
       .sort((a, b) => b.count - a.count);
   }, [vehicles]);
 
-  // 2. Powertrain Cohort Breakdown
   const fuelStats = useMemo(() => {
     const map = new Map<string, { count: number; avgPrice: number; total: number }>();
     vehicles.forEach((v) => {
@@ -60,7 +61,6 @@ export function LookerAnalyticsStrip() {
     }));
   }, [vehicles]);
 
-  // 3. Body Architecture Cohort Breakdown
   const bodyStats = useMemo(() => {
     const map = new Map<string, { count: number; totalMargin: number }>();
     vehicles.forEach((v) => {
@@ -92,36 +92,59 @@ export function LookerAnalyticsStrip() {
     <div className="space-y-2.5">
       {/* Active Cross-Filter Callout Banner */}
       {chartFilter && (
-        <div className="flex items-center justify-between px-3.5 py-2 rounded-lg border border-[#1A73E8]/30 bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.08] text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-lg border border-[var(--theme-primary)]/30 bg-[var(--theme-primary)]/[0.06] text-xs">
           <div className="flex items-center gap-2">
-            <Filter className="h-3.5 w-3.5 text-[#1A73E8] dark:text-[#8AB4F8]" />
+            <Filter className="h-3.5 w-3.5 text-[var(--theme-primary)]" />
             <span className="text-slate-600 dark:text-slate-300">
-              Looker Studio Cross-Filter Active:
+              {language === "ps"
+                ? "فعال فلټر:"
+                : language === "fa"
+                ? "فیلتر تحلیلی فعال:"
+                : "Cross-Filter Active:"}
             </span>
-            <span className="font-mono font-bold text-[#1A73E8] dark:text-[#8AB4F8]">
+            <span className="font-mono font-bold text-[var(--theme-primary)]">
               {chartFilter.dimension} = {chartFilter.value}
             </span>
           </div>
           <button
+            type="button"
             onClick={() => setChartFilter(null)}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#1A73E8] dark:text-[#8AB4F8] hover:underline cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--theme-primary)] hover:underline cursor-pointer"
           >
             <X className="h-3.5 w-3.5" />
-            <span>Clear chart filter</span>
+            <span>
+              {language === "ps"
+                ? "فلټر پاک کړئ"
+                : language === "fa"
+                ? "پاک کردن فیلتر"
+                : "Clear Filter"}
+            </span>
           </button>
         </div>
       )}
 
-      {/* 3-Column Interactive Looker Studio Cohort Grid */}
+      {/* 3-Column Interactive Analytics Cohort Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-slate-200 dark:bg-[#262F40] border border-slate-200 dark:border-[#262F40] rounded-lg overflow-hidden">
         {/* Panel 1: Import Origin Corridors */}
         <div className="bg-white dark:bg-[#161B26] p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
-              <Globe2 className="h-3.5 w-3.5 text-[#1A73E8] dark:text-[#8AB4F8]" />
-              <span>Import Origin Corridors</span>
+              <Globe2 className="h-3.5 w-3.5 text-[var(--theme-primary)]" />
+              <span>
+                {language === "ps"
+                  ? "د وارداتو هیوادونه"
+                  : language === "fa"
+                  ? "مبادی وارداتی ناوگان"
+                  : "Import Origin Corridors"}
+              </span>
             </div>
-            <span className="text-[11px] text-slate-400">Click bar to filter</span>
+            <span className="text-[11px] text-slate-400">
+              {language === "ps"
+                ? "د فلټر لپاره کلیک وکړئ"
+                : language === "fa"
+                ? "کلیک برای فیلتر"
+                : "Click bar to filter"}
+            </span>
           </div>
 
           <div className="space-y-2">
@@ -136,7 +159,7 @@ export function LookerAnalyticsStrip() {
                   onClick={() => toggleDimension("originCountry", item.country)}
                   className={`w-full text-start rounded-md p-1.5 transition-colors cursor-pointer ${
                     isSelected
-                      ? "bg-[#1A73E8]/10 dark:bg-[#8AB4F8]/15 ring-1 ring-[#1A73E8]"
+                      ? "bg-[var(--theme-primary)]/10 ring-1 ring-[var(--theme-primary)]"
                       : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"
                   }`}
                 >
@@ -145,12 +168,13 @@ export function LookerAnalyticsStrip() {
                       {item.country}
                     </span>
                     <span className="font-mono tabular-nums text-[11px] text-slate-500">
-                      {item.count} units · {formatCurrency(item.value, currency, exchangeRate)}
+                      {item.count} {t.units} ·{" "}
+                      {formatCurrency(item.value, currency, exchangeRate)}
                     </span>
                   </div>
                   <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-[#1A73E8] dark:bg-[#8AB4F8] transition-all"
+                      className="h-full rounded-full bg-[var(--theme-primary)] transition-all"
                       style={{ width: `${Math.max(item.share, 8)}%` }}
                     />
                   </div>
@@ -165,9 +189,21 @@ export function LookerAnalyticsStrip() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
               <Fuel className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Powertrain & Tariff Cohorts</span>
+              <span>
+                {language === "ps"
+                  ? "د سونګ او انجن ډول"
+                  : language === "fa"
+                  ? "ترکیب سوخت و پیشرانه"
+                  : "Powertrain & Tariff Cohorts"}
+              </span>
             </div>
-            <span className="text-[11px] text-slate-400">Interactive segment</span>
+            <span className="text-[11px] text-slate-400">
+              {language === "ps"
+                ? "متقابل انتخاب"
+                : language === "fa"
+                ? "بخش تعاملی"
+                : "Interactive segment"}
+            </span>
           </div>
 
           <div className="space-y-2">
@@ -190,7 +226,8 @@ export function LookerAnalyticsStrip() {
                       {item.fuel}
                     </span>
                     <span className="font-mono tabular-nums text-[11px] text-slate-500">
-                      {item.count} units ({item.share}%) · Avg ${item.avgPrice.toLocaleString()}
+                      {item.count} {t.units} ({item.share}%) · Avg $
+                      {item.avgPrice.toLocaleString()}
                     </span>
                   </div>
                   <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -210,9 +247,21 @@ export function LookerAnalyticsStrip() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
               <Layers className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-              <span>Chassis Class & Net Margin</span>
+              <span>
+                {language === "ps"
+                  ? "د موټر بڼه او ګټه"
+                  : language === "fa"
+                  ? "کلاس بدنه و حاشیه سود"
+                  : "Chassis Class & Net Margin"}
+              </span>
             </div>
-            <span className="text-[11px] text-slate-400">Click to isolate</span>
+            <span className="text-[11px] text-slate-400">
+              {language === "ps"
+                ? "کلیک وکړئ"
+                : language === "fa"
+                ? "تفکیک سریع"
+                : "Click to isolate"}
+            </span>
           </div>
 
           <div className="space-y-2">
@@ -235,10 +284,10 @@ export function LookerAnalyticsStrip() {
                       {item.body}
                     </span>
                     <span className="font-mono tabular-nums text-[11px] text-slate-500">
-                      {item.count} units
+                      {item.count} {t.units}
                       {showMargins
-                        ? ` · +$${item.totalMargin.toLocaleString()} net`
-                        : ` · ${item.share}% share`}
+                        ? ` · +$${item.totalMargin.toLocaleString()} ${t.dashboardNet}`
+                        : ` · ${item.share}%`}
                     </span>
                   </div>
                   <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">

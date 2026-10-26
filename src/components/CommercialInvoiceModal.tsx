@@ -1,21 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import QRCode from "qrcode";
 import { InvoiceRecord } from "@/lib/mock-data";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
-import { formatCurrency } from "@/lib/utils";
-import { MuiButton, MuiChip, IconButton } from "@/components/mui";
+import { MuiButton, IconButton } from "@/components/mui";
 import {
   X,
   Printer,
   FileCheck2,
-  DollarSign,
-  Building2,
-  Phone,
-  Calendar,
-  CheckCircle2,
   Car,
   Download,
   Loader2,
@@ -33,12 +27,12 @@ export function CommercialInvoiceModal({
   isOpen,
   onClose,
 }: CommercialInvoiceModalProps) {
-  const { exchangeRate, language, addToast } = useShowroomStore();
+  const { language, addToast, branding } = useShowroomStore();
   const t = translations[language];
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [isDownloadingPDF, setIsDownloadingPDF] = useState<boolean>(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!invoice) return;
     const qrData = JSON.stringify({
       inv: invoice.invoiceNumber,
@@ -48,13 +42,24 @@ export function CommercialInvoiceModal({
       totalUSD: invoice.totalUSD,
       totalAFN: invoice.totalAFN,
       date: invoice.issueDate,
-      dealer: "Sadozai Motors Herat",
+      dealer: branding.dealershipName,
     });
 
     QRCode.toDataURL(qrData, { width: 140, margin: 1 })
       .then((url) => setQrCodeUrl(url))
       .catch((err) => console.error("QR Code error:", err));
-  }, [invoice]);
+  }, [invoice, branding.dealershipName]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !invoice) return null;
 
@@ -78,10 +83,19 @@ export function CommercialInvoiceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-3 sm:p-4 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-xl bg-white p-6 sm:p-8 shadow-2xl dark:bg-[#121824] dark:text-white border border-slate-200 dark:border-slate-800">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Commercial Invoice ${invoice.invoiceNumber}`}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-3 sm:p-4 backdrop-blur-xs overflow-y-auto"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-xl bg-white p-6 sm:p-8 shadow-2xl dark:bg-[#161B26] dark:text-white border border-slate-200 dark:border-[#262F40]"
+      >
         {/* Top Action Bar (hidden when printing) */}
-        <div className="flex items-center justify-between border-b pb-4 dark:border-slate-800 print:hidden">
+        <div className="flex items-center justify-between border-b pb-4 border-slate-200 dark:border-[#262F40] print:hidden">
           <div className="flex items-center gap-2">
             <FileCheck2 className="h-5 w-5 text-primary" />
             <span className="font-bold text-sm text-slate-900 dark:text-white">
@@ -115,7 +129,7 @@ export function CommercialInvoiceModal({
             >
               {isDownloadingPDF ? t.buttonGeneratingPdf : t.buttonDownloadPdf}
             </MuiButton>
-            <IconButton size="small" onClick={onClose}>
+            <IconButton size="small" onClick={onClose} aria-label="Close invoice modal">
               <X className="h-5 w-5" />
             </IconButton>
           </div>
@@ -127,7 +141,7 @@ export function CommercialInvoiceModal({
           className="mt-6 space-y-6 text-slate-900 dark:text-slate-100 print:m-0 print:p-0"
         >
           {/* Header & Logo */}
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-200 dark:border-[#262F40] pb-6">
             <div>
               <div className="flex items-center gap-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white font-bold">
@@ -135,49 +149,64 @@ export function CommercialInvoiceModal({
                 </div>
                 <div>
                   <h1 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-                    Sadozai Motors Herat
+                    {branding.dealershipName}
                   </h1>
                   <span className="text-xs font-dari text-slate-500 dark:text-slate-400 block font-bold">
-                    نندارتون و شرکت وارداتی اتومبیل سدوزی هرات
+                    {branding.dealershipNameFa}
                   </span>
                 </div>
               </div>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 max-w-sm">
-                Main Boulevard, Bagh-e-Azadi, Herat, Afghanistan • Registered Dealership License #49912
+                {branding.address} • {branding.licenseNumber}
               </p>
-              <p className="text-xs text-slate-500 font-mono">
-                Tel: +93 79 910 2030 | WhatsApp: +93 79 912 3456
+              <p className="text-xs text-slate-500 font-mono tabular-nums">
+                Tel: {branding.phone} | WhatsApp: {branding.whatsapp}
               </p>
             </div>
 
-            <div className="text-right sm:self-auto self-end">
+            <div className="text-end sm:self-auto self-end">
               <span className="inline-block px-3 py-1 text-xs font-bold font-mono uppercase tracking-wider rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
                 {invoice.invoiceNumber}
               </span>
               <div className="mt-2 space-y-0.5 text-xs text-slate-500">
-                <p>Date: <span className="font-mono font-medium text-slate-800 dark:text-slate-200">{invoice.issueDate}</span></p>
+                <p>
+                  Date:{" "}
+                  <span className="font-mono tabular-nums font-medium text-slate-800 dark:text-slate-200">
+                    {invoice.issueDate}
+                  </span>
+                </p>
                 {invoice.dueDate && (
-                  <p>Due Date: <span className="font-mono font-medium text-slate-800 dark:text-slate-200">{invoice.dueDate}</span></p>
+                  <p>
+                    Due Date:{" "}
+                    <span className="font-mono tabular-nums font-medium text-slate-800 dark:text-slate-200">
+                      {invoice.dueDate}
+                    </span>
+                  </p>
                 )}
-                <p>Status: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{invoice.status}</span></p>
+                <p>
+                  Status:{" "}
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                    {invoice.status}
+                  </span>
+                </p>
               </div>
             </div>
           </div>
 
           {/* Bill To & Vehicle Spec Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="rounded-lg bg-slate-50/80 p-3.5 dark:bg-[#1A2234] border border-slate-200/80 dark:border-slate-800">
+            <div className="rounded-lg bg-slate-50/80 p-3.5 dark:bg-[#0F141C] border border-slate-200 dark:border-[#262F40]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
                 Billed To (مشخصات خریدار / مشتری)
               </span>
               <p className="font-bold text-sm text-slate-900 dark:text-white">
                 {invoice.customerName}
               </p>
-              <p className="text-slate-600 dark:text-slate-300 font-mono mt-0.5">
+              <p className="text-slate-600 dark:text-slate-300 font-mono tabular-nums mt-0.5">
                 Phone: {invoice.customerPhone}
               </p>
               {invoice.customerTazkira && (
-                <p className="text-slate-500 font-mono">
+                <p className="text-slate-500 font-mono tabular-nums">
                   Tazkira ID: {invoice.customerTazkira}
                 </p>
               )}
@@ -186,17 +215,17 @@ export function CommercialInvoiceModal({
               )}
             </div>
 
-            <div className="rounded-lg bg-slate-50/80 p-3.5 dark:bg-[#1A2234] border border-slate-200/80 dark:border-slate-800">
+            <div className="rounded-lg bg-slate-50/80 p-3.5 dark:bg-[#0F141C] border border-slate-200 dark:border-[#262F40]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
                 Vehicle Details (مشخصات موتر معامله‌شده)
               </span>
               <p className="font-bold text-sm text-slate-900 dark:text-white">
                 {invoice.vehicleDesc || "Vehicle Direct Import"}
               </p>
-              <p className="text-slate-600 dark:text-slate-300 font-mono mt-0.5">
+              <p className="text-slate-600 dark:text-slate-300 font-mono tabular-nums mt-0.5">
                 Stock #: {invoice.vehicleStock || "N/A"}
               </p>
-              <p className="text-slate-500 font-mono">
+              <p className="text-slate-500 font-mono tabular-nums">
                 Chassis / VIN: {invoice.vin || "N/A"}
               </p>
               <p className="text-slate-500 font-medium">
@@ -206,20 +235,30 @@ export function CommercialInvoiceModal({
           </div>
 
           {/* Line Items Table */}
-          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-[#262F40]">
+            <table className="w-full text-start text-xs">
+              <thead className="bg-slate-50 dark:bg-[#121722] border-b border-slate-200 dark:border-[#262F40]">
                 <tr>
-                  <th className="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">#</th>
-                  <th className="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">Description (شرح خدمات و موتر)</th>
-                  <th className="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Amount (USD)</th>
-                  <th className="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Amount (AFN)</th>
+                  <th className="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-start">
+                    #
+                  </th>
+                  <th className="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-start">
+                    Description (شرح خدمات و موتر)
+                  </th>
+                  <th className="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-end">
+                    Amount (USD)
+                  </th>
+                  <th className="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-end">
+                    Amount (AFN)
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#262F40]">
                 {invoice.items.map((item, idx) => (
                   <tr key={idx}>
-                    <td className="py-2.5 px-4 font-mono text-slate-400">{idx + 1}</td>
+                    <td className="py-2.5 px-4 font-mono tabular-nums text-slate-400">
+                      {idx + 1}
+                    </td>
                     <td className="py-2.5 px-4">
                       <div className="font-semibold text-slate-900 dark:text-white">
                         {item.description}
@@ -228,10 +267,10 @@ export function CommercialInvoiceModal({
                         {item.descriptionDari}
                       </div>
                     </td>
-                    <td className="py-2.5 px-4 text-right font-mono font-semibold text-slate-900 dark:text-white">
+                    <td className="py-2.5 px-4 text-end font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
                       ${item.amountUSD.toLocaleString()}
                     </td>
-                    <td className="py-2.5 px-4 text-right font-mono text-slate-600 dark:text-slate-400">
+                    <td className="py-2.5 px-4 text-end font-mono tabular-nums text-slate-600 dark:text-slate-400">
                       ؋{Math.round(item.amountUSD * invoice.exchangeRate).toLocaleString()}
                     </td>
                   </tr>
@@ -244,7 +283,7 @@ export function CommercialInvoiceModal({
           <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-2">
             <div className="flex items-center gap-3">
               {qrCodeUrl && (
-                <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-1 bg-white">
+                <div className="rounded-lg border border-slate-200 dark:border-[#262F40] p-1 bg-white">
                   <img src={qrCodeUrl} alt="Invoice QR" className="h-20 w-20" />
                 </div>
               )}
@@ -253,30 +292,36 @@ export function CommercialInvoiceModal({
                   Digitally Verified ERP Invoice
                 </p>
                 <p>Islam Qala Port Customs Cleared</p>
-                <p className="font-mono">Rate: $1 = {invoice.exchangeRate} AFN</p>
+                <p className="font-mono tabular-nums">
+                  Rate: $1 = {invoice.exchangeRate} AFN
+                </p>
               </div>
             </div>
 
             <div className="w-full sm:w-72 space-y-2 text-xs">
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>Subtotal (مجموع):</span>
-                <span className="font-mono font-medium">${invoice.subtotalUSD.toLocaleString()} USD</span>
+                <span className="font-mono tabular-nums font-medium">
+                  ${invoice.subtotalUSD.toLocaleString()} USD
+                </span>
               </div>
               {invoice.discountUSD > 0 && (
                 <div className="flex justify-between text-emerald-600">
                   <span>Special Discount (تخفیف):</span>
-                  <span className="font-mono font-medium">-${invoice.discountUSD.toLocaleString()} USD</span>
+                  <span className="font-mono tabular-nums font-medium">
+                    -${invoice.discountUSD.toLocaleString()} USD
+                  </span>
                 </div>
               )}
-              <div className="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between items-baseline">
+              <div className="border-t border-slate-200 dark:border-[#262F40] pt-2 flex justify-between items-baseline">
                 <span className="font-bold text-slate-900 dark:text-white text-sm">
                   Total Payable:
                 </span>
-                <div className="text-right">
-                  <span className="font-black font-mono text-base text-slate-950 dark:text-white block">
+                <div className="text-end">
+                  <span className="font-black font-mono tabular-nums text-base text-slate-950 dark:text-white block">
                     ${invoice.totalUSD.toLocaleString()} USD
                   </span>
-                  <span className="font-mono text-xs text-slate-500 block">
+                  <span className="font-mono tabular-nums text-xs text-slate-500 block">
                     ؋{invoice.totalAFN.toLocaleString()} AFN
                   </span>
                 </div>
@@ -285,19 +330,23 @@ export function CommercialInvoiceModal({
           </div>
 
           {/* Authorized Signature Block */}
-          <div className="grid grid-cols-2 gap-8 pt-8 border-t border-dashed border-slate-200 dark:border-slate-800 text-xs text-center">
+          <div className="grid grid-cols-2 gap-8 pt-8 border-t border-dashed border-slate-200 dark:border-[#262F40] text-xs text-center">
             <div>
               <div className="h-12 flex items-center justify-center">
-                <span className="text-[11px] text-slate-400 italic">Official Showroom Stamp & Signature</span>
+                <span className="text-[11px] text-slate-400 italic">
+                  Official Showroom Stamp & Signature
+                </span>
               </div>
               <div className="border-t border-slate-300 dark:border-slate-700 pt-1 font-semibold text-slate-800 dark:text-slate-200">
-                Haji Ahmad Shah (Sadozai Motors CEO)
+                {branding.authorizedSignatory} ({branding.dealershipName})
               </div>
             </div>
 
             <div>
               <div className="h-12 flex items-center justify-center">
-                <span className="text-[11px] text-slate-400 italic">Buyer Acceptance (امضاء و شصت خریدار)</span>
+                <span className="text-[11px] text-slate-400 italic">
+                  Buyer Acceptance (امضاء و شصت خریدار)
+                </span>
               </div>
               <div className="border-t border-slate-300 dark:border-slate-700 pt-1 font-semibold text-slate-800 dark:text-slate-200">
                 {invoice.customerName}

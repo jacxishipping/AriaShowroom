@@ -1,7 +1,8 @@
 import { useShowroomStore } from "@/store/useShowroomStore";
+
 /**
  * Client-Side Image Watermarking & WebP Optimization
- * Stamped onto vehicle inspection photos before uploading to Vercel Blob.
+ * Stamped onto vehicle inspection photos before uploading.
  */
 
 export interface WatermarkOptions {
@@ -16,12 +17,17 @@ export async function processAndWatermarkImage(
   file: File,
   options: WatermarkOptions = {}
 ): Promise<File> {
+  const storeBranding = useShowroomStore.getState().branding;
+  const defaultWatermarkName =
+    storeBranding?.watermarkText ||
+    `${(storeBranding?.dealershipName || "ARIA MOTORS").toUpperCase()} • HERAT`;
+
   const {
-    stockNumber = "SM-HRT",
-    showroomName = "SADOZAI MOTORS • HERAT",
+    stockNumber = `${storeBranding?.dealershipShortCode || "ARI"}-HRT`,
+    showroomName = defaultWatermarkName,
     applyWatermark = true,
-    maxWidth = 2048,
-    quality = 0.85,
+    maxWidth = 1600,
+    quality = 0.82,
   } = options;
 
   // If not in a browser environment, return original file
@@ -34,7 +40,6 @@ export async function processAndWatermarkImage(
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        // Calculate proportional scale
         let width = img.width;
         let height = img.height;
 
@@ -53,42 +58,47 @@ export async function processAndWatermarkImage(
           return;
         }
 
-        // Draw original scaled image
         ctx.drawImage(img, 0, 0, width, height);
 
         if (applyWatermark) {
-          // Watermark badge dimensions
           const badgeWidth = Math.min(width * 0.45, 420);
           const badgeHeight = 58;
           const padding = 24;
-          const x = width - badgeWidth - padding;
-          const y = height - badgeHeight - padding;
+          const pos = storeBranding?.watermarkPosition || "bottom-right";
+          const opacity = storeBranding?.watermarkOpacity ?? 0.78;
+
+          let x = width - badgeWidth - padding;
+          let y = height - badgeHeight - padding;
+          if (pos === "bottom-left") {
+            x = padding;
+            y = height - badgeHeight - padding;
+          } else if (pos === "center" || pos === "diagonal") {
+            x = (width - badgeWidth) / 2;
+            y = (height - badgeHeight) / 2;
+          }
+
           const radius = 10;
 
-          // Semi-transparent dark glass background
           ctx.save();
-          ctx.fillStyle = "rgba(11, 15, 25, 0.78)";
+          ctx.globalAlpha = Math.max(0.2, Math.min(1, opacity + 0.35));
+          ctx.fillStyle = "rgba(11, 15, 25, 0.82)";
           ctx.beginPath();
           ctx.roundRect(x, y, badgeWidth, badgeHeight, radius);
           ctx.fill();
 
-          // Gold border outline
           ctx.strokeStyle = "rgba(217, 119, 6, 0.85)";
           ctx.lineWidth = 1.5;
           ctx.stroke();
 
-          // Gold Accent Bar on Left of Badge
           ctx.fillStyle = "#D97706";
           ctx.beginPath();
           ctx.roundRect(x + 8, y + 10, 4, badgeHeight - 20, 2);
           ctx.fill();
 
-          // Primary Showroom Text
           ctx.font = "bold 13px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
           ctx.fillStyle = "#FFFFFF";
           ctx.fillText(showroomName, x + 20, y + 24);
 
-          // Secondary Sub-label (Customs & Stock ID)
           ctx.font = "500 10px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
           ctx.fillStyle = "#D97706";
           ctx.fillText(`VERIFIED LOT #${stockNumber} • ISLAM QALA CLEARED`, x + 20, y + 43);
@@ -96,7 +106,6 @@ export async function processAndWatermarkImage(
           ctx.restore();
         }
 
-        // Convert canvas to optimized WebP Blob
         canvas.toBlob(
           (blob) => {
             if (!blob) {

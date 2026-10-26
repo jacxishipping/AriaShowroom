@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useShowroomStore } from "@/store/useShowroomStore";
-import { translations } from "@/lib/translations";
 import { formatCurrency } from "@/lib/utils";
 import { InvoicesTab } from "@/components/accounting/InvoicesTab";
 import { SuppliersTab } from "@/components/accounting/SuppliersTab";
@@ -31,16 +30,33 @@ export default function AccountingHubPage() {
     currency,
     exchangeRate,
     language,
+    currentRole,
+    branding,
   } = useShowroomStore();
 
-  const t = translations[language];
   const [activeTab, setActiveTab] = useState("0");
 
-  // Financial aggregates
+  const localizedDealershipName =
+    language === "fa"
+      ? branding.dealershipNameFa || branding.dealershipName
+      : language === "ps"
+      ? branding.dealershipNamePs || branding.dealershipName
+      : branding.dealershipName;
+
+  // Financial aggregates using actual vehicle landed costs (no fabricated 0.86 fallback)
   const totalRevenueUSD = sales.reduce((acc, s) => acc + s.salePriceUSD, 0);
   const totalCogsUSD = sales.reduce((acc, s) => {
-    const matchedVehicle = vehicles.find((v) => v.stockNumber === s.stockNumber);
-    return acc + (matchedVehicle ? matchedVehicle.landedCost : s.salePriceUSD * 0.86);
+    const matchedVehicle = vehicles.find(
+      (v) => v.stockNumber === s.stockNumber
+    );
+    if (!matchedVehicle) return acc;
+    const cost =
+      matchedVehicle.landedCost ||
+      matchedVehicle.purchasePrice +
+        matchedVehicle.freightCost +
+        matchedVehicle.customsDuty +
+        matchedVehicle.repairCost;
+    return acc + cost;
   }, 0);
   const grossProfitUSD = totalRevenueUSD - totalCogsUSD;
   const totalExpensesUSD = expenses.reduce((acc, e) => acc + e.amountUSD, 0);
@@ -113,13 +129,13 @@ export default function AccountingHubPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Google Cloud Accounting Header */}
+      {/* Enterprise Accounting Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-slate-200 dark:border-[#262F40]">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
-            <span>Khorasan Sarrafi Market · Desk #14</span>
+            <span>{localizedDealershipName} · Khorasan Sarrafi Desk</span>
             <span>·</span>
-            <span className="font-mono text-[#1A73E8] dark:text-[#8AB4F8] font-semibold">
+            <span className="font-mono text-primary font-semibold">
               Bilingual Double-Entry Ledger
             </span>
           </div>
@@ -135,36 +151,50 @@ export default function AccountingHubPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 print:hidden">
           <MuiButton
             variant="outlined"
             size="small"
             onClick={() => window.print()}
             startIcon={<Printer className="h-4 w-4" />}
           >
-            Print Report
+            {language === "fa"
+              ? "چاپ گزارش"
+              : language === "ps"
+              ? "راپور چاپ"
+              : "Print Report"}
           </MuiButton>
-          <Link href="/intake">
-            <MuiButton
-              variant="contained"
-              size="small"
-              startIcon={<Plus className="h-4 w-4" />}
-            >
-              Intake Stock
-            </MuiButton>
-          </Link>
+          {currentRole === "SuperAdmin" && (
+            <Link href="/intake">
+              <MuiButton
+                variant="contained"
+                size="small"
+                startIcon={<Plus className="h-4 w-4" />}
+              >
+                {language === "fa"
+                  ? "ثبت موتر جدید"
+                  : language === "ps"
+                  ? "نوی موټر"
+                  : "Intake Stock"}
+              </MuiButton>
+            </Link>
+          )}
         </div>
       </div>
 
-      {/* Google Cloud 1px Hairline Financial Ledger Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-200 dark:bg-[#262F40] border border-slate-200 dark:border-[#262F40] rounded-lg overflow-hidden">
+      {/* 1px Hairline Financial Ledger Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-200 dark:bg-[#262F40] border border-slate-200 dark:border-[#262F40] rounded-xl overflow-hidden">
         {/* Cell 1: Gross Revenue */}
         <div className="bg-white dark:bg-[#161B26] p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>01. Gross Revenue</span>
-            <span className="font-mono text-[11px] text-[#1A73E8] dark:text-[#8AB4F8]">
-              REV
+            <span>
+              {language === "fa"
+                ? "۰۱. عواید ناخالص فروش"
+                : language === "ps"
+                ? "۰۱. ناخالص عواید"
+                : "01. Gross Revenue"}
             </span>
+            <span className="font-mono text-[11px] text-primary">REV</span>
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
             {formatCurrency(totalRevenueUSD, currency, exchangeRate)}
@@ -180,12 +210,24 @@ export default function AccountingHubPage() {
         {/* Cell 2: Net Profit */}
         <div className="bg-white dark:bg-[#161B26] p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>02. Net Operating Profit</span>
+            <span>
+              {language === "fa"
+                ? "۰۲. سود خالص عملیاتی"
+                : language === "ps"
+                ? "۰۲. خالصه عملیاتي ګټه"
+                : "02. Net Operating Profit"}
+            </span>
             <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
               EBITDA
             </span>
           </div>
-          <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 tracking-tight">
+          <div
+            className={`mt-2 text-2xl font-bold font-mono tabular-nums tracking-tight ${
+              netProfitUSD >= 0
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-rose-600 dark:text-rose-400"
+            }`}
+          >
             {formatCurrency(netProfitUSD, currency, exchangeRate)}
           </div>
           <div className="mt-2 pt-2 border-t border-slate-100 dark:border-[#262F40] flex items-center justify-between text-[11px] font-mono text-slate-500">
@@ -199,7 +241,13 @@ export default function AccountingHubPage() {
         {/* Cell 3: Sarrafi Cash */}
         <div className="bg-white dark:bg-[#161B26] p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>03. Sarrafi & Vault Liquidity</span>
+            <span>
+              {language === "fa"
+                ? "۰۳. موجودی صرافی و صندوق"
+                : language === "ps"
+                ? "۰۳. د صرافۍ او خزانې نغدې"
+                : "03. Sarrafi & Vault Liquidity"}
+            </span>
             <span className="font-mono text-[11px] text-amber-600 dark:text-amber-400">
               CASH
             </span>
@@ -216,7 +264,13 @@ export default function AccountingHubPage() {
         {/* Cell 4: Customs & Overheads */}
         <div className="bg-white dark:bg-[#161B26] p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>04. Customs & Overheads</span>
+            <span>
+              {language === "fa"
+                ? "۰۴. مصارف گمرکی و جاری"
+                : language === "ps"
+                ? "۰۴. ګمرکي او جاري مصارف"
+                : "04. Customs & Overheads"}
+            </span>
             <span className="font-mono text-[11px] text-rose-600 dark:text-rose-400">
               OPEX
             </span>
@@ -234,8 +288,7 @@ export default function AccountingHubPage() {
       </div>
 
       {/* Institutional Ledger Container */}
-      <div className="rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] overflow-hidden">
-        {/* Google Cloud Underlined Tab Strip */}
+      <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] overflow-hidden">
         <div className="px-3 sm:px-5 border-b border-slate-200 dark:border-[#262F40] bg-slate-50/70 dark:bg-[#121722] overflow-x-auto scrollbar-none">
           <div className="flex items-center gap-5 shrink-0">
             {tabsConfig.map((tab, idx) => {
@@ -248,7 +301,7 @@ export default function AccountingHubPage() {
                   onClick={() => setActiveTab(String(idx))}
                   className={`py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
                     isActive
-                      ? "border-[#1A73E8] dark:border-[#8AB4F8] text-[#1A73E8] dark:text-[#8AB4F8]"
+                      ? "border-primary text-primary"
                       : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
@@ -260,7 +313,6 @@ export default function AccountingHubPage() {
           </div>
         </div>
 
-        {/* Tab Content Panes */}
         <div className="p-3 sm:p-5">
           {activeTab === "0" && <AccountingTab initialSubView="pnl" />}
           {activeTab === "1" && <InvoicesTab />}

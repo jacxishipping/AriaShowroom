@@ -1,22 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useShowroomStore, RoleType } from "@/store/useShowroomStore";
-import { InvoicesTab } from "@/components/accounting/InvoicesTab";
-import { SuppliersTab } from "@/components/accounting/SuppliersTab";
-import { ExpensesTab } from "@/components/accounting/ExpensesTab";
-import { PaymentsTab } from "@/components/accounting/PaymentsTab";
-import { AccountingTab } from "@/components/accounting/AccountingTab";
-import { formatCurrency } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import {
   VehicleItem,
   CustomerRecord,
   SaleRecord,
   InvoiceRecord,
-  SupplierRecord,
-  PaymentVoucherRecord,
 } from "@/lib/mock-data";
 import { FloatingBatchToolbar } from "@/components/FloatingBatchToolbar";
 import {
@@ -26,12 +19,9 @@ import {
 } from "@/lib/export-utils";
 import {
   MuiCard,
-  MuiCardHeader,
-  MuiCardContent,
   MuiButton,
   MuiChip,
   MuiTabs,
-  MuiTableContainer,
   MuiTable,
   MuiTableHead,
   MuiTableBody,
@@ -48,66 +38,43 @@ import {
   FormControlLabel,
 } from "@/components/mui";
 import {
-  LayoutDashboard,
   Car,
   Users,
   BadgeDollarSign,
-  TrendingUp,
   Plus,
   Search,
   X,
   Trash2,
   Edit,
   Eye,
-  Shield,
   Phone,
   FileText,
-  Clock,
-  Printer,
-  ChevronRight,
-  Filter,
-  CheckCircle2,
   DollarSign,
-  AlertTriangle,
-  Receipt,
-  FileCheck2,
   FileSpreadsheet,
-  Building2,
   Landmark,
-  Scale,
-  Wallet,
   Banknote,
-  ArrowUpRight,
-  ArrowDownLeft,
-  Percent,
-  BookOpen,
   Kanban,
   Table as TableIcon,
   Send,
   ArrowLeft,
   ArrowRight,
-  PlusCircle,
   Download,
   Loader2,
 } from "lucide-react";
 import { downloadCommercialInvoicePDF } from "@/lib/invoice-pdf";
 
 export default function AdminDashboardPage() {
+  const { data: session } = useSession();
   const {
     vehicles,
     customers,
     sales,
-    expenses,
-    suppliers,
     invoices,
-    payments,
-    accounts,
-    journalEntries,
-    currency,
     exchangeRate,
     language,
     currentRole,
     clientPresentationMode,
+    branding,
     deleteVehicle,
     setInspectedVehicleId,
     batchUpdateVehicleStatus,
@@ -116,12 +83,8 @@ export default function AdminDashboardPage() {
     updateCustomerStage,
     batchUpdateCustomerStage,
     addSale,
-    addExpense,
-    addSupplier,
     addInvoice,
-    updateInvoiceStatus,
     addPaymentVoucher,
-    addJournalEntry,
     updateVehicle,
     updateCustomer,
     deleteCustomer,
@@ -132,11 +95,19 @@ export default function AdminDashboardPage() {
 
   const t = translations[language];
   const hideFinancialMargins = clientPresentationMode || currentRole === "SalesAgent";
+  const activeAgentName = session?.user?.name || branding?.authorizedSignatory || "Sales Desk";
+  const dealershipTitle =
+    language === "ps"
+      ? branding?.dealershipNamePs || branding?.dealershipName || "Aria Motors"
+      : language === "fa"
+      ? branding?.dealershipNameFa || branding?.dealershipName || "آریا موتورز"
+      : branding?.dealershipName || "Aria Motors";
+  const brandSlug = (branding?.dealershipShortCode || "aria")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
 
-  // Active ERP Tab — default to CRM & Leads Pipeline
-  const [activeTab, setActiveTab] = useState<
-    "crm" | "sales" | "invoices" | "inventory" | "suppliers" | "expenses" | "payments" | "accounting"
-  >("crm");
+  // Active Commercial Workspace Tab — focused strictly on CRM, Sales Desk & Lot Lookup
+  const [activeTab, setActiveTab] = useState<"crm" | "sales" | "inventory">("crm");
   const [vehicleToDelete, setVehicleToDelete] = useState<VehicleItem | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<CustomerRecord | null>(null);
   const [deletingCustomer, setDeletingCustomer] = useState<CustomerRecord | null>(null);
@@ -144,7 +115,6 @@ export default function AdminDashboardPage() {
   const [deletingSale, setDeletingSale] = useState<SaleRecord | null>(null);
   const [revertVehicleOnVoid, setRevertVehicleOnVoid] = useState(true);
   const [editingVehicle, setEditingVehicle] = useState<VehicleItem | null>(null);
-
 
   // CRM Kanban vs Table view mode
   const [crmViewMode, setCrmViewMode] = useState<"kanban" | "table">("table");
@@ -313,17 +283,17 @@ export default function AdminDashboardPage() {
     if (!newCustomerForm.fullName.trim() || !newCustomerForm.phone.trim()) return;
     try {
       await addCustomer({
-      fullName: newCustomerForm.fullName,
-      phone: newCustomerForm.phone,
-      whatsapp: newCustomerForm.whatsapp || newCustomerForm.phone,
-      tazkiraNumber: newCustomerForm.tazkiraNumber,
-      city: newCustomerForm.city,
-      address: newCustomerForm.address,
-      budget: Number(newCustomerForm.budget),
-      interestedInVehicleId: newCustomerForm.interestedInVehicleId,
-      tradeInRecord: newCustomerForm.tradeInRecord || undefined,
-      notes: newCustomerForm.notes,
-      leadStage: newCustomerForm.leadStage,
+        fullName: newCustomerForm.fullName,
+        phone: newCustomerForm.phone,
+        whatsapp: newCustomerForm.whatsapp || newCustomerForm.phone,
+        tazkiraNumber: newCustomerForm.tazkiraNumber,
+        city: newCustomerForm.city,
+        address: newCustomerForm.address,
+        budget: Number(newCustomerForm.budget),
+        interestedInVehicleId: newCustomerForm.interestedInVehicleId,
+        tradeInRecord: newCustomerForm.tradeInRecord || undefined,
+        notes: newCustomerForm.notes,
+        leadStage: newCustomerForm.leadStage,
       });
     } catch (error) {
       addToast(error instanceof Error ? error.message : "Unable to save customer", "error");
@@ -341,7 +311,7 @@ export default function AdminDashboardPage() {
       budget: 35000,
       interestedInVehicleId: vehicles[0]?.id || "",
       tradeInRecord: "",
-      notes: "Herat showroom inquiry.",
+      notes: "",
       leadStage: "New Inquiry",
     });
   };
@@ -357,13 +327,23 @@ export default function AdminDashboardPage() {
     customerName: "",
     customerPhone: "",
     customerTazkira: "",
-    salesAgent: "Farhad Timori",
+    salesAgent: activeAgentName,
     salePriceUSD: vehicles[0]?.sellingPrice || 0,
     paymentType: "Full Cash" as "Full Cash" | "Installment Plan" | "Hawala / Bank Transfer",
     downPaymentUSD: vehicles[0]?.sellingPrice || 0,
     installmentsRemaining: 0,
     notes: "",
   });
+
+  useEffect(() => {
+    if (session?.user?.name) {
+      setSaleForm((prev) =>
+        prev.salesAgent === "Sales Desk" || !prev.salesAgent
+          ? { ...prev, salesAgent: session.user!.name! }
+          : prev
+      );
+    }
+  }, [session?.user?.name]);
 
   // Filtered vehicles for inventory tab
   const filteredInventory = vehicles.filter((v) => {
@@ -427,7 +407,7 @@ export default function AdminDashboardPage() {
     exportCustomersToCSV(
       selected,
       vehicles,
-      `sadozai_crm_leads_batch_${selected.length}.csv`
+      `${brandSlug}_crm_leads_batch_${selected.length}.csv`
     );
     addToast(`Exported ${selected.length} selected CRM lead(s) to CSV`, "success");
   };
@@ -462,14 +442,14 @@ export default function AdminDashboardPage() {
   };
 
   const handleBatchAdminVehiclePrice = async (percentDelta: number) => {
-    if (selectedAdminVehicleIds.length === 0) return;
+    if (selectedAdminVehicleIds.length === 0 || currentRole !== "SuperAdmin") return;
     await batchAdjustVehiclePrice(selectedAdminVehicleIds, percentDelta);
   };
 
   const handleBatchAdminVehicleExportCSV = () => {
     const selected = vehicles.filter((v) => selectedAdminVehicleIds.includes(v.id));
     if (selected.length === 0) return;
-    exportInventoryToCSV(selected, `sadozai_lot_batch_${selected.length}.csv`);
+    exportInventoryToCSV(selected, `${brandSlug}_lot_batch_${selected.length}.csv`);
     addToast(`Exported ${selected.length} selected vehicle(s) to CSV`, "success");
   };
 
@@ -485,7 +465,6 @@ export default function AdminDashboardPage() {
     );
   });
 
-  // 1-Click Pre-fill Deal from CRM Lead
   const handleUpdateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCustomer) return;
@@ -540,7 +519,7 @@ export default function AdminDashboardPage() {
   };
 
   const handleDeleteSale = async () => {
-    if (!deletingSale) return;
+    if (!deletingSale || currentRole !== "SuperAdmin") return;
     try {
       await deleteSale(deletingSale.id, revertVehicleOnVoid);
       addToast(
@@ -557,15 +536,20 @@ export default function AdminDashboardPage() {
     e.preventDefault();
     if (!editingVehicle) return;
     try {
-      await updateVehicle(editingVehicle.id, {
-        sellingPrice: Number(editingVehicle.sellingPrice),
-        minTargetPrice: Number(editingVehicle.minTargetPrice || editingVehicle.sellingPrice),
+      const updates: Partial<VehicleItem> = {
         status: editingVehicle.status,
         yardLocation: editingVehicle.yardLocation,
         mileage: Number(editingVehicle.mileage),
         color: editingVehicle.color,
         customsClearance: editingVehicle.customsClearance,
-      });
+      };
+      if (currentRole === "SuperAdmin") {
+        updates.sellingPrice = Number(editingVehicle.sellingPrice);
+        updates.minTargetPrice = Number(
+          editingVehicle.minTargetPrice || editingVehicle.sellingPrice
+        );
+      }
+      await updateVehicle(editingVehicle.id, updates);
       addToast(`Vehicle ${editingVehicle.stockNumber} updated successfully`, "success");
       setEditingVehicle(null);
     } catch (err) {
@@ -573,6 +557,7 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // 1-Click Pre-fill Deal from CRM Lead
   const handleInitiateDealFromLead = (cust: CustomerRecord) => {
     const matchedVeh =
       vehicles.find((v) => v.id === cust.interestedInVehicleId && v.status !== "Sold") ||
@@ -583,8 +568,8 @@ export default function AdminDashboardPage() {
       stockNumber: matchedVeh?.stockNumber || "",
       customerName: cust.fullName,
       customerPhone: cust.phone,
-      customerTazkira: cust.tazkiraNumber || "1402-8841-HRT",
-      salesAgent: "Farhad Timori",
+      customerTazkira: cust.tazkiraNumber || "",
+      salesAgent: activeAgentName,
       salePriceUSD: matchedVeh?.sellingPrice || cust.budget || 35000,
       paymentType: "Hawala / Bank Transfer",
       downPaymentUSD: matchedVeh?.sellingPrice || cust.budget || 35000,
@@ -598,11 +583,26 @@ export default function AdminDashboardPage() {
     );
   };
 
-  // Collect Installment (Qist) Payment
+  // Collect Installment (Qist) Payment & Persist Updated Sale Balance
   const handleCollectInstallment = async (sale: (typeof sales)[0]) => {
     const remainingUSD = Math.max(0, sale.salePriceUSD - (sale.downPaymentUSD || 0));
+    if (remainingUSD <= 0) {
+      addToast(`Contract ${sale.contractNumber} is already settled in full.`, "info");
+      return;
+    }
     const qistCount = Math.max(1, sale.installmentsRemaining || 1);
-    const installmentAmountUSD = Math.round(remainingUSD / qistCount) || 2500;
+    const installmentAmountUSD = Math.min(
+      remainingUSD,
+      Math.max(1, Math.round(remainingUSD / qistCount))
+    );
+    const newPaid = Math.min(
+      sale.salePriceUSD,
+      (sale.downPaymentUSD || 0) + installmentAmountUSD
+    );
+    const newRemaining =
+      newPaid >= sale.salePriceUSD ? 0 : Math.max(0, (sale.installmentsRemaining || 1) - 1);
+    const nextStatus: SaleRecord["status"] =
+      newPaid >= sale.salePriceUSD ? "Completed" : "Pending Installments";
 
     try {
       await addPaymentVoucher({
@@ -619,10 +619,21 @@ export default function AdminDashboardPage() {
         referenceNumber: `QIST-${sale.contractNumber}-${Date.now().toString().slice(-4)}`,
         vehicleStock: sale.stockNumber,
         purpose: `Installment (Qist) collection for ${sale.vehicleName} (${sale.contractNumber})`,
-        recordedBy: "Farhad Timori",
+        recordedBy: activeAgentName,
       });
+
+      await updateSale(sale.id, {
+        downPaymentUSD: newPaid,
+        installmentsRemaining: newRemaining,
+        status: nextStatus,
+      });
+
       addToast(
-        `Recorded $${installmentAmountUSD.toLocaleString()} USD Qist installment voucher for ${sale.customerName}`,
+        `Collected $${installmentAmountUSD.toLocaleString()} USD Qist for ${sale.customerName} (${
+          nextStatus === "Completed"
+            ? "Contract Settled!"
+            : `$${(sale.salePriceUSD - newPaid).toLocaleString()} USD remaining`
+        })`,
         "success"
       );
     } catch (error) {
@@ -653,7 +664,7 @@ export default function AdminDashboardPage() {
         customerName: saleForm.customerName,
         customerPhone: saleForm.customerPhone,
         customerTazkira: saleForm.customerTazkira,
-        salesAgent: saleForm.salesAgent,
+        salesAgent: saleForm.salesAgent || activeAgentName,
         salePriceUSD: priceUSD,
         exchangeRate: exchangeRate,
         paymentType: saleForm.paymentType,
@@ -669,7 +680,7 @@ export default function AdminDashboardPage() {
         customerName: saleForm.customerName,
         customerPhone: saleForm.customerPhone,
         customerTazkira: saleForm.customerTazkira,
-        customerAddress: "Herat, Afghanistan",
+        customerAddress: branding?.address || "Herat, Afghanistan",
         vehicleStock: vehicleObj.stockNumber,
         vehicleDesc: `${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model} (${vehicleObj.trim})`,
         vin: vehicleObj.vin,
@@ -712,7 +723,7 @@ export default function AdminDashboardPage() {
           referenceNumber: `HAW-${Date.now().toString().slice(-5)}`,
           vehicleStock: vehicleObj.stockNumber,
           purpose: `${isInstallment ? "Down payment" : "Full settlement"} for ${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model}`,
-          recordedBy: saleForm.salesAgent,
+          recordedBy: saleForm.salesAgent || activeAgentName,
         });
       }
 
@@ -738,33 +749,53 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-12">
-      {/* Google Cloud Console CRM & Sales Desk Header */}
+      {/* Enterprise Console CRM & Sales Desk Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-[#E2E8F0] dark:border-[#262F40]">
         <div>
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#475569] dark:text-[#94A3B8]">
-            <span>Google Cloud Workspace</span>
+            <span>{dealershipTitle}</span>
             <span>/</span>
-            <span className="text-[#1A73E8] dark:text-[#8AB4F8]">CRM Pipeline & Dealership Sales Desk</span>
+            <span className="text-[#1A73E8] dark:text-[#8AB4F8]">
+              {language === "ps"
+                ? "د پلور او پیرودونکو میز"
+                : language === "fa"
+                ? "پایپ‌لاین مشتریان و میز فروش"
+                : "CRM Pipeline & Dealership Sales Desk"}
+            </span>
           </div>
           <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC] mt-1">
-            Customer Leads, Negotiations & Contract Execution
+            {language === "ps"
+              ? "د پیرودونکو مدیریت، مذاکره او د قراردادونو ثبت"
+              : language === "fa"
+              ? "مدیریت مشتریان، مذاکرات قیمت و عقد قرارداد فروش"
+              : "Customer Leads, Negotiations & Contract Execution"}
           </h1>
           <p className="text-xs text-[#475569] dark:text-[#94A3B8] mt-0.5">
-            Track walk-in buyers, test drives, Sarrafi price negotiations, and execute bilingual sales contracts
+            {language === "ps"
+              ? "د مراجعینو، ټسټ ډرایو، صرافۍ مذاکراتو او رسمي پلور قراردادونو بشپړ بهیر"
+              : language === "fa"
+              ? "پیگیری مراجعین حضوری، تست درایو، مذاکرات صرافی و صدور آنی قرارداد و بل فروش"
+              : "Track walk-in buyers, test drives, Sarrafi price negotiations, and execute bilingual sales contracts"}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <MuiButton
-            component={Link}
-            href="/accounting"
-            variant="outlined"
-            color="inherit"
-            size="small"
-            startIcon={<Landmark className="h-4 w-4 text-[#1A73E8] dark:text-[#8AB4F8]" />}
-          >
-            Accounting & Sarrafi Hub
-          </MuiButton>
+          {(currentRole === "SuperAdmin" || currentRole === "Accountant") && (
+            <MuiButton
+              component={Link}
+              href="/accounting"
+              variant="outlined"
+              color="inherit"
+              size="small"
+              startIcon={<Landmark className="h-4 w-4 text-[#1A73E8] dark:text-[#8AB4F8]" />}
+            >
+              {language === "ps"
+                ? "مالي او صرافي مرکز"
+                : language === "fa"
+                ? "مرکز محاسبات و صرافی"
+                : "Accounting & Sarrafi Hub"}
+            </MuiButton>
+          )}
           <MuiButton
             variant="contained"
             color="primary"
@@ -775,59 +806,50 @@ export default function AdminDashboardPage() {
             }}
             startIcon={<Plus className="h-4 w-4" />}
           >
-            New Walk-In Lead
+            {language === "ps" ? "نوی پیرودونکی" : language === "fa" ? "ثبت لید جدید" : "New Walk-In Lead"}
           </MuiButton>
         </div>
       </div>
 
-      {/* Material Navigation Tabs & Exports Bar */}
+      {/* Navigation Tabs & Exports Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 gap-3">
         <MuiTabs
           value={activeTab}
-          onChange={(val) => setActiveTab(val as any)}
+          onChange={(val) => setActiveTab(val as "crm" | "sales" | "inventory")}
           color="primary"
           tabs={[
             {
               value: "crm",
-              label: "CRM & Leads",
+              label:
+                language === "ps"
+                  ? "پیرودونکي (CRM)"
+                  : language === "fa"
+                  ? "مشتریان و لیدها"
+                  : "CRM & Leads",
               icon: <Users className="h-4 w-4" />,
               badge: customers.length,
             },
             {
               value: "sales",
-              label: "Sales Desk & Contracts",
+              label:
+                language === "ps"
+                  ? "د پلور میز او قراردادونه"
+                  : language === "fa"
+                  ? "میز فروش و قراردادها"
+                  : "Sales Desk & Contracts",
               icon: <BadgeDollarSign className="h-4 w-4" />,
               badge: sales.length,
             },
             {
-              value: "invoices",
-              label: "Commercial Invoices",
-              icon: <FileCheck2 className="h-4 w-4" />,
-              badge: invoices.length,
-            },
-            {
               value: "inventory",
-              label: "Quick Lot Lookup",
+              label:
+                language === "ps"
+                  ? "د موټرو چټک لټون"
+                  : language === "fa"
+                  ? "جستجوی سریع موجودی"
+                  : "Quick Lot Lookup",
               icon: <Car className="h-4 w-4" />,
               badge: vehicles.length,
-            },
-            {
-              value: "suppliers",
-              label: "Supplier Ledger (AP)",
-              icon: <Building2 className="h-4 w-4" />,
-              badge: suppliers.length,
-            },
-            {
-              value: "expenses",
-              label: "Vehicle Expenses",
-              icon: <Receipt className="h-4 w-4" />,
-              badge: expenses.length,
-            },
-            {
-              value: "payments",
-              label: "Payment Vouchers",
-              icon: <Banknote className="h-4 w-4" />,
-              badge: payments.length,
             },
           ]}
         />
@@ -838,7 +860,7 @@ export default function AdminDashboardPage() {
             variant="outlined"
             size="small"
             onClick={() => {
-              exportCustomersToCSV(customers, vehicles);
+              exportCustomersToCSV(customers, vehicles, `${brandSlug}_crm_leads.csv`);
               addToast(`Exported ${customers.length} CRM leads to CSV`, "success");
             }}
             startIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-[#1A73E8]" />}
@@ -850,7 +872,7 @@ export default function AdminDashboardPage() {
             variant="outlined"
             size="small"
             onClick={() => {
-              exportInventoryToCSV(vehicles);
+              exportInventoryToCSV(vehicles, `${brandSlug}_inventory.csv`);
               addToast(`Exported ${vehicles.length} vehicles to CSV`, "success");
             }}
             startIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />}
@@ -862,7 +884,7 @@ export default function AdminDashboardPage() {
             variant="outlined"
             size="small"
             onClick={() => {
-              exportSalesLedgerToCSV(sales);
+              exportSalesLedgerToCSV(sales, `${brandSlug}_sales_ledger.csv`);
               addToast(`Exported ${sales.length} sales records to CSV`, "success");
             }}
             startIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-[#D97706]" />}
@@ -872,16 +894,16 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* TAB 1: INVENTORY MANAGEMENT */}
+      {/* TAB 1: QUICK LOT INVENTORY LOOKUP */}
       {activeTab === "inventory" && (
         <div className="space-y-6">
-          {/* Actions Bar with Status Filter and Search */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
                 <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
+                  aria-label="Search vehicles"
                   placeholder="Search stock #, VIN, make..."
                   value={inventorySearch}
                   onChange={(e) => setInventorySearch(e.target.value)}
@@ -890,6 +912,7 @@ export default function AdminDashboardPage() {
                 {inventorySearch && (
                   <button
                     onClick={() => setInventorySearch("")}
+                    aria-label="Clear search"
                     className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
                   >
                     <X className="h-3 w-3" />
@@ -898,6 +921,7 @@ export default function AdminDashboardPage() {
               </div>
 
               <select
+                aria-label="Filter vehicle status"
                 value={inventoryStatus}
                 onChange={(e) => setInventoryStatus(e.target.value)}
                 className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
@@ -906,6 +930,7 @@ export default function AdminDashboardPage() {
                 <option value="Available on Lot">Available on Lot</option>
                 <option value="In Transit">In Transit</option>
                 <option value="Reserved/Deposit Paid">Reserved / Deposit</option>
+                <option value="Under Prep/Maintenance">Under Prep / Maintenance</option>
                 <option value="Sold">Sold</option>
               </select>
 
@@ -921,12 +946,12 @@ export default function AdminDashboardPage() {
                 </button>
               )}
 
-              <span className="text-[11px] font-mono text-slate-400">
+              <span className="text-[11px] font-mono tabular-nums text-slate-400">
                 ({filteredInventory.length} units)
               </span>
             </div>
 
-            {currentRole !== "Accountant" && (
+            {currentRole === "SuperAdmin" && (
               <MuiButton
                 component={Link}
                 href="/intake"
@@ -940,7 +965,6 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          {/* Material Vehicle Inventory Table */}
           <MuiCard elevation={1}>
             <div className="overflow-x-auto">
               <MuiTable dense size="small" className="w-full">
@@ -976,107 +1000,116 @@ export default function AdminDashboardPage() {
                   {filteredInventory.map((veh) => {
                     const isSelected = selectedAdminVehicleIds.includes(veh.id);
                     return (
-                    <MuiTableRow
-                      key={veh.id}
-                      className={
-                        isSelected
-                          ? "bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.08]"
-                          : undefined
-                      }
-                    >
-                      <MuiTableCell className="w-8 !px-2.5 text-center py-1.5">
-                        <input
-                          type="checkbox"
-                          aria-label={`Select ${veh.year} ${veh.make} ${veh.model}`}
-                          checked={isSelected}
-                          onChange={() => handleToggleAdminVehicleSelect(veh.id)}
-                          className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
-                        />
-                      </MuiTableCell>
-                      <MuiTableCell className="py-1.5">
-                        <div className="font-bold text-xs text-slate-900 dark:text-white leading-tight">
-                          {veh.year} {veh.make} {veh.model}
-                        </div>
-                        <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
-                          <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-1 py-0.2 rounded border border-blue-200/50 dark:border-blue-900/50">
-                            {veh.stockNumber}
-                          </span>
-                          <span className="select-all text-slate-500 font-mono tracking-tight">{veh.vin}</span>
-                          <span>•</span>
-                          <span>{veh.originCountry}</span>
-                        </div>
-                      </MuiTableCell>
-                      <MuiTableCell className="py-1.5 whitespace-nowrap">
-                        <MuiChip
-                          label={veh.status}
-                          color={veh.status === "Available on Lot" ? "success" : "default"}
-                          size="small"
-                        />
-                      </MuiTableCell>
-                      <MuiTableCell className="py-1.5 text-slate-600 dark:text-slate-300 text-xs whitespace-nowrap">
-                        {veh.customsClearance.split("-")[0].trim()}
-                      </MuiTableCell>
-                      {!hideFinancialMargins && (
-                        <MuiTableCell align="right" className="py-1.5 font-mono text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                          ${veh.landedCost.toLocaleString()} USD
+                      <MuiTableRow
+                        key={veh.id}
+                        className={
+                          isSelected
+                            ? "bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.08]"
+                            : undefined
+                        }
+                      >
+                        <MuiTableCell className="w-8 !px-2.5 text-center py-1.5">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${veh.year} ${veh.make} ${veh.model}`}
+                            checked={isSelected}
+                            onChange={() => handleToggleAdminVehicleSelect(veh.id)}
+                            className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                          />
                         </MuiTableCell>
-                      )}
-                      <MuiTableCell align="right" className="py-1.5 font-mono font-bold text-xs text-slate-900 dark:text-white whitespace-nowrap">
-                        ${veh.sellingPrice.toLocaleString()} USD
-                      </MuiTableCell>
-                      <MuiTableCell align="right" className="py-1.5 whitespace-nowrap !pe-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setInspectedVehicleId(veh.id)}
-                            className="px-2 py-0.5 rounded text-[11px] font-semibold border border-[#E2E8F0] dark:border-[#262F40] text-[#1A73E8] dark:text-[#8AB4F8] hover:bg-[#1A73E8]/10 transition-colors cursor-pointer"
-                            title="Open Slide-Over Inspector"
-                          >
-                            Inspect
-                          </button>
-                          <IconButton
-                            component={Link}
-                            size="small"
-                            color="primary"
+                        <MuiTableCell className="py-1.5">
+                          <Link
                             href={`/vehicles/${veh.id}`}
-                            sx={{ padding: "4px" }}
-                            title="View Photo Gallery & Specs"
+                            className="font-bold text-xs text-slate-900 dark:text-white hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] leading-tight"
                           >
-                            <Eye className="h-3.5 w-3.5" />
-                          </IconButton>
-                          <IconButton
-                            component={Link}
-                            href={`/vehicles/${veh.id}/deed`}
+                            {veh.year} {veh.make} {veh.model}
+                          </Link>
+                          <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                            <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-1 py-0.2 rounded border border-blue-200/50 dark:border-blue-900/50 tabular-nums">
+                              {veh.stockNumber}
+                            </span>
+                            <span className="select-all text-slate-500 font-mono tracking-tight">{veh.vin}</span>
+                            <span>•</span>
+                            <span>{veh.originCountry}</span>
+                          </div>
+                        </MuiTableCell>
+                        <MuiTableCell className="py-1.5 whitespace-nowrap">
+                          <MuiChip
+                            label={veh.status}
+                            color={veh.status === "Available on Lot" ? "success" : "default"}
                             size="small"
-                            color="primary"
-                            sx={{ padding: "4px" }}
-                            title="Print Legal Deed"
-                          >
-                            <FileText className="h-3.5 w-3.5" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => setEditingVehicle({ ...veh })}
-                            sx={{ padding: "4px" }}
-                            title="Edit Vehicle Details & Pricing"
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </IconButton>
-                          {currentRole === "SuperAdmin" && (
-                            <IconButton
-                              size="small"
-                              color="error"
-                              sx={{ padding: "4px" }}
-                              onClick={() => setVehicleToDelete(veh)}
-                              title="Delete vehicle"
+                          />
+                        </MuiTableCell>
+                        <MuiTableCell className="py-1.5 text-slate-600 dark:text-slate-300 text-xs whitespace-nowrap">
+                          {veh.customsClearance.split("-")[0].trim()}
+                        </MuiTableCell>
+                        {!hideFinancialMargins && (
+                          <MuiTableCell align="right" className="py-1.5 font-mono tabular-nums text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                            ${veh.landedCost.toLocaleString()} USD
+                          </MuiTableCell>
+                        )}
+                        <MuiTableCell align="right" className="py-1.5 font-mono tabular-nums font-bold text-xs text-slate-900 dark:text-white whitespace-nowrap">
+                          ${veh.sellingPrice.toLocaleString()} USD
+                        </MuiTableCell>
+                        <MuiTableCell align="right" className="py-1.5 whitespace-nowrap !pe-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setInspectedVehicleId(veh.id)}
+                              className="px-2 py-0.5 rounded text-[11px] font-semibold border border-[#E2E8F0] dark:border-[#262F40] text-[#1A73E8] dark:text-[#8AB4F8] hover:bg-[#1A73E8]/10 transition-colors cursor-pointer"
+                              title="Open Slide-Over Inspector"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              Inspect
+                            </button>
+                            <IconButton
+                              component={Link}
+                              size="small"
+                              color="primary"
+                              href={`/vehicles/${veh.id}`}
+                              sx={{ padding: "4px" }}
+                              title="View Photo Gallery & Specs"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
                             </IconButton>
-                          )}
-                        </div>
-                      </MuiTableCell>
-                    </MuiTableRow>
+                            <IconButton
+                              component={Link}
+                              href={`/vehicles/${veh.id}/deed`}
+                              size="small"
+                              color="primary"
+                              sx={{ padding: "4px" }}
+                              title="Print Legal Deed"
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                            </IconButton>
+                            {currentRole !== "Accountant" && (
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => setEditingVehicle({ ...veh })}
+                                sx={{ padding: "4px" }}
+                                title={
+                                  currentRole === "SuperAdmin"
+                                    ? "Edit Vehicle Details & Pricing"
+                                    : "Update Operational Status & Bay"
+                                }
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </IconButton>
+                            )}
+                            {currentRole === "SuperAdmin" && (
+                              <IconButton
+                                size="small"
+                                color="error"
+                                sx={{ padding: "4px" }}
+                                onClick={() => setVehicleToDelete(veh)}
+                                title="Delete vehicle"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </IconButton>
+                            )}
+                          </div>
+                        </MuiTableCell>
+                      </MuiTableRow>
                     );
                   })}
                 </MuiTableBody>
@@ -1089,13 +1122,12 @@ export default function AdminDashboardPage() {
       {/* TAB 2: CRM & LEADS PIPELINE */}
       {activeTab === "crm" && (
         <div className="space-y-6">
-          {/* Header & Controls Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Herat Showroom Customer & CRM Pipeline (مدیریت مشتریان و لیدها)
+                  {dealershipTitle} — Customer & CRM Pipeline (مدیریت مشتریان و لیدها)
                 </h3>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -1104,7 +1136,6 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* View Switcher: Kanban vs Table */}
               <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold">
                 <button
                   onClick={() => setCrmViewMode("kanban")}
@@ -1130,7 +1161,6 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
 
-              {/* Add Lead Button */}
               <MuiButton
                 onClick={() => setIsAddCustomerModalOpen(true)}
                 variant="contained"
@@ -1149,6 +1179,7 @@ export default function AdminDashboardPage() {
               <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               <input
                 type="text"
+                aria-label="Search CRM leads"
                 placeholder="Search leads by name, phone, city, tazkira..."
                 value={crmSearchQuery}
                 onChange={(e) => setCrmSearchQuery(e.target.value)}
@@ -1157,6 +1188,7 @@ export default function AdminDashboardPage() {
               {crmSearchQuery && (
                 <button
                   onClick={() => setCrmSearchQuery("")}
+                  aria-label="Clear search"
                   className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   <X className="h-3 w-3" />
@@ -1164,7 +1196,7 @@ export default function AdminDashboardPage() {
               )}
             </div>
 
-            <div className="flex items-center gap-4 text-xs font-mono">
+            <div className="flex items-center gap-4 text-xs font-mono tabular-nums">
               <span className="text-slate-500">
                 Total Leads: <strong className="text-slate-900 dark:text-white">{customers.length}</strong>
               </span>
@@ -1205,25 +1237,23 @@ export default function AdminDashboardPage() {
                     key={stage.id}
                     className={`rounded-2xl border ${stage.borderColor} bg-slate-50/70 dark:bg-[#111827]/70 flex flex-col min-h-[480px] shadow-2xs`}
                   >
-                    {/* Stage Header */}
                     <div className={`p-3 rounded-t-2xl border-b ${stage.borderColor} ${stage.headerBg}`}>
                       <div className="flex items-center justify-between">
                         <span className={`text-xs font-bold tracking-tight ${stage.color}`}>
                           {stage.label}
                         </span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${stage.badgeBg}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono tabular-nums font-bold ${stage.badgeBg}`}>
                           {stageCustomers.length}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                         <span>{stage.sublabel}</span>
-                        <span className="font-mono font-semibold">
+                        <span className="font-mono tabular-nums font-semibold">
                           ${stageTotalBudget.toLocaleString()}
                         </span>
                       </div>
                     </div>
 
-                    {/* Cards Container */}
                     <div className="p-2 space-y-2.5 flex-1 overflow-y-auto max-h-[65vh]">
                       {stageCustomers.length === 0 ? (
                         <div className="py-8 text-center text-[11px] text-slate-400 italic">
@@ -1238,7 +1268,7 @@ export default function AdminDashboardPage() {
                           const prevStage = getPrevStage(cust.leadStage);
 
                           const whatsappUrl = `https://wa.me/${cust.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                            `Salam ${cust.fullName}! Regarding your inquiry at Sadozai Motors Herat...`
+                            `Salam ${cust.fullName}! Regarding your inquiry at ${branding?.dealershipName || "Aria Motors"}...`
                           )}`;
 
                           return (
@@ -1250,7 +1280,6 @@ export default function AdminDashboardPage() {
                                   : "border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151D2A]"
                               }`}
                             >
-                              {/* Top Name & City with Batch Checkbox */}
                               <div className="flex items-start justify-between gap-1">
                                 <div className="flex items-start gap-2 min-w-0">
                                   <input
@@ -1269,21 +1298,23 @@ export default function AdminDashboardPage() {
                                     </span>
                                   </div>
                                 </div>
-                                <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                                <span className="font-mono tabular-nums text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0">
                                   ${cust.budget.toLocaleString()}
                                 </span>
                               </div>
 
-                              {/* Interested Vehicle Info */}
                               {matchedVehicle ? (
                                 <div className="text-[11px] p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 text-slate-700 dark:text-slate-300">
                                   <span className="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">
                                     Interested Unit:
                                   </span>
-                                  <span className="font-semibold block truncate">
+                                  <Link
+                                    href={`/vehicles/${matchedVehicle.id}`}
+                                    className="font-semibold block truncate hover:text-[#1A73E8] dark:hover:text-[#8AB4F8]"
+                                  >
                                     {matchedVehicle.year} {matchedVehicle.make} {matchedVehicle.model}
-                                  </span>
-                                  <span className="text-[10px] font-mono text-slate-400">
+                                  </Link>
+                                  <span className="text-[10px] font-mono tabular-nums text-slate-400">
                                     Stock #{matchedVehicle.stockNumber} (${matchedVehicle.sellingPrice.toLocaleString()})
                                   </span>
                                 </div>
@@ -1298,9 +1329,7 @@ export default function AdminDashboardPage() {
                                 </div>
                               ) : null}
 
-                              {/* Communication & Stage Advancement Toolbar */}
                               <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-1">
-                                {/* WhatsApp & Phone */}
                                 <div className="flex items-center gap-1">
                                   <a
                                     href={whatsappUrl}
@@ -1325,24 +1354,29 @@ export default function AdminDashboardPage() {
                                   >
                                     <Edit className="h-3 w-3" />
                                   </button>
-                                  <button
-                                    onClick={() => setDeletingCustomer(cust)}
-                                    className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
-                                    title="Delete Lead"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </button>
+                                  {currentRole === "SuperAdmin" && (
+                                    <button
+                                      onClick={() => setDeletingCustomer(cust)}
+                                      className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                                      title="Delete Lead"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  )}
                                 </div>
 
-                                {/* Step Movers & 1-Click Close Deal */}
                                 <div className="flex items-center gap-1">
                                   {prevStage && (
                                     <button
-                                      onClick={() => void updateCustomerStage(cust.id, prevStage).catch((error) => addToast(error.message, "error"))}
-                                      className="p-1 rounded border border-[#D8D5CD] dark:border-[#242A38] hover:bg-stone-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+                                      onClick={() =>
+                                        void updateCustomerStage(cust.id, prevStage).catch((error) =>
+                                          addToast(error.message, "error")
+                                        )
+                                      }
+                                      className="p-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
                                       title={`Move back to ${prevStage}`}
                                     >
-                                      <ArrowLeft className="h-3 w-3" />
+                                      <ArrowLeft className="h-3 w-3 rtl:rotate-180" />
                                     </button>
                                   )}
                                   {cust.leadStage !== "Closed/Won" && (
@@ -1356,11 +1390,15 @@ export default function AdminDashboardPage() {
                                   )}
                                   {nextStage && (
                                     <button
-                                      onClick={() => void updateCustomerStage(cust.id, nextStage).catch((error) => addToast(error.message, "error"))}
-                                      className="flex items-center gap-0.5 px-2 py-1 rounded bg-[#111318] hover:bg-slate-800 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-mono text-[10px] font-bold cursor-pointer"
+                                      onClick={() =>
+                                        void updateCustomerStage(cust.id, nextStage).catch((error) =>
+                                          addToast(error.message, "error")
+                                        )
+                                      }
+                                      className="flex items-center gap-0.5 px-2 py-1 rounded bg-[#1A73E8] hover:bg-[#1557B0] text-white font-mono text-[10px] font-bold cursor-pointer"
                                       title={`Advance to ${nextStage}`}
                                     >
-                                      <ArrowRight className="h-3 w-3" />
+                                      <ArrowRight className="h-3 w-3 rtl:rotate-180" />
                                     </button>
                                   )}
                                 </div>
@@ -1413,7 +1451,7 @@ export default function AdminDashboardPage() {
                         (v) => v.id === cust.interestedInVehicleId
                       );
                       const whatsappUrl = `https://wa.me/${cust.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                        `Salam ${cust.fullName}! Regarding your inquiry at Sadozai Motors Herat...`
+                        `Salam ${cust.fullName}! Regarding your inquiry at ${branding?.dealershipName || "Aria Motors"}...`
                       )}`;
 
                       return (
@@ -1435,82 +1473,102 @@ export default function AdminDashboardPage() {
                             />
                           </MuiTableCell>
                           <MuiTableCell className="py-2">
-                              <span className="font-bold text-xs text-slate-900 dark:text-white block">
-                                {cust.fullName}
-                              </span>
-                              <span className="text-[10px] font-mono text-slate-500">
-                                Tazkira: {cust.tazkiraNumber}
-                              </span>
-                            </MuiTableCell>
-                            <MuiTableCell className="py-2 text-xs">
-                              <span className="font-mono text-slate-800 dark:text-slate-200 block">
-                                {cust.phone}
-                              </span>
-                              <span className="text-[10px] text-slate-400">
-                                {cust.city}
-                              </span>
-                            </MuiTableCell>
-                            <MuiTableCell className="py-2 text-xs">
-                              {matchedVehicle ? (
-                                <div>
-                                  <span className="font-semibold text-slate-900 dark:text-white block">
-                                    {matchedVehicle.year} {matchedVehicle.make} {matchedVehicle.model}
-                                  </span>
-                                  <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">
-                                    Stock #{matchedVehicle.stockNumber}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-slate-400 italic text-[11px]">General Inquiry</span>
+                            <span className="font-bold text-xs text-slate-900 dark:text-white block">
+                              {cust.fullName}
+                            </span>
+                            <span className="text-[10px] font-mono tabular-nums text-slate-500">
+                              Tazkira: {cust.tazkiraNumber}
+                            </span>
+                          </MuiTableCell>
+                          <MuiTableCell className="py-2 text-xs">
+                            <span className="font-mono tabular-nums text-slate-800 dark:text-slate-200 block">
+                              {cust.phone}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {cust.city}
+                            </span>
+                          </MuiTableCell>
+                          <MuiTableCell className="py-2 text-xs">
+                            {matchedVehicle ? (
+                              <div>
+                                <Link
+                                  href={`/vehicles/${matchedVehicle.id}`}
+                                  className="font-semibold text-slate-900 dark:text-white hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] block"
+                                >
+                                  {matchedVehicle.year} {matchedVehicle.make} {matchedVehicle.model}
+                                </Link>
+                                <span className="text-[10px] font-mono tabular-nums text-blue-600 dark:text-blue-400">
+                                  Stock #{matchedVehicle.stockNumber}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic text-[11px]">General Inquiry</span>
+                            )}
+                          </MuiTableCell>
+                          <MuiTableCell align="right" className="py-2 font-mono tabular-nums font-bold text-xs text-slate-900 dark:text-white">
+                            ${cust.budget.toLocaleString()}
+                          </MuiTableCell>
+                          <MuiTableCell align="right" className="py-2 font-mono tabular-nums text-xs text-slate-500">
+                            ؋ {(cust.budget * exchangeRate).toLocaleString()}
+                          </MuiTableCell>
+                          <MuiTableCell className="py-2">
+                            <select
+                              aria-label={`Stage for ${cust.fullName}`}
+                              value={cust.leadStage}
+                              onChange={(e) =>
+                                void updateCustomerStage(
+                                  cust.id,
+                                  e.target.value as CustomerRecord["leadStage"]
+                                ).catch((error) => addToast(error.message, "error"))
+                              }
+                              className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 outline-none cursor-pointer"
+                            >
+                              <option value="New Inquiry">New Inquiry</option>
+                              <option value="Follow-Up">Follow-Up</option>
+                              <option value="Test Drive">Test Drive</option>
+                              <option value="Negotiation">Negotiation</option>
+                              <option value="Closed/Won">Closed/Won</option>
+                              <option value="Lost">Lost</option>
+                            </select>
+                          </MuiTableCell>
+                          <MuiTableCell align="right" className="py-2 !pe-3">
+                            <div className="flex items-center justify-end gap-1">
+                              {cust.leadStage !== "Closed/Won" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleInitiateDealFromLead(cust)}
+                                  className="px-2 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-mono text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                                  title="Load into Sales Desk"
+                                >
+                                  Close Deal
+                                </button>
                               )}
-                            </MuiTableCell>
-                            <MuiTableCell align="right" className="py-2 font-mono font-bold text-xs text-slate-900 dark:text-white">
-                              ${cust.budget.toLocaleString()}
-                            </MuiTableCell>
-                            <MuiTableCell align="right" className="py-2 font-mono text-xs text-slate-500">
-                              ؋ {(cust.budget * exchangeRate).toLocaleString()}
-                            </MuiTableCell>
-                            <MuiTableCell className="py-2">
-                              <select
-                                value={cust.leadStage}
-                                onChange={(e) => void updateCustomerStage(cust.id, e.target.value as any).catch((error) => addToast(error.message, "error"))}
-                                className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 outline-none cursor-pointer"
+                              <a
+                                href={whatsappUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                                title="WhatsApp Message"
                               >
-                                <option value="New Inquiry">New Inquiry</option>
-                                <option value="Follow-Up">Follow-Up</option>
-                                <option value="Test Drive">Test Drive</option>
-                                <option value="Negotiation">Negotiation</option>
-                                <option value="Closed/Won">Closed/Won</option>
-                                <option value="Lost">Lost</option>
-                              </select>
-                            </MuiTableCell>
-                            <MuiTableCell align="right" className="py-2 !pe-3">
-                              <div className="flex items-center justify-end gap-1">
-                                <a
-                                  href={whatsappUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 hover:bg-emerald-100 transition-colors"
-                                  title="WhatsApp Message"
-                                >
-                                  <Send className="h-3.5 w-3.5" />
-                                </a>
-                                <a
-                                  href={`tel:${cust.phone}`}
-                                  className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 hover:bg-blue-100 transition-colors"
-                                  title="Call Phone"
-                                >
-                                  <Phone className="h-3.5 w-3.5" />
-                                </a>
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={() => setEditingCustomer({ ...cust })}
-                                  title="Edit Lead Details"
-                                  sx={{ p: "3px" }}
-                                >
-                                  <Edit className="h-3.5 w-3.5" />
-                                </IconButton>
+                                <Send className="h-3.5 w-3.5" />
+                              </a>
+                              <a
+                                href={`tel:${cust.phone}`}
+                                className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 hover:bg-blue-100 transition-colors"
+                                title="Call Phone"
+                              >
+                                <Phone className="h-3.5 w-3.5" />
+                              </a>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => setEditingCustomer({ ...cust })}
+                                title="Edit Lead Details"
+                                sx={{ p: "3px" }}
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </IconButton>
+                              {currentRole === "SuperAdmin" && (
                                 <IconButton
                                   size="small"
                                   color="error"
@@ -1520,11 +1578,12 @@ export default function AdminDashboardPage() {
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </IconButton>
-                              </div>
-                            </MuiTableCell>
-                          </MuiTableRow>
-                        );
-                      })}
+                              )}
+                            </div>
+                          </MuiTableCell>
+                        </MuiTableRow>
+                      );
+                    })}
                   </MuiTableBody>
                 </MuiTable>
               </div>
@@ -1579,7 +1638,6 @@ export default function AdminDashboardPage() {
                       setNewCustomerForm({
                         ...newCustomerForm,
                         phone: e.target.value,
-                        whatsapp: newCustomerForm.whatsapp || e.target.value,
                       })
                     }
                   />
@@ -1587,9 +1645,9 @@ export default function AdminDashboardPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <MuiTextField
-                    label="Tazkira ID / National ID (نمبر تذکره)"
+                    label="Tazkira Number (نمبر تذکره)"
                     size="small"
-                    placeholder="e.g. 1402-9988-HRT"
+                    placeholder="1402-0401-55210"
                     value={newCustomerForm.tazkiraNumber}
                     onChange={(e) =>
                       setNewCustomerForm({
@@ -1785,10 +1843,11 @@ export default function AdminDashboardPage() {
                   onChange={(e) =>
                     setSaleForm({
                       ...saleForm,
-                      paymentType: e.target.value as any,
-                      downPaymentUSD: e.target.value === "Installment Plan"
-                        ? Math.round(Number(saleForm.salePriceUSD) * 0.2)
-                        : Number(saleForm.salePriceUSD),
+                      paymentType: e.target.value as SaleRecord["paymentType"],
+                      downPaymentUSD:
+                        e.target.value === "Installment Plan"
+                          ? Math.round(Number(saleForm.salePriceUSD) * 0.2)
+                          : Number(saleForm.salePriceUSD),
                     })
                   }
                 >
@@ -1828,7 +1887,7 @@ export default function AdminDashboardPage() {
                 </div>
               )}
 
-              <div className="p-2.5 rounded border border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] text-[11px] font-mono text-slate-600 dark:text-slate-400">
+              <div className="p-2.5 rounded-lg border border-[#E2E8F0] dark:border-[#262F40] bg-[#F8FAFC] dark:bg-[#121722] text-[11px] font-mono text-slate-600 dark:text-slate-400">
                 1-Click Atomic Execution: Marks chassis <strong>SOLD</strong>, issues{" "}
                 <strong>Commercial Invoice</strong>, and posts{" "}
                 <strong>Sarrafi Receipt Voucher</strong> at 1 USD = {exchangeRate} AFN.
@@ -1848,24 +1907,25 @@ export default function AdminDashboardPage() {
 
           {/* Right 7 Cols: Completed Contracts + Installment (Qist) Collections Schedule */}
           <div className="lg:col-span-7 space-y-5">
-            {/* Past Sales Records Table */}
             <MuiCard elevation={1}>
-              <div className="p-3.5 border-b border-[#E2E0D8] dark:border-[#1F2430] flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#FAF9F6] dark:bg-[#0D1017]">
-                <h3 className="font-mono font-bold text-[#111318] dark:text-white text-xs uppercase tracking-wider">
+              <div className="p-3.5 border-b border-[#E2E8F0] dark:border-[#262F40] flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#F8FAFC] dark:bg-[#121722]">
+                <h3 className="font-mono font-bold text-[#0F172A] dark:text-white text-xs uppercase tracking-wider">
                   EXECUTED SHOWROOM CONTRACTS ({filteredSales.length})
                 </h3>
                 <div className="relative">
                   <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
+                    aria-label="Filter contracts"
                     placeholder="Filter contract, buyer, vehicle..."
                     value={salesSearch}
                     onChange={(e) => setSalesSearch(e.target.value)}
-                    className="w-48 sm:w-56 ps-7 pe-6 py-1 text-xs rounded border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] text-[#111318] dark:text-white placeholder-slate-400 outline-none focus:border-[#111318] dark:focus:border-amber-500 h-7"
+                    className="w-48 sm:w-56 ps-7 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161B26] text-[#0F172A] dark:text-white placeholder-slate-400 outline-none focus:border-[#1A73E8] h-7"
                   />
                   {salesSearch && (
                     <button
                       onClick={() => setSalesSearch("")}
+                      aria-label="Clear filter"
                       className="absolute end-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
                     >
                       <X className="h-3 w-3" />
@@ -1891,35 +1951,42 @@ export default function AdminDashboardPage() {
                         (inv) => inv.saleId === s.id || inv.vehicleStock === s.stockNumber
                       );
                       const isDownloadingThis = downloadingSaleInvoiceId === s.id;
+                      const matchedVehicleObj = vehicles.find(
+                        (v) => v.stockNumber === s.stockNumber
+                      );
 
                       return (
                         <MuiTableRow key={s.id}>
-                          <MuiTableCell className="py-1.5 font-mono font-bold text-[#111318] dark:text-amber-400 text-xs">
+                          <MuiTableCell className="py-1.5 font-mono tabular-nums font-bold text-[#1A73E8] dark:text-[#8AB4F8] text-xs">
                             {s.contractNumber}
                           </MuiTableCell>
                           <MuiTableCell className="py-1.5">
-                            <div className="font-semibold text-xs text-[#111318] dark:text-white leading-tight">
+                            <div className="font-semibold text-xs text-[#0F172A] dark:text-white leading-tight">
                               {s.vehicleName}
                             </div>
-                            <div className="text-[10px] text-slate-400 font-mono">
+                            <div className="text-[10px] text-slate-400 font-mono tabular-nums">
                               {s.stockNumber}
                             </div>
                           </MuiTableCell>
                           <MuiTableCell className="py-1.5">
-                            <div className="text-xs font-medium text-[#111318] dark:text-white">
+                            <div className="text-xs font-medium text-[#0F172A] dark:text-white">
                               {s.customerName}
                             </div>
-                            <div className="text-[10px] font-mono text-slate-400">
+                            <div className="text-[10px] text-slate-400 font-mono tabular-nums">
                               {s.customerTazkira}
                             </div>
                           </MuiTableCell>
-                          <MuiTableCell align="right" className="py-1.5 font-mono tabular-nums font-bold text-xs text-[#111318] dark:text-white whitespace-nowrap">
+                          <MuiTableCell align="right" className="py-1.5 font-mono tabular-nums font-bold text-xs text-[#0F172A] dark:text-white whitespace-nowrap">
                             ${s.salePriceUSD.toLocaleString()}
                           </MuiTableCell>
                           <MuiTableCell className="py-1.5 whitespace-nowrap">
                             <MuiChip
-                              label={s.paymentType}
-                              color={s.paymentType === "Full Cash" ? "success" : "warning"}
+                              label={s.status === "Completed" ? "Completed" : s.paymentType}
+                              color={
+                                s.status === "Completed" || s.paymentType === "Full Cash"
+                                  ? "success"
+                                  : "warning"
+                              }
                               size="small"
                             />
                           </MuiTableCell>
@@ -1939,20 +2006,22 @@ export default function AdminDashboardPage() {
                                   <Download className="h-3.5 w-3.5" />
                                 )}
                               </IconButton>
-                              <IconButton
-                                component={Link}
-                                href={
-                                  matchedInv
-                                    ? `/accounting/invoices/${matchedInv.id}`
-                                    : `/vehicles/${vehicles.find((v) => v.stockNumber === s.stockNumber)?.id || ""}/deed`
-                                }
-                                size="small"
-                                color="inherit"
-                                title="View Official Commercial Invoice / Deed"
-                                sx={{ p: "3px" }}
-                              >
-                                <Eye className="h-3.5 w-3.5 text-slate-500" />
-                              </IconButton>
+                              {(matchedInv || matchedVehicleObj) && (
+                                <IconButton
+                                  component={Link}
+                                  href={
+                                    matchedInv
+                                      ? `/accounting/invoices/${matchedInv.id}`
+                                      : `/vehicles/${matchedVehicleObj!.id}/deed`
+                                  }
+                                  size="small"
+                                  color="inherit"
+                                  title="View Official Commercial Invoice / Deed"
+                                  sx={{ p: "3px" }}
+                                >
+                                  <Eye className="h-3.5 w-3.5 text-slate-500" />
+                                </IconButton>
+                              )}
                               <IconButton
                                 size="small"
                                 color="primary"
@@ -1962,18 +2031,20 @@ export default function AdminDashboardPage() {
                               >
                                 <Edit className="h-3.5 w-3.5" />
                               </IconButton>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                title="Void / Cancel Sale Contract"
-                                onClick={() => {
-                                  setRevertVehicleOnVoid(true);
-                                  setDeletingSale(s);
-                                }}
-                                sx={{ p: "3px" }}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </IconButton>
+                              {currentRole === "SuperAdmin" && (
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  title="Void / Cancel Sale Contract"
+                                  onClick={() => {
+                                    setRevertVehicleOnVoid(true);
+                                    setDeletingSale(s);
+                                  }}
+                                  sx={{ p: "3px" }}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </IconButton>
+                              )}
                             </div>
                           </MuiTableCell>
                         </MuiTableRow>
@@ -1985,53 +2056,68 @@ export default function AdminDashboardPage() {
             </MuiCard>
 
             {/* Installment (Qist) Amortization & Due-Date Collections Schedule */}
-            <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-[#E2E0D8] dark:border-[#1F2430] bg-[#FAF9F6] dark:bg-[#0D1017] flex items-center justify-between flex-wrap gap-2">
+            <div className="rounded-xl border border-[#E2E8F0] dark:border-[#262F40] bg-white dark:bg-[#161B26] overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-[#E2E8F0] dark:border-[#262F40] bg-[#F8FAFC] dark:bg-[#121722] flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#111318] dark:text-amber-400 block">
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#0F172A] dark:text-white block">
                     INSTALLMENT (QIST) RECEIVABLES & COLLECTIONS SCHEDULE
                   </span>
                   <span className="text-[11px] text-slate-500">
                     Active buyer installment plans, remaining USD/AFN balances & 1-click Hawala collection
                   </span>
                 </div>
-                <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-                  {sales.filter((s) => s.paymentType === "Installment Plan" || s.status === "Pending Installments").length} ACTIVE QIST ACCOUNTS
+                <span className="px-2 py-0.5 rounded font-mono tabular-nums text-[10px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                  {
+                    sales.filter(
+                      (s) =>
+                        s.status === "Pending Installments" &&
+                        (s.downPaymentUSD || 0) < s.salePriceUSD
+                    ).length
+                  }{" "}
+                  ACTIVE QIST ACCOUNTS
                 </span>
               </div>
 
-              <div className="divide-y divide-[#E2E0D8] dark:divide-[#1F2430]">
+              <div className="divide-y divide-[#E2E8F0] dark:divide-[#262F40]">
                 {sales
                   .filter(
                     (s) =>
-                      s.paymentType === "Installment Plan" ||
-                      s.status === "Pending Installments" ||
-                      s.downPaymentUSD < s.salePriceUSD
+                      (s.paymentType === "Installment Plan" ||
+                        s.status === "Pending Installments") &&
+                      (s.downPaymentUSD || 0) < s.salePriceUSD
                   )
                   .map((s) => {
                     const balanceUSD = Math.max(0, s.salePriceUSD - (s.downPaymentUSD || 0));
-                    const months = Math.max(1, s.installmentsRemaining || 6);
-                    const monthlyQistUSD = Math.round(balanceUSD / months);
-                    const reminderWhatsapp = `https://wa.me/${(s.customerPhone || "93799102030").replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                      `Salam ${s.customerName}, friendly reminder from Sadozai Motors Herat regarding your vehicle installment (${s.vehicleName}, Contract #${s.contractNumber}). Next Qist due: $${monthlyQistUSD.toLocaleString()} USD (؋ ${(monthlyQistUSD * exchangeRate).toLocaleString()} AFN).`
+                    const months = Math.max(1, s.installmentsRemaining || 1);
+                    const monthlyQistUSD = Math.min(
+                      balanceUSD,
+                      Math.max(1, Math.round(balanceUSD / months))
+                    );
+                    const targetPhone = (
+                      s.customerPhone ||
+                      branding?.whatsapp ||
+                      ""
+                    ).replace(/[^0-9]/g, "");
+                    const reminderWhatsapp = `https://wa.me/${targetPhone}?text=${encodeURIComponent(
+                      `Salam ${s.customerName}, friendly reminder from ${branding?.dealershipName || "Aria Motors"} regarding your vehicle installment (${s.vehicleName}, Contract #${s.contractNumber}). Next Qist due: $${monthlyQistUSD.toLocaleString()} USD (؋ ${(monthlyQistUSD * exchangeRate).toLocaleString()} AFN).`
                     )}`;
 
                     return (
                       <div
                         key={s.id}
-                        className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#FAF9F6] dark:hover:bg-[#151922] transition-colors"
+                        className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-[#1C2331] transition-colors"
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs text-[#111318] dark:text-white">
+                            <span className="font-bold text-xs text-[#0F172A] dark:text-white">
                               {s.customerName}
                             </span>
-                            <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-[#D8D5CD] dark:border-slate-700">
+                            <span className="font-mono tabular-nums text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                               {s.contractNumber}
                             </span>
                           </div>
-                          <div className="text-[11px] text-slate-500 mt-0.5">
-                            {s.vehicleName} · Paid Down:{" "}
+                          <div className="text-[11px] text-slate-500 mt-0.5 tabular-nums">
+                            {s.vehicleName} · Paid:{" "}
                             <strong className="font-mono text-emerald-700 dark:text-emerald-400">
                               ${(s.downPaymentUSD || 0).toLocaleString()}
                             </strong>{" "}
@@ -2048,7 +2134,7 @@ export default function AdminDashboardPage() {
                             href={reminderWhatsapp}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-[#D8D5CD] dark:border-[#242A38] text-[11px] font-mono font-semibold text-emerald-700 dark:text-emerald-400 hover:border-emerald-600 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-mono font-semibold text-emerald-700 dark:text-emerald-400 hover:border-emerald-600 transition-colors"
                           >
                             <Send className="h-3 w-3" />
                             <span>WhatsApp Reminder</span>
@@ -2056,7 +2142,7 @@ export default function AdminDashboardPage() {
                           <button
                             type="button"
                             onClick={() => void handleCollectInstallment(s)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#111318] hover:bg-slate-800 dark:bg-amber-600 dark:hover:bg-amber-500 text-white text-[11px] font-mono font-bold cursor-pointer transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#1A73E8] hover:bg-[#1557B0] text-white text-[11px] font-mono tabular-nums font-bold cursor-pointer transition-colors"
                           >
                             <Banknote className="h-3 w-3" />
                             <span>Collect Qist (${monthlyQistUSD.toLocaleString()})</span>
@@ -2071,20 +2157,6 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* TAB 4: COMMERCIAL INVOICING */}
-      {activeTab === "invoices" && <InvoicesTab />}
-
-      {/* TAB 5: SUPPLIER LEDGER (ACCOUNTS PAYABLE) */}
-      {activeTab === "suppliers" && <SuppliersTab />}
-
-      {/* TAB 6: VEHICLE EXPENSES & DIRECT LANDED COST */}
-      {activeTab === "expenses" && <ExpensesTab />}
-
-      {/* TAB 7: PAYMENT VOUCHERS & CASHFLOW */}
-      {activeTab === "payments" && <PaymentsTab />}
-
-      {/* TAB 8: FULL GENERAL LEDGER ACCOUNTING */}
-      {activeTab === "accounting" && <AccountingTab />}
       {/* Custom Delete Vehicle Confirmation Dialog */}
       <Dialog
         open={Boolean(vehicleToDelete)}
@@ -2136,7 +2208,6 @@ export default function AdminDashboardPage() {
           </MuiButton>
         </DialogActions>
       </Dialog>
-
 
       {/* Edit Customer Dialog */}
       <Dialog
@@ -2206,7 +2277,12 @@ export default function AdminDashboardPage() {
                   select
                   label="Funnel Stage"
                   value={editingCustomer.leadStage}
-                  onChange={(e) => setEditingCustomer({ ...editingCustomer, leadStage: e.target.value as any })}
+                  onChange={(e) =>
+                    setEditingCustomer({
+                      ...editingCustomer,
+                      leadStage: e.target.value as CustomerRecord["leadStage"],
+                    })
+                  }
                   required
                 >
                   <MenuItem value="New Inquiry">New Inquiry (استعلام جدید)</MenuItem>
@@ -2308,6 +2384,7 @@ export default function AdminDashboardPage() {
                   label="Contract Price (USD $)"
                   type="number"
                   value={editingSale.salePriceUSD}
+                  disabled={currentRole !== "SuperAdmin"}
                   onChange={(e) => setEditingSale({ ...editingSale, salePriceUSD: Number(e.target.value) })}
                   required
                 />
@@ -2315,7 +2392,12 @@ export default function AdminDashboardPage() {
                   select
                   label="Payment Method"
                   value={editingSale.paymentType}
-                  onChange={(e) => setEditingSale({ ...editingSale, paymentType: e.target.value as any })}
+                  onChange={(e) =>
+                    setEditingSale({
+                      ...editingSale,
+                      paymentType: e.target.value as SaleRecord["paymentType"],
+                    })
+                  }
                   required
                 >
                   <MenuItem value="Full Cash">Full Cash (نقد کامل)</MenuItem>
@@ -2345,7 +2427,12 @@ export default function AdminDashboardPage() {
                 select
                 label="Contract Status"
                 value={editingSale.status}
-                onChange={(e) => setEditingSale({ ...editingSale, status: e.target.value as any })}
+                onChange={(e) =>
+                  setEditingSale({
+                    ...editingSale,
+                    status: e.target.value as SaleRecord["status"],
+                  })
+                }
                 required
               >
                 <MenuItem value="Completed">Completed (تکمیل شده)</MenuItem>
@@ -2419,7 +2506,9 @@ export default function AdminDashboardPage() {
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
-          Edit Vehicle Details & Pricing ({editingVehicle?.stockNumber})
+          {currentRole === "SuperAdmin"
+            ? `Edit Vehicle Details & Pricing (${editingVehicle?.stockNumber})`
+            : `Update Operational Status & Bay (${editingVehicle?.stockNumber})`}
         </DialogTitle>
         {editingVehicle && (
           <form onSubmit={handleUpdateVehicle}>
@@ -2433,29 +2522,46 @@ export default function AdminDashboardPage() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <MuiTextField
-                  label="Selling Price (USD $)"
-                  type="number"
-                  value={editingVehicle.sellingPrice}
-                  onChange={(e) => setEditingVehicle({ ...editingVehicle, sellingPrice: Number(e.target.value) })}
-                  required
-                />
-                <MuiTextField
-                  label="Minimum Target / Floor ($)"
-                  type="number"
-                  value={editingVehicle.minTargetPrice || editingVehicle.sellingPrice}
-                  onChange={(e) => setEditingVehicle({ ...editingVehicle, minTargetPrice: Number(e.target.value) })}
-                  required
-                />
-              </div>
+              {currentRole === "SuperAdmin" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <MuiTextField
+                    label="Selling Price (USD $)"
+                    type="number"
+                    value={editingVehicle.sellingPrice}
+                    onChange={(e) =>
+                      setEditingVehicle({
+                        ...editingVehicle,
+                        sellingPrice: Number(e.target.value),
+                      })
+                    }
+                    required
+                  />
+                  <MuiTextField
+                    label="Minimum Target / Floor ($)"
+                    type="number"
+                    value={editingVehicle.minTargetPrice || editingVehicle.sellingPrice}
+                    onChange={(e) =>
+                      setEditingVehicle({
+                        ...editingVehicle,
+                        minTargetPrice: Number(e.target.value),
+                      })
+                    }
+                    required
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <MuiTextField
                   select
                   label="Vehicle Status"
                   value={editingVehicle.status}
-                  onChange={(e) => setEditingVehicle({ ...editingVehicle, status: e.target.value as any })}
+                  onChange={(e) =>
+                    setEditingVehicle({
+                      ...editingVehicle,
+                      status: e.target.value as VehicleItem["status"],
+                    })
+                  }
                   required
                 >
                   <MenuItem value="Available on Lot">Available on Lot (موجود در نمایشگاه)</MenuItem>
@@ -2540,7 +2646,9 @@ export default function AdminDashboardPage() {
             { label: t.inventorySold, value: "Sold" },
           ]}
           onApplyStatus={(status) => void handleBatchAdminVehicleStatus(status)}
-          onAdjustPrice={handleBatchAdminVehiclePrice}
+          onAdjustPrice={
+            currentRole === "SuperAdmin" ? handleBatchAdminVehiclePrice : undefined
+          }
           onExportCSV={handleBatchAdminVehicleExportCSV}
           onClearSelection={() => setSelectedAdminVehicleIds([])}
         />

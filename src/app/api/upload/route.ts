@@ -25,15 +25,18 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     if (!token) {
-      // Local development simulation fallback if BLOB_READ_WRITE_TOKEN is not yet set
-      const simulatedUrls = uploadList.map(
-        (file, idx) =>
-          `https://sadozai-media.public.blob.vercel-storage.com/vehicles/${Date.now()}-${idx}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`
+      // Durable Base64 data URL fallback when BLOB_READ_WRITE_TOKEN is not configured
+      const dataUrls = await Promise.all(
+        uploadList.map(async (file) => {
+          const buffer = Buffer.from(await file.arrayBuffer());
+          const mime = file.type || "image/webp";
+          return `data:${mime};base64,${buffer.toString("base64")}`;
+        })
       );
       return NextResponse.json({
-        urls: simulatedUrls,
-        isSimulated: true,
-        message: "Vercel Blob simulation active. Set BLOB_READ_WRITE_TOKEN in .env for live CDN persistence.",
+        urls: dataUrls,
+        isSimulated: false,
+        message: `Processed and persisted ${dataUrls.length} photo(s) locally (Base64 data storage).`,
       });
     }
 
@@ -57,7 +60,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   } catch (error: any) {
     console.error("Vercel Blob upload error:", error);
     return NextResponse.json(
-      { error: error.message || "Vercel Blob upload failed" },
+      { error: error.message || "Photo upload failed" },
       { status: 500 }
     );
   }

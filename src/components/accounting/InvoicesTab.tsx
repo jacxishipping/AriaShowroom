@@ -6,9 +6,7 @@ import { useShowroomStore } from "@/store/useShowroomStore";
 import { InvoiceRecord } from "@/lib/mock-data";
 import { translations } from "@/lib/translations";
 import {
-  MuiCard,
   MuiButton,
-  MuiChip,
   MuiTable,
   MuiTableHead,
   MuiTableBody,
@@ -28,9 +26,7 @@ import {
   Search,
   X,
   Eye,
-  Printer,
   DollarSign,
-  Car,
   CheckCircle2,
   Download,
   Loader2,
@@ -46,8 +42,17 @@ interface InvoicesTabProps {
   onSelectInvoice?: (invoice: InvoiceRecord) => void;
 }
 
-export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
-  const { invoices, vehicles, exchangeRate, language, addInvoice, updateInvoice, deleteInvoice, addToast } = useShowroomStore();
+export function InvoicesTab({ onSelectInvoice: _onSelectInvoice }: InvoicesTabProps) {
+  const {
+    invoices,
+    vehicles,
+    exchangeRate,
+    language,
+    addInvoice,
+    updateInvoice,
+    deleteInvoice,
+    addToast,
+  } = useShowroomStore();
   const t = translations[language];
   const [search, setSearch] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -70,14 +75,17 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
     }
   };
 
-  // Form state
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerTazkira, setCustomerTazkira] = useState("");
   const [customerAddress, setCustomerAddress] = useState("Herat City");
   const [selectedStock, setSelectedStock] = useState(vehicles[0]?.stockNumber || "");
-  const [basePriceUSD, setBasePriceUSD] = useState<number>(vehicles[0]?.sellingPrice || 45000);
-  const [customsFeeUSD, setCustomsFeeUSD] = useState<number>(2500);
+  const [basePriceUSD, setBasePriceUSD] = useState<number>(
+    vehicles[0]?.sellingPrice || 45000
+  );
+  const [customsFeeUSD, setCustomsFeeUSD] = useState<number>(
+    vehicles[0]?.customsDuty || 0
+  );
   const [registrationFeeUSD, setRegistrationFeeUSD] = useState<number>(400);
   const [discountUSD, setDiscountUSD] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState("Cash (نقدی)");
@@ -112,41 +120,45 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
 
     try {
       await addInvoice({
-      customerName,
-      customerPhone,
-      customerTazkira,
-      customerAddress,
-      vehicleStock: selectedStock,
-      vehicleDesc: vehicleObj ? `${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model}` : "Vehicle Import",
-      vin: vehicleObj?.vin,
-      items: [
-        {
-          description: `${vehicleObj?.year || ""} ${vehicleObj?.make || ""} ${vehicleObj?.model || "Vehicle"} Base Price`,
-          descriptionDari: "قیمت موتر وارداتی",
-          amountUSD: subtotal,
-        },
-        {
-          description: "Islam Qala Port Customs Duty & Legal Maktoub Clearance",
-          descriptionDari: "تعرفه و محصول گمرک اسلام قلعه",
-          amountUSD: customs,
-        },
-        {
-          description: "Herat Traffic Directorate Official Plate & Registration",
-          descriptionDari: "هزینه ثبت پلاک و انتقال سند ترافیک",
-          amountUSD: reg,
-        },
-      ],
-      subtotalUSD: subtotal,
-      customsFeeUSD: customs,
-      registrationFeeUSD: reg,
-      discountUSD: disc,
-      totalUSD,
-      totalAFN,
-      exchangeRate,
-      status: "Paid",
-      paymentMethod,
-      issueDate: new Date().toISOString().split("T")[0],
-      notes: "Commercial invoice generated from ERP Sales Desk",
+        customerName,
+        customerPhone,
+        customerTazkira,
+        customerAddress,
+        vehicleStock: selectedStock,
+        vehicleDesc: vehicleObj
+          ? `${vehicleObj.year} ${vehicleObj.make} ${vehicleObj.model}`
+          : "Vehicle Import",
+        vin: vehicleObj?.vin,
+        items: [
+          {
+            description: `${vehicleObj?.year || ""} ${vehicleObj?.make || ""} ${
+              vehicleObj?.model || "Vehicle"
+            } Base Price`,
+            descriptionDari: "قیمت موتر وارداتی",
+            amountUSD: subtotal,
+          },
+          {
+            description: "Islam Qala Port Customs Duty & Legal Maktoub Clearance",
+            descriptionDari: "تعرفه و محصول گمرک اسلام قلعه",
+            amountUSD: customs,
+          },
+          {
+            description: "Herat Traffic Directorate Official Plate & Registration",
+            descriptionDari: "هزینه ثبت پلاک و انتقال سند ترافیک",
+            amountUSD: reg,
+          },
+        ],
+        subtotalUSD: subtotal,
+        customsFeeUSD: customs,
+        registrationFeeUSD: reg,
+        discountUSD: disc,
+        totalUSD,
+        totalAFN,
+        exchangeRate,
+        status: "Paid",
+        paymentMethod,
+        issueDate: new Date().toISOString().split("T")[0],
+        notes: "Commercial invoice generated from ERP Accounting Hub",
       });
     } catch (error) {
       addToast(error instanceof Error ? error.message : "Unable to save invoice", "error");
@@ -198,53 +210,68 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
     <div className="space-y-4">
       {/* Top Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Invoiced
+              {language === "fa"
+                ? "مجموع فاکتورها"
+                : language === "ps"
+                ? "ټول فاکتورونه"
+                : "Total Invoiced"}
             </span>
             <span className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
               <DollarSign className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
-            ${totalInvoiced.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
+            ${totalInvoiced.toLocaleString()}{" "}
+            <span className="text-xs font-normal text-slate-400">USD</span>
           </p>
-          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5">
+          <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 block mt-0.5">
             ؋{Math.round(totalInvoiced * exchangeRate).toLocaleString()} AFN
           </span>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Settled / Collected (تسویه‌شده)
+              {language === "fa"
+                ? "تسویه‌شده / دریافتی"
+                : language === "ps"
+                ? "تصفیه شوي"
+                : "Settled / Collected"}
             </span>
             <span className="p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
               <CheckCircle2 className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
-            ${totalPaid.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 tracking-tight">
+            ${totalPaid.toLocaleString()}{" "}
+            <span className="text-xs font-normal text-slate-400">USD</span>
           </p>
-          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5">
+          <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 block mt-0.5">
             ؋{Math.round(totalPaid * exchangeRate).toLocaleString()} AFN
           </span>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Outstanding Balances
+              {language === "fa"
+                ? "مطالبات باقی‌مانده"
+                : language === "ps"
+                ? "پاتې حسابونه"
+                : "Outstanding Balances"}
             </span>
             <span className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40">
               <FileCheck2 className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-amber-600 dark:text-amber-400 tracking-tight">
-            ${totalPending.toLocaleString()} <span className="text-xs font-normal text-slate-400">USD</span>
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-amber-600 dark:text-amber-400 tracking-tight">
+            ${totalPending.toLocaleString()}{" "}
+            <span className="text-xs font-normal text-slate-400">USD</span>
           </p>
-          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5">
+          <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 block mt-0.5">
             ؋{Math.round(totalPending * exchangeRate).toLocaleString()} AFN
           </span>
         </div>
@@ -257,15 +284,23 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
             <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search invoice #, buyer, stock..."
+              aria-label="Search commercial invoices"
+              placeholder={
+                language === "fa"
+                  ? "جستجوی شماره فاکتور، خریدار، استاک..."
+                  : language === "ps"
+                  ? "د فاکتور شمېره یا پیرودونکی..."
+                  : "Search invoice #, buyer, stock..."
+              }
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-52 sm:w-64 ps-7 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 h-8"
+              className="w-52 sm:w-64 ps-7 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#0F141C] text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-primary h-8"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
                 className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                aria-label="Clear invoice search"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -273,9 +308,10 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
           </div>
 
           <select
+            aria-label="Filter invoices by payment status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#0F141C] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-primary cursor-pointer"
           >
             <option value="ALL">All Invoices</option>
             <option value="Paid">Paid / Settled (تسویه‌شده)</option>
@@ -295,8 +331,8 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
             </button>
           )}
 
-          <span className="text-[11px] font-mono text-slate-400">
-            ({filteredInvoices.length} invoices)
+          <span className="text-[11px] font-mono tabular-nums text-slate-400">
+            ({filteredInvoices.length})
           </span>
         </div>
 
@@ -329,13 +365,16 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
 
       {/* Invoice Generator Form */}
       {isCreating && (
-        <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs space-y-3">
+        <div className="p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] shadow-xs space-y-3">
           <h3 className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5 uppercase tracking-wider">
-            <FileCheck2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <FileCheck2 className="h-4 w-4 text-primary" />
             Issue Official Commercial Invoice • صدور فاکتور رسمی تجارتی
           </h3>
 
-          <form onSubmit={handleCreateInvoice} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <form
+            onSubmit={handleCreateInvoice}
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs"
+          >
             <MuiTextField
               label="Buyer Full Name (نام خریدار)"
               required
@@ -366,12 +405,16 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
               onChange={(e) => {
                 setSelectedStock(e.target.value);
                 const sel = vehicles.find((v) => v.stockNumber === e.target.value);
-                if (sel) setBasePriceUSD(sel.sellingPrice);
+                if (sel) {
+                  setBasePriceUSD(sel.sellingPrice);
+                  setCustomsFeeUSD(sel.customsDuty || 0);
+                }
               }}
             >
               {vehicles.map((v) => (
                 <MenuItem key={v.id} value={v.stockNumber}>
-                  {v.stockNumber} - {v.year} {v.make} {v.model} (${v.sellingPrice.toLocaleString()})
+                  {v.stockNumber} - {v.year} {v.make} {v.model} ($
+                  {v.sellingPrice.toLocaleString()})
                 </MenuItem>
               ))}
             </MuiTextField>
@@ -416,12 +459,22 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
               onChange={(e) => setPaymentMethod(e.target.value)}
             >
               <MenuItem value="Cash (نقدی)">Cash Safe (نقدی - صندوق)</MenuItem>
-              <MenuItem value="Sarrafi Hawala (حواله صرافی)">Sarrafi Hawala (حواله صرافی)</MenuItem>
-              <MenuItem value="Bank Transfer (حساب بانکی)">Bank Transfer (حساب بانکی)</MenuItem>
+              <MenuItem value="Sarrafi Hawala (حواله صرافی)">
+                Sarrafi Hawala (حواله صرافی)
+              </MenuItem>
+              <MenuItem value="Bank Transfer (حساب بانکی)">
+                Bank Transfer (حساب بانکی)
+              </MenuItem>
             </MuiTextField>
 
             <div className="sm:col-span-3 flex justify-end">
-              <MuiButton type="submit" variant="contained" color="primary" size="small" sx={{ fontSize: "11px" }}>
+              <MuiButton
+                type="submit"
+                variant="contained"
+                color="primary"
+                size="small"
+                sx={{ fontSize: "11px" }}
+              >
                 Generate & Save Commercial Invoice
               </MuiButton>
             </div>
@@ -430,7 +483,7 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
       )}
 
       {/* Invoices Table */}
-      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] shadow-xs overflow-hidden">
+      <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <MuiTable dense size="small" className="w-full">
             <MuiTableHead>
@@ -442,34 +495,49 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                 <MuiTableCell header>Subtotal</MuiTableCell>
                 <MuiTableCell header>Total (USD / AFN)</MuiTableCell>
                 <MuiTableCell header>Status</MuiTableCell>
-                <MuiTableCell header align="right">Actions</MuiTableCell>
+                <MuiTableCell header align="right">
+                  Actions
+                </MuiTableCell>
               </MuiTableRow>
             </MuiTableHead>
             <MuiTableBody>
               {filteredInvoices.map((inv) => (
                 <MuiTableRow key={inv.id}>
-                  <MuiTableCell className="font-mono font-semibold text-blue-600 dark:text-blue-400 text-xs">
-                    {inv.invoiceNumber}
+                  <MuiTableCell className="font-mono tabular-nums font-semibold text-primary text-xs">
+                    <Link
+                      href={`/accounting/invoices/${inv.id}`}
+                      className="hover:underline"
+                    >
+                      {inv.invoiceNumber}
+                    </Link>
                   </MuiTableCell>
-                  <MuiTableCell className="font-mono text-slate-500 text-[11px]">
+                  <MuiTableCell className="font-mono tabular-nums text-slate-500 text-[11px]">
                     {inv.issueDate}
                   </MuiTableCell>
                   <MuiTableCell>
-                    <div className="font-semibold text-slate-900 dark:text-white text-xs">{inv.customerName}</div>
-                    <div className="text-[10px] font-mono text-slate-400">{inv.customerPhone}</div>
+                    <div className="font-semibold text-slate-900 dark:text-white text-xs">
+                      {inv.customerName}
+                    </div>
+                    <div className="text-[10px] font-mono tabular-nums text-slate-400">
+                      {inv.customerPhone}
+                    </div>
                   </MuiTableCell>
                   <MuiTableCell>
-                    <div className="font-medium text-slate-800 dark:text-slate-200 text-xs">{inv.vehicleDesc}</div>
-                    <div className="text-[10px] font-mono text-slate-400">{inv.vehicleStock}</div>
+                    <div className="font-medium text-slate-800 dark:text-slate-200 text-xs">
+                      {inv.vehicleDesc}
+                    </div>
+                    <div className="text-[10px] font-mono tabular-nums text-slate-400">
+                      {inv.vehicleStock}
+                    </div>
                   </MuiTableCell>
-                  <MuiTableCell className="font-mono text-slate-600 dark:text-slate-300 text-xs">
+                  <MuiTableCell className="font-mono tabular-nums text-slate-600 dark:text-slate-300 text-xs">
                     ${inv.subtotalUSD.toLocaleString()}
                   </MuiTableCell>
                   <MuiTableCell>
-                    <div className="font-mono font-semibold text-slate-900 dark:text-white text-xs">
+                    <div className="font-mono tabular-nums font-semibold text-slate-900 dark:text-white text-xs">
                       ${inv.totalUSD.toLocaleString()}
                     </div>
-                    <div className="text-[10px] font-mono text-slate-400">
+                    <div className="text-[10px] font-mono tabular-nums text-slate-400">
                       ؋{inv.totalAFN.toLocaleString()}
                     </div>
                   </MuiTableCell>
@@ -490,6 +558,7 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                         size="small"
                         color="primary"
                         title={t.buttonDownloadInvoice}
+                        aria-label={`Download PDF for invoice ${inv.invoiceNumber}`}
                         onClick={() => handleDownloadInvoicePDF(inv)}
                         disabled={downloadingInvoiceId === inv.id}
                         sx={{ p: "3px" }}
@@ -504,6 +573,7 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                         size="small"
                         color="inherit"
                         title="Quick Preview Invoice Modal"
+                        aria-label={`Preview invoice ${inv.invoiceNumber}`}
                         onClick={() => setPreviewInvoice(inv)}
                         sx={{ p: "3px" }}
                       >
@@ -515,6 +585,7 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                         size="small"
                         color="primary"
                         title="View & Print Official Invoice Page"
+                        aria-label={`Open full invoice ${inv.invoiceNumber}`}
                         sx={{ p: "3px" }}
                       >
                         <Eye className="h-3.5 w-3.5" />
@@ -523,6 +594,7 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                         size="small"
                         color="primary"
                         title="Edit Invoice"
+                        aria-label={`Edit invoice ${inv.invoiceNumber}`}
                         onClick={() => setEditingInvoice({ ...inv })}
                         sx={{ p: "3px" }}
                       >
@@ -532,12 +604,12 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                         size="small"
                         color="error"
                         title="Delete Invoice"
+                        aria-label={`Delete invoice ${inv.invoiceNumber}`}
                         onClick={() => setDeletingInvoice(inv)}
                         sx={{ p: "3px" }}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </IconButton>
-
                     </div>
                   </MuiTableCell>
                 </MuiTableRow>
@@ -553,6 +625,7 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
         isOpen={Boolean(previewInvoice)}
         onClose={() => setPreviewInvoice(null)}
       />
+
       {/* Edit Invoice Dialog */}
       <Dialog
         open={Boolean(editingInvoice)}
@@ -570,13 +643,17 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                 <MuiTextField
                   label="Customer / Buyer Name"
                   value={editingInvoice.customerName}
-                  onChange={(e) => setEditingInvoice({ ...editingInvoice, customerName: e.target.value })}
+                  onChange={(e) =>
+                    setEditingInvoice({ ...editingInvoice, customerName: e.target.value })
+                  }
                   required
                 />
                 <MuiTextField
                   label="Customer Phone"
                   value={editingInvoice.customerPhone || ""}
-                  onChange={(e) => setEditingInvoice({ ...editingInvoice, customerPhone: e.target.value })}
+                  onChange={(e) =>
+                    setEditingInvoice({ ...editingInvoice, customerPhone: e.target.value })
+                  }
                 />
               </div>
 
@@ -584,13 +661,20 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                 <MuiTextField
                   label="Customer Address / Location"
                   value={editingInvoice.customerAddress || ""}
-                  onChange={(e) => setEditingInvoice({ ...editingInvoice, customerAddress: e.target.value })}
+                  onChange={(e) =>
+                    setEditingInvoice({
+                      ...editingInvoice,
+                      customerAddress: e.target.value,
+                    })
+                  }
                 />
                 <MuiTextField
                   select
                   label="Invoice Status"
                   value={editingInvoice.status}
-                  onChange={(e) => setEditingInvoice({ ...editingInvoice, status: e.target.value })}
+                  onChange={(e) =>
+                    setEditingInvoice({ ...editingInvoice, status: e.target.value })
+                  }
                   required
                 >
                   <MenuItem value="Paid">Paid (تسویه کامل)</MenuItem>
@@ -605,32 +689,53 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
                   label="Total (USD $)"
                   type="number"
                   value={editingInvoice.totalUSD}
-                  onChange={(e) => setEditingInvoice({ ...editingInvoice, totalUSD: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setEditingInvoice({
+                      ...editingInvoice,
+                      totalUSD: Number(e.target.value),
+                    })
+                  }
                   required
                 />
                 <MuiTextField
                   label="Discount (USD $)"
                   type="number"
                   value={editingInvoice.discountUSD || 0}
-                  onChange={(e) => setEditingInvoice({ ...editingInvoice, discountUSD: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setEditingInvoice({
+                      ...editingInvoice,
+                      discountUSD: Number(e.target.value),
+                    })
+                  }
                 />
                 <MuiTextField
                   label="Payment Channel"
-                  value={editingInvoice.paymentMethod || "Cash Safe (کندی)"}
-                  onChange={(e) => setEditingInvoice({ ...editingInvoice, paymentMethod: e.target.value })}
+                  value={editingInvoice.paymentMethod || "Cash (نقدی)"}
+                  onChange={(e) =>
+                    setEditingInvoice({
+                      ...editingInvoice,
+                      paymentMethod: e.target.value,
+                    })
+                  }
                 />
               </div>
 
               <MuiTextField
                 label="Invoice Notes & Terms"
                 value={editingInvoice.notes || ""}
-                onChange={(e) => setEditingInvoice({ ...editingInvoice, notes: e.target.value })}
+                onChange={(e) =>
+                  setEditingInvoice({ ...editingInvoice, notes: e.target.value })
+                }
                 multiline
                 rows={2}
               />
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2.5 }}>
-              <MuiButton variant="outlined" color="inherit" onClick={() => setEditingInvoice(null)}>
+              <MuiButton
+                variant="outlined"
+                color="inherit"
+                onClick={() => setEditingInvoice(null)}
+              >
                 Cancel
               </MuiButton>
               <MuiButton type="submit" variant="contained" color="primary">
@@ -665,7 +770,11 @@ export function InvoicesTab({ onSelectInvoice }: InvoicesTabProps) {
           </p>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <MuiButton variant="outlined" color="inherit" onClick={() => setDeletingInvoice(null)}>
+          <MuiButton
+            variant="outlined"
+            color="inherit"
+            onClick={() => setDeletingInvoice(null)}
+          >
             Cancel
           </MuiButton>
           <MuiButton variant="contained" color="error" onClick={handleDeleteInvoice}>

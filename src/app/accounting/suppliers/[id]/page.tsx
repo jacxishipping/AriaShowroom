@@ -6,12 +6,10 @@ import { useParams } from "next/navigation";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import {
-  MuiCard,
   MuiButton,
   MuiChip,
   MuiTextField,
   MenuItem,
-  IconButton,
   MuiTable,
   MuiTableContainer,
   MuiTableHead,
@@ -28,21 +26,28 @@ import {
   DollarSign,
   Plus,
   Receipt,
-  FileSpreadsheet,
-  CheckCircle2,
   Share2,
   Landmark,
-  MessageCircle,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function SupplierLedgerPage() {
   const params = useParams();
   const supplierId = params?.id as string;
-  const { suppliers, exchangeRate, recordSupplierPayment, addSupplierBill, addToast, language } =
-    useShowroomStore();
+  const {
+    suppliers,
+    exchangeRate,
+    recordSupplierPayment,
+    addSupplierBill,
+    addToast,
+    language,
+    branding,
+  } = useShowroomStore();
   const t = translations[language];
 
-  const supplier = suppliers.find((s) => s.id === supplierId || s.id.toLowerCase() === supplierId?.toLowerCase());
+  const supplier = suppliers.find(
+    (s) => s.id === supplierId || s.id.toLowerCase() === supplierId?.toLowerCase()
+  );
 
   const [isPaying, setIsPaying] = useState(false);
   const [payAmount, setPayAmount] = useState<number>(0);
@@ -57,11 +62,26 @@ export default function SupplierLedgerPage() {
 
   if (!supplier) {
     return (
-      <div className="p-8 text-center text-slate-500">
-        Supplier record not found.{" "}
-        <Link href="/admin" className="text-primary underline">
-          Return to Dealership ERP Hub
-        </Link>
+      <div className="mx-auto max-w-xl px-4 py-16 text-center space-y-4">
+        <div className="mx-auto h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600">
+          <AlertTriangle className="h-6 w-6" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          Supplier Record Not Found
+        </h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          No supplier account matching <span className="font-mono font-bold">{supplierId}</span> was found.
+        </p>
+        <MuiButton
+          component={Link}
+          href="/accounting"
+          variant="contained"
+          color="primary"
+          size="small"
+          startIcon={<ArrowLeft className="h-4 w-4 rtl:rotate-180" />}
+        >
+          Back to Accounting Hub
+        </MuiButton>
       </div>
     );
   }
@@ -79,14 +99,20 @@ export default function SupplierLedgerPage() {
         paySarrafi
       );
     } catch (error) {
-      addToast(error instanceof Error ? error.message : "Unable to record supplier payment", "error");
+      addToast(
+        error instanceof Error ? error.message : "Unable to record supplier payment",
+        "error"
+      );
       return;
     }
 
     setIsPaying(false);
     setPayAmount(0);
     setPayRef("");
-    addToast(`Payment of $${payAmount.toLocaleString()} recorded for ${supplier.companyName}!`, "success");
+    addToast(
+      `Payment of $${payAmount.toLocaleString()} recorded for ${supplier.companyName}!`,
+      "success"
+    );
   };
 
   const handleBillSubmit = async (e: React.FormEvent) => {
@@ -96,16 +122,25 @@ export default function SupplierLedgerPage() {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     try {
       await addSupplierBill({
-      billNumber: `BILL-${supplier.country.includes("UAE") ? "DXB" : supplier.country.includes("Japan") ? "TYO" : "HRT"}-${randomNum}`,
-      supplierId: supplier.id,
-      stockNumber: billStock,
-      vehicleDescription: billDesc,
-      amountUSD: Number(billAmount),
-      status: "Unpaid",
-      issueDate: new Date().toISOString().split("T")[0],
+        billNumber: `BILL-${
+          supplier.country.includes("UAE")
+            ? "DXB"
+            : supplier.country.includes("Japan")
+            ? "TYO"
+            : "HRT"
+        }-${randomNum}`,
+        supplierId: supplier.id,
+        stockNumber: billStock,
+        vehicleDescription: billDesc,
+        amountUSD: Number(billAmount),
+        status: "Unpaid",
+        issueDate: new Date().toISOString().split("T")[0],
       });
     } catch (error) {
-      addToast(error instanceof Error ? error.message : "Unable to record supplier bill", "error");
+      addToast(
+        error instanceof Error ? error.message : "Unable to record supplier bill",
+        "error"
+      );
       return;
     }
 
@@ -130,15 +165,15 @@ export default function SupplierLedgerPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
       {/* Top Header & Actions (Hidden in Print) */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 print:hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-[#262F40] print:hidden">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
             <Link href="/" className="hover:text-primary transition-colors">
               Cockpit
             </Link>
             <span>/</span>
-            <Link href="/admin" className="hover:text-primary transition-colors">
-              Dealership ERP Hub
+            <Link href="/accounting" className="hover:text-primary transition-colors">
+              Accounting & Sarrafi Hub
             </Link>
             <span>/</span>
             <span className="text-slate-900 dark:text-white font-medium">
@@ -150,20 +185,20 @@ export default function SupplierLedgerPage() {
             Supplier Statement of Account • صورتحساب تفصیلی واردکننده
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Itemized bills, Sarrafi Hawala settlements, and running balance ledger
+            {branding.dealershipName} — Itemized bills, Sarrafi Hawala settlements, and running balance ledger
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <MuiButton
             component={Link}
-            href="/admin"
+            href="/accounting"
             variant="outlined"
             color="inherit"
             size="small"
-            startIcon={<ArrowLeft className="h-4 w-4" />}
+            startIcon={<ArrowLeft className="h-4 w-4 rtl:rotate-180" />}
           >
-            Back to ERP Hub
+            Back to Accounting
           </MuiButton>
           <MuiButton
             variant="outlined"
@@ -177,7 +212,7 @@ export default function SupplierLedgerPage() {
           <MuiButton
             variant="contained"
             color="primary"
-            size="medium"
+            size="small"
             onClick={handlePrint}
             startIcon={<Printer className="h-4 w-4" />}
           >
@@ -187,9 +222,9 @@ export default function SupplierLedgerPage() {
       </div>
 
       {/* Main Statement Paper */}
-      <div className="rounded-2xl bg-white p-6 sm:p-10 shadow-lg border border-slate-200 dark:border-slate-800 dark:bg-[#111827] text-slate-900 dark:text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0 space-y-6">
+      <div className="rounded-xl bg-white p-6 sm:p-10 shadow-lg border border-slate-200 dark:border-[#262F40] dark:bg-[#161B26] text-slate-900 dark:text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0 space-y-6">
         {/* Supplier Profile Header & Action Buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800 print:border-black">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-[#262F40] print:border-black">
           <div>
             <div className="flex items-center gap-2.5">
               <span className="font-mono text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded print:text-black">
@@ -200,9 +235,13 @@ export default function SupplierLedgerPage() {
               </h2>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 print:text-gray-600">
-              Key Account Representative: <strong className="text-slate-800 dark:text-slate-200 print:text-black">{supplier.contactName}</strong> • {supplier.country}
+              Key Account Representative:{" "}
+              <strong className="text-slate-800 dark:text-slate-200 print:text-black">
+                {supplier.contactName}
+              </strong>{" "}
+              • {supplier.country}
             </p>
-            <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 font-mono print:text-gray-600">
+            <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 font-mono tabular-nums print:text-gray-600">
               <span className="flex items-center gap-1">
                 <Phone className="h-3.5 w-3.5 text-slate-400" />
                 {supplier.phone}
@@ -246,44 +285,51 @@ export default function SupplierLedgerPage() {
 
         {/* Running Balance KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+          <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#0F141C] border border-slate-200 dark:border-[#262F40] print:border-gray-400">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">
               Total Invoiced Purchases
             </span>
-            <p className="mt-1 text-xl font-bold font-mono text-slate-900 dark:text-white print:text-black">
+            <p className="mt-1 text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white print:text-black">
               ${supplier.totalPurchasedUSD.toLocaleString()} USD
             </p>
-            <span className="text-[11px] text-slate-500 font-mono">
+            <span className="text-[11px] text-slate-500 font-mono tabular-nums">
               {supplier.bills.length} Invoices to date
             </span>
           </div>
 
-          <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+          <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#0F141C] border border-slate-200 dark:border-[#262F40] print:border-gray-400">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">
               Total Hawala Settled (پرداخت شده)
             </span>
-            <p className="mt-1 text-xl font-bold font-mono text-emerald-600 print:text-black">
+            <p className="mt-1 text-xl font-bold font-mono tabular-nums text-emerald-600 print:text-black">
               ${supplier.totalPaidUSD.toLocaleString()} USD
             </p>
-            <span className="text-[11px] text-slate-500 font-mono">
-              {((supplier.totalPaidUSD / (supplier.totalPurchasedUSD || 1)) * 100).toFixed(0)}% cleared
+            <span className="text-[11px] text-slate-500 font-mono tabular-nums">
+              {((supplier.totalPaidUSD / (supplier.totalPurchasedUSD || 1)) * 100).toFixed(0)}
+              % cleared
             </span>
           </div>
 
-          <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+          <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#0F141C] border border-slate-200 dark:border-[#262F40] print:border-gray-400">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">
               Net Outstanding Balance (باقیداری)
             </span>
-            <p className={`mt-1 text-xl font-bold font-mono ${supplier.balanceUSD > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-800 dark:text-slate-200"} print:text-black`}>
+            <p
+              className={`mt-1 text-xl font-bold font-mono tabular-nums ${
+                supplier.balanceUSD > 0
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-slate-800 dark:text-slate-200"
+              } print:text-black`}
+            >
               ${supplier.balanceUSD.toLocaleString()} USD
             </p>
-            <span className="text-[11px] text-slate-500 font-mono">
+            <span className="text-[11px] text-slate-500 font-mono tabular-nums">
               ؋{Math.round(supplier.balanceUSD * exchangeRate).toLocaleString()} AFN
             </span>
           </div>
         </div>
 
-        {/* Payment Recording Form Dropdown */}
+        {/* Payment Recording Form */}
         {isPaying && (
           <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 dark:border-primary/20 dark:bg-primary/10 space-y-4 print:hidden">
             <h4 className="font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1.5">
@@ -291,7 +337,10 @@ export default function SupplierLedgerPage() {
               Issue Supplier Settlement Voucher (صدور حواله و سند پرداخت)
             </h4>
 
-            <form onSubmit={handlePaySubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <form
+              onSubmit={handlePaySubmit}
+              className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs"
+            >
               <MuiTextField
                 label="Amount (USD)"
                 type="number"
@@ -308,9 +357,15 @@ export default function SupplierLedgerPage() {
                 value={payMethod}
                 onChange={(e) => setPayMethod(e.target.value)}
               >
-                <MenuItem value="Sarrafi Hawala (حواله صرافی)">Sarrafi Hawala (حواله صرافی)</MenuItem>
-                <MenuItem value="Cash Safe (صندوق مرکزی)">Cash Safe (صندوق مرکزی)</MenuItem>
-                <MenuItem value="Bank Wire (انتقال بانکی)">Bank Wire (انتقال بانکی)</MenuItem>
+                <MenuItem value="Sarrafi Hawala (حواله صرافی)">
+                  Sarrafi Hawala (حواله صرافی)
+                </MenuItem>
+                <MenuItem value="Cash Safe (صندوق مرکزی)">
+                  Cash Safe (صندوق مرکزی)
+                </MenuItem>
+                <MenuItem value="Bank Wire (انتقال بانکی)">
+                  Bank Wire (انتقال بانکی)
+                </MenuItem>
               </MuiTextField>
 
               <MuiTextField
@@ -346,19 +401,22 @@ export default function SupplierLedgerPage() {
           </div>
         )}
 
-        {/* New Purchase Bill Form Dropdown */}
+        {/* New Purchase Bill Form */}
         {isBilling && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-[#1A2234] space-y-4 print:hidden">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-[#262F40] dark:bg-[#0F141C] space-y-4 print:hidden">
             <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <Plus className="h-4 w-4 text-primary" />
               Book Purchase Bill / Import Consignment
             </h4>
 
-            <form onSubmit={handleBillSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <form
+              onSubmit={handleBillSubmit}
+              className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs"
+            >
               <MuiTextField
                 label="Linked Stock # (Optional)"
                 sizeVariant="small"
-                placeholder="e.g. SM-HRT-107"
+                placeholder={`e.g. ${branding.dealershipShortCode || "ARI"}-HRT-107`}
                 value={billStock}
                 onChange={(e) => setBillStock(e.target.value)}
               />
@@ -408,26 +466,18 @@ export default function SupplierLedgerPage() {
           <MuiTableContainer component={MuiPaper} elevation={1}>
             <MuiTable size="small">
               <MuiTableHead>
-                <MuiTableRow className="bg-slate-50 dark:bg-slate-900/60">
-                  <MuiTableCell className="font-bold text-slate-500 uppercase text-[10px]">
-                    Bill #
-                  </MuiTableCell>
-                  <MuiTableCell className="font-bold text-slate-500 uppercase text-[10px]">
-                    Issue Date
-                  </MuiTableCell>
-                  <MuiTableCell className="font-bold text-slate-500 uppercase text-[10px]">
-                    Vehicle Description / Particulars
-                  </MuiTableCell>
-                  <MuiTableCell className="font-bold text-slate-500 uppercase text-[10px]">
-                    Linked Stock
-                  </MuiTableCell>
-                  <MuiTableCell className="font-bold text-slate-500 uppercase text-[10px] text-right">
+                <MuiTableRow className="bg-slate-50 dark:bg-[#121722]">
+                  <MuiTableCell header>Bill #</MuiTableCell>
+                  <MuiTableCell header>Issue Date</MuiTableCell>
+                  <MuiTableCell header>Vehicle Description / Particulars</MuiTableCell>
+                  <MuiTableCell header>Linked Stock</MuiTableCell>
+                  <MuiTableCell header align="right">
                     Amount (USD)
                   </MuiTableCell>
-                  <MuiTableCell className="font-bold text-slate-500 uppercase text-[10px] text-right">
+                  <MuiTableCell header align="right">
                     Amount (AFN)
                   </MuiTableCell>
-                  <MuiTableCell className="font-bold text-slate-500 uppercase text-[10px] text-center">
+                  <MuiTableCell header align="center">
                     Status
                   </MuiTableCell>
                 </MuiTableRow>
@@ -435,22 +485,28 @@ export default function SupplierLedgerPage() {
               <MuiTableBody>
                 {supplier.bills.map((bill) => (
                   <MuiTableRow key={bill.id}>
-                    <MuiTableCell className="font-mono font-semibold text-primary">
+                    <MuiTableCell className="font-mono tabular-nums font-semibold text-primary">
                       {bill.billNumber}
                     </MuiTableCell>
-                    <MuiTableCell className="font-mono text-xs text-slate-500">
+                    <MuiTableCell className="font-mono tabular-nums text-xs text-slate-500">
                       {bill.issueDate}
                     </MuiTableCell>
                     <MuiTableCell className="font-medium text-slate-800 dark:text-slate-200">
                       {bill.vehicleDescription}
                     </MuiTableCell>
-                    <MuiTableCell className="font-mono text-xs text-slate-500">
+                    <MuiTableCell className="font-mono tabular-nums text-xs text-slate-500">
                       {bill.stockNumber || "—"}
                     </MuiTableCell>
-                    <MuiTableCell className="font-mono font-bold text-right text-slate-900 dark:text-white">
+                    <MuiTableCell
+                      align="right"
+                      className="font-mono tabular-nums font-bold text-slate-900 dark:text-white"
+                    >
                       ${bill.amountUSD.toLocaleString()}
                     </MuiTableCell>
-                    <MuiTableCell className="font-mono text-xs text-right text-slate-500">
+                    <MuiTableCell
+                      align="right"
+                      className="font-mono tabular-nums text-xs text-slate-500"
+                    >
                       ؋{Math.round(bill.amountUSD * exchangeRate).toLocaleString()}
                     </MuiTableCell>
                     <MuiTableCell align="center">

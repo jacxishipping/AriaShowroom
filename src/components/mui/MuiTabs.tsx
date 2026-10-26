@@ -30,7 +30,7 @@ export function MuiTabs({
   className = "",
   ...props
 }: MuiTabsProps) {
-  const muiColor = color === "gold" ? "secondary" : color;
+  const muiColor = color === "gold" ? "primary" : color;
 
   const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
     onChange(newValue);
@@ -54,7 +54,7 @@ export function MuiTabs({
                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
                   <span>{tab.label}</span>
                   {tab.badge !== undefined && tab.badge !== null && (
-                    <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono tabular-nums font-semibold rounded bg-stone-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-mono tabular-nums font-semibold rounded bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                       {tab.badge}
                     </span>
                   )}

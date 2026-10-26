@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useShowroomStore } from "@/store/useShowroomStore";
@@ -45,6 +45,7 @@ import {
   ChevronDown,
   PanelRightOpen,
   BarChart3,
+  ExternalLink,
 } from "lucide-react";
 
 export default function InventoryPage() {
@@ -52,6 +53,7 @@ export default function InventoryPage() {
     vehicles,
     filters,
     chartFilter,
+    activePinnedViewId,
     language,
     currency,
     exchangeRate,
@@ -64,10 +66,12 @@ export default function InventoryPage() {
     batchUpdateVehicleStatus,
     batchAdjustVehiclePrice,
     addToast,
+    branding,
   } = useShowroomStore();
 
   const t = translations[language];
-  const hideFinancialMargins = clientPresentationMode || currentRole === "SalesAgent";
+  const hideFinancialMargins =
+    clientPresentationMode || currentRole === "SalesAgent";
 
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
@@ -81,6 +85,11 @@ export default function InventoryPage() {
   >("year");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // Reset pagination to page 0 whenever filters, cross-filters, or pinned views change
+  useEffect(() => {
+    setPage(0);
+  }, [filters, chartFilter, activePinnedViewId]);
+
   const handleSort = (field: "sellingPrice" | "landedCost" | "year" | "stockNumber") => {
     if (sortField === field) {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -90,7 +99,7 @@ export default function InventoryPage() {
     }
   };
 
-  // Instant faceted filtering + Looker cross-filter
+  // Instant faceted filtering + cross-filter
   const filteredVehicles = useMemo(() => {
     const result = vehicles.filter((v) => {
       if (filters.search) {
@@ -124,12 +133,14 @@ export default function InventoryPage() {
     });
 
     result.sort((a, b) => {
-      const valA: any = a[sortField];
-      const valB: any = b[sortField];
-      if (typeof valA === "string") {
+      const valA = a[sortField];
+      const valB = b[sortField];
+      if (typeof valA === "string" && typeof valB === "string") {
         return sortDir === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
       }
-      return sortDir === "asc" ? valA - valB : valB - valA;
+      return sortDir === "asc"
+        ? Number(valA) - Number(valB)
+        : Number(valB) - Number(valA);
     });
 
     return result;
@@ -166,14 +177,15 @@ export default function InventoryPage() {
   };
 
   const handleBatchPriceAdjust = async (percentDelta: number) => {
-    if (selectedVehicleIds.length === 0) return;
+    if (selectedVehicleIds.length === 0 || currentRole !== "SuperAdmin") return;
     await batchAdjustVehiclePrice(selectedVehicleIds, percentDelta);
   };
 
   const handleBatchExportCSV = () => {
     const selected = vehicles.filter((v) => selectedVehicleIds.includes(v.id));
     if (selected.length === 0) return;
-    exportInventoryToCSV(selected, `sadozai_inventory_batch_${selected.length}.csv`);
+    const prefix = (branding?.dealershipShortCode || "ari").toLowerCase();
+    exportInventoryToCSV(selected, `${prefix}_inventory_batch_${selected.length}.csv`);
     addToast(
       t.inventoryExportedSelected.replace("{count}", String(selected.length)),
       "success"
@@ -182,13 +194,13 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
-      {/* Google Cloud Inventory Header */}
+      {/* Inventory Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-3 border-b border-slate-200 dark:border-[#262F40]">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
-            <span>{t.inventoryLotLabel}</span>
+            <span>{branding?.dealershipName || t.inventoryLotLabel}</span>
             <span>·</span>
-            <span className="font-mono text-[#1A73E8] dark:text-[#8AB4F8] font-semibold">
+            <span className="font-mono text-[var(--theme-primary)] font-semibold">
               {filteredVehicles.length} {t.inventoryVerifiedChassis}
             </span>
           </div>
@@ -206,7 +218,7 @@ export default function InventoryPage() {
             onClick={() => setShowLookerAnalytics(!showLookerAnalytics)}
             className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-md border text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
               showLookerAnalytics
-                ? "border-[#1A73E8] bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8]"
+                ? "border-[var(--theme-primary)] bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]"
                 : "border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-slate-700 dark:text-slate-300"
             }`}
           >
@@ -251,26 +263,28 @@ export default function InventoryPage() {
             {t.inventoryExportCsv}
           </MuiButton>
 
-          <MuiButton
-            component={Link}
-            href="/intake"
-            variant="contained"
-            color="primary"
-            size="small"
-            startIcon={<Plus className="h-4 w-4" />}
-          >
-            {t.addNewVehicle}
-          </MuiButton>
           {currentRole === "SuperAdmin" && (
-            <MuiButton
-              component={Link}
-              href="/inventory/import"
-              variant="outlined"
-              color="inherit"
-              size="small"
-            >
-              {t.importTitle}
-            </MuiButton>
+            <>
+              <MuiButton
+                component={Link}
+                href="/intake"
+                variant="contained"
+                color="primary"
+                size="small"
+                startIcon={<Plus className="h-4 w-4" />}
+              >
+                {t.addNewVehicle}
+              </MuiButton>
+              <MuiButton
+                component={Link}
+                href="/inventory/import"
+                variant="outlined"
+                color="inherit"
+                size="small"
+              >
+                {t.importTitle}
+              </MuiButton>
+            </>
           )}
         </div>
       </div>
@@ -278,7 +292,7 @@ export default function InventoryPage() {
       {/* Pinned Views Bar */}
       <PinnedViewsBar />
 
-      {/* Optional Looker Studio Cohort Strip */}
+      {/* Optional Analytics Cohort Strip */}
       {showLookerAnalytics && <LookerAnalyticsStrip />}
 
       {/* Filter Toolbar */}
@@ -312,21 +326,25 @@ export default function InventoryPage() {
 
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
+                  aria-label={t.inventoryPreviousPage}
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  className="p-1.5 rounded border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#1A73E8] transition-colors"
+                  className="p-1.5 rounded border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[var(--theme-primary)] transition-colors cursor-pointer"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
                 </button>
                 <span className="font-semibold px-2 tabular-nums text-slate-900 dark:text-white">
                   {t.inventoryPage} {page + 1} / {totalPages}
                 </span>
                 <button
+                  type="button"
+                  aria-label={t.inventoryNextPage}
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                  className="p-1.5 rounded border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#1A73E8] transition-colors"
+                  className="p-1.5 rounded border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[var(--theme-primary)] transition-colors cursor-pointer"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4 rtl:rotate-180" />
                 </button>
               </div>
             </div>
@@ -345,7 +363,7 @@ export default function InventoryPage() {
                         paginatedVehicles.every((v) => selectedVehicleIds.includes(v.id))
                       }
                       onChange={handleSelectAll}
-                      className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                      className="h-3.5 w-3.5 rounded border-slate-300 accent-[var(--theme-primary)] cursor-pointer"
                     />
                   </MuiTableCell>
                   <MuiTableCell
@@ -357,9 +375,9 @@ export default function InventoryPage() {
                       <span>{t.inventoryVehicleStockVin}</span>
                       {sortField === "stockNumber" ? (
                         sortDir === "asc" ? (
-                          <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
+                          <ArrowUp className="h-3 w-3 text-[var(--theme-primary)]" />
                         ) : (
-                          <ArrowDown className="h-3 w-3 text-[#1A73E8]" />
+                          <ArrowDown className="h-3 w-3 text-[var(--theme-primary)]" />
                         )
                       ) : (
                         <ArrowUpDown className="h-3 w-3 text-slate-400" />
@@ -379,9 +397,9 @@ export default function InventoryPage() {
                         <span>{t.inventoryLandedCost}</span>
                         {sortField === "landedCost" ? (
                           sortDir === "asc" ? (
-                            <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
+                            <ArrowUp className="h-3 w-3 text-[var(--theme-primary)]" />
                           ) : (
-                            <ArrowDown className="h-3 w-3 text-[#1A73E8]" />
+                            <ArrowDown className="h-3 w-3 text-[var(--theme-primary)]" />
                           )
                         ) : (
                           <ArrowUpDown className="h-3 w-3 text-slate-400" />
@@ -399,9 +417,9 @@ export default function InventoryPage() {
                       <span>{t.inventorySellingPrice}</span>
                       {sortField === "sellingPrice" ? (
                         sortDir === "asc" ? (
-                          <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
+                          <ArrowUp className="h-3 w-3 text-[var(--theme-primary)]" />
                         ) : (
-                          <ArrowDown className="h-3 w-3 text-[#1A73E8]" />
+                          <ArrowDown className="h-3 w-3 text-[var(--theme-primary)]" />
                         )
                       ) : (
                         <ArrowUpDown className="h-3 w-3 text-slate-400" />
@@ -433,7 +451,7 @@ export default function InventoryPage() {
                       key={veh.id}
                       className={
                         isSelected || isInspected
-                          ? "bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.08]"
+                          ? "bg-[var(--theme-primary)]/[0.06]"
                           : undefined
                       }
                     >
@@ -443,7 +461,7 @@ export default function InventoryPage() {
                           aria-label={`${t.inventorySelectVehicles}: ${veh.year} ${veh.make} ${veh.model}`}
                           checked={isSelected}
                           onChange={() => handleToggleSelect(veh.id)}
-                          className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                          className="h-3.5 w-3.5 rounded border-slate-300 accent-[var(--theme-primary)] cursor-pointer"
                         />
                       </MuiTableCell>
                       <MuiTableCell className="py-1.5">
@@ -451,6 +469,7 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => setInspectedVehicleId(veh.id)}
+                            aria-label={`${t.inventoryInspectTitle}: ${veh.year} ${veh.make} ${veh.model}`}
                             className="relative h-8 w-11 shrink-0 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer block"
                             title={t.inventoryInspectTitle}
                           >
@@ -470,15 +489,14 @@ export default function InventoryPage() {
                           </button>
 
                           <div className="min-w-0">
-                            <button
-                              type="button"
-                              onClick={() => setInspectedVehicleId(veh.id)}
-                              className="font-bold text-xs text-slate-900 dark:text-white hover:text-[#1A73E8] transition-colors block truncate leading-tight text-start cursor-pointer"
+                            <Link
+                              href={`/vehicles/${veh.id}`}
+                              className="font-bold text-xs text-slate-900 dark:text-white hover:text-[var(--theme-primary)] transition-colors block truncate leading-tight text-start"
                             >
                               {veh.year} {veh.make} {veh.model}
-                            </button>
+                            </Link>
                             <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5 truncate">
-                              <span className="font-bold text-[#1A73E8] dark:text-[#8AB4F8]">
+                              <span className="font-bold text-[var(--theme-primary)]">
                                 {veh.stockNumber}
                               </span>
                               <span>·</span>
@@ -495,6 +513,8 @@ export default function InventoryPage() {
                       <MuiTableCell className="py-1.5 whitespace-nowrap">
                         <div className="relative inline-block">
                           <select
+                            aria-label={`${t.inventoryStatus}: ${veh.stockNumber}`}
+                            disabled={currentRole === "Accountant"}
                             value={veh.status}
                             onChange={(e) =>
                               void setVehicleStatus(
@@ -502,13 +522,13 @@ export default function InventoryPage() {
                                 e.target.value as VehicleItem["status"]
                               ).catch((error) => addToast(error.message, "error"))
                             }
-                            className={`text-[10px] font-mono font-bold uppercase tracking-wider rounded px-2 py-0.5 border transition-colors cursor-pointer outline-none appearance-none pe-5 leading-tight ${
+                            className={`text-[10px] font-mono font-bold uppercase tracking-wider rounded px-2 py-0.5 border transition-colors cursor-pointer outline-none appearance-none pe-5 leading-tight disabled:opacity-60 ${
                               veh.status === "Available on Lot"
                                 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
                                 : veh.status === "In Transit"
                                 ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30"
                                 : veh.status === "Reserved/Deposit Paid"
-                                ? "bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8] border-[#1A73E8]/30"
+                                ? "bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] border-[var(--theme-primary)]/30"
                                 : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700"
                             }`}
                           >
@@ -568,7 +588,7 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => setInspectedVehicleId(veh.id)}
-                            className="px-2 py-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-[11px] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1 cursor-pointer"
+                            className="px-2 py-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[var(--theme-primary)] text-[11px] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1 cursor-pointer"
                             title={t.inventoryInspectorTitle}
                           >
                             <PanelRightOpen className="h-3 w-3" />
@@ -576,8 +596,18 @@ export default function InventoryPage() {
                           </button>
 
                           <Link
+                            href={`/vehicles/${veh.id}`}
+                            aria-label={`${t.viewDetails}: ${veh.stockNumber}`}
+                            className="p-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[var(--theme-primary)] text-slate-600 dark:text-slate-300 hover:text-[var(--theme-primary)]"
+                            title={t.viewDetails}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Link>
+
+                          <Link
                             href={`/vehicles/${veh.id}/deed`}
-                            className="p-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-slate-600 dark:text-slate-300"
+                            aria-label={`${t.inventoryPrintDeed}: ${veh.stockNumber}`}
+                            className="p-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[var(--theme-primary)] text-slate-600 dark:text-slate-300"
                             title={t.inventoryPrintDeed}
                           >
                             <FileText className="h-3.5 w-3.5" />
@@ -585,8 +615,10 @@ export default function InventoryPage() {
 
                           {currentRole === "SuperAdmin" && (
                             <button
+                              type="button"
+                              aria-label={`${t.inventoryDeleteVehicle}: ${veh.stockNumber}`}
                               onClick={() => setVehicleToDelete(veh)}
-                              className="p-1 rounded text-slate-400 hover:text-rose-600"
+                              className="p-1 rounded text-slate-400 hover:text-rose-600 cursor-pointer"
                               title={t.inventoryDeleteVehicle}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -648,7 +680,7 @@ export default function InventoryPage() {
           { label: t.inventorySold, value: "Sold" },
         ]}
         onApplyStatus={handleBatchStatusUpdate}
-        onAdjustPrice={handleBatchPriceAdjust}
+        onAdjustPrice={currentRole === "SuperAdmin" ? handleBatchPriceAdjust : undefined}
         onExportCSV={handleBatchExportCSV}
         onClearSelection={() => setSelectedVehicleIds([])}
       />

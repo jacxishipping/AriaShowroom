@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import {
@@ -14,6 +14,14 @@ export function VehicleFilters() {
   const { vehicles, filters, setFilter, resetFilters, language } = useShowroomStore();
   const t = translations[language];
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const availableMakes = useMemo(() => {
+    const makes = new Set<string>(["Toyota", "Lexus"]);
+    vehicles.forEach((v) => {
+      if (v.make) makes.add(v.make);
+    });
+    return Array.from(makes).sort();
+  }, [vehicles]);
 
   // Status counts
   const availableCount = vehicles.filter((v) => v.status === "Available on Lot").length;
@@ -149,10 +157,11 @@ export function VehicleFilters() {
             return (
               <button
                 key={opt.id}
+                type="button"
                 onClick={() => setFilter("status", opt.id)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
                   isActive
-                    ? "bg-white dark:bg-[#161B26] text-[#1A73E8] dark:text-[#8AB4F8] font-semibold shadow-2xs"
+                    ? "bg-white dark:bg-[#161B26] text-[var(--theme-primary)] font-semibold shadow-2xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
@@ -168,10 +177,11 @@ export function VehicleFilters() {
         {/* Advanced Filters Toggle & Reset Button */}
         <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
           <button
+            type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md border transition-colors cursor-pointer whitespace-nowrap ${
               showAdvanced || filters.fuelType !== "ALL" || filters.transmission !== "ALL"
-                ? "bg-[#1A73E8] text-white border-[#1A73E8]"
+                ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)]"
                 : "border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
@@ -184,6 +194,7 @@ export function VehicleFilters() {
 
           {hasActiveFilters && (
             <button
+              type="button"
               onClick={resetFilters}
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/10 rounded-md transition-colors cursor-pointer whitespace-nowrap"
               title={t.filterResetAllTitle}
@@ -201,13 +212,17 @@ export function VehicleFilters() {
           {/* Make Selector */}
           <div className="relative">
             <select
+              aria-label={t.allMakes}
               value={filters.make}
               onChange={(e) => setFilter("make", e.target.value)}
-              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[#1A73E8] cursor-pointer appearance-none"
+              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[var(--theme-primary)] cursor-pointer appearance-none"
             >
-              <option value="ALL">{t.allMakes} (Toyota, Lexus)</option>
-              <option value="Toyota">Toyota</option>
-              <option value="Lexus">Lexus</option>
+              <option value="ALL">{t.allMakes}</option>
+              {availableMakes.map((make) => (
+                <option key={make} value={make}>
+                  {make}
+                </option>
+              ))}
             </select>
             <ChevronDown className="absolute end-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
           </div>
@@ -215,15 +230,18 @@ export function VehicleFilters() {
           {/* Body Type Selector */}
           <div className="relative">
             <select
+              aria-label={t.body}
               value={filters.bodyType}
               onChange={(e) => setFilter("bodyType", e.target.value)}
-              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[#1A73E8] cursor-pointer appearance-none"
+              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[var(--theme-primary)] cursor-pointer appearance-none"
             >
-              <option value="ALL">{t.body}: {t.filterAll}</option>
-              <option value="SUV">{t.filterSuv} (Land Cruiser / LX)</option>
-              <option value="Sedan">{t.filterSedan} (Corolla / Camry)</option>
-              <option value="Pickup">{t.filterPickup} (Hilux Revo)</option>
-              <option value="Crossover">{t.filterCrossover} (RAV4)</option>
+              <option value="ALL">
+                {t.body}: {t.filterAll}
+              </option>
+              <option value="SUV">{t.filterSuv}</option>
+              <option value="Sedan">{t.filterSedan}</option>
+              <option value="Pickup">{t.filterPickup}</option>
+              <option value="Crossover">{t.filterCrossover}</option>
             </select>
             <ChevronDown className="absolute end-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
           </div>
@@ -231,15 +249,17 @@ export function VehicleFilters() {
           {/* Origin Country Selector */}
           <div className="relative">
             <select
+              aria-label={t.allOrigins}
               value={filters.originCountry}
               onChange={(e) => setFilter("originCountry", e.target.value)}
-              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[#1A73E8] cursor-pointer appearance-none"
+              className="h-8 ps-2.5 pe-7 py-1 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[var(--theme-primary)] cursor-pointer appearance-none"
             >
               <option value="ALL">{t.allOrigins}</option>
               <option value="UAE">{t.filterUaeOrigin}</option>
               <option value="USA">{t.filterUsaOrigin}</option>
               <option value="Canada">{t.filterCanadaOrigin}</option>
               <option value="Japan">{t.filterJapanOrigin}</option>
+              <option value="Europe">Europe</option>
             </select>
             <ChevronDown className="absolute end-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
           </div>
@@ -255,13 +275,14 @@ export function VehicleFilters() {
             return (
               <button
                 key={preset.label}
+                type="button"
                 onClick={() => {
                   setFilter("minPrice", preset.min);
                   setFilter("maxPrice", preset.max);
                 }}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer border ${
                   isSelected
-                    ? "bg-[#1A73E8] text-white border-[#1A73E8] font-semibold"
+                    ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)] font-semibold"
                     : "border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
@@ -281,6 +302,7 @@ export function VehicleFilters() {
 
           <div className="relative">
             <select
+              aria-label={t.allFuelTypes}
               value={filters.fuelType}
               onChange={(e) => setFilter("fuelType", e.target.value)}
               className="h-7 ps-2 pe-6 text-[11px] rounded border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-slate-800 dark:text-slate-200 outline-none cursor-pointer appearance-none"
@@ -289,12 +311,14 @@ export function VehicleFilters() {
               <option value="Petrol">{t.filterPetrol}</option>
               <option value="Diesel">{t.filterDiesel}</option>
               <option value="Hybrid">{t.filterHybrid}</option>
+              <option value="Electric">Electric</option>
             </select>
             <ChevronDown className="absolute end-1.5 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-slate-400 pointer-events-none" />
           </div>
 
           <div className="relative">
             <select
+              aria-label={t.allTransmissions}
               value={filters.transmission}
               onChange={(e) => setFilter("transmission", e.target.value)}
               className="h-7 ps-2 pe-6 text-[11px] rounded border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-slate-800 dark:text-slate-200 outline-none cursor-pointer appearance-none"
@@ -319,7 +343,7 @@ export function VehicleFilters() {
               key={item.key}
               type="button"
               onClick={item.clear}
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8] border border-[#1A73E8]/20 hover:bg-[#1A73E8]/20 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] border border-[var(--theme-primary)]/20 hover:bg-[var(--theme-primary)]/20 cursor-pointer"
               title={t.filterRemoveTitle}
             >
               <span>{item.label}</span>

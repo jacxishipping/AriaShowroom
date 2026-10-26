@@ -7,7 +7,6 @@ import { SupplierRecord } from "@/lib/mock-data";
 import {
   MuiCard,
   MuiButton,
-  MuiChip,
   MuiTable,
   MuiTableHead,
   MuiTableBody,
@@ -30,7 +29,6 @@ import {
   DollarSign,
   Phone,
   MessageCircle,
-  FileSpreadsheet,
   CheckCircle2,
   Clock,
   Globe,
@@ -44,15 +42,22 @@ interface SuppliersTabProps {
   onSelectSupplier?: (supplier: SupplierRecord) => void;
 }
 
-export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
-  const { suppliers, exchangeRate, addSupplier, updateSupplier, deleteSupplier, addToast } = useShowroomStore();
+export function SuppliersTab({ onSelectSupplier: _onSelectSupplier }: SuppliersTabProps) {
+  const {
+    suppliers,
+    exchangeRate,
+    language,
+    addSupplier,
+    updateSupplier,
+    deleteSupplier,
+    addToast,
+  } = useShowroomStore();
   const [editingSupplier, setEditingSupplier] = useState<SupplierRecord | null>(null);
   const [deletingSupplier, setDeletingSupplier] = useState<SupplierRecord | null>(null);
   const [search, setSearch] = useState("");
   const [countryFilter, setCountryFilter] = useState("all");
   const [isCreating, setIsCreating] = useState(false);
 
-  // New Supplier Form State
   const [companyName, setCompanyName] = useState("");
   const [contactName, setContactName] = useState("");
   const [country, setCountry] = useState("UAE (Ras Al Khor, Dubai)");
@@ -60,9 +65,10 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
   const [phone, setPhone] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
-  const [bankOrSarrafiAccount, setBankOrSarrafiAccount] = useState("Sarrafi Khorasan Market Holding Safe");
+  const [bankOrSarrafiAccount, setBankOrSarrafiAccount] = useState(
+    "Sarrafi Khorasan Market Holding Safe"
+  );
   const [notes, setNotes] = useState("");
-
   const [standingFilter, setStandingFilter] = useState("all");
 
   const filteredSuppliers = suppliers.filter((s) => {
@@ -70,7 +76,9 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
       s.companyName.toLowerCase().includes(search.toLowerCase()) ||
       s.contactName.toLowerCase().includes(search.toLowerCase()) ||
       Boolean(s.city && s.city.toLowerCase().includes(search.toLowerCase()));
-    const matchesCountry = countryFilter === "all" || s.country.toLowerCase().includes(countryFilter.toLowerCase());
+    const matchesCountry =
+      countryFilter === "all" ||
+      s.country.toLowerCase().includes(countryFilter.toLowerCase());
     const matchesStanding =
       standingFilter === "all"
         ? true
@@ -106,7 +114,6 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
       return;
     }
 
-    // Reset Form
     setCompanyName("");
     setContactName("");
     setPhone("");
@@ -154,91 +161,109 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
     <div className="space-y-4">
       {/* Top AP Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Payables (باقیداری)
+              {language === "fa"
+                ? "بدهی به تامین‌کنندگان"
+                : language === "ps"
+                ? "د عرضه کوونکو پور"
+                : "Total Payables"}
             </span>
             <span className="p-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40">
               <DollarSign className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-rose-600 dark:text-rose-400 tracking-tight">
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-rose-600 dark:text-rose-400 tracking-tight">
             ${totalPayablesUSD.toLocaleString()}
           </p>
-          <p className="mt-0.5 text-[11px] text-slate-500 font-mono">
+          <p className="mt-0.5 text-[11px] text-slate-500 font-mono tabular-nums">
             ؋ {totalPayablesAFN.toLocaleString()} AFN
           </p>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Active Suppliers (همکاران)
+              {language === "fa"
+                ? "شرکت‌های همکار"
+                : language === "ps"
+                ? "فعال عرضه کوونکي"
+                : "Active Suppliers"}
             </span>
             <span className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
               <Building2 className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
             {suppliers.length}
           </p>
-          <p className="mt-0.5 text-[11px] text-slate-500">
-            Dubai, Japan, Iran & Overland
-          </p>
+          <p className="mt-0.5 text-[11px] text-slate-500">Dubai, Japan, Iran & Overland</p>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Pending Settlement
+              {language === "fa"
+                ? "در انتظار تسویه حواله"
+                : language === "ps"
+                ? "تصفیې ته منتظر"
+                : "Pending Settlement"}
             </span>
             <span className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40">
               <Clock className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-amber-600 dark:text-amber-400 tracking-tight">
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-amber-600 dark:text-amber-400 tracking-tight">
             {activeOwingCount} Accounts
           </p>
-          <p className="mt-0.5 text-[11px] text-slate-500">
-            Awaiting Hawala exchange
-          </p>
+          <p className="mt-0.5 text-[11px] text-slate-500">Awaiting Hawala exchange</p>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Cleared Standing
+              {language === "fa"
+                ? "تسویه کامل"
+                : language === "ps"
+                ? "بشپړ تصفیه شوي"
+                : "Cleared Standing"}
             </span>
             <span className="p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
               <CheckCircle2 className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 tracking-tight">
             {settledCount} Accounts
           </p>
-          <p className="mt-0.5 text-[11px] text-slate-500">
-            Zero outstanding balance
-          </p>
+          <p className="mt-0.5 text-[11px] text-slate-500">Zero outstanding balance</p>
         </div>
       </div>
 
-      {/* Control Bar: Search, Country Filter, Standing Filter, and Add Supplier */}
+      {/* Control Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search supplier, contact, city..."
+              aria-label="Search vehicle suppliers"
+              placeholder={
+                language === "fa"
+                  ? "جستجوی شرکت، نماینده، شهر..."
+                  : language === "ps"
+                  ? "د شرکت یا استازي پلټنه..."
+                  : "Search supplier, contact, city..."
+              }
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-52 sm:w-64 ps-7 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 h-8"
+              className="w-52 sm:w-64 ps-7 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#0F141C] text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-primary h-8"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
                 className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                aria-label="Clear supplier search"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -246,9 +271,10 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
           </div>
 
           <select
+            aria-label="Filter suppliers by origin country"
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
-            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#0F141C] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-primary cursor-pointer"
           >
             <option value="all">All Origins</option>
             <option value="uae">UAE (Dubai)</option>
@@ -258,9 +284,10 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
           </select>
 
           <select
+            aria-label="Filter suppliers by balance standing"
             value={standingFilter}
             onChange={(e) => setStandingFilter(e.target.value)}
-            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#0F141C] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-primary cursor-pointer"
           >
             <option value="all">All Accounts</option>
             <option value="owing">Awaiting Hawala (Owing)</option>
@@ -280,8 +307,8 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
             </button>
           )}
 
-          <span className="text-[11px] font-mono text-slate-400">
-            ({filteredSuppliers.length} suppliers)
+          <span className="text-[11px] font-mono tabular-nums text-slate-400">
+            ({filteredSuppliers.length})
           </span>
         </div>
 
@@ -298,9 +325,12 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
 
       {/* Expandable Add Supplier Card */}
       {isCreating && (
-        <MuiCard elevation={2} className="p-6 border border-blue-200 dark:border-blue-900/50 bg-blue-50/20 dark:bg-[#121b2d]">
+        <MuiCard
+          elevation={2}
+          className="p-5 rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26]"
+        >
           <div className="flex items-center gap-2 mb-4">
-            <Building2 className="h-5 w-5 text-[#1976D2]" />
+            <Building2 className="h-5 w-5 text-primary" />
             <h3 className="font-bold text-slate-900 dark:text-white text-sm">
               Register New Vehicle Supplier / Exporter (ثبت شرکت صادرکننده)
             </h3>
@@ -329,10 +359,18 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
               >
-                <MenuItem value="UAE (Ras Al Khor, Dubai)">UAE (Ras Al Khor, Dubai)</MenuItem>
-                <MenuItem value="Japan (Yokohama & Kobe Auctions)">Japan (Yokohama & Kobe Auctions)</MenuItem>
-                <MenuItem value="Iran (Bandar Abbas / Tehran Transit)">Iran (Bandar Abbas / Tehran Transit)</MenuItem>
-                <MenuItem value="Afghanistan (Islam Qala / Herat Freight)">Afghanistan (Islam Qala / Herat Freight)</MenuItem>
+                <MenuItem value="UAE (Ras Al Khor, Dubai)">
+                  UAE (Ras Al Khor, Dubai)
+                </MenuItem>
+                <MenuItem value="Japan (Yokohama & Kobe Auctions)">
+                  Japan (Yokohama & Kobe Auctions)
+                </MenuItem>
+                <MenuItem value="Iran (Bandar Abbas / Tehran Transit)">
+                  Iran (Bandar Abbas / Tehran Transit)
+                </MenuItem>
+                <MenuItem value="Afghanistan (Islam Qala / Herat Freight)">
+                  Afghanistan (Islam Qala / Herat Freight)
+                </MenuItem>
               </MuiTextField>
 
               <MuiTextField
@@ -367,7 +405,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
               <div className="sm:col-span-2">
                 <MuiTextField
                   label="Sarrafi / Bank Settlement Safe (حساب صرافی و تسویه)"
-                  placeholder="e.g. Sarrafi Haji Qayoum - Khorasan Market Herat / Al Ansari Exchange Dubai"
+                  placeholder="e.g. Sarrafi Haji Qayoum - Khorasan Market Herat"
                   value={bankOrSarrafiAccount}
                   onChange={(e) => setBankOrSarrafiAccount(e.target.value)}
                 />
@@ -376,7 +414,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
 
             <MuiTextField
               label="Supplier Notes & Import Terms"
-              placeholder="e.g. Specializes in GCC-spec Land Cruisers and Lexus LX600; 30% advance via Hawala."
+              placeholder="e.g. Specializes in GCC-spec Land Cruisers; 30% advance via Hawala."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -391,12 +429,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
               >
                 Cancel
               </MuiButton>
-              <MuiButton
-                type="submit"
-                variant="contained"
-                color="primary"
-                size="small"
-              >
+              <MuiButton type="submit" variant="contained" color="primary" size="small">
                 Save Supplier to Registry
               </MuiButton>
             </div>
@@ -405,8 +438,8 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
       )}
 
       {/* Suppliers Table */}
-      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] shadow-xs overflow-hidden">
-        <div className="px-3.5 py-2.5 border-b border-slate-200/90 dark:border-slate-800/90 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/30">
+      <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] shadow-xs overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-[#262F40] flex items-center justify-between bg-slate-50/70 dark:bg-[#121722]">
           <div>
             <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
               Supplier Accounts & Running Ledger (دفتر حسابات تامین‌کنندگان)
@@ -415,7 +448,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
               Review purchase bills, Hawala settlements, or issue a payment voucher.
             </p>
           </div>
-          <span className="text-[11px] font-mono text-slate-400">
+          <span className="text-[11px] font-mono tabular-nums text-slate-400">
             {filteredSuppliers.length} records
           </span>
         </div>
@@ -428,20 +461,25 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                 <MuiTableCell header>Country & Port</MuiTableCell>
                 <MuiTableCell header>Contact & Details</MuiTableCell>
                 <MuiTableCell header>Settlement Safe</MuiTableCell>
-                <MuiTableCell header align="right">Balance</MuiTableCell>
-                <MuiTableCell header align="center">Action</MuiTableCell>
+                <MuiTableCell header align="right">
+                  Balance
+                </MuiTableCell>
+                <MuiTableCell header align="center">
+                  Action
+                </MuiTableCell>
               </MuiTableRow>
             </MuiTableHead>
             <MuiTableBody>
               {filteredSuppliers.map((sup) => (
                 <MuiTableRow key={sup.id}>
                   <MuiTableCell>
-                    <div className="font-bold text-slate-900 dark:text-white text-xs">
+                    <Link
+                      href={`/accounting/suppliers/${sup.id}`}
+                      className="font-bold text-slate-900 dark:text-white hover:text-primary text-xs block"
+                    >
                       {sup.companyName}
-                    </div>
-                    <div className="text-[10px] text-slate-400">
-                      Rep: {sup.contactName}
-                    </div>
+                    </Link>
+                    <div className="text-[10px] text-slate-400">Rep: {sup.contactName}</div>
                   </MuiTableCell>
 
                   <MuiTableCell>
@@ -456,12 +494,12 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                   </MuiTableCell>
 
                   <MuiTableCell>
-                    <div className="flex items-center gap-1 font-mono text-xs text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center gap-1 font-mono tabular-nums text-xs text-slate-700 dark:text-slate-300">
                       <Phone className="h-3 w-3 text-slate-400" />
                       <span>{sup.phone || "—"}</span>
                     </div>
                     {sup.whatsapp && (
-                      <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono">
+                      <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono tabular-nums">
                         <MessageCircle className="h-2.5 w-2.5" />
                         <span>{sup.whatsapp}</span>
                       </div>
@@ -471,7 +509,10 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                   <MuiTableCell>
                     <div className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
                       <Landmark className="h-3 w-3 text-slate-400 shrink-0" />
-                      <span className="truncate max-w-[160px]" title={sup.bankOrSarrafiAccount}>
+                      <span
+                        className="truncate max-w-[160px]"
+                        title={sup.bankOrSarrafiAccount}
+                      >
                         {sup.bankOrSarrafiAccount || "Cash Safe"}
                       </span>
                     </div>
@@ -479,7 +520,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
 
                   <MuiTableCell align="right">
                     <div
-                      className={`font-mono font-bold text-xs ${
+                      className={`font-mono tabular-nums font-bold text-xs ${
                         sup.balanceUSD > 0
                           ? "text-rose-600 dark:text-rose-400"
                           : "text-emerald-600 dark:text-emerald-400"
@@ -487,7 +528,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                     >
                       ${sup.balanceUSD.toLocaleString()} USD
                     </div>
-                    <div className="text-[10px] font-mono text-slate-400">
+                    <div className="text-[10px] font-mono tabular-nums text-slate-400">
                       ؋ {Math.round(sup.balanceUSD * exchangeRate).toLocaleString()} AFN
                     </div>
                   </MuiTableCell>
@@ -509,6 +550,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                         size="small"
                         color="primary"
                         title="Edit Supplier"
+                        aria-label={`Edit supplier ${sup.companyName}`}
                         onClick={() => setEditingSupplier({ ...sup })}
                         sx={{ p: "3px" }}
                       >
@@ -518,6 +560,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                         size="small"
                         color="error"
                         title="Delete Supplier"
+                        aria-label={`Delete supplier ${sup.companyName}`}
                         onClick={() => setDeletingSupplier(sup)}
                         sx={{ p: "3px" }}
                       >
@@ -531,6 +574,7 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
           </MuiTable>
         </div>
       </div>
+
       {/* Edit Supplier Dialog */}
       <Dialog
         open={Boolean(editingSupplier)}
@@ -548,18 +592,30 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                 <MuiTextField
                   label="Company Name"
                   value={editingSupplier.companyName}
-                  onChange={(e) => setEditingSupplier({ ...editingSupplier, companyName: e.target.value })}
+                  onChange={(e) =>
+                    setEditingSupplier({
+                      ...editingSupplier,
+                      companyName: e.target.value,
+                    })
+                  }
                   required
                 />
                 <MuiTextField
                   label="Contact Person"
                   value={editingSupplier.contactName}
-                  onChange={(e) => setEditingSupplier({ ...editingSupplier, contactName: e.target.value })}
+                  onChange={(e) =>
+                    setEditingSupplier({
+                      ...editingSupplier,
+                      contactName: e.target.value,
+                    })
+                  }
                 />
                 <MuiTextField
                   label="Country & Hub"
                   value={editingSupplier.country}
-                  onChange={(e) => setEditingSupplier({ ...editingSupplier, country: e.target.value })}
+                  onChange={(e) =>
+                    setEditingSupplier({ ...editingSupplier, country: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -568,18 +624,24 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                 <MuiTextField
                   label="City / Port"
                   value={editingSupplier.city || ""}
-                  onChange={(e) => setEditingSupplier({ ...editingSupplier, city: e.target.value })}
+                  onChange={(e) =>
+                    setEditingSupplier({ ...editingSupplier, city: e.target.value })
+                  }
                 />
                 <MuiTextField
                   label="Phone"
                   value={editingSupplier.phone}
-                  onChange={(e) => setEditingSupplier({ ...editingSupplier, phone: e.target.value })}
+                  onChange={(e) =>
+                    setEditingSupplier({ ...editingSupplier, phone: e.target.value })
+                  }
                   required
                 />
                 <MuiTextField
                   label="WhatsApp"
                   value={editingSupplier.whatsapp || ""}
-                  onChange={(e) => setEditingSupplier({ ...editingSupplier, whatsapp: e.target.value })}
+                  onChange={(e) =>
+                    setEditingSupplier({ ...editingSupplier, whatsapp: e.target.value })
+                  }
                 />
               </div>
 
@@ -588,25 +650,38 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
                   label="Email"
                   type="email"
                   value={editingSupplier.email || ""}
-                  onChange={(e) => setEditingSupplier({ ...editingSupplier, email: e.target.value })}
+                  onChange={(e) =>
+                    setEditingSupplier({ ...editingSupplier, email: e.target.value })
+                  }
                 />
                 <MuiTextField
                   label="Sarrafi / Bank Settlement Safe"
                   value={editingSupplier.bankOrSarrafiAccount || ""}
-                  onChange={(e) => setEditingSupplier({ ...editingSupplier, bankOrSarrafiAccount: e.target.value })}
+                  onChange={(e) =>
+                    setEditingSupplier({
+                      ...editingSupplier,
+                      bankOrSarrafiAccount: e.target.value,
+                    })
+                  }
                 />
               </div>
 
               <MuiTextField
                 label="Supplier Notes & Import Terms"
                 value={editingSupplier.notes || ""}
-                onChange={(e) => setEditingSupplier({ ...editingSupplier, notes: e.target.value })}
+                onChange={(e) =>
+                  setEditingSupplier({ ...editingSupplier, notes: e.target.value })
+                }
                 multiline
                 rows={2}
               />
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2.5 }}>
-              <MuiButton variant="outlined" color="inherit" onClick={() => setEditingSupplier(null)}>
+              <MuiButton
+                variant="outlined"
+                color="inherit"
+                onClick={() => setEditingSupplier(null)}
+              >
                 Cancel
               </MuiButton>
               <MuiButton type="submit" variant="contained" color="primary">
@@ -637,7 +712,11 @@ export function SuppliersTab({ onSelectSupplier }: SuppliersTabProps) {
           </p>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <MuiButton variant="outlined" color="inherit" onClick={() => setDeletingSupplier(null)}>
+          <MuiButton
+            variant="outlined"
+            color="inherit"
+            onClick={() => setDeletingSupplier(null)}
+          >
             Cancel
           </MuiButton>
           <MuiButton variant="contained" color="error" onClick={handleDeleteSupplier}>

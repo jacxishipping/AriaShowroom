@@ -61,7 +61,6 @@ export async function GET(
       repairCost,
       landedCost,
       minTargetPrice,
-      conditionNotes,
       expenses,
       documents,
       ...salesVehicle
@@ -79,15 +78,18 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const unauthorized = await requireApiRole(["ADMIN"]);
+  const unauthorized = await requireApiRole(["ADMIN", "SALES", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
 
   await ensureDatabaseSchemaSynced();
 
   try {
     const { id } = await params;
+    const session = await getServerSession(authOptions);
+    const role = (session?.user as { role?: string } | undefined)?.role;
     const body = await request.json();
-    const allowedFields = [
+
+    const adminAllowedFields = [
       "stockNumber", "vin", "make", "model", "year", "trim", "bodyType",
       "originCountry", "steering", "customsClearance", "cleanTitle", "mileage",
       "fuelType", "transmission", "driveType", "color", "status", "purchasePrice",
@@ -95,18 +97,50 @@ export async function PATCH(
       "sellingPrice", "currency", "features", "description", "descriptionDari",
       "conditionNotes", "yardLocation", "viewsCount", "inquiriesCount",
     ];
+    const operationalFields = [
+      "status",
+      "yardLocation",
+      "conditionNotes",
+      "viewsCount",
+      "inquiriesCount",
+    ];
+
+    const allowedFields = role === "ADMIN" ? adminAllowedFields : operationalFields;
+
+    // If a non-admin attempts to update price or cost fields, reject with 403
+    if (
+      role !== "ADMIN" &&
+      (body.sellingPrice !== undefined ||
+        body.purchasePrice !== undefined ||
+        body.landedCost !== undefined)
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Administrator access is required to modify vehicle pricing or costs" },
+        { status: 403 }
+      );
+    }
+
     const data = Object.fromEntries(
       allowedFields
         .filter((field) => body[field] !== undefined)
         .map((field) => [field, body[field]])
     );
-    if (body.yardLocation !== undefined) {
+
+    if (body.yardLocation !== undefined || body.conditionNotes !== undefined) {
       const existing = await prisma.vehicle.findUnique({ where: { id }, select: { conditionNotes: true } });
       const existingNotes = existing?.conditionNotes && typeof existing.conditionNotes === "object"
-        ? existing.conditionNotes as Record<string, unknown>
+        ? (existing.conditionNotes as Record<string, unknown>)
         : {};
-      data.conditionNotes = { ...existingNotes, yardLocation: body.yardLocation };
+      const incomingNotes = body.conditionNotes && typeof body.conditionNotes === "object"
+        ? (body.conditionNotes as Record<string, unknown>)
+        : {};
+      data.conditionNotes = {
+        ...existingNotes,
+        ...incomingNotes,
+        ...(body.yardLocation !== undefined ? { yardLocation: body.yardLocation } : {}),
+      };
     }
+
     if (typeof data.status === "string") {
       const statusMap: Record<string, VehicleStatus> = {
         "In Transit": VehicleStatus.IN_TRANSIT,
@@ -117,6 +151,7 @@ export async function PATCH(
       };
       data.status = statusMap[data.status] || data.status;
     }
+
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ success: false, error: "No supported vehicle fields supplied" }, { status: 400 });
     }
@@ -174,7 +209,6 @@ export async function PATCH(
         errMsg.includes("does not exist in the current database");
 
       if (isMissingColumn) {
-        // Fallback for pre-migration schemas: strip physical columns and preserve in conditionNotes
         const fallbackData = { ...data };
         delete (fallbackData as any).yardLocation;
         delete (fallbackData as any).viewsCount;

@@ -26,12 +26,7 @@ import {
   X,
   DollarSign,
   Car,
-  Filter,
-  CheckCircle2,
-  FileSpreadsheet,
-  Building,
   ShieldCheck,
-  TrendingDown,
   Truck,
   Wrench,
   Pencil,
@@ -39,7 +34,16 @@ import {
 } from "lucide-react";
 
 export function ExpensesTab() {
-  const { expenses, vehicles, exchangeRate, addExpense, updateExpense, deleteExpense, addToast } = useShowroomStore();
+  const {
+    expenses,
+    vehicles,
+    exchangeRate,
+    language,
+    addExpense,
+    updateExpense,
+    deleteExpense,
+    addToast,
+  } = useShowroomStore();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [vehicleFilter, setVehicleFilter] = useState("all");
@@ -47,7 +51,6 @@ export function ExpensesTab() {
   const [editingExpense, setEditingExpense] = useState<any | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<any | null>(null);
 
-  // New Expense Form State
   const [category, setCategory] = useState<
     | "Gomrok & Port Tariffs"
     | "Transit & Ocean Freight"
@@ -93,7 +96,10 @@ export function ExpensesTab() {
     .reduce((acc, e) => acc + e.amountUSD, 0);
 
   const overheadTotalUSD = expenses
-    .filter((e) => e.category === "Showroom Overhead & Fuel" || e.category === "Staff Commissions")
+    .filter(
+      (e) =>
+        e.category === "Showroom Overhead & Fuel" || e.category === "Staff Commissions"
+    )
     .reduce((acc, e) => acc + e.amountUSD, 0);
 
   const handleCreateExpense = async (e: React.FormEvent) => {
@@ -114,7 +120,6 @@ export function ExpensesTab() {
       return;
     }
 
-    // Reset Form
     setDescription("");
     setReceiptNumber("MKT-HRT-2026-");
     setIsCreating(false);
@@ -172,72 +177,82 @@ export function ExpensesTab() {
     <div className="space-y-4">
       {/* Top Expense KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Expenses (مصارف)
+              {language === "fa"
+                ? "مجموع مصارف"
+                : language === "ps"
+                ? "ټول مصارف"
+                : "Total Expenses"}
             </span>
             <span className="p-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40">
               <DollarSign className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-rose-600 dark:text-rose-400 tracking-tight">
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-rose-600 dark:text-rose-400 tracking-tight">
             ${totalExpenseUSD.toLocaleString()}
           </p>
-          <p className="mt-0.5 text-[11px] text-slate-500 font-mono">
+          <p className="mt-0.5 text-[11px] text-slate-500 font-mono tabular-nums">
             ؋ {totalExpenseAFN.toLocaleString()} AFN
           </p>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Islam Qala Customs
+              {language === "fa"
+                ? "گمرک اسلام قلعه"
+                : language === "ps"
+                ? "اسلام قلعه ګمرک"
+                : "Islam Qala Customs"}
             </span>
             <span className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
               <ShieldCheck className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
             ${customsTotalUSD.toLocaleString()}
           </p>
-          <p className="mt-0.5 text-[11px] text-slate-500">
-            Border tariff clearance
-          </p>
+          <p className="mt-0.5 text-[11px] text-slate-500">Border tariff clearance</p>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Freight & Transit
+              {language === "fa"
+                ? "حمل و ترانزیت"
+                : language === "ps"
+                ? "ترانسپورت او ترانزیت"
+                : "Freight & Transit"}
             </span>
             <span className="p-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40">
               <Truck className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
             ${transitTotalUSD.toLocaleString()}
           </p>
-          <p className="mt-0.5 text-[11px] text-slate-500">
-            Bandar Abbas & trailers
-          </p>
+          <p className="mt-0.5 text-[11px] text-slate-500">Bandar Abbas & trailers</p>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-slate-800/90 shadow-xs relative overflow-hidden group">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#262F40] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Detailing & Operations
+              {language === "fa"
+                ? "ترمیم، پولیش و دفتر"
+                : language === "ps"
+                ? "ترمیم او اداري مصارف"
+                : "Detailing & Operations"}
             </span>
             <span className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40">
               <Wrench className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="mt-1.5 text-xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight">
+          <p className="mt-1.5 text-xl font-extrabold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
             ${(maintenanceTotalUSD + overheadTotalUSD).toLocaleString()}
           </p>
-          <p className="mt-0.5 text-[11px] text-slate-500">
-            Showroom overhead & fuel
-          </p>
+          <p className="mt-0.5 text-[11px] text-slate-500">Showroom overhead & fuel</p>
         </div>
       </div>
 
@@ -248,15 +263,23 @@ export function ExpensesTab() {
             <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search description, payee..."
+              aria-label="Search expenses"
+              placeholder={
+                language === "fa"
+                  ? "جستجوی شرح مصرف، گیرنده..."
+                  : language === "ps"
+                  ? "د مصرف تفصیل پلټنه..."
+                  : "Search description, payee..."
+              }
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-48 sm:w-60 ps-7 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 h-8"
+              className="w-48 sm:w-60 ps-7 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#0F141C] text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-primary h-8"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
                 className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                aria-label="Clear expense search"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -264,9 +287,10 @@ export function ExpensesTab() {
           </div>
 
           <select
+            aria-label="Filter expenses by category"
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#0F141C] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-primary cursor-pointer"
           >
             <option value="all">All Categories</option>
             <option value="Gomrok & Port Tariffs">Gomrok & Tariffs</option>
@@ -277,9 +301,10 @@ export function ExpensesTab() {
           </select>
 
           <select
+            aria-label="Filter expenses by vehicle allocation"
             value={vehicleFilter}
             onChange={(e) => setVehicleFilter(e.target.value)}
-            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer max-w-[200px] truncate"
+            className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#0F141C] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-primary cursor-pointer max-w-[200px] truncate"
           >
             <option value="all">All Allocations</option>
             <option value="overhead">General Overhead</option>
@@ -303,8 +328,8 @@ export function ExpensesTab() {
             </button>
           )}
 
-          <span className="text-[11px] font-mono text-slate-400">
-            ({filteredExpenses.length} expenses)
+          <span className="text-[11px] font-mono tabular-nums text-slate-400">
+            ({filteredExpenses.length})
           </span>
         </div>
 
@@ -320,20 +345,22 @@ export function ExpensesTab() {
       </div>
 
       {/* Direct Landed Cost Allocation Notice Banner */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3.5 text-xs text-blue-900 dark:border-blue-900/60 dark:bg-[#111c30] dark:text-blue-200 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Car className="h-4 w-4 text-[#1976D2] shrink-0" />
-          <span>
-            <strong>Direct Landed Cost Engine:</strong> Assigning an expense to a specific <strong>Stock #</strong> dynamically updates the landed purchase cost of that vehicle in real time, accurately computing net gross margins on sale.
-          </span>
-        </div>
+      <div className="rounded-lg border border-primary/25 bg-primary/[0.05] p-3 text-xs text-slate-700 dark:text-slate-200 flex items-center gap-2.5">
+        <Car className="h-4 w-4 text-primary shrink-0" />
+        <span>
+          <strong>Direct Landed Cost Engine:</strong> Assigning an expense to a specific{" "}
+          <strong>Stock #</strong> dynamically updates the landed purchase cost of that vehicle in real time.
+        </span>
       </div>
 
       {/* Expandable Expense Booking Form */}
       {isCreating && (
-        <MuiCard elevation={2} className="p-6 border border-blue-200 dark:border-blue-900/50 bg-blue-50/20 dark:bg-[#121b2d]">
+        <MuiCard
+          elevation={2}
+          className="p-5 rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26]"
+        >
           <div className="flex items-center gap-2 mb-4">
-            <Receipt className="h-5 w-5 text-[#1976D2]" />
+            <Receipt className="h-5 w-5 text-primary" />
             <h3 className="font-bold text-slate-900 dark:text-white text-sm">
               Book Expense / Vehicle Cost Allocation Voucher (ثبت مصرف و هزینه موتر)
             </h3>
@@ -392,7 +419,7 @@ export function ExpensesTab() {
                 onChange={(e) => setReceiptNumber(e.target.value)}
               />
 
-              <div className="sm:col-span-1">
+              <div>
                 <MuiTextField
                   label="Description / Purpose"
                   required
@@ -413,12 +440,7 @@ export function ExpensesTab() {
               >
                 Cancel
               </MuiButton>
-              <MuiButton
-                type="submit"
-                variant="contained"
-                color="primary"
-                size="small"
-              >
+              <MuiButton type="submit" variant="contained" color="primary" size="small">
                 Save & Post to General Ledger
               </MuiButton>
             </div>
@@ -427,8 +449,8 @@ export function ExpensesTab() {
       )}
 
       {/* Expenses Table */}
-      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#111827] shadow-xs overflow-hidden">
-        <div className="px-3.5 py-2.5 border-b border-slate-200/90 dark:border-slate-800/90 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/30">
+      <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] shadow-xs overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-[#262F40] flex items-center justify-between bg-slate-50/70 dark:bg-[#121722]">
           <div>
             <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
               Vehicle Cost Allocations & Operational Outlays
@@ -437,7 +459,7 @@ export function ExpensesTab() {
               Audited record of import customs, transit freight, and showroom maintenance outlays.
             </p>
           </div>
-          <span className="text-[11px] font-mono text-slate-400">
+          <span className="text-[11px] font-mono tabular-nums text-slate-400">
             {filteredExpenses.length} records
           </span>
         </div>
@@ -451,8 +473,12 @@ export function ExpensesTab() {
                 <MuiTableCell header>Description</MuiTableCell>
                 <MuiTableCell header>Payee & Ref</MuiTableCell>
                 <MuiTableCell header>Date</MuiTableCell>
-                <MuiTableCell header align="right">Amount (USD / AFN)</MuiTableCell>
-                <MuiTableCell header align="center">Actions</MuiTableCell>
+                <MuiTableCell header align="right">
+                  Amount (USD / AFN)
+                </MuiTableCell>
+                <MuiTableCell header align="center">
+                  Actions
+                </MuiTableCell>
               </MuiTableRow>
             </MuiTableHead>
             <MuiTableBody>
@@ -468,7 +494,7 @@ export function ExpensesTab() {
 
                   <MuiTableCell>
                     {exp.vehicleStock ? (
-                      <div className="flex items-center gap-1 font-mono text-xs font-semibold text-blue-600 dark:text-blue-400">
+                      <div className="flex items-center gap-1 font-mono text-xs font-semibold text-primary">
                         <Car className="h-3 w-3 shrink-0" />
                         <span>{exp.vehicleStock}</span>
                       </div>
@@ -494,15 +520,15 @@ export function ExpensesTab() {
                     )}
                   </MuiTableCell>
 
-                  <MuiTableCell className="font-mono text-[11px] text-slate-500">
+                  <MuiTableCell className="font-mono tabular-nums text-[11px] text-slate-500">
                     {exp.date}
                   </MuiTableCell>
 
                   <MuiTableCell align="right">
-                    <div className="font-mono font-bold text-xs text-rose-600 dark:text-rose-400">
+                    <div className="font-mono tabular-nums font-bold text-xs text-rose-600 dark:text-rose-400">
                       -${exp.amountUSD.toLocaleString()} USD
                     </div>
-                    <div className="text-[10px] font-mono text-slate-400">
+                    <div className="text-[10px] font-mono tabular-nums text-slate-400">
                       ؋ {Math.round(exp.amountUSD * exchangeRate).toLocaleString()} AFN
                     </div>
                   </MuiTableCell>
@@ -513,6 +539,7 @@ export function ExpensesTab() {
                         color="primary"
                         onClick={() => setEditingExpense({ ...exp })}
                         title="Edit expense"
+                        aria-label={`Edit expense ${exp.description}`}
                         sx={{ p: "3px" }}
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -522,6 +549,7 @@ export function ExpensesTab() {
                         color="error"
                         onClick={() => setDeletingExpense(exp)}
                         title="Delete expense"
+                        aria-label={`Delete expense ${exp.description}`}
                         sx={{ p: "3px" }}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -534,6 +562,7 @@ export function ExpensesTab() {
           </MuiTable>
         </div>
       </div>
+
       {/* Edit Expense Dialog */}
       <Dialog
         open={Boolean(editingExpense)}
@@ -551,7 +580,9 @@ export function ExpensesTab() {
                 select
                 label="Expense Category"
                 value={editingExpense.category}
-                onChange={(e) => setEditingExpense({ ...editingExpense, category: e.target.value })}
+                onChange={(e) =>
+                  setEditingExpense({ ...editingExpense, category: e.target.value })
+                }
                 required
               >
                 <MenuItem value="Gomrok & Port Tariffs">Gomrok & Port Tariffs (گمرک و محصول)</MenuItem>
@@ -565,34 +596,44 @@ export function ExpensesTab() {
                 label="Amount (USD)"
                 type="number"
                 value={editingExpense.amountUSD}
-                onChange={(e) => setEditingExpense({ ...editingExpense, amountUSD: Number(e.target.value) })}
+                onChange={(e) =>
+                  setEditingExpense({ ...editingExpense, amountUSD: Number(e.target.value) })
+                }
                 required
               />
 
               <MuiTextField
                 label="Expense Description / Reason"
                 value={editingExpense.description}
-                onChange={(e) => setEditingExpense({ ...editingExpense, description: e.target.value })}
+                onChange={(e) =>
+                  setEditingExpense({ ...editingExpense, description: e.target.value })
+                }
                 required
               />
 
               <MuiTextField
                 label="Paid To (Payee / Vendor)"
                 value={editingExpense.payee || ""}
-                onChange={(e) => setEditingExpense({ ...editingExpense, payee: e.target.value })}
+                onChange={(e) =>
+                  setEditingExpense({ ...editingExpense, payee: e.target.value })
+                }
               />
 
               <MuiTextField
                 label="Receipt / Bill Reference No."
                 value={editingExpense.receiptNumber || ""}
-                onChange={(e) => setEditingExpense({ ...editingExpense, receiptNumber: e.target.value })}
+                onChange={(e) =>
+                  setEditingExpense({ ...editingExpense, receiptNumber: e.target.value })
+                }
               />
 
               <MuiTextField
                 select
                 label="Vehicle Allocation (Stock)"
                 value={editingExpense.vehicleStock || ""}
-                onChange={(e) => setEditingExpense({ ...editingExpense, vehicleStock: e.target.value })}
+                onChange={(e) =>
+                  setEditingExpense({ ...editingExpense, vehicleStock: e.target.value })
+                }
               >
                 <MenuItem value="">Showroom Overhead (No Car Assigned)</MenuItem>
                 {vehicles.map((v) => (
@@ -603,7 +644,11 @@ export function ExpensesTab() {
               </MuiTextField>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2.5 }}>
-              <MuiButton variant="outlined" color="inherit" onClick={() => setEditingExpense(null)}>
+              <MuiButton
+                variant="outlined"
+                color="inherit"
+                onClick={() => setEditingExpense(null)}
+              >
                 Cancel
               </MuiButton>
               <MuiButton type="submit" variant="contained" color="primary">
@@ -628,13 +673,18 @@ export function ExpensesTab() {
           <p className="text-sm text-slate-600 dark:text-slate-300">
             Are you sure you want to permanently delete this expense record:{" "}
             <strong className="text-slate-900 dark:text-white">
-              {deletingExpense?.description} (${deletingExpense?.amountUSD?.toLocaleString()} USD)
+              {deletingExpense?.description} (${deletingExpense?.amountUSD?.toLocaleString()}{" "}
+              USD)
             </strong>
             ? This action will update financial totals and cannot be undone.
           </p>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <MuiButton variant="outlined" color="inherit" onClick={() => setDeletingExpense(null)}>
+          <MuiButton
+            variant="outlined"
+            color="inherit"
+            onClick={() => setDeletingExpense(null)}
+          >
             Cancel
           </MuiButton>
           <MuiButton variant="contained" color="error" onClick={handleDeleteExpense}>

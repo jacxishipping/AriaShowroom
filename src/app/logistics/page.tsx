@@ -5,98 +5,30 @@ import Link from "next/link";
 import Image from "next/image";
 import { useShowroomStore } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
-import { formatCurrency } from "@/lib/utils";
 import { VehicleItem } from "@/lib/mock-data";
 import {
-  MuiCard,
-  MuiCardContent,
   MuiButton,
-  MuiChip,
   MuiTextField,
   MenuItem,
-  MuiTable,
-  MuiTableHead,
-  MuiTableBody,
-  MuiTableRow,
-  MuiTableCell,
-  IconButton,
-  Stepper,
-  Step,
-  StepLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@/components/mui";
 import {
   Truck,
   Anchor,
   Compass,
-  MapPin,
   ShieldCheck,
-  FileText,
   Calculator,
   ArrowRight,
-  Clock,
   CheckCircle2,
-  AlertTriangle,
   Building2,
-  Calendar,
-  ExternalLink,
-  ChevronRight,
-  Sparkles,
   Search,
   Plus,
-  RefreshCw,
-  FileCheck2,
-  Printer,
-  DollarSign,
-  Filter,
-  ArrowUpRight,
-  Check,
-  Layers,
-  ChevronDown,
+  Car,
+  X,
 } from "lucide-react";
-
-// 5 Transit Pipeline Milestones
-const PIPELINE_MILESTONES = [
-  {
-    id: 1,
-    title: "Port of Origin (Dubai / Korea / USA)",
-    titleDari: "بندر مبدأ (دبی / کوریا / امریکا)",
-    desc: "Export title verified, container stuffed, B/L issued.",
-    icon: Anchor,
-    color: "text-blue-500 bg-blue-500/10 border-blue-500/20",
-  },
-  {
-    id: 2,
-    title: "High Seas Ocean Freight",
-    titleDari: "حمل و نقل دریایی بین‌المللی",
-    desc: "Vessel navigation across Arabian Sea to Gulf ports.",
-    icon: Compass,
-    color: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
-  },
-  {
-    id: 3,
-    title: "Bandar Abbas / Chabahar Transit",
-    titleDari: "ترانزیت بندر عباس / چابهار",
-    desc: "Port discharge, TIR carnet escort convoy to border.",
-    icon: Truck,
-    color: "text-amber-500 bg-amber-500/10 border-amber-500/20",
-  },
-  {
-    id: 4,
-    title: "Islam Qala Customs (Gomrok Herat)",
-    titleDari: "گمرک اسلام قلعه و تفتیش هرات",
-    desc: "Physical chassis audit, MoF tariff appraisal & tax clearance.",
-    icon: ShieldCheck,
-    color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-  },
-  {
-    id: 5,
-    title: "Sadozai Motors Herat Lot Arrival",
-    titleDari: "ورود به نمایشگاه مرکزی هرات",
-    desc: "PDI detailing, 40+ photo vault, client delivery ready.",
-    icon: Building2,
-    color: "text-purple-500 bg-purple-500/10 border-purple-500/20",
-  },
-];
 
 export default function LogisticsAndCustomsPage() {
   const {
@@ -104,13 +36,78 @@ export default function LogisticsAndCustomsPage() {
     updateVehicle,
     addVehicle,
     addToast,
-    currency,
     exchangeRate,
     language,
+    currentRole,
+    clientPresentationMode,
+    branding,
     setInspectedVehicleId,
   } = useShowroomStore();
 
   const t = translations[language];
+  const showFinancialMargins =
+    !clientPresentationMode &&
+    (currentRole === "SuperAdmin" || currentRole === "Accountant");
+
+  const dealershipTitle =
+    language === "ps"
+      ? branding?.dealershipNamePs || branding?.dealershipName || "Aria Motors"
+      : language === "fa"
+      ? branding?.dealershipNameFa || branding?.dealershipName || "آریا موتورز"
+      : branding?.dealershipName || "Aria Motors";
+  const customsTerminal = branding?.customsTerminalBranch || "Islam Qala Gomrok";
+
+  // 5 Transit Pipeline Milestones bound to dynamic branding
+  const pipelineMilestones = useMemo(
+    () => [
+      {
+        id: 1,
+        title: "Port of Origin (Dubai / Japan / USA)",
+        titleDari: "بندر مبدأ (دبی / جاپان / امریکا)",
+        titlePashto: "د پیل بندر (دوبۍ / جاپان / امریکا)",
+        desc: "Export title verified, container stuffed, B/L issued.",
+        icon: Anchor,
+      },
+      {
+        id: 2,
+        title: "High Seas Ocean Freight",
+        titleDari: "حمل و نقل دریایی بین‌المللی",
+        titlePashto: "نړیوال سمندري بار وړل",
+        desc: "Vessel navigation across Arabian Sea to Gulf ports.",
+        icon: Compass,
+      },
+      {
+        id: 3,
+        title: "Bandar Abbas / Chabahar Transit",
+        titleDari: "ترانزیت بندر عباس / چابهار",
+        titlePashto: "د بندر عباس / چابهار ترانزیت",
+        desc: "Port discharge, TIR carnet escort convoy to border.",
+        icon: Truck,
+      },
+      {
+        id: 4,
+        title: `${customsTerminal} Inspection`,
+        titleDari: "گمرک اسلام قلعه و تفتیش مرزی",
+        titlePashto: "د اسلام قلعه ګمرک او تفتیش",
+        desc: "Physical chassis audit, MoF tariff appraisal & tax clearance.",
+        icon: ShieldCheck,
+      },
+      {
+        id: 5,
+        title: `${branding?.dealershipName || "Aria Motors"} Lot Arrival`,
+        titleDari: `ورود به محوطه ${branding?.dealershipNameFa || "نمایشگاه"}`,
+        titlePashto: `د ${branding?.dealershipNamePs || branding?.dealershipName || "نمایشگاه"} محوطې ته رسیدل`,
+        desc: "PDI detailing, photo gallery & client delivery ready.",
+        icon: Building2,
+      },
+    ],
+    [
+      branding?.dealershipName,
+      branding?.dealershipNameFa,
+      branding?.dealershipNamePs,
+      customsTerminal,
+    ]
+  );
 
   // Pipeline Filter Tab State
   const [activeStageFilter, setActiveStageFilter] = useState<string>("ALL");
@@ -122,37 +119,51 @@ export default function LogisticsAndCustomsPage() {
   const [calcFuelType, setCalcFuelType] = useState<"petrol" | "hybrid" | "electric">("petrol");
   const [selectedOrigin, setSelectedOrigin] = useState("UAE / Dubai");
 
-  // Track simulated transit milestones for vehicles in state (mapping vehicleId -> milestone 1..5)
-  const [vehicleMilestones, setVehicleMilestones] = useState<Record<string, number>>(() => {
-    const initial: Record<string, number> = {};
-    vehicles.forEach((v, idx) => {
-      if (v.status === "In Transit") {
-        initial[v.id] = (idx % 3) + 2; // stage 2 (High Seas), 3 (Bandar Abbas), or 4 (Islam Qala)
-      } else {
-        initial[v.id] = 5; // Arrived
-      }
-    });
-    return initial;
+  // Dispatch Transit Shipment Modal State
+  const [isDispatchOpen, setIsDispatchOpen] = useState(false);
+  const [dispatchBusy, setDispatchBusy] = useState(false);
+  const [dispatchForm, setDispatchForm] = useState({
+    make: "Toyota",
+    model: "Land Cruiser Prado",
+    year: new Date().getFullYear(),
+    trim: "TX.L V6 GCC",
+    vin: "",
+    color: "Pearl White",
+    bodyType: "SUV" as VehicleItem["bodyType"],
+    originCountry: "UAE" as VehicleItem["originCountry"],
+    fuelType: "Petrol" as VehicleItem["fuelType"],
+    initialStage: 1,
+    purchasePrice: 42000,
+    freightCost: 1800,
+    customsDuty: 6400,
+    sellingPrice: 54500,
   });
+
+  const getVehicleStage = (veh: VehicleItem): number => {
+    const saved = veh.conditionNotes?.logisticsStage;
+    if (typeof saved === "number" && saved >= 1 && saved <= 5) {
+      return veh.status === "Available on Lot" || veh.status === "Sold" ? 5 : saved;
+    }
+    return veh.status === "In Transit" ? 3 : 5;
+  };
 
   // Calculate Afghan Gomrok Duty
   const baseValue = Number(vehicleValueUSD) || 0;
   const cc = Number(engineCC) || 2000;
-  let tariffRate = 0.16; // Standard base 16%
+  let tariffRate = 0.16;
 
   if (cc > 4000) {
-    tariffRate = 0.25; // 25% for high-displacement V8 (Land Cruiser 5.7 / LX570 / LX600)
+    tariffRate = 0.25;
   } else if (cc > 2500) {
-    tariffRate = 0.20; // 20% for 2.5L - 4.0L
+    tariffRate = 0.20;
   } else {
-    tariffRate = 0.14; // 14% for compact engines (<2.5L)
+    tariffRate = 0.14;
   }
 
-  // Hybrid / EV green incentive discount
   if (calcFuelType === "hybrid") {
-    tariffRate *= 0.70; // 30% reduction
+    tariffRate *= 0.7;
   } else if (calcFuelType === "electric") {
-    tariffRate *= 0.50; // 50% reduction
+    tariffRate *= 0.5;
   }
 
   const estimatedDutyUSD = Math.round(baseValue * tariffRate);
@@ -161,21 +172,27 @@ export default function LogisticsAndCustomsPage() {
   const municipalityRoadTaxUSD = 150;
   const redCrescentFeeUSD = 45;
   const totalClearanceUSD =
-    estimatedDutyUSD + portHandlingFeeUSD + transitEscortFeeUSD + municipalityRoadTaxUSD + redCrescentFeeUSD;
+    estimatedDutyUSD +
+    portHandlingFeeUSD +
+    transitEscortFeeUSD +
+    municipalityRoadTaxUSD +
+    redCrescentFeeUSD;
 
   // Filter in-transit vs lot vehicles
-  const inTransitVehicles = useMemo(() => {
-    return vehicles.filter((v) => v.status === "In Transit");
-  }, [vehicles]);
+  const inTransitVehicles = useMemo(
+    () => vehicles.filter((v) => v.status === "In Transit"),
+    [vehicles]
+  );
 
-  const lotVehicles = useMemo(() => {
-    return vehicles.filter((v) => v.status === "Available on Lot");
-  }, [vehicles]);
+  const lotVehicles = useMemo(
+    () => vehicles.filter((v) => v.status === "Available on Lot"),
+    [vehicles]
+  );
 
   // Combined pipeline shipments
   const pipelineVehicles = useMemo(() => {
     return vehicles.filter((v) => {
-      const stage = vehicleMilestones[v.id] || (v.status === "In Transit" ? 3 : 5);
+      const stage = getVehicleStage(v);
 
       if (activeStageFilter === "IN_TRANSIT" && v.status !== "In Transit") return false;
       if (activeStageFilter === "GOMROK" && stage !== 4) return false;
@@ -195,46 +212,60 @@ export default function LogisticsAndCustomsPage() {
       }
       return true;
     });
-  }, [vehicles, activeStageFilter, searchQuery, vehicleMilestones]);
+  }, [vehicles, activeStageFilter, searchQuery]);
 
   // Aggregate Corridor Metrics
-  const totalInTransitValueUSD = useMemo(() => {
-    return inTransitVehicles.reduce((sum, v) => sum + (v.landedCost || v.purchasePrice || 0), 0);
-  }, [inTransitVehicles]);
+  const totalInTransitValueUSD = useMemo(
+    () =>
+      inTransitVehicles.reduce(
+        (sum, v) =>
+          sum +
+          (showFinancialMargins
+            ? v.landedCost || v.purchasePrice || 0
+            : v.sellingPrice || 0),
+        0
+      ),
+    [inTransitVehicles, showFinancialMargins]
+  );
 
-  const totalCustomsDuesUSD = useMemo(() => {
-    return inTransitVehicles.reduce((sum, v) => sum + (v.customsDuty || 0), 0);
-  }, [inTransitVehicles]);
+  const totalCustomsDuesUSD = useMemo(
+    () => inTransitVehicles.reduce((sum, v) => sum + (v.customsDuty || 0), 0),
+    [inTransitVehicles]
+  );
 
-  const vehiclesAtGomrokCount = useMemo(() => {
-    return vehicles.filter((v) => (vehicleMilestones[v.id] || 0) === 4).length;
-  }, [vehicles, vehicleMilestones]);
+  const vehiclesAtGomrokCount = useMemo(
+    () => vehicles.filter((v) => getVehicleStage(v) === 4).length,
+    [vehicles]
+  );
 
-  // Advance milestone for a vehicle
+  // Advance milestone & persist in conditionNotes.logisticsStage
   const handleAdvanceMilestone = async (vehicle: VehicleItem) => {
-    const current = vehicleMilestones[vehicle.id] || (vehicle.status === "In Transit" ? 3 : 5);
-    if (current < 4) {
-      const next = current + 1;
-      setVehicleMilestones((prev) => ({ ...prev, [vehicle.id]: next }));
+    const current = getVehicleStage(vehicle);
+    if (current >= 5) return;
+    const next = current + 1;
+    const arrivingOnLot = next === 5;
+
+    try {
+      await updateVehicle(vehicle.id, {
+        status: arrivingOnLot ? "Available on Lot" : "In Transit",
+        customsClearance: arrivingOnLot
+          ? `${customsTerminal} - Verified & Cleared`
+          : vehicle.customsClearance,
+        conditionNotes: {
+          ...vehicle.conditionNotes,
+          logisticsStage: next,
+        },
+      });
       addToast(
-        `${vehicle.make} ${vehicle.model} advanced to: ${PIPELINE_MILESTONES[next - 1].title}`,
-        "info"
+        arrivingOnLot
+          ? `${vehicle.make} ${vehicle.model} cleared ${customsTerminal} and is now Available on Lot!`
+          : `${vehicle.make} ${vehicle.model} advanced to: ${pipelineMilestones[next - 1].title}`,
+        arrivingOnLot ? "success" : "info"
       );
-    } else if (current === 4) {
-      // Move from Islam Qala to Lot
-      try {
-        await updateVehicle(vehicle.id, {
-          status: "Available on Lot",
-          customsClearance: "Islam Qala Gomrok - Verified & Cleared (Doc #MK-2026-8819)",
-        });
-      } catch (error) {
-        addToast(error instanceof Error ? error.message : "Unable to update customs clearance", "error");
-        return;
-      }
-      setVehicleMilestones((prev) => ({ ...prev, [vehicle.id]: 5 }));
+    } catch (error) {
       addToast(
-        `🎉 ${vehicle.make} ${vehicle.model} cleared Islam Qala customs and is now Available on Lot!`,
-        "success"
+        error instanceof Error ? error.message : "Unable to update transit stage",
+        "error"
       );
     }
   };
@@ -244,99 +275,110 @@ export default function LogisticsAndCustomsPage() {
     try {
       await updateVehicle(vehicle.id, {
         status: "Available on Lot",
-        customsClearance: "Islam Qala Gomrok - Cleared via Maktoub #IQ-GMRK-2026-904",
+        customsClearance: `${customsTerminal} - Cleared via Official Maktoub`,
+        conditionNotes: {
+          ...vehicle.conditionNotes,
+          logisticsStage: 5,
+        },
       });
+      addToast(
+        `${vehicle.year} ${vehicle.make} ${vehicle.model} customs clearance finalized!`,
+        "success"
+      );
     } catch (error) {
-      addToast(error instanceof Error ? error.message : "Unable to update customs clearance", "error");
-      return;
+      addToast(
+        error instanceof Error ? error.message : "Unable to update customs clearance",
+        "error"
+      );
     }
-    setVehicleMilestones((prev) => ({ ...prev, [vehicle.id]: 5 }));
-    addToast(
-      `${vehicle.year} ${vehicle.make} ${vehicle.model} customs clearance finalized!`,
-      "success"
-    );
   };
 
-  // Quick Action: Dispatch new Dubai Transit Demo Vehicle
-  const handleDispatchDemoShipment = async () => {
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const newStock = `ARI-DXB-${randomSuffix}`;
-    const newVin = `JTEBU5JR8R50${randomSuffix}`;
-
-    const demoVehicle: VehicleItem = {
-      id: `dxb-transit-${Date.now()}`,
-      stockNumber: newStock,
-      vin: newVin,
-      make: "Lexus",
-      model: "LX600",
-      year: 2024,
-      trim: "VIP 4-Seater Ultra Luxury",
-      bodyType: "SUV",
-      originCountry: "UAE",
-      steering: "Left-Hand Drive (LHD)",
-      customsClearance: "In Process - Maktoub pending at Islam Qala Gomrok",
-      cleanTitle: true,
-      mileage: 1200,
-      fuelType: "Petrol",
-      transmission: "Automatic",
-      driveType: "4WD",
-      color: "Sonic Titanium",
-      status: "In Transit",
-      yardLocation: "Islam Qala Border Compound - Bay 4",
-      purchasePrice: 142000,
-      freightCost: 3400,
-      customsDuty: 24800,
-      repairCost: 0,
-      landedCost: 170200,
-      minTargetPrice: 160000,
-      sellingPrice: 168000,
-      features: [
-        "Executive VIP Seating",
-        "Mark Levinson 25-Speaker Audio",
-        "Active Height Control (AHC)",
-        "Center Console Cool Box",
-        "Rear Entertainment Screens",
-        "360 Surround Monitor",
-      ],
-      description: "Dubai Port Free Zone direct import. GCC specification Lexus LX600 VIP currently in transit.",
-      descriptionDari: "واردات مستقیم از منطقه آزاد دبی، مشخصات خلیجی لکسس LX600 VIP در حال ترانزیت.",
-      descriptionPashto: "له دوبۍ څخه مستقیم وارد شوی، د خلیج مشخصاتو لکسس LX600 وی آی پی.",
-      conditionNotes: {
-        interior: "Pristine Factory Condition (New)",
-        exterior: "Export Wrapped & Protected",
-        engine: "Zero-Hour Tested",
-        tires: "Original Dunlop Grandtrek",
-        accidentHistory: "Clean Title (No Accidents)",
-      },
-      images: [
-        "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=1200&q=80",
-      ],
-      documents: [],
-      viewsCount: 14,
-      inquiriesCount: 2,
-    };
-
-    try {
-      const savedVehicle = await addVehicle(demoVehicle);
-      setVehicleMilestones((prev) => ({ ...prev, [savedVehicle.id]: 2 }));
-    } catch (error) {
-      addToast(error instanceof Error ? error.message : "Unable to dispatch shipment", "error");
+  // Dispatch Real Transit Vehicle via Modal
+  const handleDispatchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!dispatchForm.make.trim() || !dispatchForm.model.trim() || !dispatchForm.vin.trim()) {
+      addToast("Please enter Make, Model, and Chassis VIN.", "warning");
       return;
     }
-    addToast(`Dispatched new transit shipment: 2024 Lexus LX600 (${newStock}) en route from Dubai!`, "success");
+
+    setDispatchBusy(true);
+    const shortCode = branding?.dealershipShortCode || "ARIA";
+    const suffix = Math.floor(1000 + Math.random() * 9000);
+    const stockNumber = `${shortCode}-TRN-${suffix}`;
+    const purchasePrice = Number(dispatchForm.purchasePrice) || 0;
+    const freightCost = Number(dispatchForm.freightCost) || 0;
+    const customsDuty = Number(dispatchForm.customsDuty) || 0;
+    const landedCost = purchasePrice + freightCost + customsDuty;
+    const sellingPrice = Number(dispatchForm.sellingPrice) || landedCost;
+
+    try {
+      await addVehicle({
+        stockNumber,
+        vin: dispatchForm.vin.trim().toUpperCase(),
+        make: dispatchForm.make.trim(),
+        model: dispatchForm.model.trim(),
+        year: Number(dispatchForm.year) || new Date().getFullYear(),
+        trim: dispatchForm.trim.trim() || "Standard",
+        bodyType: dispatchForm.bodyType,
+        originCountry: dispatchForm.originCountry,
+        steering: "Left-Hand Drive (LHD)",
+        customsClearance: `In Transit - Pending ${customsTerminal}`,
+        cleanTitle: true,
+        mileage: 0,
+        fuelType: dispatchForm.fuelType,
+        transmission: "Automatic",
+        driveType: "4WD",
+        color: dispatchForm.color.trim() || "White",
+        status: "In Transit",
+        yardLocation: `In Transit (${dispatchForm.originCountry} Corridor)`,
+        purchasePrice,
+        freightCost,
+        customsDuty,
+        repairCost: 0,
+        landedCost,
+        minTargetPrice: Math.max(landedCost, Math.round(sellingPrice * 0.96)),
+        sellingPrice,
+        features: ["Export Certificate Verified", "TIR Bonded Transit"],
+        description: `${dispatchForm.originCountry} direct import dispatched into transit corridor.`,
+        descriptionDari: `واردات مستقیم از ${dispatchForm.originCountry} در مسیر ترانزیت.`,
+        descriptionPashto: `له ${dispatchForm.originCountry} څخه مستقیم واردات په ترانزیت کې.`,
+        conditionNotes: {
+          interior: "Export Inspected",
+          exterior: "Transit Protected",
+          engine: "Verified at Port",
+          tires: "OEM Standard",
+          accidentHistory: "Clean Export Title",
+          logisticsStage: dispatchForm.initialStage,
+        },
+        images: [],
+        documents: [],
+      });
+      setIsDispatchOpen(false);
+      setDispatchForm((prev) => ({ ...prev, vin: "" }));
+      addToast(
+        `Dispatched ${dispatchForm.year} ${dispatchForm.make} ${dispatchForm.model} (${stockNumber}) at Stage ${dispatchForm.initialStage}`,
+        "success"
+      );
+    } catch (error) {
+      addToast(
+        error instanceof Error ? error.message : "Unable to dispatch transit shipment",
+        "error"
+      );
+    } finally {
+      setDispatchBusy(false);
+    }
   };
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto pb-12">
-      {/* Google Cloud Console Corridor Header */}
+      {/* Corridor Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-[#E2E8F0] dark:border-[#262F40]">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-0.5">
-            <span>Dogharoun → Islam Qala Border Corridor</span>
+            <span>{dealershipTitle}</span>
             <span>·</span>
             <span className="font-semibold text-[#1A73E8] dark:text-[#8AB4F8]">
-              TIR Carnet & Gomrok Manifest
+              TIR Carnet &amp; {customsTerminal} Manifest
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A] dark:text-white">
@@ -344,36 +386,46 @@ export default function LogisticsAndCustomsPage() {
               ? "د اسلام قلعه او ترانزیت لوژستیکي مدیریت"
               : language === "fa"
               ? "لوجستیک بندر، ترانزیت و گمرک اسلام قلعه"
-              : "Port Logistics & Islam Qala Customs Tracker"}
+              : "Port Logistics & Customs Corridor Tracker"}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {language === "ps"
-              ? "له دوبۍ او نړیوالو بندرونو څخه تر اسلام قلعه او د سدوزي موټرو ګودام پورې د موټرونو تعقیب"
+              ? `له نړیوالو بندرونو څخه تر ${customsTerminal} او د ${dealershipTitle} تر محوطې پورې د موټرو تعقیب`
               : language === "fa"
-              ? "ردیابی موترها از بنادر دبی و چابهار از طریق مرز اسلام قلعه تا نندارتون مرکزی هرات"
-              : "Real-time pipeline tracking from Dubai / Chabahar ports through Islam Qala border to Herat lot"}
+              ? `ردیابی موترها از بنادر بین‌المللی از طریق مرز تا محوطه ${dealershipTitle}`
+              : `Real-time pipeline tracking from origin ports through ${customsTerminal} to ${dealershipTitle}`}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <MuiButton
-            variant="outlined"
-            size="small"
-            onClick={handleDispatchDemoShipment}
-            startIcon={<Plus className="h-4 w-4" />}
-          >
-            + Dispatch Dubai Transit
-          </MuiButton>
-          <Link href="/intake">
+        {currentRole === "SuperAdmin" && (
+          <div className="flex items-center gap-2 flex-wrap">
             <MuiButton
+              variant="outlined"
+              size="small"
+              onClick={() => setIsDispatchOpen(true)}
+              startIcon={<Plus className="h-4 w-4" />}
+            >
+              {language === "ps"
+                ? "نوی ترانزیتي محموله"
+                : language === "fa"
+                ? "ثبت محموله ترانزیتی"
+                : "Dispatch Transit Vehicle"}
+            </MuiButton>
+            <MuiButton
+              component={Link}
+              href="/intake"
               variant="contained"
               size="small"
               startIcon={<Truck className="h-4 w-4" />}
             >
-              {language === "ps" ? "د نوي موټر ثبتول" : language === "fa" ? "ثبت موتر ترانزیتی" : "Intake Transit Stock"}
+              {language === "ps"
+                ? "د نوي موټر ثبتول"
+                : language === "fa"
+                ? "ورود کامل موتر"
+                : "Full Intake Wizard"}
             </MuiButton>
-          </Link>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* 1px Hairline Corridor Ledger Strip */}
@@ -387,7 +439,7 @@ export default function LogisticsAndCustomsPage() {
             {inTransitVehicles.length} Units
           </div>
           <div className="mt-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E2636] flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <span>FOB Value</span>
+            <span>{showFinancialMargins ? "Landed Basis" : "Retail Value"}</span>
             <span className="font-bold text-[#0F172A] dark:text-slate-200 tabular-nums">
               ${totalInTransitValueUSD.toLocaleString()}
             </span>
@@ -396,7 +448,7 @@ export default function LogisticsAndCustomsPage() {
 
         <div className="bg-white dark:bg-[#161B26] p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-            <span>Islam Qala Gomrok</span>
+            <span>{customsTerminal}</span>
             <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">BORDER</span>
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#0F172A] dark:text-white">
@@ -412,16 +464,22 @@ export default function LogisticsAndCustomsPage() {
 
         <div className="bg-white dark:bg-[#161B26] p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-            <span>Projected Tariffs</span>
-            <span className="font-mono text-[11px] text-[#1A73E8] dark:text-[#8AB4F8] font-bold">DUTY</span>
+            <span>{showFinancialMargins ? "Projected Tariffs" : "Cleared on Lot"}</span>
+            <span className="font-mono text-[11px] text-[#1A73E8] dark:text-[#8AB4F8] font-bold">
+              {showFinancialMargins ? "DUTY" : "READY"}
+            </span>
           </div>
           <div className="mt-2 text-2xl font-bold font-mono tabular-nums text-[#0F172A] dark:text-white">
-            ${totalCustomsDuesUSD.toLocaleString()}
+            {showFinancialMargins
+              ? `$${totalCustomsDuesUSD.toLocaleString()}`
+              : `${lotVehicles.length} Units`}
           </div>
           <div className="mt-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E2636] flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <span>AFN Equiv</span>
+            <span>{showFinancialMargins ? "AFN Equiv" : "Status"}</span>
             <span className="tabular-nums text-[#0F172A] dark:text-slate-300">
-              ؋ {(totalCustomsDuesUSD * exchangeRate).toLocaleString()}
+              {showFinancialMargins
+                ? `؋ ${(totalCustomsDuesUSD * exchangeRate).toLocaleString()}`
+                : "Showroom Verified"}
             </span>
           </div>
         </div>
@@ -462,10 +520,8 @@ export default function LogisticsAndCustomsPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-px bg-[#E2E8F0] dark:bg-[#1E2636]">
-          {PIPELINE_MILESTONES.map((m) => {
-            const inStageCount = vehicles.filter(
-              (v) => (vehicleMilestones[v.id] || (v.status === "In Transit" ? 3 : 5)) === m.id
-            ).length;
+          {pipelineMilestones.map((m) => {
+            const inStageCount = vehicles.filter((v) => getVehicleStage(v) === m.id).length;
 
             const isSelectedStage =
               (activeStageFilter === "PORT" && (m.id === 1 || m.id === 2)) ||
@@ -474,7 +530,8 @@ export default function LogisticsAndCustomsPage() {
               (activeStageFilter === "ARRIVED" && m.id === 5);
 
             return (
-              <div
+              <button
+                type="button"
                 key={m.id}
                 onClick={() => {
                   if (m.id === 1 || m.id === 2) setActiveStageFilter("PORT");
@@ -482,14 +539,14 @@ export default function LogisticsAndCustomsPage() {
                   else if (m.id === 4) setActiveStageFilter("GOMROK");
                   else setActiveStageFilter("ARRIVED");
                 }}
-                className={`p-3.5 transition-colors cursor-pointer relative ${
+                className={`p-3.5 text-start transition-colors cursor-pointer relative ${
                   isSelectedStage
                     ? "bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.1] border-t-2 border-t-[#1A73E8] dark:border-t-[#8AB4F8]"
                     : "bg-white dark:bg-[#161B26] hover:bg-slate-50 dark:hover:bg-white/[0.03]"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2 font-mono">
-                  <span className="text-[11px] font-semibold text-slate-400">
+                  <span className="text-[11px] font-semibold text-slate-400 tabular-nums">
                     Stage 0{m.id}
                   </span>
                   <span
@@ -503,12 +560,16 @@ export default function LogisticsAndCustomsPage() {
                   </span>
                 </div>
                 <h4 className="text-xs font-bold text-[#0F172A] dark:text-white leading-snug">
-                  {language === "fa" || language === "ps" ? m.titleDari : m.title}
+                  {language === "ps"
+                    ? m.titlePashto
+                    : language === "fa"
+                    ? m.titleDari
+                    : m.title}
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
                   {m.desc}
                 </p>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -523,7 +584,7 @@ export default function LogisticsAndCustomsPage() {
             <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
               <button
                 onClick={() => setActiveStageFilter("ALL")}
-                className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all ${
+                className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
                   activeStageFilter === "ALL"
                     ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs font-bold"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
@@ -533,7 +594,7 @@ export default function LogisticsAndCustomsPage() {
               </button>
               <button
                 onClick={() => setActiveStageFilter("IN_TRANSIT")}
-                className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all ${
+                className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
                   activeStageFilter === "IN_TRANSIT"
                     ? "bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-2xs font-bold"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
@@ -543,17 +604,17 @@ export default function LogisticsAndCustomsPage() {
               </button>
               <button
                 onClick={() => setActiveStageFilter("GOMROK")}
-                className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all ${
+                className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
                   activeStageFilter === "GOMROK"
                     ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-2xs font-bold"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
                 }`}
               >
-                At Islam Qala ({vehiclesAtGomrokCount})
+                At Border ({vehiclesAtGomrokCount})
               </button>
               <button
                 onClick={() => setActiveStageFilter("ARRIVED")}
-                className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all ${
+                className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
                   activeStageFilter === "ARRIVED"
                     ? "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-2xs font-bold"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
@@ -564,58 +625,63 @@ export default function LogisticsAndCustomsPage() {
             </div>
 
             <div className="relative min-w-[160px] sm:w-48">
-              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="h-3.5 w-3.5 absolute start-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
+                aria-label="Search VIN or model"
                 placeholder="Search VIN or model..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500"
+                className="w-full ps-8 pe-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500"
               />
             </div>
           </div>
 
           {/* Shipments List */}
           {pipelineVehicles.length === 0 ? (
-            <div className="p-8 text-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-[#121824]">
+            <div className="p-8 text-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-[#161B26]">
               <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
               <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                 No shipments found matching the active filter
               </h4>
               <p className="text-[11px] text-slate-500 max-w-sm mx-auto mt-1">
-                Try switching the corridor filter or dispatch a new Dubai transit test shipment above.
+                Try switching the corridor filter above to view all vehicles.
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               {pipelineVehicles.map((veh) => {
-                const currentStage = vehicleMilestones[veh.id] || (veh.status === "In Transit" ? 3 : 5);
-                const milestoneInfo = PIPELINE_MILESTONES[currentStage - 1];
+                const currentStage = getVehicleStage(veh);
+                const milestoneInfo = pipelineMilestones[currentStage - 1];
 
                 return (
                   <div
                     key={veh.id}
-                    className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs hover:border-blue-500/40 transition-all space-y-3"
+                    className="p-3.5 rounded-xl border border-slate-200/90 dark:border-[#262F40] bg-white dark:bg-[#161B26] shadow-xs hover:border-blue-500/40 transition-all space-y-3"
                   >
-                    {/* Header Strip: Vehicle Photo & Core Info */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="relative h-14 w-20 shrink-0 rounded-lg overflow-hidden border border-slate-200/90 dark:border-slate-750 bg-slate-100 dark:bg-slate-800">
-                          <Image
-                            src={
-                              veh.images[0] ||
-                              "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=600&q=80"
-                            }
-                            alt={veh.model}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="relative h-14 w-20 shrink-0 rounded-lg overflow-hidden border border-slate-200/90 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                          {veh.images[0] ? (
+                            <Image
+                              src={veh.images[0]}
+                              alt={veh.model}
+                              fill
+                              unoptimized={veh.images[0].startsWith("data:")}
+                              className="object-cover"
+                            />
+                          ) : (
+                            <Car className="h-6 w-6 text-slate-400" />
+                          )}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            <Link
+                              href={`/vehicles/${veh.id}`}
+                              className="text-xs font-bold text-slate-900 dark:text-white hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] truncate"
+                            >
                               {veh.year} {veh.make} {veh.model}
-                            </span>
+                            </Link>
                             <span className="text-[11px] text-slate-500">
                               ({veh.trim || "Standard"})
                             </span>
@@ -629,16 +695,17 @@ export default function LogisticsAndCustomsPage() {
                               {veh.status}
                             </span>
                           </div>
-                          <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                          <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                             VIN: {veh.vin} • Origin: {veh.originCountry} • Stock #{veh.stockNumber}
                           </div>
-                          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 font-mono">
-                            Landed: ${veh.landedCost?.toLocaleString() || (veh.purchasePrice + 2000).toLocaleString()} (Customs: ${veh.customsDuty?.toLocaleString() || "N/A"})
+                          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 font-mono tabular-nums">
+                            {showFinancialMargins
+                              ? `Landed: $${(veh.landedCost || veh.purchasePrice).toLocaleString()} (Customs: $${(veh.customsDuty || 0).toLocaleString()})`
+                              : `Retail Asking: $${veh.sellingPrice.toLocaleString()} USD`}
                           </div>
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
                       <div className="flex items-center sm:flex-col sm:items-end gap-1.5 shrink-0">
                         <div className="flex items-center gap-1.5">
                           <button
@@ -648,22 +715,22 @@ export default function LogisticsAndCustomsPage() {
                           >
                             Inspect
                           </button>
-                          <Link href={`/vehicles/${veh.id}`}>
-                            <MuiButton
-                              variant="outlined"
-                              size="small"
-                              sx={{ fontSize: "11px", py: "2px", px: "8px" }}
-                            >
-                              Dossier
-                            </MuiButton>
-                          </Link>
+                          <MuiButton
+                            component={Link}
+                            href={`/vehicles/${veh.id}`}
+                            variant="outlined"
+                            size="small"
+                            sx={{ fontSize: "11px", py: "2px", px: "8px" }}
+                          >
+                            Dossier
+                          </MuiButton>
                         </div>
-                        {veh.status === "In Transit" && (
+                        {veh.status === "In Transit" && currentRole !== "Accountant" && (
                           <MuiButton
                             variant="contained"
                             color="success"
                             size="small"
-                            onClick={() => handleDirectClearGomrok(veh)}
+                            onClick={() => void handleDirectClearGomrok(veh)}
                             startIcon={<CheckCircle2 className="h-3 w-3" />}
                             sx={{ fontSize: "11px", py: "2px", px: "8px" }}
                           >
@@ -681,23 +748,27 @@ export default function LogisticsAndCustomsPage() {
                             Current Stage:
                           </span>
                           <span className="font-bold text-blue-600 dark:text-blue-400">
-                            {milestoneInfo.title}
+                            {language === "ps"
+                              ? milestoneInfo.titlePashto
+                              : language === "fa"
+                              ? milestoneInfo.titleDari
+                              : milestoneInfo.title}
                           </span>
                         </div>
-                        {currentStage < 5 && (
+                        {currentStage < 5 && currentRole !== "Accountant" && (
                           <button
-                            onClick={() => handleAdvanceMilestone(veh)}
+                            type="button"
+                            onClick={() => void handleAdvanceMilestone(veh)}
                             className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
                           >
                             Advance to {currentStage === 4 ? "Showroom Lot" : "Next Stage"}
-                            <ArrowRight className="h-3 w-3" />
+                            <ArrowRight className="h-3 w-3 rtl:rotate-180" />
                           </button>
                         )}
                       </div>
 
-                      {/* Visual 5-segment bar */}
                       <div className="grid grid-cols-5 gap-1.5">
-                        {PIPELINE_MILESTONES.map((step) => {
+                        {pipelineMilestones.map((step) => {
                           const isCompleted = step.id < currentStage;
                           const isCurrent = step.id === currentStage;
                           return (
@@ -717,10 +788,10 @@ export default function LogisticsAndCustomsPage() {
                       </div>
 
                       <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-400">
-                        <span>1. Dubai / Port</span>
+                        <span>1. Origin Port</span>
                         <span>3. Chabahar Transit</span>
-                        <span>4. Islam Qala Gomrok</span>
-                        <span>5. Herat Lot</span>
+                        <span>4. {customsTerminal}</span>
+                        <span>5. Showroom Lot</span>
                       </div>
                     </div>
                   </div>
@@ -732,12 +803,12 @@ export default function LogisticsAndCustomsPage() {
 
         {/* Right Column: Afghan Gomrok Customs Duty Estimator (5 cols) */}
         <div className="lg:col-span-5 space-y-3">
-          <div className="p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs space-y-3 sticky top-4">
+          <div className="p-4 rounded-2xl border border-slate-200/90 dark:border-[#262F40] bg-white dark:bg-[#161B26] shadow-xs space-y-3 sticky top-4">
             <div className="pb-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calculator className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                  Islam Qala Customs Estimator
+                  {customsTerminal} Estimator
                 </h3>
               </div>
               <span className="text-[10px] text-slate-400 font-mono">Official MoF Tariff</span>
@@ -786,7 +857,9 @@ export default function LogisticsAndCustomsPage() {
                     size="small"
                     fullWidth
                     value={calcFuelType}
-                    onChange={(e) => setCalcFuelType(e.target.value as any)}
+                    onChange={(e) =>
+                      setCalcFuelType(e.target.value as "petrol" | "hybrid" | "electric")
+                    }
                   >
                     <MenuItem value="petrol">Standard Petrol</MenuItem>
                     <MenuItem value="hybrid">Hybrid (-30% Green Discount)</MenuItem>
@@ -807,32 +880,32 @@ export default function LogisticsAndCustomsPage() {
                   onChange={(e) => setSelectedOrigin(e.target.value)}
                 >
                   <MenuItem value="UAE / Dubai">Jebel Ali Port / Dubai (UAE)</MenuItem>
-                  <MenuItem value="Korea / Incheon">Incheon Port (South Korea)</MenuItem>
+                  <MenuItem value="Japan / Yokohama">Yokohama Port (Japan)</MenuItem>
                   <MenuItem value="USA / Houston">Houston / Savannah (USA)</MenuItem>
-                  <MenuItem value="Germany / Hamburg">Hamburg Port (Germany)</MenuItem>
+                  <MenuItem value="Germany / Hamburg">Hamburg Port (Europe)</MenuItem>
                 </MuiTextField>
               </div>
 
               {/* Duty Breakdown Result Box */}
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 space-y-2">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 space-y-2 tabular-nums">
                 <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-400">
                   <span>Customs Duty Tariff ({(tariffRate * 100).toFixed(0)}%):</span>
                   <span className="font-mono font-semibold">${estimatedDutyUSD.toLocaleString()} USD</span>
                 </div>
                 <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-400">
-                  <span>Islam Qala Dry Port Handling:</span>
+                  <span>Dry Port Handling:</span>
                   <span className="font-mono font-semibold">${portHandlingFeeUSD} USD</span>
                 </div>
                 <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-400">
-                  <span>TIR Carnet & Border Convoy Escort:</span>
+                  <span>TIR Carnet &amp; Border Convoy Escort:</span>
                   <span className="font-mono font-semibold">${transitEscortFeeUSD} USD</span>
                 </div>
                 <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-400">
-                  <span>Herat Municipality Road Maintenance:</span>
+                  <span>Municipality Road Maintenance:</span>
                   <span className="font-mono font-semibold">${municipalityRoadTaxUSD} USD</span>
                 </div>
                 <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-400">
-                  <span>Afghan Red Crescent Stamp Fee:</span>
+                  <span>Red Crescent Stamp Fee:</span>
                   <span className="font-mono font-semibold">${redCrescentFeeUSD} USD</span>
                 </div>
 
@@ -850,20 +923,220 @@ export default function LogisticsAndCustomsPage() {
                 </div>
               </div>
 
-              {/* Informative Note Box */}
               <div className="p-2.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/40 text-[10px] text-blue-800 dark:text-blue-300 space-y-1">
                 <div className="font-bold flex items-center gap-1">
                   <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
                   Official Gomrok Maktoub Compliance
                 </div>
                 <p>
-                  Tariff calculations match the Afghan Ministry of Finance customs scale for Herat Dry Port. Clean chassis titles require official clearing documentation before lot release.
+                  Tariff calculations match the Ministry of Finance customs scale. Clean chassis titles require official clearing documentation before showroom release.
                 </p>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Dispatch Transit Shipment Modal */}
+      <Dialog
+        open={isDispatchOpen}
+        onClose={() => !dispatchBusy && setIsDispatchOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <Truck className="h-4 w-4 text-[#1A73E8]" />
+            <span className="text-sm font-bold text-slate-900 dark:text-white">
+              Dispatch Transit Shipment
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsDispatchOpen(false)}
+            className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </DialogTitle>
+
+        <form onSubmit={handleDispatchSubmit}>
+          <DialogContent className="p-4 sm:p-6 space-y-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <MuiTextField
+                label="Make"
+                required
+                size="small"
+                value={dispatchForm.make}
+                onChange={(e) => setDispatchForm({ ...dispatchForm, make: e.target.value })}
+              />
+              <MuiTextField
+                label="Model"
+                required
+                size="small"
+                value={dispatchForm.model}
+                onChange={(e) => setDispatchForm({ ...dispatchForm, model: e.target.value })}
+              />
+              <MuiTextField
+                label="Year"
+                type="number"
+                required
+                size="small"
+                value={dispatchForm.year}
+                onChange={(e) =>
+                  setDispatchForm({ ...dispatchForm, year: Number(e.target.value) })
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <MuiTextField
+                label="Chassis VIN"
+                required
+                size="small"
+                placeholder="JTEBU5JR8R50..."
+                value={dispatchForm.vin}
+                onChange={(e) => setDispatchForm({ ...dispatchForm, vin: e.target.value })}
+              />
+              <MuiTextField
+                label="Trim / Spec"
+                size="small"
+                value={dispatchForm.trim}
+                onChange={(e) => setDispatchForm({ ...dispatchForm, trim: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <MuiTextField
+                select
+                label="Origin Country"
+                size="small"
+                value={dispatchForm.originCountry}
+                onChange={(e) =>
+                  setDispatchForm({
+                    ...dispatchForm,
+                    originCountry: e.target.value as VehicleItem["originCountry"],
+                  })
+                }
+              >
+                <MenuItem value="UAE">UAE (Dubai)</MenuItem>
+                <MenuItem value="Japan">Japan</MenuItem>
+                <MenuItem value="USA">USA</MenuItem>
+                <MenuItem value="Canada">Canada</MenuItem>
+                <MenuItem value="Europe">Europe</MenuItem>
+              </MuiTextField>
+
+              <MuiTextField
+                select
+                label="Body Type"
+                size="small"
+                value={dispatchForm.bodyType}
+                onChange={(e) =>
+                  setDispatchForm({
+                    ...dispatchForm,
+                    bodyType: e.target.value as VehicleItem["bodyType"],
+                  })
+                }
+              >
+                <MenuItem value="SUV">SUV</MenuItem>
+                <MenuItem value="Sedan">Sedan</MenuItem>
+                <MenuItem value="Pickup">Pickup</MenuItem>
+                <MenuItem value="Crossover">Crossover</MenuItem>
+              </MuiTextField>
+
+              <MuiTextField
+                select
+                label="Initial Stage"
+                size="small"
+                value={dispatchForm.initialStage}
+                onChange={(e) =>
+                  setDispatchForm({
+                    ...dispatchForm,
+                    initialStage: Number(e.target.value),
+                  })
+                }
+              >
+                <MenuItem value={1}>1. Origin Port</MenuItem>
+                <MenuItem value={2}>2. Ocean Freight</MenuItem>
+                <MenuItem value={3}>3. Chabahar Transit</MenuItem>
+                <MenuItem value={4}>4. Border Gomrok</MenuItem>
+              </MuiTextField>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <MuiTextField
+                label="FOB Price ($)"
+                type="number"
+                size="small"
+                value={dispatchForm.purchasePrice}
+                onChange={(e) =>
+                  setDispatchForm({
+                    ...dispatchForm,
+                    purchasePrice: Number(e.target.value),
+                  })
+                }
+              />
+              <MuiTextField
+                label="Freight ($)"
+                type="number"
+                size="small"
+                value={dispatchForm.freightCost}
+                onChange={(e) =>
+                  setDispatchForm({
+                    ...dispatchForm,
+                    freightCost: Number(e.target.value),
+                  })
+                }
+              />
+              <MuiTextField
+                label="Duty Est. ($)"
+                type="number"
+                size="small"
+                value={dispatchForm.customsDuty}
+                onChange={(e) =>
+                  setDispatchForm({
+                    ...dispatchForm,
+                    customsDuty: Number(e.target.value),
+                  })
+                }
+              />
+              <MuiTextField
+                label="Asking ($)"
+                type="number"
+                size="small"
+                value={dispatchForm.sellingPrice}
+                onChange={(e) =>
+                  setDispatchForm({
+                    ...dispatchForm,
+                    sellingPrice: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+          </DialogContent>
+
+          <DialogActions className="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+            <MuiButton
+              variant="outlined"
+              color="inherit"
+              size="small"
+              onClick={() => setIsDispatchOpen(false)}
+              disabled={dispatchBusy}
+            >
+              Cancel
+            </MuiButton>
+            <MuiButton
+              type="submit"
+              variant="contained"
+              color="primary"
+              size="small"
+              disabled={dispatchBusy}
+            >
+              {dispatchBusy ? "Dispatching..." : "Dispatch Shipment"}
+            </MuiButton>
+          </DialogActions>
+        </form>
+      </Dialog>
     </div>
   );
 }

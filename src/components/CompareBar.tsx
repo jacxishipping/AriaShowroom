@@ -4,27 +4,42 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useShowroomStore } from "@/store/useShowroomStore";
-import { X, ArrowRight, Layers } from "lucide-react";
-import { MuiButton, IconButton } from "@/components/mui";
+import { X, ArrowRight, Layers, Car } from "lucide-react";
+import { MuiButton } from "@/components/mui";
 
 interface CompareBarProps {
   onOpenCompare?: () => void;
 }
 
-export function CompareBar({ onOpenCompare }: CompareBarProps) {
-  const { vehicles, compareIds, toggleCompare, clearCompare } = useShowroomStore();
+export function CompareBar({ onOpenCompare: _onOpenCompare }: CompareBarProps) {
+  const { vehicles, compareIds, toggleCompare, clearCompare, language } = useShowroomStore();
 
   if (compareIds.length === 0) return null;
 
   const comparedVehicles = vehicles.filter((v) => compareIds.includes(v.id));
 
+  const compareLabel =
+    language === "fa"
+      ? "مقایسه موتر"
+      : language === "ps"
+      ? "د موټر مقایسه"
+      : "Compare";
+  const clearLabel =
+    language === "fa" ? "پاک کردن" : language === "ps" ? "پاکول" : "Clear";
+  const compareNowLabel =
+    language === "fa"
+      ? "مشاهده جدول مقایسه"
+      : language === "ps"
+      ? "د مقایسې جدول"
+      : "Compare Now";
+
   return (
-    <div className="fixed bottom-6 inset-x-0 z-40 flex justify-center pointer-events-none px-4 animate-in fade-in slide-in-from-bottom-4">
+    <div className="fixed bottom-6 inset-x-0 z-40 flex justify-center pointer-events-none px-4 animate-in fade-in slide-in-from-bottom-4 print:hidden">
       <div className="pointer-events-auto flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-2xl bg-slate-900/95 dark:bg-[#111827]/95 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md max-w-xl w-full">
-        <div className="flex items-center gap-2 ps-2">
+        <div className="flex items-center gap-2 ps-2 pe-3 border-e border-slate-700/80">
           <Layers className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-xs font-bold whitespace-nowrap">
-            Compare ({comparedVehicles.length}/3)
+          <span className="text-xs font-bold whitespace-nowrap tabular-nums">
+            {compareLabel} ({comparedVehicles.length}/3)
           </span>
         </div>
 
@@ -35,11 +50,18 @@ export function CompareBar({ onOpenCompare }: CompareBarProps) {
               key={v.id}
               className="relative h-10 w-14 shrink-0 rounded-lg overflow-hidden border border-slate-700 group bg-slate-800"
             >
-              <Image src={v.images[0]} alt={v.model} fill className="object-cover" />
+              {v.images[0] ? (
+                <Image src={v.images[0]} alt={v.model} fill className="object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                  <Car className="h-4 w-4 opacity-50" />
+                </div>
+              )}
               <button
                 onClick={() => toggleCompare(v.id)}
                 className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Remove"
+                title="Remove from comparison"
+                aria-label={`Remove ${v.year} ${v.make} ${v.model} from comparison`}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -55,7 +77,7 @@ export function CompareBar({ onOpenCompare }: CompareBarProps) {
             color="inherit"
             size="small"
           >
-            Clear
+            {clearLabel}
           </MuiButton>
           <MuiButton
             component={Link}
@@ -65,7 +87,7 @@ export function CompareBar({ onOpenCompare }: CompareBarProps) {
             size="small"
             endIcon={<ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />}
           >
-            Compare Now
+            {compareNowLabel}
           </MuiButton>
         </div>
       </div>

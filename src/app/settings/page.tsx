@@ -2,13 +2,12 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
   useShowroomStore,
   THEME_PRESETS,
-  DEFAULT_BRANDING,
   DEFAULT_THEMING,
-  ThemePreset,
+  BrandingSettings,
+  ThemingSettings,
 } from "@/store/useShowroomStore";
 import { translations } from "@/lib/translations";
 import {
@@ -21,21 +20,12 @@ import {
   Sun,
   Moon,
   Laptop,
-  SlidersHorizontal,
   ShieldCheck,
-  CheckCircle2,
-  FileText,
-  Car,
   Eye,
-  Award,
-  Crown,
-  Shield,
-  Layers,
-  ArrowRight,
-  Phone,
-  Mail,
-  Send,
   HelpCircle,
+  Lock,
+  Type,
+  Contrast,
 } from "lucide-react";
 
 const ACCENT_COLOR_OPTIONS = [
@@ -80,11 +70,15 @@ const SEAL_STYLES = [
   },
 ];
 
-const LOGO_PRESETS = [
-  { id: "luxury_crest" as const, name: "Luxury Crest", icon: Award },
-  { id: "crown" as const, name: "Royal Crown", icon: Crown },
-  { id: "shield" as const, name: "Guaranteed Shield", icon: Shield },
-  { id: "monogram" as const, name: "Modern Monogram", icon: Building2 },
+const FONT_FAMILY_OPTIONS: {
+  id: ThemingSettings["fontFamily"];
+  label: string;
+  desc: string;
+}[] = [
+  { id: "jakarta", label: "Plus Jakarta Sans", desc: "Enterprise console geometric" },
+  { id: "inter", label: "Inter UI", desc: "High-legibility data tables" },
+  { id: "serif-luxury", label: "Editorial Serif", desc: "Executive showroom elegance" },
+  { id: "mono", label: "Technical Mono", desc: "Precision VIN & ledger focus" },
 ];
 
 export default function SettingsThemingPage() {
@@ -105,7 +99,7 @@ export default function SettingsThemingPage() {
   } = useShowroomStore();
 
   const t = translations[language];
-  const isRtl = language === "fa" || language === "ps";
+  const isSuperAdmin = currentRole === "SuperAdmin";
 
   const [activeTab, setActiveTab] = useState<
     "theming" | "branding" | "watermark" | "branches"
@@ -113,6 +107,11 @@ export default function SettingsThemingPage() {
 
   // Local state for instant feedback before saving
   const [tempColor, setTempColor] = useState(theming.primaryColor);
+
+  const handleBrandingUpdate = (patch: Partial<BrandingSettings>) => {
+    if (!isSuperAdmin) return;
+    updateBranding(patch);
+  };
 
   const handleColorChange = (hex: string) => {
     setTempColor(hex);
@@ -125,11 +124,25 @@ export default function SettingsThemingPage() {
   };
 
   const handleReset = () => {
-    resetBrandingToDefault();
+    if (isSuperAdmin) {
+      resetBrandingToDefault();
+    }
     resetThemingToDefault();
     setTempColor(DEFAULT_THEMING.primaryColor);
-    addToast("Reset all branding and theming to defaults", "info");
+    addToast(
+      isSuperAdmin
+        ? "Reset all branding and theming to defaults"
+        : "Reset personal theming preferences to defaults",
+      "info"
+    );
   };
+
+  const adminOnlyBannerText =
+    language === "fa"
+      ? "حالت فقط خواندنی: تغییر هویت تجاری، مهر رسمی، واترمارک و شعبات فقط برای مدیر ارشد (SuperAdmin) مجاز است."
+      : language === "ps"
+      ? "یوازې د لوستلو حالت: د نندارتون نوم، رسمي مهر، واټرمارک او څانګو بدلون یوازې د عمومي مدیر (SuperAdmin) لپاره مجاز دی."
+      : "Read-Only View: Dealership identity, official seals, watermarks, and branch details can only be modified by a SuperAdmin.";
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -154,13 +167,13 @@ export default function SettingsThemingPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setIsTutorialOpen(true)}
             className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition flex items-center gap-1.5 cursor-pointer"
           >
-            <HelpCircle className="h-3.5 w-3.5 text-[#1A73E8]" />
+            <HelpCircle className="h-3.5 w-3.5" style={{ color: theming.primaryColor }} />
             <span>{t.tutorialButtonOpen}</span>
           </button>
 
@@ -180,7 +193,13 @@ export default function SettingsThemingPage() {
             style={{ backgroundColor: theming.primaryColor }}
           >
             <Check className="h-3.5 w-3.5" />
-            <span>Save & Apply</span>
+            <span>
+              {language === "fa"
+                ? "ذخیره و اعمال"
+                : language === "ps"
+                ? "خوندي او پلي کړئ"
+                : "Save & Apply"}
+            </span>
           </button>
         </div>
       </div>
@@ -192,10 +211,10 @@ export default function SettingsThemingPage() {
           {/* Tabs Navigation */}
           <div className="flex border-b border-slate-200 dark:border-[#262F40] gap-1 overflow-x-auto pb-px">
             {[
-              { id: "theming" as const, label: t.settingsTabTheming, icon: Palette },
-              { id: "branding" as const, label: t.settingsTabBranding, icon: Building2 },
-              { id: "watermark" as const, label: t.settingsTabWatermark, icon: Sparkles },
-              { id: "branches" as const, label: t.settingsTabBranches, icon: MapPin },
+              { id: "theming" as const, label: t.settingsTabTheming, icon: Palette, restricted: false },
+              { id: "branding" as const, label: t.settingsTabBranding, icon: Building2, restricted: !isSuperAdmin },
+              { id: "watermark" as const, label: t.settingsTabWatermark, icon: Sparkles, restricted: !isSuperAdmin },
+              { id: "branches" as const, label: t.settingsTabBranches, icon: MapPin, restricted: !isSuperAdmin },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -220,12 +239,23 @@ export default function SettingsThemingPage() {
                 >
                   <Icon className="h-4 w-4" />
                   <span>{tab.label}</span>
+                  {tab.restricted && <Lock className="h-3 w-3 opacity-60" />}
                 </button>
               );
             })}
           </div>
 
-          {/* TAB 1: THEMING & VISUAL STYLING */}
+          {activeTab !== "theming" && !isSuperAdmin && (
+            <div
+              role="status"
+              className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs font-medium text-amber-800 dark:text-amber-200"
+            >
+              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span>{adminOnlyBannerText}</span>
+            </div>
+          )}
+
+          {/* TAB 1: THEMING & VISUAL STYLING (Editable by all roles) */}
           {activeTab === "theming" && (
             <div className="space-y-6">
               {/* Luxury Theme Presets */}
@@ -374,6 +404,7 @@ export default function SettingsThemingPage() {
                           borderColor: isSelected ? "#FFFFFF" : "transparent",
                         }}
                         title={`${c.name} (${c.hex})`}
+                        aria-label={`${c.name} (${c.hex})`}
                       >
                         {isSelected && <Check className="h-4 w-4 text-white drop-shadow" />}
                       </button>
@@ -389,12 +420,14 @@ export default function SettingsThemingPage() {
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
+                      aria-label={t.settingsCustomColor}
                       value={theming.primaryColor}
                       onChange={(e) => handleColorChange(e.target.value)}
                       className="h-8 w-10 rounded border border-slate-200 dark:border-[#262F40] cursor-pointer bg-transparent"
                     />
                     <input
                       type="text"
+                      aria-label="Hex color code"
                       value={tempColor}
                       onChange={(e) => setTempColor(e.target.value)}
                       onBlur={() => {
@@ -403,7 +436,7 @@ export default function SettingsThemingPage() {
                         }
                       }}
                       placeholder="#1A73E8"
-                      className="w-28 rounded border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] px-2.5 py-1 text-xs font-mono uppercase font-bold text-slate-800 dark:text-white outline-none focus:border-[#1A73E8]"
+                      className="w-28 rounded border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] px-2.5 py-1 text-xs font-mono uppercase font-bold text-slate-800 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)]"
                     />
                   </div>
                 </div>
@@ -430,7 +463,7 @@ export default function SettingsThemingPage() {
                         key={item.r}
                         type="button"
                         onClick={() => updateTheming({ borderRadius: item.r })}
-                        className={`py-2 text-xs font-semibold border transition cursor-pointer text-center ${
+                        className={`py-2 text-xs font-semibold border transition cursor-pointer text-center tabular-nums ${
                           theming.borderRadius === item.r
                             ? "border-2 bg-slate-100 dark:bg-white/[0.05] shadow-xs font-bold"
                             : "border-slate-200 dark:border-[#262F40] text-slate-600 dark:text-slate-400"
@@ -495,10 +528,113 @@ export default function SettingsThemingPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Typography & Contrast Accessibility */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-4 shadow-xs">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-1.5">
+                    <Type className="h-3.5 w-3.5" style={{ color: theming.primaryColor }} />
+                    <span>
+                      {language === "fa"
+                        ? "فونت رابط کاربری"
+                        : language === "ps"
+                        ? "د کارن بڼې لیکبڼه"
+                        : "Console Typography"}
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mb-3">
+                    Primary Latin typeface paired with Vazirmatn for Dari & Pashto.
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {FONT_FAMILY_OPTIONS.map((font) => {
+                      const isSelected = theming.fontFamily === font.id;
+                      return (
+                        <button
+                          key={font.id}
+                          type="button"
+                          onClick={() => updateTheming({ fontFamily: font.id })}
+                          className={`p-2 rounded-lg border text-start transition cursor-pointer ${
+                            isSelected
+                              ? "border-2 bg-slate-100 dark:bg-white/[0.05] shadow-xs"
+                              : "border-slate-200 dark:border-[#262F40] text-slate-600 dark:text-slate-400"
+                          }`}
+                          style={{
+                            borderColor: isSelected ? theming.primaryColor : undefined,
+                          }}
+                        >
+                          <span className="block text-xs font-bold text-slate-900 dark:text-white truncate">
+                            {font.label}
+                          </span>
+                          <span className="block text-[10px] text-slate-500 truncate">
+                            {font.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-4 shadow-xs">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-1.5">
+                    <Contrast className="h-3.5 w-3.5" style={{ color: theming.primaryColor }} />
+                    <span>
+                      {language === "fa"
+                        ? "کنتراست و خوانایی"
+                        : language === "ps"
+                        ? "لوړ تباین او روښانتیا"
+                        : "Contrast & Legibility"}
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mb-3">
+                    Boost border sharpness and text contrast for bright outdoor lots.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      {
+                        id: "standard" as const,
+                        label:
+                          language === "fa"
+                            ? "استاندارد"
+                            : language === "ps"
+                            ? "معیاري"
+                            : "Standard",
+                      },
+                      {
+                        id: "high-contrast" as const,
+                        label:
+                          language === "fa"
+                            ? "کنتراست بالا"
+                            : language === "ps"
+                            ? "لوړ تباین"
+                            : "High Contrast",
+                      },
+                    ].map((opt) => {
+                      const isSelected = theming.contrastMode === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => updateTheming({ contrastMode: opt.id })}
+                          className={`p-2 rounded-lg border text-xs font-semibold transition cursor-pointer ${
+                            isSelected
+                              ? "border-2 bg-slate-100 dark:bg-white/[0.05] shadow-xs font-bold"
+                              : "border-slate-200 dark:border-[#262F40] text-slate-600 dark:text-slate-400"
+                          }`}
+                          style={{
+                            borderColor: isSelected ? theming.primaryColor : undefined,
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* TAB 2: SHOWROOM IDENTITY & BRANDING */}
+          {/* TAB 2: SHOWROOM IDENTITY & BRANDING (SuperAdmin Only Mutations) */}
           {activeTab === "branding" && (
             <div className="space-y-5">
               <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 shadow-xs space-y-4">
@@ -514,9 +650,10 @@ export default function SettingsThemingPage() {
                     </label>
                     <input
                       type="text"
+                      disabled={!isSuperAdmin}
                       value={branding.dealershipName}
-                      onChange={(e) => updateBranding({ dealershipName: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) => handleBrandingUpdate({ dealershipName: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
 
@@ -527,9 +664,10 @@ export default function SettingsThemingPage() {
                     <input
                       type="text"
                       dir="rtl"
+                      disabled={!isSuperAdmin}
                       value={branding.dealershipNameFa}
-                      onChange={(e) => updateBranding({ dealershipNameFa: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) => handleBrandingUpdate({ dealershipNameFa: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
 
@@ -540,9 +678,10 @@ export default function SettingsThemingPage() {
                     <input
                       type="text"
                       dir="rtl"
+                      disabled={!isSuperAdmin}
                       value={branding.dealershipNamePs}
-                      onChange={(e) => updateBranding({ dealershipNamePs: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) => handleBrandingUpdate({ dealershipNamePs: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -555,9 +694,10 @@ export default function SettingsThemingPage() {
                     </label>
                     <input
                       type="text"
+                      disabled={!isSuperAdmin}
                       value={branding.dealershipTagline}
-                      onChange={(e) => updateBranding({ dealershipTagline: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) => handleBrandingUpdate({ dealershipTagline: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
 
@@ -568,9 +708,12 @@ export default function SettingsThemingPage() {
                     <input
                       type="text"
                       maxLength={4}
+                      disabled={!isSuperAdmin}
                       value={branding.dealershipShortCode}
-                      onChange={(e) => updateBranding({ dealershipShortCode: e.target.value.toUpperCase() })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) =>
+                        handleBrandingUpdate({ dealershipShortCode: e.target.value.toUpperCase() })
+                      }
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -583,9 +726,10 @@ export default function SettingsThemingPage() {
                     </label>
                     <input
                       type="text"
+                      disabled={!isSuperAdmin}
                       value={branding.licenseNumber}
-                      onChange={(e) => updateBranding({ licenseNumber: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) => handleBrandingUpdate({ licenseNumber: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
 
@@ -595,9 +739,10 @@ export default function SettingsThemingPage() {
                     </label>
                     <input
                       type="text"
+                      disabled={!isSuperAdmin}
                       value={branding.tinNumber}
-                      onChange={(e) => updateBranding({ tinNumber: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) => handleBrandingUpdate({ tinNumber: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -619,8 +764,9 @@ export default function SettingsThemingPage() {
                       <button
                         key={seal.id}
                         type="button"
-                        onClick={() => updateBranding({ sealStyle: seal.id })}
-                        className={`p-3 rounded-xl border text-start transition cursor-pointer relative ${
+                        disabled={!isSuperAdmin}
+                        onClick={() => handleBrandingUpdate({ sealStyle: seal.id })}
+                        className={`p-3 rounded-xl border text-start transition cursor-pointer relative disabled:opacity-60 disabled:cursor-not-allowed ${
                           isSelected
                             ? "border-2 shadow-xs bg-slate-50 dark:bg-white/[0.04]"
                             : "border-slate-200 dark:border-[#262F40] hover:border-slate-400"
@@ -652,9 +798,12 @@ export default function SettingsThemingPage() {
                     </label>
                     <input
                       type="text"
+                      disabled={!isSuperAdmin}
                       value={branding.authorizedSignatory}
-                      onChange={(e) => updateBranding({ authorizedSignatory: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) =>
+                        handleBrandingUpdate({ authorizedSignatory: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
 
@@ -664,9 +813,10 @@ export default function SettingsThemingPage() {
                     </label>
                     <input
                       type="text"
+                      disabled={!isSuperAdmin}
                       value={branding.signatoryTitle}
-                      onChange={(e) => updateBranding({ signatoryTitle: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) => handleBrandingUpdate({ signatoryTitle: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -674,7 +824,7 @@ export default function SettingsThemingPage() {
             </div>
           )}
 
-          {/* TAB 3: WATERMARK & PHOTO INSPECTIONS */}
+          {/* TAB 3: WATERMARK & PHOTO INSPECTIONS (SuperAdmin Only Mutations) */}
           {activeTab === "watermark" && (
             <div className="space-y-5">
               <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 shadow-xs space-y-4">
@@ -693,9 +843,10 @@ export default function SettingsThemingPage() {
                   </label>
                   <input
                     type="text"
+                    disabled={!isSuperAdmin}
                     value={branding.watermarkText}
-                    onChange={(e) => updateBranding({ watermarkText: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                    onChange={(e) => handleBrandingUpdate({ watermarkText: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -705,11 +856,14 @@ export default function SettingsThemingPage() {
                       {t.settingsWatermarkPosition}
                     </label>
                     <select
+                      disabled={!isSuperAdmin}
                       value={branding.watermarkPosition}
                       onChange={(e) =>
-                        updateBranding({ watermarkPosition: e.target.value as any })
+                        handleBrandingUpdate({
+                          watermarkPosition: e.target.value as BrandingSettings["watermarkPosition"],
+                        })
                       }
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <option value="bottom-right">Bottom Right Corner</option>
                       <option value="bottom-left">Bottom Left Corner</option>
@@ -723,20 +877,25 @@ export default function SettingsThemingPage() {
                       <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                         {t.settingsWatermarkOpacity}
                       </label>
-                      <span className="text-xs font-mono font-bold text-[#1A73E8]">
+                      <span
+                        className="text-xs font-mono font-bold tabular-nums"
+                        style={{ color: theming.primaryColor }}
+                      >
                         {Math.round(branding.watermarkOpacity * 100)}%
                       </span>
                     </div>
                     <input
                       type="range"
+                      disabled={!isSuperAdmin}
                       min={0.1}
                       max={0.8}
                       step={0.05}
                       value={branding.watermarkOpacity}
                       onChange={(e) =>
-                        updateBranding({ watermarkOpacity: parseFloat(e.target.value) })
+                        handleBrandingUpdate({ watermarkOpacity: parseFloat(e.target.value) })
                       }
-                      className="w-full accent-[#1A73E8] cursor-pointer mt-2"
+                      className="w-full cursor-pointer mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                      style={{ accentColor: theming.primaryColor }}
                     />
                   </div>
                 </div>
@@ -780,7 +939,7 @@ export default function SettingsThemingPage() {
             </div>
           )}
 
-          {/* TAB 4: BRANCHES & CONTACT */}
+          {/* TAB 4: BRANCHES & CONTACT (SuperAdmin Only Mutations) */}
           {activeTab === "branches" && (
             <div className="space-y-5">
               <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-5 shadow-xs space-y-4">
@@ -794,9 +953,10 @@ export default function SettingsThemingPage() {
                   </label>
                   <input
                     type="text"
+                    disabled={!isSuperAdmin}
                     value={branding.address}
-                    onChange={(e) => updateBranding({ address: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                    onChange={(e) => handleBrandingUpdate({ address: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -806,9 +966,12 @@ export default function SettingsThemingPage() {
                   </label>
                   <input
                     type="text"
+                    disabled={!isSuperAdmin}
                     value={branding.customsTerminalBranch}
-                    onChange={(e) => updateBranding({ customsTerminalBranch: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                    onChange={(e) =>
+                      handleBrandingUpdate({ customsTerminalBranch: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -819,9 +982,11 @@ export default function SettingsThemingPage() {
                     </label>
                     <input
                       type="text"
+                      dir="ltr"
+                      disabled={!isSuperAdmin}
                       value={branding.phone}
-                      onChange={(e) => updateBranding({ phone: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) => handleBrandingUpdate({ phone: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono tabular-nums text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
 
@@ -831,9 +996,11 @@ export default function SettingsThemingPage() {
                     </label>
                     <input
                       type="text"
+                      dir="ltr"
+                      disabled={!isSuperAdmin}
                       value={branding.whatsapp}
-                      onChange={(e) => updateBranding({ whatsapp: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) => handleBrandingUpdate({ whatsapp: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono tabular-nums text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
 
@@ -843,9 +1010,11 @@ export default function SettingsThemingPage() {
                     </label>
                     <input
                       type="email"
+                      dir="ltr"
+                      disabled={!isSuperAdmin}
                       value={branding.email}
-                      onChange={(e) => updateBranding({ email: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-[#1A73E8]"
+                      onChange={(e) => handleBrandingUpdate({ email: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] p-2 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-[var(--primary-color,#1A73E8)] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -860,7 +1029,7 @@ export default function SettingsThemingPage() {
             <div className="rounded-xl border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-4 shadow-sm">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#262F40] mb-3">
                 <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Eye className="h-4 w-4 text-[#1A73E8]" />
+                  <Eye className="h-4 w-4" style={{ color: theming.primaryColor }} />
                   {t.settingsLivePreview}
                 </span>
                 <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">
@@ -882,10 +1051,14 @@ export default function SettingsThemingPage() {
                       className="h-6 w-6 rounded flex items-center justify-center text-white text-[10px] font-bold"
                       style={{ backgroundColor: theming.primaryColor }}
                     >
-                      {branding.dealershipShortCode || "SM"}
+                      {branding.dealershipShortCode || "ARI"}
                     </div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
-                      {branding.dealershipName}
+                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[130px]">
+                      {language === "ps"
+                        ? branding.dealershipNamePs || branding.dealershipName
+                        : language === "fa"
+                        ? branding.dealershipNameFa || branding.dealershipName
+                        : branding.dealershipName}
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
@@ -895,7 +1068,7 @@ export default function SettingsThemingPage() {
                     >
                       USD
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400">؋70.5</span>
+                    <span className="text-[10px] font-mono tabular-nums text-slate-400">؋70.5</span>
                   </div>
                 </div>
               </div>
@@ -922,8 +1095,8 @@ export default function SettingsThemingPage() {
                       </span>
                     </div>
                     <div className="absolute bottom-2 end-2">
-                      <span className="text-[10px] font-mono font-bold text-white bg-black/60 px-1.5 py-0.5 rounded">
-                        #HD-1092
+                      <span className="text-[10px] font-mono tabular-nums font-bold text-white bg-black/60 px-1.5 py-0.5 rounded">
+                        #ARI-1092
                       </span>
                     </div>
                   </div>
@@ -933,7 +1106,7 @@ export default function SettingsThemingPage() {
                     </div>
                     <div className="flex justify-between items-center mt-2">
                       <span
-                        className="text-xs font-bold"
+                        className="text-xs font-bold tabular-nums"
                         style={{ color: theming.primaryColor }}
                       >
                         $115,000 USD
@@ -993,4 +1166,3 @@ export default function SettingsThemingPage() {
     </div>
   );
 }
-

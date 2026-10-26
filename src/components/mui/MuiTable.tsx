@@ -86,14 +86,20 @@ export interface MuiTableCellProps extends TableCellProps {
 }
 
 export const MuiTableCell = React.forwardRef<HTMLTableCellElement, MuiTableCellProps>(
-  function MuiTableCell({ children, header, align = "left", className = "", ...props }, ref) {
+  function MuiTableCell({ children, header, align, className = "", ...props }, ref) {
+    const alignClass =
+      align === "right"
+        ? "text-end"
+        : align === "center"
+        ? "text-center"
+        : "text-start";
     return (
       <TableCell
         ref={ref}
         variant={header ? "head" : undefined}
         component={header ? "th" : undefined}
         align={align}
-        className={className}
+        className={`${alignClass} ${className}`.trim()}
         {...props}
       >
         {children}

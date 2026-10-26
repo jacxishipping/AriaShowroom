@@ -39,6 +39,8 @@ import {
   PanelRightOpen,
   BarChart3,
   Keyboard,
+  ExternalLink,
+  FileUp,
 } from "lucide-react";
 
 export default function ErpOperationsCockpit() {
@@ -80,6 +82,14 @@ export default function ErpOperationsCockpit() {
   >("year");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  const availableMakes = useMemo(() => {
+    const makes = new Set<string>(["Toyota", "Lexus"]);
+    vehicles.forEach((v) => {
+      if (v.make) makes.add(v.make);
+    });
+    return Array.from(makes).sort();
+  }, [vehicles]);
+
   // Metrics calculations
   const activeLotVehicles = useMemo(
     () => vehicles.filter((v) => v.status === "Available on Lot"),
@@ -118,7 +128,7 @@ export default function ErpOperationsCockpit() {
     }
   };
 
-  // Filter & sort (integrating global filters, PinnedViews, and Looker Studio chartFilter)
+  // Filter & sort
   const processedVehicles = useMemo(() => {
     const list = vehicles.filter((v) => {
       if (filters.status !== "ALL" && v.status !== filters.status) return false;
@@ -148,12 +158,14 @@ export default function ErpOperationsCockpit() {
     });
 
     list.sort((a, b) => {
-      const valA: any = a[sortField];
-      const valB: any = b[sortField];
-      if (typeof valA === "string") {
+      const valA = a[sortField];
+      const valB = b[sortField];
+      if (typeof valA === "string" && typeof valB === "string") {
         return sortDir === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
       }
-      return sortDir === "asc" ? valA - valB : valB - valA;
+      return sortDir === "asc"
+        ? Number(valA) - Number(valB)
+        : Number(valB) - Number(valA);
     });
 
     return list;
@@ -189,7 +201,7 @@ export default function ErpOperationsCockpit() {
   };
 
   const handleBatchPriceAdjust = async (deltaPct: number) => {
-    if (selectedVehicleIds.length === 0) return;
+    if (selectedVehicleIds.length === 0 || currentRole !== "SuperAdmin") return;
     await batchAdjustVehiclePrice(selectedVehicleIds, deltaPct);
   };
 
@@ -205,18 +217,25 @@ export default function ErpOperationsCockpit() {
     );
   };
 
+  const dealerName =
+    language === "ps"
+      ? branding?.dealershipNamePs || branding?.dealershipName || "Aria Motors"
+      : language === "fa"
+      ? branding?.dealershipNameFa || branding?.dealershipName || "Aria Motors"
+      : branding?.dealershipName || "Aria Motors";
+
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
-      {/* Google Cloud Console Page Header */}
+      {/* Enterprise Console Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-3 border-b border-slate-200 dark:border-[#262F40]">
         <div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span>Sadozai Motors Herat</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span>{dealerName}</span>
             <span>·</span>
-            <span>Bagh-e-Azadi Showroom</span>
+            <span>{branding?.address || "Bagh-e-Azadi Boulevard, Herat"}</span>
             <span>·</span>
-            <span className="font-mono text-[#1A73E8] dark:text-[#8AB4F8] font-semibold">
-              {t.dashboardLicense} #49912
+            <span className="font-mono text-[var(--theme-primary)] font-semibold">
+              {branding?.licenseNumber || `${t.dashboardLicense} #49912`}
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
@@ -234,7 +253,7 @@ export default function ErpOperationsCockpit() {
             onClick={() => setShowLookerAnalytics(!showLookerAnalytics)}
             className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-md border text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
               showLookerAnalytics
-                ? "border-[#1A73E8] bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8]"
+                ? "border-[var(--theme-primary)] bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]"
                 : "border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-slate-700 dark:text-slate-300"
             }`}
           >
@@ -245,7 +264,7 @@ export default function ErpOperationsCockpit() {
           <button
             type="button"
             onClick={() => setIsShortcutsModalOpen(true)}
-            className="hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-xs font-semibold text-slate-600 dark:text-slate-300 hover:border-[#1A73E8]"
+            className="hidden md:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-xs font-semibold text-slate-600 dark:text-slate-300 hover:border-[var(--theme-primary)] cursor-pointer"
             title={t.dashboardKeyboardShortcutsTitle}
           >
             <Keyboard className="h-3.5 w-3.5" />
@@ -268,16 +287,30 @@ export default function ErpOperationsCockpit() {
             {t.inventoryExportCsv}
           </MuiButton>
 
-          <MuiButton
-            component={Link}
-            href="/intake"
-            variant="contained"
-            color="primary"
-            size="small"
-            startIcon={<Plus className="h-3.5 w-3.5" />}
-          >
-            {t.addNewVehicle}
-          </MuiButton>
+          {currentRole === "SuperAdmin" && (
+            <>
+              <MuiButton
+                component={Link}
+                href="/inventory/import"
+                variant="outlined"
+                color="inherit"
+                size="small"
+                startIcon={<FileUp className="h-3.5 w-3.5" />}
+              >
+                {t.importTitle}
+              </MuiButton>
+              <MuiButton
+                component={Link}
+                href="/intake"
+                variant="contained"
+                color="primary"
+                size="small"
+                startIcon={<Plus className="h-3.5 w-3.5" />}
+              >
+                {t.addNewVehicle}
+              </MuiButton>
+            </>
+          )}
         </div>
       </div>
 
@@ -285,7 +318,7 @@ export default function ErpOperationsCockpit() {
       <PinnedViewsBar />
       <WorkflowAlerts />
 
-      {/* Google Cloud 1px Hairline KPI Strip */}
+      {/* 1px Hairline KPI Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-200 dark:bg-[#262F40] border border-slate-200 dark:border-[#262F40] rounded-lg overflow-hidden">
         {/* Cell 01: Active Lot Valuation */}
         <button
@@ -326,7 +359,7 @@ export default function ErpOperationsCockpit() {
         >
           <div className="flex items-center justify-between w-full text-xs font-semibold text-slate-500 dark:text-slate-400">
             <span>02. {t.dashboardExecutedContracts}</span>
-            <span className="font-mono text-[11px] text-[#1A73E8] dark:text-[#8AB4F8]">
+            <span className="font-mono text-[11px] text-[var(--theme-primary)]">
               {sales.length} {t.dashboardDeeds}
             </span>
           </div>
@@ -385,7 +418,7 @@ export default function ErpOperationsCockpit() {
             <span>Islam Qala Port</span>
             <Link
               href="/logistics"
-              className="text-[#1A73E8] dark:text-[#8AB4F8] font-semibold hover:underline"
+              className="text-[var(--theme-primary)] font-semibold hover:underline"
             >
               {t.dashboardPortVault} →
             </Link>
@@ -393,10 +426,10 @@ export default function ErpOperationsCockpit() {
         </div>
       </div>
 
-      {/* Looker Studio Interactive Cross-Filtering Analytics Strip */}
+      {/* Interactive Cross-Filtering Analytics Strip */}
       {showLookerAnalytics && <LookerAnalyticsStrip />}
 
-      {/* Main Google Cloud Resource Table */}
+      {/* Main Fleet Resource Table */}
       <div className="rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] overflow-hidden">
         {/* Underlined Tab Bar + Make Filter */}
         <div className="px-4 border-b border-slate-200 dark:border-[#262F40] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70 dark:bg-[#121722]">
@@ -412,10 +445,11 @@ export default function ErpOperationsCockpit() {
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => setFilter("status", tab.id)}
                   className={`py-3 border-b-2 text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
                     isActive
-                      ? "border-[#1A73E8] dark:border-[#8AB4F8] text-[#1A73E8] dark:text-[#8AB4F8]"
+                      ? "border-[var(--theme-primary)] text-[var(--theme-primary)]"
                       : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
@@ -431,13 +465,17 @@ export default function ErpOperationsCockpit() {
           {/* Table Make Filter & Counter */}
           <div className="flex flex-wrap items-center gap-2.5 py-2 sm:py-0 shrink-0">
             <select
+              aria-label={t.allMakes}
               value={filters.make}
               onChange={(e) => setFilter("make", e.target.value)}
-              className="h-7 ps-2.5 pe-6 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[#1A73E8] cursor-pointer"
+              className="h-7 ps-2.5 pe-6 text-xs rounded-md border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-[var(--theme-primary)] cursor-pointer"
             >
               <option value="ALL">{t.allMakes}</option>
-              <option value="Toyota">Toyota</option>
-              <option value="Lexus">Lexus</option>
+              {availableMakes.map((make) => (
+                <option key={make} value={make}>
+                  {make}
+                </option>
+              ))}
             </select>
 
             {(filters.search ||
@@ -445,6 +483,7 @@ export default function ErpOperationsCockpit() {
               filters.status !== "ALL" ||
               chartFilter) && (
               <button
+                type="button"
                 onClick={() => {
                   resetFilters();
                   setChartFilter(null);
@@ -461,77 +500,6 @@ export default function ErpOperationsCockpit() {
           </div>
         </div>
 
-        {/* Google Workspace / Cloud Console Multi-Select Batch Action Bar */}
-        {selectedVehicleIds.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-[#1A73E8] text-white text-xs">
-            <div className="flex items-center gap-3">
-              <span className="font-mono font-bold">
-                {t.dashboardSelectedCount.replace(
-                  "{count}",
-                  String(selectedVehicleIds.length)
-                )}
-              </span>
-              <button
-                onClick={() => setSelectedVehicleIds([])}
-                className="text-[11px] text-white/80 underline hover:text-white"
-              >
-                {t.inventoryDeselectAll}
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] text-white/80 hidden md:inline me-1">
-                {t.dashboardStatus}:
-              </span>
-              <button
-                onClick={() => handleBatchStatus("Available on Lot")}
-                className="px-2.5 py-1 rounded bg-white/15 hover:bg-white/25 font-semibold text-[11px] whitespace-nowrap"
-              >
-                {t.dashboardSet} {t.inventoryOnLot}
-              </button>
-              <button
-                onClick={() => handleBatchStatus("In Transit")}
-                className="px-2.5 py-1 rounded bg-white/15 hover:bg-white/25 font-semibold text-[11px] whitespace-nowrap"
-              >
-                {t.dashboardSet} {t.inventoryInTransit}
-              </button>
-              <button
-                onClick={() => handleBatchStatus("Reserved/Deposit Paid")}
-                className="px-2.5 py-1 rounded bg-white/15 hover:bg-white/25 font-semibold text-[11px] whitespace-nowrap"
-              >
-                {t.dashboardSet} {t.inventoryReserved}
-              </button>
-
-              <span className="mx-1 text-white/40">|</span>
-              <span className="text-[11px] text-white/80 hidden md:inline">
-                {t.dashboardRepricing}:
-              </span>
-              <button
-                onClick={() => handleBatchPriceAdjust(-2)}
-                className="px-2 py-1 rounded bg-white/15 hover:bg-white/25 font-mono font-semibold text-[11px]"
-                title={t.dashboardReducePrice}
-              >
-                -2%
-              </button>
-              <button
-                onClick={() => handleBatchPriceAdjust(2)}
-                className="px-2 py-1 rounded bg-white/15 hover:bg-white/25 font-mono font-semibold text-[11px]"
-                title={t.dashboardIncreasePrice}
-              >
-                +2%
-              </button>
-
-              <span className="mx-1 text-white/40">|</span>
-              <button
-                onClick={handleBatchExport}
-                className="px-2.5 py-1 rounded bg-white text-[#1A73E8] font-semibold text-[11px] hover:bg-slate-100 whitespace-nowrap"
-              >
-                {t.dashboardExportSelectedCsv}
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* High-Density Resource Table */}
         <MuiTableContainer className="overflow-x-auto !border-0 !rounded-none">
           <MuiTable dense size="small" className="w-full">
@@ -540,12 +508,13 @@ export default function ErpOperationsCockpit() {
                 <MuiTableCell header className="w-8 !px-2 text-center">
                   <input
                     type="checkbox"
+                    aria-label={t.inventorySelectAll}
                     checked={
                       processedVehicles.length > 0 &&
                       selectedVehicleIds.length === processedVehicles.length
                     }
                     onChange={handleSelectAll}
-                    className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                    className="h-3.5 w-3.5 rounded border-slate-300 accent-[var(--theme-primary)] cursor-pointer"
                   />
                 </MuiTableCell>
                 <MuiTableCell
@@ -557,9 +526,9 @@ export default function ErpOperationsCockpit() {
                     <span>{t.dashboardResourceStockVin}</span>
                     {sortField === "stockNumber" ? (
                       sortDir === "asc" ? (
-                        <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
+                        <ArrowUp className="h-3 w-3 text-[var(--theme-primary)]" />
                       ) : (
-                        <ArrowDown className="h-3 w-3 text-[#1A73E8]" />
+                        <ArrowDown className="h-3 w-3 text-[var(--theme-primary)]" />
                       )
                     ) : (
                       <ArrowUpDown className="h-3 w-3 text-slate-400" />
@@ -579,9 +548,9 @@ export default function ErpOperationsCockpit() {
                       <span>{t.totalLanded}</span>
                       {sortField === "landedCost" ? (
                         sortDir === "asc" ? (
-                          <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
+                          <ArrowUp className="h-3 w-3 text-[var(--theme-primary)]" />
                         ) : (
-                          <ArrowDown className="h-3 w-3 text-[#1A73E8]" />
+                          <ArrowDown className="h-3 w-3 text-[var(--theme-primary)]" />
                         )
                       ) : (
                         <ArrowUpDown className="h-3 w-3 text-slate-400" />
@@ -599,9 +568,9 @@ export default function ErpOperationsCockpit() {
                     <span>{t.sellingPrice}</span>
                     {sortField === "sellingPrice" ? (
                       sortDir === "asc" ? (
-                        <ArrowUp className="h-3 w-3 text-[#1A73E8]" />
+                        <ArrowUp className="h-3 w-3 text-[var(--theme-primary)]" />
                       ) : (
-                        <ArrowDown className="h-3 w-3 text-[#1A73E8]" />
+                        <ArrowDown className="h-3 w-3 text-[var(--theme-primary)]" />
                       )
                     ) : (
                       <ArrowUpDown className="h-3 w-3 text-slate-400" />
@@ -644,7 +613,7 @@ export default function ErpOperationsCockpit() {
                       key={veh.id}
                       className={
                         isSelected || isInspected
-                          ? "bg-[#1A73E8]/[0.06] dark:bg-[#8AB4F8]/[0.08]"
+                          ? "bg-[var(--theme-primary)]/[0.06]"
                           : undefined
                       }
                     >
@@ -652,9 +621,10 @@ export default function ErpOperationsCockpit() {
                       <MuiTableCell className="w-8 !px-2 text-center">
                         <input
                           type="checkbox"
+                          aria-label={`${t.inventorySelectVehicles}: ${veh.year} ${veh.make} ${veh.model}`}
                           checked={isSelected}
                           onChange={() => handleToggleSelect(veh.id)}
-                          className="h-3.5 w-3.5 rounded border-slate-300 accent-[#1A73E8] cursor-pointer"
+                          className="h-3.5 w-3.5 rounded border-slate-300 accent-[var(--theme-primary)] cursor-pointer"
                         />
                       </MuiTableCell>
 
@@ -664,6 +634,7 @@ export default function ErpOperationsCockpit() {
                           <button
                             type="button"
                             onClick={() => setInspectedVehicleId(veh.id)}
+                            aria-label={`${t.dashboardQuickInspect}: ${veh.year} ${veh.make} ${veh.model}`}
                             className="relative h-8 w-12 shrink-0 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-[#262F40] block group/thumb cursor-pointer"
                             title={t.dashboardQuickInspect}
                           >
@@ -683,16 +654,15 @@ export default function ErpOperationsCockpit() {
                           </button>
 
                           <div className="min-w-0">
-                            <button
-                              type="button"
-                              onClick={() => setInspectedVehicleId(veh.id)}
-                              className="font-bold text-xs text-slate-900 dark:text-white hover:text-[#1A73E8] dark:hover:text-[#8AB4F8] transition-colors block truncate leading-tight text-start cursor-pointer"
+                            <Link
+                              href={`/vehicles/${veh.id}`}
+                              className="font-bold text-xs text-slate-900 dark:text-white hover:text-[var(--theme-primary)] transition-colors block truncate leading-tight text-start"
                             >
                               {veh.year} {veh.make} {veh.model}{" "}
                               <span className="font-normal text-slate-500">{veh.trim}</span>
-                            </button>
+                            </Link>
                             <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5 truncate">
-                              <span className="font-semibold text-[#1A73E8] dark:text-[#8AB4F8]">
+                              <span className="font-semibold text-[var(--theme-primary)]">
                                 {veh.stockNumber}
                               </span>
                               <span>·</span>
@@ -710,6 +680,8 @@ export default function ErpOperationsCockpit() {
                       <MuiTableCell className="py-2 whitespace-nowrap">
                         <div className="relative inline-block">
                           <select
+                            aria-label={`${t.dashboardStatus}: ${veh.stockNumber}`}
+                            disabled={currentRole === "Accountant"}
                             value={veh.status}
                             onChange={(e) =>
                               void setVehicleStatus(
@@ -717,13 +689,13 @@ export default function ErpOperationsCockpit() {
                                 e.target.value as VehicleItem["status"]
                               ).catch((error) => addToast(error.message, "error"))
                             }
-                            className={`text-[11px] font-mono font-semibold rounded px-2 py-0.5 border transition-all cursor-pointer outline-none appearance-none pe-5 leading-tight ${
+                            className={`text-[11px] font-mono font-semibold rounded px-2 py-0.5 border transition-all cursor-pointer outline-none appearance-none pe-5 leading-tight disabled:opacity-60 ${
                               veh.status === "Available on Lot"
                                 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
                                 : veh.status === "In Transit"
                                 ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30"
                                 : veh.status === "Reserved/Deposit Paid"
-                                ? "bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8] border-[#1A73E8]/30"
+                                ? "bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] border-[var(--theme-primary)]/30"
                                 : "bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                             }`}
                           >
@@ -784,8 +756,8 @@ export default function ErpOperationsCockpit() {
                             onClick={() => setInspectedVehicleId(veh.id)}
                             className={`px-2 py-1 rounded border text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer ${
                               isInspected
-                                ? "border-[#1A73E8] bg-[#1A73E8] text-white"
-                                : "border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-slate-700 dark:text-slate-200"
+                                ? "border-[var(--theme-primary)] bg-[var(--theme-primary)] text-white"
+                                : "border-slate-200 dark:border-[#262F40] hover:border-[var(--theme-primary)] text-slate-700 dark:text-slate-200"
                             }`}
                             title={t.inventoryInspectorTitle}
                           >
@@ -794,8 +766,18 @@ export default function ErpOperationsCockpit() {
                           </button>
 
                           <Link
+                            href={`/vehicles/${veh.id}`}
+                            aria-label={`${t.viewDetails}: ${veh.stockNumber}`}
+                            className="p-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[var(--theme-primary)] text-slate-600 dark:text-slate-300 hover:text-[var(--theme-primary)] transition-colors"
+                            title={t.viewDetails}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Link>
+
+                          <Link
                             href={`/vehicles/${veh.id}/deed`}
-                            className="p-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-slate-600 dark:text-slate-300 hover:text-[#1A73E8] transition-colors"
+                            aria-label={`${t.dashboardGenerateDeed}: ${veh.stockNumber}`}
+                            className="p-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[var(--theme-primary)] text-slate-600 dark:text-slate-300 hover:text-[var(--theme-primary)] transition-colors"
                             title={t.dashboardGenerateDeed}
                           >
                             <FileText className="h-3.5 w-3.5" />
@@ -803,8 +785,10 @@ export default function ErpOperationsCockpit() {
 
                           {currentRole === "SuperAdmin" && (
                             <button
+                              type="button"
+                              aria-label={`${t.inventoryDeleteVehicle}: ${veh.stockNumber}`}
                               onClick={() => setVehicleToDelete(veh)}
-                              className="p-1 rounded border border-transparent hover:border-rose-500/40 text-slate-400 hover:text-rose-600 transition-colors"
+                              className="p-1 rounded border border-transparent hover:border-rose-500/40 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                               title={t.inventoryDeleteVehicle}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -825,13 +809,13 @@ export default function ErpOperationsCockpit() {
           <span>
             {t.dashboardShowingResources
               .replace("{visible}", String(processedVehicles.length))
-              .replace("{total}", String(vehicles.length))} ·{" "}
-            {t.dashboardPressToCycleInspector}{" "}
-            <kbd className="px-1 py-0.2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
+              .replace("{total}", String(vehicles.length))}{" "}
+            · {t.dashboardPressToCycleInspector}{" "}
+            <kbd className="px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
               j
             </kbd>{" "}
             /{" "}
-            <kbd className="px-1 py-0.2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
+            <kbd className="px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
               k
             </kbd>{" "}
           </span>
@@ -841,7 +825,6 @@ export default function ErpOperationsCockpit() {
         </div>
       </div>
 
-      
       {/* About Showroom & Customs Terminal Overview Section */}
       <section
         id="about"
@@ -854,17 +837,22 @@ export default function ErpOperationsCockpit() {
                 ★
               </span>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                About {branding?.dealershipName || "Aria Motors"} Herat
+                {language === "ps"
+                  ? `د ${dealerName} په اړه`
+                  : language === "fa"
+                  ? `درباره ${dealerName}`
+                  : `About ${dealerName}`}
               </h2>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {branding?.dealershipTagline || "Premier Luxury Automotive Showroom & Import Agency"}
+              {branding?.dealershipTagline ||
+                "Premier Luxury Automotive Showroom & Import Agency"}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-2.5 py-1 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold">
-              License #49912
+            <span className="px-2.5 py-1 rounded bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] text-xs font-semibold">
+              {branding?.licenseNumber || "License #49912"}
             </span>
             <span className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
               Islam Qala Verified Customs
@@ -882,7 +870,7 @@ export default function ErpOperationsCockpit() {
               {branding?.address || "Bagh-e-Azadi Boulevard, Herat, Afghanistan"}
             </p>
             <p className="text-[11px] text-slate-400">
-              Mon – Sat: 8:00 AM – 7:30 PM (Friday by Appointment)
+              {branding?.phone || "+93 79 910 2030"}
             </p>
           </div>
 
@@ -892,7 +880,8 @@ export default function ErpOperationsCockpit() {
               <span>Import Corridor & Customs</span>
             </h3>
             <p className="text-slate-500 dark:text-slate-400">
-              {branding?.customsTerminalBranch || "Islam Qala Dry Port Customs Terminal #3"}
+              {branding?.customsTerminalBranch ||
+                "Islam Qala Dry Port Customs Terminal #3"}
             </p>
             <p className="text-[11px] text-slate-400">
               Direct Gulf & Dubai Jebel Ali transit, bonded escort clearance & Maktoub inspection.
@@ -984,7 +973,7 @@ export default function ErpOperationsCockpit() {
           { label: t.inventorySold, value: "Sold" },
         ]}
         onApplyStatus={(status) => void handleBatchStatus(status as VehicleItem["status"])}
-        onAdjustPrice={handleBatchPriceAdjust}
+        onAdjustPrice={currentRole === "SuperAdmin" ? handleBatchPriceAdjust : undefined}
         onExportCSV={handleBatchExport}
         onClearSelection={() => setSelectedVehicleIds([])}
       />

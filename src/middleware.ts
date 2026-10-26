@@ -7,7 +7,9 @@ export default withAuth(
       request.nextauth.token?.mustChangePassword &&
       request.nextUrl.pathname !== "/account/security/password"
     ) {
-      return NextResponse.redirect(new URL("/account/security/password", request.url));
+      return NextResponse.redirect(
+        new URL("/account/security/password?forced=1", request.url)
+      );
     }
   },
   {
@@ -41,7 +43,7 @@ export const config = {
     "/intake/:path*",
     "/logistics/:path*",
     "/scanner/:path*",
-    "/vehicles/:id/deed/:path*",
-    "/vehicles/:id/settlement/:path*",
+    "/settings/:path*",
+    "/vehicles/:path*",
   ],
 };

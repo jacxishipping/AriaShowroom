@@ -14,6 +14,7 @@ import {
   Heart,
   Layers,
   PanelRightOpen,
+  Car,
 } from "lucide-react";
 
 interface VehicleCardProps {
@@ -34,6 +35,7 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
     toggleCompare,
     setInspectedVehicleId,
     addToast,
+    branding,
   } = useShowroomStore();
   const t = translations[language];
 
@@ -42,7 +44,7 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
 
   const isFavorite = favoriteIds.includes(vehicle.id);
   const isCompared = compareIds.includes(vehicle.id);
-  const currentImage = vehicle.images[activePhotoIndex] || vehicle.images[0];
+  const currentImage = vehicle.images[activePhotoIndex] || vehicle.images[0] || "";
 
   const showDealerMargin =
     !clientPresentationMode &&
@@ -86,6 +88,11 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
     toggleCompare(vehicle.id);
   };
 
+  const handleTriggerQuickView = () => {
+    if (onQuickView) onQuickView(vehicle);
+    else setInspectedVehicleId(vehicle.id);
+  };
+
   const marginAmount = vehicle.sellingPrice - vehicle.landedCost;
   const originUrl =
     typeof window !== "undefined"
@@ -101,21 +108,28 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
     .replace("{vin}", vehicle.vin)
     .replace("{price}", vehicle.sellingPrice.toLocaleString())
     .replace("{url}", originUrl);
-  const waNumber = (useShowroomStore.getState().branding?.whatsapp || "93799102030").replace(/[^0-9]/g, "");
+  const waNumber = (branding?.whatsapp || "93799102030").replace(/[^0-9]/g, "");
   const whatsappUrl = `https://wa.me/${waNumber || "93799102030"}?text=${encodeURIComponent(
     whatsappMessage
   )}`;
 
   return (
     <div
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          handleTriggerQuickView();
+        }
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group relative flex flex-col rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] overflow-hidden transition-colors hover:border-[#1A73E8] dark:hover:border-[#8AB4F8]"
+      className="group relative flex flex-col rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] overflow-hidden transition-colors hover:border-[var(--theme-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
     >
-      {/* Top Unboxed Metadata Strip (Zero-Pill Compliance) */}
+      {/* Top Unboxed Metadata Strip */}
       <div className="flex items-center justify-between px-3.5 py-2 border-b border-slate-100 dark:border-[#262F40] bg-slate-50/70 dark:bg-[#121722] text-[11px]">
         <div className="flex items-center gap-1.5 font-mono text-slate-500 dark:text-slate-400 truncate">
-          <span className="font-bold text-[#1A73E8] dark:text-[#8AB4F8]">
+          <span className="font-bold text-[var(--theme-primary)]">
             {vehicle.stockNumber}
           </span>
           <span>·</span>
@@ -146,10 +160,12 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
 
         <div className="flex items-center gap-1 shrink-0">
           <button
+            type="button"
             onClick={handleToggleCompare}
-            className={`h-6 w-6 rounded flex items-center justify-center border transition-colors ${
+            aria-label={isCompared ? t.cardRemoveComparison : t.cardAddComparison}
+            className={`h-6 w-6 rounded flex items-center justify-center border transition-colors cursor-pointer ${
               isCompared
-                ? "bg-[#1A73E8] text-white border-[#1A73E8]"
+                ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)]"
                 : "border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
             title={isCompared ? t.cardRemoveComparison : t.cardAddComparison}
@@ -158,8 +174,10 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
           </button>
 
           <button
+            type="button"
             onClick={handleToggleFavorite}
-            className={`h-6 w-6 rounded flex items-center justify-center border transition-colors ${
+            aria-label={isFavorite ? t.cardRemoveSaved : t.cardSaveVehicle}
+            className={`h-6 w-6 rounded flex items-center justify-center border transition-colors cursor-pointer ${
               isFavorite
                 ? "bg-rose-600 text-white border-rose-600"
                 : "border-slate-200 dark:border-[#262F40] text-slate-500 hover:text-rose-600"
@@ -174,14 +192,20 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
       {/* 16:10 Vehicle Photography Viewport */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
         <Link href={`/vehicles/${vehicle.id}`} className="block w-full h-full">
-          <Image
-            src={currentImage}
-            alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-            fill
-            referrerPolicy="no-referrer"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-103"
-          />
+          {currentImage ? (
+            <Image
+              src={currentImage}
+              alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+              fill
+              referrerPolicy="no-referrer"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-103"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-slate-400">
+              <Car className="h-10 w-10 opacity-40" />
+            </div>
+          )}
         </Link>
 
         {/* Photo Navigation Arrows */}
@@ -192,15 +216,17 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
             }`}
           >
             <button
+              type="button"
               onClick={handlePrevPhoto}
-              className="pointer-events-auto h-7 w-7 rounded bg-black/75 text-white hover:bg-black flex items-center justify-center transition-colors"
+              className="pointer-events-auto h-7 w-7 rounded bg-black/75 text-white hover:bg-black flex items-center justify-center transition-colors cursor-pointer"
               aria-label={t.cardPreviousPhoto}
             >
               <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
             </button>
             <button
+              type="button"
               onClick={handleNextPhoto}
-              className="pointer-events-auto h-7 w-7 rounded bg-black/75 text-white hover:bg-black flex items-center justify-center transition-colors"
+              className="pointer-events-auto h-7 w-7 rounded bg-black/75 text-white hover:bg-black flex items-center justify-center transition-colors cursor-pointer"
               aria-label={t.cardNextPhoto}
             >
               <ChevronRight className="h-4 w-4 rtl:rotate-180" />
@@ -209,15 +235,17 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
         )}
 
         {/* Discreet Monospace Frame Counter */}
-        <div className="absolute bottom-2.5 end-2.5 px-1.5 py-0.5 rounded bg-black/75 font-mono tabular-nums text-[10px] text-white/90 pointer-events-none">
-          {activePhotoIndex + 1}/{vehicle.images.length}
-        </div>
+        {vehicle.images.length > 0 && (
+          <div className="absolute bottom-2.5 end-2.5 px-1.5 py-0.5 rounded bg-black/75 font-mono tabular-nums text-[10px] text-white/90 pointer-events-none">
+            {activePhotoIndex + 1}/{vehicle.images.length}
+          </div>
+        )}
       </div>
 
       {/* Title & Clean Unboxed Spec Line */}
       <div className="p-4 pb-3 space-y-1">
         <Link href={`/vehicles/${vehicle.id}`} className="block">
-          <h3 className="text-base font-bold text-slate-900 group-hover:text-[#1A73E8] dark:text-white dark:group-hover:text-[#8AB4F8] transition-colors truncate tracking-tight">
+          <h3 className="text-base font-bold text-slate-900 group-hover:text-[var(--theme-primary)] dark:text-white transition-colors truncate tracking-tight">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h3>
         </Link>
@@ -240,7 +268,7 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
         </div>
       </div>
 
-      {/* Valuation & Google Workspace Actions Footer */}
+      {/* Valuation & Actions Footer */}
       <div className="mt-auto p-4 pt-3 border-t border-slate-100 dark:border-[#262F40] flex flex-col gap-3 bg-white dark:bg-[#161B26]">
         <div className="flex items-baseline justify-between gap-2">
           <div>
@@ -267,20 +295,19 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
         <div className="grid grid-cols-3 gap-1.5">
           <button
             type="button"
-            onClick={() => {
-              if (onQuickView) onQuickView(vehicle);
-              else setInspectedVehicleId(vehicle.id);
-            }}
-            className="inline-flex items-center justify-center gap-1 h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] hover:border-[#1A73E8] text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors whitespace-nowrap cursor-pointer"
+            aria-label={`${t.inventoryInspect}: ${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+            onClick={handleTriggerQuickView}
+            className="inline-flex items-center justify-center gap-1 h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#121722] hover:border-[var(--theme-primary)] text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors whitespace-nowrap cursor-pointer"
             title={t.inventoryInspectorTitle}
           >
-            <PanelRightOpen className="h-3 w-3 text-[#1A73E8] dark:text-[#8AB4F8]" />
+            <PanelRightOpen className="h-3 w-3 text-[var(--theme-primary)]" />
             <span>{t.inventoryInspect}</span>
           </button>
 
           <Link
             href={`/vehicles/${vehicle.id}`}
-            className="inline-flex items-center justify-center h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors whitespace-nowrap"
+            aria-label={`${t.viewDetails}: ${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+            className="inline-flex items-center justify-center h-8 px-2.5 rounded-md border border-slate-200 dark:border-[#262F40] hover:border-[var(--theme-primary)] text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors whitespace-nowrap"
           >
             <span>{t.viewDetails}</span>
           </Link>
@@ -289,7 +316,8 @@ export function VehicleCard({ vehicle, onQuickView }: VehicleCardProps) {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1 h-8 px-2.5 rounded-md bg-[#1A73E8] hover:bg-[#1557B0] text-xs font-semibold text-white transition-colors whitespace-nowrap"
+            aria-label={`${t.buttonInquireWhatsApp}: ${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+            className="inline-flex items-center justify-center gap-1 h-8 px-2.5 rounded-md bg-[var(--theme-primary)] hover:opacity-90 text-xs font-semibold text-white transition-opacity whitespace-nowrap"
           >
             <Send className="h-3 w-3" />
             <span>{t.buttonInquireWhatsApp}</span>

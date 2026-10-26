@@ -116,9 +116,9 @@ export const THEME_PRESETS: ThemePreset[] = [
   },
   {
     id: "royal-gold",
-    name: "Sadozai Royal Gold",
-    nameFa: "طلایی سلطنتی سدوزی",
-    namePs: "د سدوزی شاهي طلايي",
+    name: "Aria Royal Gold",
+    nameFa: "طلایی سلطنتی آریا",
+    namePs: "د آریا شاهي طلايي",
     primaryColor: "#D97706",
     borderRadius: 12,
     uiDensity: "comfortable",
@@ -493,10 +493,19 @@ export const useShowroomStore = create<ShowroomStore>()(
         })),
 
       updateTheming: (updates) =>
-        set((state) => ({
-          theming: { ...state.theming, ...updates },
-          ...(updates.themeMode ? { darkMode: updates.themeMode === "dark" } : {}),
-        })),
+        set((state) => {
+          const nextMode = updates.themeMode ?? state.theming.themeMode;
+          let nextDark = state.darkMode;
+          if (updates.themeMode === "dark") nextDark = true;
+          else if (updates.themeMode === "light") nextDark = false;
+          else if (updates.themeMode === "system" && typeof window !== "undefined") {
+            nextDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          }
+          return {
+            theming: { ...state.theming, ...updates, themeMode: nextMode },
+            darkMode: nextDark,
+          };
+        }),
 
       applyThemePreset: (presetId) => {
         const preset = THEME_PRESETS.find((p) => p.id === presetId);
@@ -514,7 +523,7 @@ export const useShowroomStore = create<ShowroomStore>()(
       },
 
       resetBrandingToDefault: () => set({ branding: DEFAULT_BRANDING }),
-      resetThemingToDefault: () => set({ theming: DEFAULT_THEMING }),
+      resetThemingToDefault: () => set({ theming: DEFAULT_THEMING, darkMode: false }),
 
       inspectedVehicleId: null,
       setInspectedVehicleId: (id) => set({ inspectedVehicleId: id }),
@@ -590,7 +599,17 @@ export const useShowroomStore = create<ShowroomStore>()(
       setExchangeRate: (exchangeRate) => set({ exchangeRate }),
       setLanguage: (language) => set({ language }),
       setCurrentRole: (currentRole) => set({ currentRole }),
-      toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
+      toggleDarkMode: () =>
+        set((state) => {
+          const nextDark = !state.darkMode;
+          return {
+            darkMode: nextDark,
+            theming: {
+              ...state.theming,
+              themeMode: nextDark ? "dark" : "light",
+            },
+          };
+        }),
       setMobileDrawerOpen: (open) => set({ mobileDrawerOpen: open }),
       toggleMobileDrawer: () => set((state) => ({ mobileDrawerOpen: !state.mobileDrawerOpen })),
       toggleClientPresentationMode: () =>
@@ -737,7 +756,7 @@ export const useShowroomStore = create<ShowroomStore>()(
         const newSale: SaleRecord = {
           ...saleData,
           id: `sale-${Date.now()}`,
-          contractNumber: `SM-DEED-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+          contractNumber: `ARI-DEED-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
           saleDate: new Date().toISOString().split("T")[0],
         };
         await writeRecord("/api/sales", {
@@ -1205,6 +1224,10 @@ export const useShowroomStore = create<ShowroomStore>()(
                       "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=1400&q=85",
                     ];
 
+              const rawNotes = v.conditionNotes && typeof v.conditionNotes === "object"
+                ? v.conditionNotes
+                : {};
+
               return {
                 id: v.id,
                 stockNumber: v.stockNumber,
@@ -1234,16 +1257,17 @@ export const useShowroomStore = create<ShowroomStore>()(
                 features: v.features || [],
                 description: v.description || "",
                 descriptionDari: v.descriptionDari || "",
-                conditionNotes: v.conditionNotes || {
-                  exterior: "Clean original condition",
-                  interior: "Leather interior, smoke-free",
-                  engine: "Factory standard inspection",
-                  tires: "Good condition",
-                  accidentHistory: "Clean Title",
+                conditionNotes: {
+                  exterior: rawNotes.exterior || "Clean original condition",
+                  interior: rawNotes.interior || "Leather interior, smoke-free",
+                  engine: rawNotes.engine || "Factory standard inspection",
+                  tires: rawNotes.tires || "Good condition",
+                  accidentHistory: rawNotes.accidentHistory || "Clean Title",
+                  ...(rawNotes.yardLocation ? { yardLocation: rawNotes.yardLocation } : {}),
+                  ...(rawNotes.logisticsStage !== undefined ? { logisticsStage: Number(rawNotes.logisticsStage) } : {}),
+                  ...(rawNotes.paintZones ? { paintZones: rawNotes.paintZones } : {}),
                 },
-                yardLocation: v.yardLocation || (v.conditionNotes && typeof v.conditionNotes === "object"
-                  ? (v.conditionNotes as Record<string, string>).yardLocation
-                  : "Main Showroom - Bagh-e-Azadi"),
+                yardLocation: v.yardLocation || rawNotes.yardLocation || "Main Showroom - Bagh-e-Azadi",
                 images: imageUrls,
                 documents: v.documents || [],
                 viewsCount: Number(v.viewsCount) || 0,
@@ -1396,7 +1420,7 @@ export const useShowroomStore = create<ShowroomStore>()(
     }),
     {
       name: "sadozai_motors_storage",
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         currency: state.currency,
         exchangeRate: state.exchangeRate,
@@ -1404,6 +1428,8 @@ export const useShowroomStore = create<ShowroomStore>()(
         darkMode: state.darkMode,
         clientPresentationMode: state.clientPresentationMode,
         activeBranch: state.activeBranch,
+        branding: state.branding,
+        theming: state.theming,
         filters: state.filters,
         favoriteIds: state.favoriteIds,
         compareIds: state.compareIds,
@@ -1420,6 +1446,8 @@ export const useShowroomStore = create<ShowroomStore>()(
           darkMode: Boolean(state?.darkMode),
           clientPresentationMode: Boolean(state?.clientPresentationMode),
           activeBranch: state?.activeBranch || "Herat HQ · Bagh-e-Azadi",
+          branding: { ...DEFAULT_BRANDING, ...(state?.branding || {}) },
+          theming: { ...DEFAULT_THEMING, ...(state?.theming || {}) },
           filters: state?.filters || initialFilters,
           favoriteIds: state?.favoriteIds || [],
           compareIds: state?.compareIds || [],

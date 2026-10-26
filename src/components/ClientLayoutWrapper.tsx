@@ -16,7 +16,14 @@ import { KeyboardShortcutManager } from "./KeyboardShortcutManager";
 import { FirstTimeTutorialModal } from "./FirstTimeTutorialModal";
 
 export function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
-  const { language, darkMode, fetchDatabaseRecords, setCurrentRole, theming, branding } = useShowroomStore();
+  const {
+    language,
+    darkMode,
+    fetchDatabaseRecords,
+    setCurrentRole,
+    theming,
+    updateTheming,
+  } = useShowroomStore();
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const isRtl = language === "fa" || language === "ps";
@@ -35,6 +42,19 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
     [darkMode, theming?.primaryColor, theming?.borderRadius]
   );
 
+  // Sync system dark mode preference when themeMode === "system"
+  useEffect(() => {
+    if (theming?.themeMode !== "system" || typeof window === "undefined") return;
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const applySystem = (matches: boolean) => {
+      useShowroomStore.setState({ darkMode: matches });
+    };
+    applySystem(mql.matches);
+    const listener = (e: MediaQueryListEvent) => applySystem(e.matches);
+    mql.addEventListener("change", listener);
+    return () => mql.removeEventListener("change", listener);
+  }, [theming?.themeMode, updateTheming]);
+
   useEffect(() => {
     const html = document.documentElement;
     if (darkMode) {
@@ -46,8 +66,26 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
     html.lang = language;
     if (theming?.primaryColor) {
       html.style.setProperty("--primary-color", theming.primaryColor);
+      html.style.setProperty("--primary", theming.primaryColor);
     }
-  }, [darkMode, isRtl, language, theming?.primaryColor]);
+    if (theming?.borderRadius !== undefined) {
+      html.style.setProperty("--custom-radius", `${theming.borderRadius}px`);
+    }
+    html.dataset.font = theming?.fontFamily || "jakarta";
+    html.dataset.density = theming?.uiDensity || "comfortable";
+    html.dataset.contrast = theming?.contrastMode || "standard";
+    html.dataset.glass = theming?.glassmorphism === false ? "false" : "true";
+  }, [
+    darkMode,
+    isRtl,
+    language,
+    theming?.primaryColor,
+    theming?.borderRadius,
+    theming?.fontFamily,
+    theming?.uiDensity,
+    theming?.contrastMode,
+    theming?.glassmorphism,
+  ]);
 
   // Synchronize live PostgreSQL database state via Next.js API routes on mount
   useEffect(() => {
@@ -101,7 +139,13 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
         {/* Right Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
           <ErpHeader />
-          <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">{children}</main>
+          <main
+            className={`flex-1 overflow-x-hidden ${
+              theming?.uiDensity === "compact" ? "p-3 sm:p-4" : "p-4 sm:p-6"
+            }`}
+          >
+            {children}
+          </main>
           <Footer />
         </div>
 

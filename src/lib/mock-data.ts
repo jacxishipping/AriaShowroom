@@ -4,6 +4,9 @@ export interface VehicleCondition {
   engine: string;
   tires: string;
   accidentHistory: string;
+  yardLocation?: string;
+  logisticsStage?: number;
+  paintZones?: Record<string, "original" | "repaint" | "putty" | "replaced">;
 }
 
 export interface VehicleDocument {
@@ -222,7 +225,7 @@ export const INITIAL_ACCOUNTS: AccountRecord[] = [
   { code: "4020", name: "Documentation & Transfer Fee Income", nameDari: "عواید کمیشن و ترخیص اسناد رسمی", type: "REVENUE", balanceUSD: 0 },
   { code: "5010", name: "COGS - Vehicle Purchase Cost", nameDari: "بهای تمام‌شده خرید موتر", type: "EXPENSE", balanceUSD: 0 },
   { code: "5020", name: "COGS - Freight & Port Clearance", nameDari: "بهای تمام‌شده ترانزیت و محصول گمرک", type: "EXPENSE", balanceUSD: 0 },
-  { code: "6010", name: "Operating Expense - Detailing & Detailing", nameDari: "هزینه رنگ، ترمیم و سرویس تخنیکی", type: "EXPENSE", balanceUSD: 0 },
+  { code: "6010", name: "Operating Expense - Detailing & Prep", nameDari: "هزینه رنگ، ترمیم و سرویس تخنیکی", type: "EXPENSE", balanceUSD: 0 },
   { code: "6020", name: "Operating Expense - Solar, Fuel & Generator", nameDari: "هزینه برق، سولر و دیزل ژنراتور نندارتون", type: "EXPENSE", balanceUSD: 0 },
   { code: "6030", name: "Operating Expense - Staff Salaries & Bonus", nameDari: "معاشات و کمیشن ماهوار پرسونل", type: "EXPENSE", balanceUSD: 0 },
 ];

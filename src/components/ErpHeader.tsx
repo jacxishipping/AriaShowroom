@@ -31,10 +31,9 @@ import {
   Calculator,
   PanelRightOpen,
   LogOut,
-  HelpCircle,
-  Compass,
   SlidersHorizontal,
-  Palette,
+  KeyRound,
+  Upload,
 } from "lucide-react";
 
 interface ErpHeaderProps {
@@ -85,8 +84,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
     setActiveBranch,
     setInspectedVehicleId,
     setIsShortcutsModalOpen,
-    setIsTutorialOpen,
-    hasCompletedTutorial,
+    branding,
   } = useShowroomStore();
 
   const [isBranchMenuOpen, setIsBranchMenuOpen] = useState(false);
@@ -112,6 +110,17 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
 
   const t = translations[language];
   const { data: session } = useSession();
+
+  const localizedDealershipName =
+    language === "fa"
+      ? branding.dealershipNameFa || branding.dealershipName
+      : language === "ps"
+      ? branding.dealershipNamePs || branding.dealershipName
+      : branding.dealershipName;
+
+  useEffect(() => {
+    setTempRate(exchangeRate.toString());
+  }, [exchangeRate]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -163,50 +172,52 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
     }
   };
 
-  // Parse structured Omnibox input tokens (e.g. "origin:Japan", "fuel:Hybrid", "make:Toyota")
+  // Parse structured Omnibox input tokens when committed with a trailing space (e.g. "make:Toyota ")
   const handleOmniboxInput = (raw: string) => {
-    const lower = raw.trim().toLowerCase();
-    if (lower === "status:available" || lower === "status:lot") {
-      setFilter("status", "Available on Lot");
-      setFilter("search", "");
-      addToast("Applied token filter: Status = Available on Lot", "info");
-      return;
-    }
-    if (lower === "status:transit") {
-      setFilter("status", "In Transit");
-      setFilter("search", "");
-      addToast("Applied token filter: Status = In Transit", "info");
-      return;
-    }
-    if (lower === "origin:japan") {
-      setFilter("originCountry", "Japan");
-      setFilter("search", "");
-      addToast("Applied token filter: Origin = Japan", "info");
-      return;
-    }
-    if (lower === "origin:uae" || lower === "origin:dubai") {
-      setFilter("originCountry", "UAE");
-      setFilter("search", "");
-      addToast("Applied token filter: Origin = UAE", "info");
-      return;
-    }
-    if (lower === "fuel:hybrid") {
-      setFilter("fuelType", "Hybrid");
-      setFilter("search", "");
-      addToast("Applied token filter: Fuel = Hybrid", "info");
-      return;
-    }
-    if (lower === "make:toyota") {
-      setFilter("make", "Toyota");
-      setFilter("search", "");
-      addToast("Applied token filter: Make = Toyota", "info");
-      return;
-    }
-    if (lower === "make:lexus") {
-      setFilter("make", "Lexus");
-      setFilter("search", "");
-      addToast("Applied token filter: Make = Lexus", "info");
-      return;
+    if (raw.endsWith(" ")) {
+      const lower = raw.trim().toLowerCase();
+      if (lower === "status:available" || lower === "status:lot") {
+        setFilter("status", "Available on Lot");
+        setFilter("search", "");
+        addToast("Applied token filter: Status = Available on Lot", "info");
+        return;
+      }
+      if (lower === "status:transit") {
+        setFilter("status", "In Transit");
+        setFilter("search", "");
+        addToast("Applied token filter: Status = In Transit", "info");
+        return;
+      }
+      if (lower === "origin:japan") {
+        setFilter("originCountry", "Japan");
+        setFilter("search", "");
+        addToast("Applied token filter: Origin = Japan", "info");
+        return;
+      }
+      if (lower === "origin:uae" || lower === "origin:dubai") {
+        setFilter("originCountry", "UAE");
+        setFilter("search", "");
+        addToast("Applied token filter: Origin = UAE", "info");
+        return;
+      }
+      if (lower === "fuel:hybrid") {
+        setFilter("fuelType", "Hybrid");
+        setFilter("search", "");
+        addToast("Applied token filter: Fuel = Hybrid", "info");
+        return;
+      }
+      if (lower === "make:toyota") {
+        setFilter("make", "Toyota");
+        setFilter("search", "");
+        addToast("Applied token filter: Make = Toyota", "info");
+        return;
+      }
+      if (lower === "make:lexus") {
+        setFilter("make", "Lexus");
+        setFilter("search", "");
+        addToast("Applied token filter: Make = Lexus", "info");
+        return;
+      }
     }
     setFilter("search", raw);
   };
@@ -248,19 +259,34 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
         c.city.toLowerCase().includes(q)
     );
 
-    const quickActions = [
-      {
-        id: "intake",
-        title: "Register New Vehicle Intake",
-        desc: "VIN decoder, Islam Qala tariff calculator, 11-zone paint blueprint",
-        icon: Plus,
-        color: "text-[#1A73E8] bg-[#1A73E8]/10",
-        action: () => {
-          setIsCommandPaletteOpen(false);
-          if (onOpenIntake) onOpenIntake();
-          else router.push("/intake");
-        },
-      },
+    const baseActions = [
+      ...(currentRole === "SuperAdmin"
+        ? [
+            {
+              id: "intake",
+              title: "Register New Vehicle Intake",
+              desc: "VIN decoder, Islam Qala tariff calculator, 11-zone paint blueprint",
+              icon: Plus,
+              color: "text-primary bg-primary/10",
+              action: () => {
+                setIsCommandPaletteOpen(false);
+                if (onOpenIntake) onOpenIntake();
+                else router.push("/intake");
+              },
+            },
+            {
+              id: "import",
+              title: "Batch CSV Vehicle Import",
+              desc: "Bulk upload fleet inventory records from spreadsheet CSV",
+              icon: Upload,
+              color: "text-cyan-600 bg-cyan-500/10",
+              action: () => {
+                setIsCommandPaletteOpen(false);
+                router.push("/inventory/import");
+              },
+            },
+          ]
+        : []),
       {
         id: "inventory",
         title: "Explore Vehicle Inventory Fleet",
@@ -272,21 +298,25 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
           router.push("/inventory");
         },
       },
-      {
-        id: "accounting",
-        title: "Dealership Accounting, P&L & Sarrafi",
-        desc: "Sarrafi balances, receivables, P&L, double-entry ledgers",
-        icon: TrendingUp,
-        color: "text-amber-600 bg-amber-500/10",
-        action: () => {
-          setIsCommandPaletteOpen(false);
-          router.push("/accounting");
-        },
-      },
+      ...(currentRole === "SuperAdmin" || currentRole === "Accountant"
+        ? [
+            {
+              id: "accounting",
+              title: "Dealership Accounting, P&L & Sarrafi",
+              desc: "Sarrafi balances, receivables, P&L, double-entry ledgers",
+              icon: TrendingUp,
+              color: "text-amber-600 bg-amber-500/10",
+              action: () => {
+                setIsCommandPaletteOpen(false);
+                router.push("/accounting");
+              },
+            },
+          ]
+        : []),
       {
         id: "scanner",
         title: "Scan Vehicle VIN Barcode",
-        desc: "Live camera barcode & OCR scanner for doorjambs",
+        desc: "Live camera barcode & QR scanner for lot doorjambs",
         icon: ScanLine,
         color: "text-indigo-600 bg-indigo-500/10",
         action: () => {
@@ -297,7 +327,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
       {
         id: "shortcuts",
         title: "Keyboard Shortcuts Cheat Sheet (?)",
-        desc: "View Gmail & Google Cloud Console navigation chords",
+        desc: "View workspace navigation chords & inspector hotkeys",
         icon: Keyboard,
         color: "text-slate-700 dark:text-slate-200 bg-slate-500/10",
         action: () => {
@@ -308,7 +338,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
       {
         id: "settings",
         title: "Showroom Settings, Theming & Branding",
-        desc: "Visual themes, luxury presets, logo, seals & contact info",
+        desc: "Visual themes, UI density, logo, seals & contact info",
         icon: SlidersHorizontal,
         color: "text-purple-600 bg-purple-500/10",
         action: () => {
@@ -316,7 +346,17 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
           router.push("/settings");
         },
       },
-
+      {
+        id: "password",
+        title: "Change Account Password",
+        desc: "Update your personal security credentials",
+        icon: KeyRound,
+        color: "text-rose-600 bg-rose-500/10",
+        action: () => {
+          setIsCommandPaletteOpen(false);
+          router.push("/account/security/password");
+        },
+      },
       {
         id: "switchCurrency",
         title: `Switch Display Currency to ${currency === "USD" ? "AFN (؋)" : "USD ($)"}`,
@@ -328,7 +368,9 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
           addToast(`Currency switched to ${currency === "USD" ? "AFN" : "USD"}`, "info");
         },
       },
-    ].filter(
+    ];
+
+    const quickActions = baseActions.filter(
       (a) =>
         !q ||
         a.title.toLowerCase().includes(q) ||
@@ -374,6 +416,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
     commandQuery,
     vehicles,
     customers,
+    currentRole,
     onOpenIntake,
     router,
     currency,
@@ -432,10 +475,19 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
   };
 
   const activeProfile = roleProfiles[currentRole];
+  const displayName = session?.user?.name || activeProfile.name;
+  const displayInitials = session?.user?.name
+    ? session.user.name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : activeProfile.avatar;
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 backdrop-blur-md dark:border-[#262F40] dark:bg-[#161B26]/95 sm:px-6">
-      {/* Left + Center Zone: Branch Project Selector + Google Cloud Omnibox */}
+    <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 backdrop-blur-md dark:border-[#262F40] dark:bg-[#161B26]/95 sm:px-6 print:hidden">
+      {/* Left + Center Zone: Branch Project Selector + Omnibox */}
       <div className="flex flex-1 items-center gap-2.5 max-w-3xl">
         <button
           onClick={toggleMobileDrawer}
@@ -445,15 +497,16 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
           <Menu className="h-4 w-4" />
         </button>
 
-        {/* Google Cloud Console Project / Branch Selector */}
+        {/* Dealership Branch Selector */}
         <div ref={branchMenuRef} className="relative hidden lg:block shrink-0">
           <button
             type="button"
             onClick={() => setIsBranchMenuOpen(!isBranchMenuOpen)}
-            className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50/70 dark:bg-[#0F141C] px-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-[#1A73E8] transition-colors whitespace-nowrap"
-            title="Select Dealership Branch / Port Context"
+            className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 dark:border-[#262F40] bg-slate-50/70 dark:bg-[#0F141C] px-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-primary transition-colors whitespace-nowrap"
+            title={`${localizedDealershipName} — Select Branch / Port Context`}
+            aria-label="Select Dealership Branch"
           >
-            <Building2 className="h-3.5 w-3.5 text-[#1A73E8] dark:text-[#8AB4F8]" />
+            <Building2 className="h-3.5 w-3.5 text-primary" />
             <span>{activeBranch}</span>
             <ChevronDown className="h-3 w-3 text-slate-400" />
           </button>
@@ -461,7 +514,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
           {isBranchMenuOpen && (
             <div className="absolute start-0 top-10 z-50 w-64 rounded-lg border border-slate-200 dark:border-[#262F40] bg-white dark:bg-[#161B26] p-1.5 shadow-xl">
               <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Active Dealership Facility
+                {localizedDealershipName}
               </div>
               {BRANCH_LOCATIONS.map((branch) => {
                 const isSelected = activeBranch === branch;
@@ -476,7 +529,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                     }}
                     className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-xs font-medium transition ${
                       isSelected
-                        ? "bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8] font-semibold"
+                        ? "bg-primary/10 text-primary font-semibold"
                         : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                     }`}
                   >
@@ -489,7 +542,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
           )}
         </div>
 
-        {/* Google Cloud Structured Omnibox */}
+        {/* Structured Omnibox */}
         <div ref={searchContainerRef} className="relative w-full">
           <div className="relative flex items-center">
             <Search className="pointer-events-none absolute start-3 h-3.5 w-3.5 text-slate-400" />
@@ -497,6 +550,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
               ref={searchInputRef}
               data-omnibox="true"
               type="text"
+              aria-label="Search vehicles, VIN, stock number, or customers"
               placeholder={
                 language === "ps"
                   ? "د موټر VIN، سټاک کوډ، یا تذکره..."
@@ -510,7 +564,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                 setIsSearchFocused(true);
               }}
               onFocus={() => setIsSearchFocused(true)}
-              className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/80 py-1.5 ps-8 pe-28 text-xs font-medium text-slate-900 outline-none transition focus:border-[#1A73E8] focus:bg-white dark:border-[#262F40] dark:bg-[#0F141C] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-[#8AB4F8]"
+              className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/80 py-1.5 ps-8 pe-28 text-xs font-medium text-slate-900 outline-none transition focus:border-primary focus:bg-white dark:border-[#262F40] dark:bg-[#0F141C] dark:text-white dark:placeholder:text-slate-500"
             />
 
             <div className="absolute end-1.5 flex items-center gap-1">
@@ -519,6 +573,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                   onClick={() => setFilter("search", "")}
                   className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
                   title="Clear search"
+                  aria-label="Clear search"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -526,16 +581,18 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
 
               <Link
                 href="/scanner"
-                className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-[#1A73E8] dark:hover:bg-slate-800 dark:hover:text-[#8AB4F8]"
+                className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-primary dark:hover:bg-slate-800"
                 title="Scan VIN Barcode"
+                aria-label="Scan VIN Barcode"
               >
                 <ScanLine className="h-3.5 w-3.5" />
               </Link>
 
               <button
                 onClick={() => setIsCommandPaletteOpen(true)}
-                className="hidden rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-500 hover:border-[#1A73E8] hover:text-[#1A73E8] dark:border-[#262F40] dark:bg-[#161B26] dark:text-slate-300 sm:inline-flex"
-                title="Open Command Palette (Ctrl+K or /)"
+                className="hidden rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-500 hover:border-primary hover:text-primary dark:border-[#262F40] dark:bg-[#161B26] dark:text-slate-300 sm:inline-flex"
+                title="Open Command Palette (Ctrl+K)"
+                aria-label="Open Command Palette"
               >
                 ⌘K
               </button>
@@ -547,16 +604,26 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
               {/* Structured Query Token Suggestions */}
               <div>
                 <div className="px-1 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                  <span>Structured Filter Tokens</span>
+                  <span>
+                    {language === "fa"
+                      ? "فیلترهای سریع"
+                      : language === "ps"
+                      ? "چټک فلټرونه"
+                      : "Structured Filter Tokens"}
+                  </span>
                   <button
                     type="button"
                     onClick={() => {
                       resetFilters();
                       setIsSearchFocused(false);
                     }}
-                    className="text-[#1A73E8] dark:text-[#8AB4F8] hover:underline"
+                    className="text-primary hover:underline"
                   >
-                    Reset all filters
+                    {language === "fa"
+                      ? "پاک کردن فیلترها"
+                      : language === "ps"
+                      ? "فلټرونه پاک کړئ"
+                      : "Reset all filters"}
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -569,7 +636,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                         setIsSearchFocused(false);
                         addToast(`Filter applied: ${tok.label}`, "info");
                       }}
-                      className="px-2 py-1 rounded border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] hover:border-[#1A73E8] text-[11px] font-mono text-slate-700 dark:text-slate-300 cursor-pointer"
+                      className="px-2 py-1 rounded border border-slate-200 dark:border-[#262F40] bg-slate-50 dark:bg-[#0F141C] hover:border-primary text-[11px] font-mono text-slate-700 dark:text-slate-300 cursor-pointer"
                     >
                       {tok.label}
                     </button>
@@ -579,9 +646,9 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
 
               {/* Instant Inline Sarrafi Calculator when typing numbers */}
               {numericFxPreview && (
-                <div className="rounded-md border border-[#1A73E8]/30 bg-[#1A73E8]/[0.05] p-2.5 flex items-center justify-between text-xs font-mono">
+                <div className="rounded-md border border-primary/30 bg-primary/[0.05] p-2.5 flex items-center justify-between text-xs font-mono">
                   <div className="flex items-center gap-2">
-                    <Calculator className="h-4 w-4 text-[#1A73E8]" />
+                    <Calculator className="h-4 w-4 text-primary" />
                     <span>Live Sarrafi FX Conversion:</span>
                   </div>
                   <div className="tabular-nums font-bold text-slate-900 dark:text-white">
@@ -646,7 +713,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                                   setInspectedVehicleId(v.id);
                                   setIsSearchFocused(false);
                                 }}
-                                className="px-2 py-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-[11px] font-semibold text-[#1A73E8] dark:text-[#8AB4F8] flex items-center gap-1"
+                                className="px-2 py-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-primary text-[11px] font-semibold text-primary flex items-center gap-1"
                                 title="Open in right-hand Inspector Drawer"
                               >
                                 <PanelRightOpen className="h-3 w-3" />
@@ -683,7 +750,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                                 </div>
                               </div>
                             </div>
-                            <span className="font-mono text-[11px] font-semibold text-[#1A73E8] dark:text-[#8AB4F8]">
+                            <span className="font-mono text-[11px] font-semibold text-primary">
                               {c.leadStage}
                             </span>
                           </Link>
@@ -691,6 +758,17 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                       </div>
                     </div>
                   )}
+
+                  {searchResults.vehicles.length === 0 &&
+                    searchResults.customers.length === 0 && (
+                      <div className="py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                        {language === "fa"
+                          ? "هیچ موتر یا مشتری با این مشخصات یافت نشد."
+                          : language === "ps"
+                          ? "په دې ځانګړتیاوو هیڅ موټر یا پیرودونکی ونه موندل شو."
+                          : "No matching vehicles or CRM customers found."}
+                      </div>
+                    )}
                 </div>
               ) : null}
             </div>
@@ -714,13 +792,14 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
             }}
             className={`inline-flex h-8 items-center gap-1.5 px-2.5 text-xs font-semibold transition whitespace-nowrap ${
               clientPresentationMode
-                ? "bg-[#1A73E8]/10 text-[#1A73E8] dark:text-[#8AB4F8]"
+                ? "bg-primary/10 text-primary"
                 : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.03]"
             }`}
             title={t.buttonToggleClientPrivacy}
+            aria-label={t.buttonToggleClientPrivacy}
           >
             {clientPresentationMode ? (
-              <EyeOff className="h-3.5 w-3.5 text-[#1A73E8] dark:text-[#8AB4F8]" />
+              <EyeOff className="h-3.5 w-3.5 text-primary" />
             ) : (
               <Eye className="h-3.5 w-3.5 text-slate-400" />
             )}
@@ -735,10 +814,9 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
               onClick={() => setIsRateEditOpen(!isRateEditOpen)}
               className="inline-flex h-8 items-center gap-1.5 px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.03] whitespace-nowrap"
               title="Switch Currency & Sarrafi Rate"
+              aria-label="Switch Currency and Sarrafi Exchange Rate"
             >
-              <span className="font-mono font-bold text-[#1A73E8] dark:text-[#8AB4F8]">
-                {currency}
-              </span>
+              <span className="font-mono font-bold text-primary">{currency}</span>
               <span className="text-slate-300 dark:text-slate-600">·</span>
               <span className="font-mono tabular-nums text-[11px] text-slate-500 dark:text-slate-400">
                 ؋{exchangeRate}
@@ -760,7 +838,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                     }}
                     className={`rounded px-2 py-1 text-xs font-mono font-semibold ${
                       currency === "USD"
-                        ? "bg-[#1A73E8] text-white"
+                        ? "bg-primary text-white"
                         : "text-slate-600 dark:text-slate-400"
                     }`}
                   >
@@ -774,7 +852,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                     }}
                     className={`rounded px-2 py-1 text-xs font-mono font-semibold ${
                       currency === "AFN"
-                        ? "bg-[#1A73E8] text-white"
+                        ? "bg-primary text-white"
                         : "text-slate-600 dark:text-slate-400"
                     }`}
                   >
@@ -800,15 +878,16 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                       <input
                         type="number"
                         step="0.1"
+                        aria-label="AFN exchange rate per 1 USD"
                         value={tempRate}
                         onChange={(e) => setTempRate(e.target.value)}
-                        className="w-full rounded border border-slate-200 bg-slate-50 py-1 ps-6 pe-2 text-xs font-mono font-semibold outline-none focus:border-[#1A73E8] dark:border-[#262F40] dark:bg-[#0F141C] dark:text-white"
+                        className="w-full rounded border border-slate-200 bg-slate-50 py-1 ps-6 pe-2 text-xs font-mono font-semibold outline-none focus:border-primary dark:border-[#262F40] dark:bg-[#0F141C] dark:text-white"
                         autoFocus
                       />
                     </div>
                     <button
                       type="submit"
-                      className="rounded bg-[#1A73E8] px-3 py-1 text-xs font-semibold text-white hover:bg-[#1557B0]"
+                      className="rounded bg-primary px-3 py-1 text-xs font-semibold text-white hover:opacity-90"
                     >
                       Set
                     </button>
@@ -823,6 +902,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
             <button
               onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
               className="inline-flex h-8 items-center gap-1.5 px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.03] whitespace-nowrap"
+              aria-label="Select Language"
             >
               <Globe className="h-3.5 w-3.5 text-slate-400" />
               <span>{language === "en" ? "EN" : language === "fa" ? "دری" : "پښتو"}</span>
@@ -844,7 +924,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                     }}
                     className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium ${
                       language === l.code
-                        ? "bg-[#1A73E8]/10 font-semibold text-[#1A73E8] dark:text-[#8AB4F8]"
+                        ? "bg-primary/10 font-semibold text-primary"
                         : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/[0.03]"
                     }`}
                   >
@@ -859,8 +939,9 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
           {/* Keyboard Shortcuts Button */}
           <button
             onClick={() => setIsShortcutsModalOpen(true)}
-            className="hidden sm:flex h-8 w-8 items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-[#1A73E8] dark:text-slate-300 dark:hover:bg-white/[0.03]"
+            className="hidden sm:flex h-8 w-8 items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-primary dark:text-slate-300 dark:hover:bg-white/[0.03]"
             title="Keyboard Shortcuts (?)"
+            aria-label="Keyboard Shortcuts"
           >
             <Keyboard className="h-3.5 w-3.5" />
           </button>
@@ -871,10 +952,11 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
               className="relative flex h-8 w-8 items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.03]"
               title="Activity Feed"
+              aria-label="Showroom Activity Notifications"
             >
               <Bell className="h-3.5 w-3.5" />
               {unreadNotifCount > 0 && (
-                <span className="absolute end-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#1A73E8]" />
+                <span className="absolute end-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
               )}
             </button>
 
@@ -887,7 +969,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                   {unreadNotifCount > 0 && (
                     <button
                       onClick={markAllNotificationsRead}
-                      className="text-[11px] font-semibold text-[#1A73E8] dark:text-[#8AB4F8]"
+                      className="text-[11px] font-semibold text-primary"
                     >
                       Mark all read
                     </button>
@@ -899,7 +981,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                       key={n.id}
                       onClick={() => markNotificationRead(n.id)}
                       className={`cursor-pointer p-3 text-xs transition hover:bg-slate-50 dark:hover:bg-white/[0.02] ${
-                        !n.read ? "bg-[#1A73E8]/[0.04]" : ""
+                        !n.read ? "bg-primary/[0.04]" : ""
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -923,6 +1005,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
             onClick={toggleDarkMode}
             className="flex h-8 w-8 items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.03]"
             title="Toggle Daylight / Dark Console Theme"
+            aria-label="Toggle Light or Dark Theme"
           >
             {darkMode ? (
               <Sun className="h-3.5 w-3.5 text-amber-400" />
@@ -936,17 +1019,33 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
             href="/settings"
             className="flex h-8 w-8 items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.03]"
             title={t.settingsTitle || "Settings & Theming"}
+            aria-label="Settings and Theming"
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
           </Link>
 
+          {/* Account Security / Password */}
+          <Link
+            href="/account/security/password"
+            className="flex h-8 w-8 items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.03]"
+            title={
+              language === "fa"
+                ? "تغییر رمز عبور"
+                : language === "ps"
+                ? "پټنوم بدلول"
+                : "Change Account Password"
+            }
+            aria-label="Change Account Password"
+          >
+            <KeyRound className="h-3.5 w-3.5" />
+          </Link>
 
-          <div className="flex items-center gap-2 px-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded bg-[#1A73E8] font-mono text-[10px] font-bold text-white">
-              {activeProfile.avatar}
+          <div className="flex items-center gap-2 ps-2 pe-1">
+            <div className="flex h-5 w-5 items-center justify-center rounded bg-primary font-mono text-[10px] font-bold text-white">
+              {displayInitials}
             </div>
             <span className="hidden font-mono text-[11px] font-semibold text-slate-800 dark:text-slate-200 md:inline">
-              {session?.user?.name || activeProfile.name} · {currentRole}
+              {displayName} · {currentRole}
             </span>
             <button
               type="button"
@@ -970,9 +1069,10 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
       >
         <DialogContent className="p-0 overflow-hidden bg-white dark:bg-[#161B26]">
           <div className="flex items-center px-4 py-3.5 border-b border-slate-200 dark:border-[#262F40] gap-3">
-            <Search className="h-5 w-5 text-[#1A73E8] shrink-0" />
+            <Search className="h-5 w-5 text-primary shrink-0" />
             <input
               type="text"
+              aria-label="Command palette search"
               placeholder="Search vehicles, VIN, customers, actions, or type USD amount for instant AFN conversion..."
               value={commandQuery}
               onChange={(e) => setCommandQuery(e.target.value)}
@@ -983,6 +1083,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
               <button
                 onClick={() => setCommandQuery("")}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                aria-label="Clear command query"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -993,8 +1094,8 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
           </div>
 
           {numericFxPreview && (
-            <div className="px-4 py-2 bg-[#1A73E8]/10 border-b border-[#1A73E8]/20 flex items-center justify-between text-xs font-mono">
-              <span className="font-semibold text-[#1A73E8] dark:text-[#8AB4F8]">
+            <div className="px-4 py-2 bg-primary/10 border-b border-primary/20 flex items-center justify-between text-xs font-mono">
+              <span className="font-semibold text-primary">
                 Instant Sarrafi Calculator (Rate: 1 USD = {exchangeRate} AFN)
               </span>
               <span className="font-bold tabular-nums text-slate-900 dark:text-white">
@@ -1018,7 +1119,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                 onClick={() => setCommandCategory(tab.id as any)}
                 className={`px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   commandCategory === tab.id
-                    ? "bg-[#1A73E8] text-white"
+                    ? "bg-primary text-white"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800"
                 }`}
               >
@@ -1042,13 +1143,13 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                         <button
                           key={act.id}
                           onClick={act.action}
-                          className="flex items-start gap-3 p-2.5 rounded-lg border border-slate-100 dark:border-[#262F40] hover:border-[#1A73E8] transition-colors text-left cursor-pointer group"
+                          className="flex items-start gap-3 p-2.5 rounded-lg border border-slate-100 dark:border-[#262F40] hover:border-primary transition-colors text-start cursor-pointer group"
                         >
                           <div className={`p-2 rounded-md shrink-0 ${act.color}`}>
                             <IconComponent className="h-4 w-4" />
                           </div>
                           <div className="overflow-hidden">
-                            <span className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-[#1A73E8] transition-colors truncate">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-primary transition-colors truncate">
                               {act.title}
                             </span>
                             <span className="text-[10px] text-slate-400 block line-clamp-1">
@@ -1095,11 +1196,11 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                             )}
                           </div>
                           <div className="truncate">
-                            <div className="text-xs font-bold text-slate-900 dark:text-white hover:text-[#1A73E8] transition-colors truncate">
+                            <div className="text-xs font-bold text-slate-900 dark:text-white hover:text-primary transition-colors truncate">
                               {v.year} {v.make} {v.model} ({v.trim})
                             </div>
                             <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5">
-                              <span className="font-semibold text-[#1A73E8] dark:text-[#8AB4F8]">
+                              <span className="font-semibold text-primary">
                                 {v.stockNumber}
                               </span>
                               <span>·</span>
@@ -1111,7 +1212,7 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                         </Link>
 
                         <div className="flex items-center gap-2 shrink-0 ps-2">
-                          <div className="text-right font-mono tabular-nums">
+                          <div className="text-end font-mono tabular-nums">
                             <div className="text-xs font-bold text-slate-900 dark:text-white">
                               ${v.sellingPrice.toLocaleString()}
                             </div>
@@ -1126,10 +1227,76 @@ export function ErpHeader({ onOpenIntake }: ErpHeaderProps) {
                               setIsCommandPaletteOpen(false);
                               setInspectedVehicleId(v.id);
                             }}
-                            className="px-2 py-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-[#1A73E8] text-xs font-semibold text-[#1A73E8] dark:text-[#8AB4F8]"
+                            className="px-2 py-1 rounded border border-slate-200 dark:border-[#262F40] hover:border-primary text-xs font-semibold text-primary"
                           >
                             Inspect
                           </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            {(commandCategory === "all" || commandCategory === "customers") &&
+              commandResults.customers.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2">
+                    CRM Customers ({commandResults.customers.length})
+                  </div>
+                  <div className="space-y-1">
+                    {commandResults.customers.slice(0, 8).map((c) => (
+                      <Link
+                        key={c.id}
+                        href="/admin"
+                        onClick={() => setIsCommandPaletteOpen(false)}
+                        className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.03] border border-transparent hover:border-slate-200 dark:hover:border-[#262F40] transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="p-2 rounded-md bg-primary/10 text-primary shrink-0">
+                            <Users className="h-4 w-4" />
+                          </div>
+                          <div className="truncate">
+                            <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {c.fullName}
+                            </div>
+                            <div className="text-[11px] font-mono text-slate-500">
+                              {c.phone} · {c.city} · Tazkira: {c.tazkiraNumber}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-mono text-[11px] font-semibold shrink-0">
+                          {c.leadStage}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            {(commandCategory === "all" || commandCategory === "sarrafi") &&
+              commandResults.rates.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2">
+                    Sarrafi Live FX Rates ({commandResults.rates.length})
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {commandResults.rates.map((r) => (
+                      <div
+                        key={r.pair}
+                        className="p-2.5 rounded-lg border border-slate-200 dark:border-[#262F40] bg-slate-50/50 dark:bg-[#0F141C]"
+                      >
+                        <div className="text-xs font-bold text-slate-900 dark:text-white">
+                          {r.pair}
+                        </div>
+                        <div className="text-[10px] text-slate-500 mb-1.5">{r.label}</div>
+                        <div className="flex items-center justify-between font-mono tabular-nums">
+                          <span className="text-xs font-bold text-primary">
+                            {r.base} = {r.rate}
+                          </span>
+                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                            {r.trend}
+                          </span>
                         </div>
                       </div>
                     ))}
