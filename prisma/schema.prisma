@@ -324,3 +324,12 @@ model AuditLog {
   @@index([actorId, createdAt])
   @@index([createdAt])
 }
+
+
+model DealershipSettings {
+  id           String   @id @default("default")
+  exchangeRate Float    @default(70.5)
+  activeBranch String   @default("Herat HQ · Bagh-e-Azadi")
+  branding     Json?
+  updatedAt    DateTime @updatedAt
+}

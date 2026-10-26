@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured, ensureDatabaseSchemaSynced } from "@/lib/prisma";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
+
+const VERIFY_LIMIT_PER_MINUTE = 30;
+const VERIFY_WINDOW_MS = 60_000;
 
 const steeringLabels: Record<string, string> = {
   LEFT_HAND: "Left-Hand Drive (LHD)",
@@ -17,6 +21,25 @@ const statusLabels: Record<string, string> = {
 };
 
 export async function GET(request: Request) {
+  const clientIp = getClientIp(request.headers);
+  const rateCheck = checkRateLimit(
+    `verify:${clientIp}`,
+    VERIFY_LIMIT_PER_MINUTE,
+    VERIFY_WINDOW_MS
+  );
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Too many verification queries. Please wait briefly and try again.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateCheck.retryAfterSeconds) },
+      }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const code = (searchParams.get("code") || "").trim();
 

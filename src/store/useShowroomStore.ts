@@ -349,6 +349,7 @@ interface ShowroomStore {
   markAllNotificationsRead: () => void;
 
   // Live PostgreSQL Database Sync
+  fetchDealershipSettings: () => Promise<void>;
   fetchDatabaseRecords: (roleOverride?: RoleType) => Promise<void>;
 }
 
@@ -442,6 +443,38 @@ async function writeRecord(path: string, data: unknown, method = "POST") {
   return result.data ?? null;
 }
 
+let settingsSyncTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingSettingsPatch: Record<string, unknown> = {};
+
+function scheduleSettingsPersist(patch: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  pendingSettingsPatch = {
+    ...pendingSettingsPatch,
+    ...patch,
+    ...(patch.branding && pendingSettingsPatch.branding
+      ? {
+          branding: {
+            ...(pendingSettingsPatch.branding as Record<string, unknown>),
+            ...(patch.branding as Record<string, unknown>),
+          },
+        }
+      : {}),
+  };
+  if (settingsSyncTimer) {
+    clearTimeout(settingsSyncTimer);
+  }
+  settingsSyncTimer = setTimeout(() => {
+    const payload = pendingSettingsPatch;
+    pendingSettingsPatch = {};
+    settingsSyncTimer = null;
+    fetch("/api/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch(() => null);
+  }, 350);
+}
+
 const vehicleStatusToDatabase = {
   "In Transit": "IN_TRANSIT",
   "Under Prep/Maintenance": "UNDER_PREP",
@@ -492,9 +525,13 @@ export const useShowroomStore = create<ShowroomStore>()(
       theming: DEFAULT_THEMING,
 
       updateBranding: (updates) =>
-        set((state) => ({
-          branding: { ...state.branding, ...updates },
-        })),
+        set((state) => {
+          const nextBranding = { ...state.branding, ...updates };
+          if (state.currentRole === "SuperAdmin") {
+            scheduleSettingsPersist({ branding: updates });
+          }
+          return { branding: nextBranding };
+        }),
 
       updateTheming: (updates) =>
         set((state) => {
@@ -526,7 +563,12 @@ export const useShowroomStore = create<ShowroomStore>()(
         }));
       },
 
-      resetBrandingToDefault: () => set({ branding: DEFAULT_BRANDING }),
+      resetBrandingToDefault: () => {
+        set({ branding: DEFAULT_BRANDING });
+        if (get().currentRole === "SuperAdmin") {
+          scheduleSettingsPersist({ branding: DEFAULT_BRANDING });
+        }
+      },
       resetThemingToDefault: () => set({ theming: DEFAULT_THEMING, darkMode: false }),
 
       inspectedVehicleId: null,
@@ -600,7 +642,13 @@ export const useShowroomStore = create<ShowroomStore>()(
       },
 
       setCurrency: (currency) => set({ currency }),
-      setExchangeRate: (exchangeRate) => set({ exchangeRate }),
+      setExchangeRate: (exchangeRate) => {
+        set({ exchangeRate });
+        const role = get().currentRole;
+        if (role === "SuperAdmin" || role === "Accountant") {
+          scheduleSettingsPersist({ exchangeRate });
+        }
+      },
       setLanguage: (language) => set({ language }),
       setCurrentRole: (currentRole) => set({ currentRole }),
       toggleDarkMode: () =>
@@ -618,7 +666,13 @@ export const useShowroomStore = create<ShowroomStore>()(
       toggleMobileDrawer: () => set((state) => ({ mobileDrawerOpen: !state.mobileDrawerOpen })),
       toggleClientPresentationMode: () =>
         set((state) => ({ clientPresentationMode: !state.clientPresentationMode })),
-      setActiveBranch: (activeBranch) => set({ activeBranch }),
+      setActiveBranch: (activeBranch) => {
+        set({ activeBranch });
+        const role = get().currentRole;
+        if (role === "SuperAdmin" || role === "Accountant") {
+          scheduleSettingsPersist({ activeBranch });
+        }
+      },
 
       vehicles: INITIAL_VEHICLES,
       filters: initialFilters,
@@ -1211,9 +1265,34 @@ export const useShowroomStore = create<ShowroomStore>()(
           notifications: state.notifications.map((n) => ({ ...n, read: true })),
         })),
 
+      fetchDealershipSettings: async () => {
+        try {
+          const res = await fetch("/api/settings");
+          if (!res.ok) return;
+          const payload = await res.json().catch(() => null);
+          if (payload?.success && payload.data) {
+            const dbSettings = payload.data;
+            set((state) => ({
+              exchangeRate:
+                Number(dbSettings.exchangeRate) > 0
+                  ? Number(dbSettings.exchangeRate)
+                  : state.exchangeRate,
+              activeBranch: dbSettings.activeBranch || state.activeBranch,
+              branding:
+                dbSettings.branding && typeof dbSettings.branding === "object"
+                  ? { ...DEFAULT_BRANDING, ...dbSettings.branding }
+                  : state.branding,
+            }));
+          }
+        } catch {
+          // Offline / unconfigured DB retains local settings
+        }
+      },
+
       // Live PostgreSQL Database Sync (role-aware; preserves cached/initial records when DB is offline or unconfigured)
       fetchDatabaseRecords: async (roleOverride) => {
         try {
+          void get().fetchDealershipSettings();
           const effectiveRole = roleOverride || get().currentRole;
           const canAccessAccounting =
             effectiveRole === "SuperAdmin" || effectiveRole === "Accountant";

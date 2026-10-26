@@ -19,8 +19,8 @@ export const prisma =
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 /**
- * Ensures any schema columns added in recent features (such as yardLocation, viewsCount, etc.)
- * exist in the PostgreSQL database if it was provisioned prior to schema updates.
+ * Ensures any schema columns or singleton tables added in recent features exist
+ * in the PostgreSQL database if provisioned prior to running `prisma migrate deploy`.
  * Safe, non-destructive, idempotent, and runs at most once per application runtime.
  */
 export async function ensureDatabaseSchemaSynced(): Promise<void> {
@@ -36,6 +36,14 @@ export async function ensureDatabaseSchemaSynced(): Promise<void> {
         ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "budget" DOUBLE PRECISION DEFAULT 0;
         ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "interestedInVehicleId" TEXT;
         ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "passwordChangeRequired" BOOLEAN DEFAULT false;
+        CREATE TABLE IF NOT EXISTS "DealershipSettings" (
+          "id" TEXT NOT NULL DEFAULT 'default',
+          "exchangeRate" DOUBLE PRECISION NOT NULL DEFAULT 70.5,
+          "activeBranch" TEXT NOT NULL DEFAULT 'Herat HQ · Bagh-e-Azadi',
+          "branding" JSONB,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "DealershipSettings_pkey" PRIMARY KEY ("id")
+        );
       EXCEPTION
         WHEN OTHERS THEN NULL;
       END $$;

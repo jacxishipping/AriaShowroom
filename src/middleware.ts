@@ -3,29 +3,38 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(request) {
-    if (
-      request.nextauth.token?.mustChangePassword &&
-      request.nextUrl.pathname !== "/account/security/password"
-    ) {
+    const { pathname } = request.nextUrl;
+    const token = request.nextauth.token;
+    const role = token?.role;
+
+    if (token?.mustChangePassword && pathname !== "/account/security/password") {
       return NextResponse.redirect(
         new URL("/account/security/password?forced=1", request.url)
       );
+    }
+
+    if (pathname.startsWith("/accounting") || pathname.startsWith("/reports")) {
+      if (role !== "ADMIN" && role !== "ACCOUNTANT") {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+    }
+
+    if (
+      pathname.startsWith("/intake") ||
+      pathname.startsWith("/inventory/import") ||
+      pathname.startsWith("/admin/users") ||
+      pathname.startsWith("/admin/audit")
+    ) {
+      if (role !== "ADMIN") {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
     }
   },
   {
     pages: { signIn: "/login" },
     secret: process.env.NEXTAUTH_SECRET,
     callbacks: {
-      authorized: ({ req, token }) => {
-        if (!token) return false;
-        if (req.nextUrl.pathname.startsWith("/accounting")) {
-          return token.role === "ADMIN" || token.role === "ACCOUNTANT";
-        }
-        if (req.nextUrl.pathname.startsWith("/reports")) {
-          return token.role === "ADMIN" || token.role === "ACCOUNTANT";
-        }
-        return true;
-      },
+      authorized: ({ token }) => Boolean(token),
     },
   }
 );

@@ -35,3 +35,13 @@ CREATE INDEX IF NOT EXISTS "AuditLog_entityType_entityId_createdAt_idx" ON "Audi
 CREATE INDEX IF NOT EXISTS "AuditLog_actorId_createdAt_idx" ON "AuditLog"("actorId", "createdAt");
 CREATE INDEX IF NOT EXISTS "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
 
+
+-- 5. DealershipSettings Singleton Table (if not already created)
+CREATE TABLE IF NOT EXISTS "DealershipSettings" (
+  "id" TEXT NOT NULL DEFAULT 'default',
+  "exchangeRate" DOUBLE PRECISION NOT NULL DEFAULT 70.5,
+  "activeBranch" TEXT NOT NULL DEFAULT 'Herat HQ · Bagh-e-Azadi',
+  "branding" JSONB,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "DealershipSettings_pkey" PRIMARY KEY ("id")
+);

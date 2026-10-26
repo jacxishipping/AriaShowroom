@@ -3,7 +3,7 @@
 import React from "react";
 import Paper, { PaperProps } from "@mui/material/Paper";
 
-export interface MuiPaperProps extends PaperProps {}
+export type MuiPaperProps = PaperProps;
 
 export const MuiPaper = React.forwardRef<HTMLDivElement, MuiPaperProps>(function MuiPaper(
   { elevation = 1, variant = "elevation", ...props },

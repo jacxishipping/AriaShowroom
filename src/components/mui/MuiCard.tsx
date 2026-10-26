@@ -6,7 +6,7 @@ import CardHeader, { CardHeaderProps } from "@mui/material/CardHeader";
 import CardContent, { CardContentProps } from "@mui/material/CardContent";
 import CardActions, { CardActionsProps } from "@mui/material/CardActions";
 
-export interface MuiCardProps extends CardProps {}
+export type MuiCardProps = CardProps;
 
 export const MuiCard = React.forwardRef<HTMLDivElement, MuiCardProps>(function MuiCard(
   { elevation = 1, variant = "elevation", ...props },

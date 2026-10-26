@@ -3,8 +3,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { UserRole } from "@prisma/client";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+import { checkRateLimit, resetRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const PASSWORD_STATE_TTL_MS = 15_000;
+const LOGIN_MAX_ATTEMPTS = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -14,38 +17,60 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
-      name: "Aria Motors Dealership Credentials",
+      name: "Dealership Staff Login",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "admin@ariamotors.af" },
+        email: {
+          label: "Email",
+          type: "email",
+          placeholder: "admin@ariamotors.af",
+        },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Please enter both email and password");
+          throw new Error("Email and password are required");
         }
 
-        const email = credentials.email.toLowerCase().trim();
-
-        if (!isDatabaseConfigured()) {
-          throw new Error("Database authentication is unavailable");
+        const normalizedEmail = credentials.email.trim().toLowerCase();
+        const clientIp = getClientIp(req?.headers);
+        const rateLimitKey = `auth:${clientIp}:${normalizedEmail}`;
+        const rateCheck = checkRateLimit(
+          rateLimitKey,
+          LOGIN_MAX_ATTEMPTS,
+          LOGIN_WINDOW_MS
+        );
+        if (!rateCheck.allowed) {
+          throw new Error(
+            `Too many sign-in attempts. Please wait ${rateCheck.retryAfterSeconds} seconds before trying again.`
+          );
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (
-          !user ||
-          credentials.password === "password123" ||
-          credentials.password === "admin123" ||
-          !(await bcrypt.compare(credentials.password, user.passwordHash))
-        ) {
-          return null;
+        const user = await prisma.user.findUnique({
+          where: { email: normalizedEmail },
+        });
+
+        if (!user) {
+          throw new Error("Invalid staff email or password");
         }
 
-        let mustChangePassword = Boolean(user.passwordChangeRequired);
+        const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+        if (!isValid) {
+          throw new Error("Invalid staff email or password");
+        }
+
+        resetRateLimit(rateLimitKey);
+
+        let mustChangePassword = Boolean(
+          (user as { passwordChangeRequired?: boolean }).passwordChangeRequired
+        );
         try {
-          const passwordState = await prisma.$queryRaw<{ passwordChangeRequired: boolean }[]>`
+          const passwordState = await prisma.$queryRaw<
+            { passwordChangeRequired: boolean }[]
+          >`
             SELECT "passwordChangeRequired" FROM "User" WHERE id = ${user.id}
           `;
-          mustChangePassword = passwordState[0]?.passwordChangeRequired ?? mustChangePassword;
+          mustChangePassword =
+            passwordState[0]?.passwordChangeRequired ?? mustChangePassword;
         } catch {
           // Fallback to Prisma model field if raw query fails
         }
@@ -75,8 +100,14 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      const lastChecked = Number((token as { passwordCheckedAt?: number }).passwordCheckedAt || 0);
-      if (token.id && isDatabaseConfigured() && now - lastChecked > PASSWORD_STATE_TTL_MS) {
+      const lastChecked = Number(
+        (token as { passwordCheckedAt?: number }).passwordCheckedAt || 0
+      );
+      if (
+        token.id &&
+        isDatabaseConfigured() &&
+        now - lastChecked > PASSWORD_STATE_TTL_MS
+      ) {
         try {
           const passwordState = await prisma.$queryRaw<
             { passwordChangeRequired: boolean }[]
@@ -84,7 +115,9 @@ export const authOptions: NextAuthOptions = {
             SELECT "passwordChangeRequired" FROM "User" WHERE id = ${token.id}
           `;
           token.mustChangePassword =
-            passwordState[0]?.passwordChangeRequired ?? token.mustChangePassword ?? false;
+            passwordState[0]?.passwordChangeRequired ??
+            token.mustChangePassword ??
+            false;
           (token as { passwordCheckedAt?: number }).passwordCheckedAt = now;
         } catch {
           // Retain cached token state on transient database connection errors
@@ -96,8 +129,11 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
         (session.user as { role?: string }).role = token.role as string;
-        (session.user as { phone?: string }).phone = token.phone as string;
-        session.user.mustChangePassword = token.mustChangePassword === true;
+        (session.user as { phone?: string }).phone = token.phone as
+          | string
+          | undefined;
+        (session.user as { mustChangePassword?: boolean }).mustChangePassword =
+          Boolean(token.mustChangePassword);
       }
       return session;
     },

@@ -19,6 +19,7 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
   const {
     language,
     darkMode,
+    fetchDealershipSettings,
     fetchDatabaseRecords,
     setCurrentRole,
     theming,
@@ -105,8 +106,17 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
 
     if (status === "authenticated" && !isStandaloneRoute) {
       fetchDatabaseRecords(resolvedRole);
+    } else if (isStandaloneRoute) {
+      fetchDealershipSettings();
     }
-  }, [session, status, isStandaloneRoute, setCurrentRole, fetchDatabaseRecords]);
+  }, [
+    session,
+    status,
+    isStandaloneRoute,
+    setCurrentRole,
+    fetchDatabaseRecords,
+    fetchDealershipSettings,
+  ]);
 
   if (isStandaloneRoute) {
     return (
