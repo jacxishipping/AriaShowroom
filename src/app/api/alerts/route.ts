@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { InstallmentStatus } from "@prisma/client";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { requireApiRole } from "@/lib/api-auth";
 
@@ -9,14 +10,33 @@ export async function GET() {
   const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
   if (!isDatabaseConfigured()) {
-    return NextResponse.json({ success: false, error: "Database is not configured" }, { status: 503 });
+    return NextResponse.json(
+      { success: false, error: "Database is not configured" },
+      { status: 503 }
+    );
   }
 
   const cutoff = new Date(Date.now() - ALERT_AFTER_DAYS * 24 * 60 * 60 * 1000);
   try {
+    await prisma.installmentPayment
+      .updateMany({
+        where: {
+          status: InstallmentStatus.PENDING,
+          dueDate: { lt: new Date() },
+        },
+        data: { status: InstallmentStatus.OVERDUE },
+      })
+      .catch(() => null);
+
     const [transit, followUps, installments] = await Promise.all([
       prisma.$queryRaw<
-        { id: string; stockNumber: string; make: string; model: string; statusChangedAt: Date }[]
+        {
+          id: string;
+          stockNumber: string;
+          make: string;
+          model: string;
+          statusChangedAt: Date;
+        }[]
       >`
         SELECT id, "stockNumber", make, model, "statusChangedAt"
         FROM "Vehicle"
@@ -25,7 +45,13 @@ export async function GET() {
         LIMIT 100
       `,
       prisma.$queryRaw<
-        { id: string; fullName: string; phone: string; leadStage: string; updatedAt: Date }[]
+        {
+          id: string;
+          fullName: string;
+          phone: string;
+          leadStage: string;
+          updatedAt: Date;
+        }[]
       >`
         SELECT id, "fullName", phone, "leadStage", "updatedAt"
         FROM "Customer"
@@ -34,13 +60,19 @@ export async function GET() {
         LIMIT 100
       `,
       prisma.$queryRaw<
-        { id: string; dueDate: Date; amount: number; contractNumber: string; customerName: string }[]
+        {
+          id: string;
+          dueDate: Date;
+          amount: number;
+          contractNumber: string;
+          customerName: string;
+        }[]
       >`
         SELECT i.id, i."dueDate", i.amount, s."contractNumber", c."fullName" AS "customerName"
         FROM "InstallmentPayment" i
         INNER JOIN "Sale" s ON s.id = i."saleId"
         INNER JOIN "Customer" c ON c.id = s."customerId"
-        WHERE i.status = 'PENDING' AND i."dueDate" <= NOW()
+        WHERE i.status IN ('PENDING', 'OVERDUE') AND i."dueDate" <= NOW()
         ORDER BY i."dueDate" ASC
         LIMIT 100
       `,
@@ -51,7 +83,10 @@ export async function GET() {
     });
   } catch {
     return NextResponse.json(
-      { success: false, error: "Unable to load workflow alerts; apply the latest database schema first" },
+      {
+        success: false,
+        error: "Unable to load workflow alerts; apply the latest database schema first",
+      },
       { status: 500 }
     );
   }

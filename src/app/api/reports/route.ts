@@ -10,51 +10,89 @@ export async function GET(request: Request) {
   const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
   if (!isDatabaseConfigured()) {
-    return NextResponse.json({ success: false, error: "Database is not configured" }, { status: 503 });
+    return NextResponse.json(
+      { success: false, error: "Database is not configured" },
+      { status: 503 }
+    );
   }
 
   const params = new URL(request.url).searchParams;
-  const from = new Date(params.get("from") || new Date(Date.now() - 30 * 86400000).toISOString());
+  const from = new Date(
+    params.get("from") || new Date(Date.now() - 30 * 86400000).toISOString()
+  );
   const to = new Date(params.get("to") || new Date().toISOString());
   if (!Number.isFinite(from.getTime()) || !Number.isFinite(to.getTime()) || from > to) {
-    return NextResponse.json({ success: false, error: "Invalid report date range" }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: "Invalid report date range" },
+      { status: 400 }
+    );
   }
 
   try {
-    const [sales, installments, inventory, sourcedVehicles, expenses] = await Promise.all([
-      prisma.sale.findMany({
-        where: { saleDate: { gte: from, lte: to } },
-        include: {
-          vehicle: { select: { id: true, stockNumber: true, make: true, model: true, year: true, landedCost: true } },
-          customer: { select: { fullName: true } },
+    await prisma.installmentPayment
+      .updateMany({
+        where: {
+          status: InstallmentStatus.PENDING,
+          dueDate: { lt: new Date() },
         },
-        orderBy: { saleDate: "desc" },
-      }),
-      prisma.installmentPayment.findMany({
-        where: { status: { in: [InstallmentStatus.PENDING, InstallmentStatus.OVERDUE] } },
-        include: {
-          sale: {
-            select: {
-              contractNumber: true,
-              customer: { select: { fullName: true } },
+        data: { status: InstallmentStatus.OVERDUE },
+      })
+      .catch(() => null);
+
+    const [sales, installments, inventory, sourcedVehicles, expenses] =
+      await Promise.all([
+        prisma.sale.findMany({
+          where: { saleDate: { gte: from, lte: to } },
+          include: {
+            vehicle: {
+              select: {
+                id: true,
+                stockNumber: true,
+                make: true,
+                model: true,
+                year: true,
+                landedCost: true,
+              },
+            },
+            customer: { select: { fullName: true } },
+          },
+          orderBy: { saleDate: "desc" },
+        }),
+        prisma.installmentPayment.findMany({
+          where: {
+            status: { in: [InstallmentStatus.PENDING, InstallmentStatus.OVERDUE] },
+          },
+          include: {
+            sale: {
+              select: {
+                contractNumber: true,
+                customer: { select: { fullName: true } },
+              },
             },
           },
-        },
-        orderBy: { dueDate: "asc" },
-      }),
-      prisma.vehicle.findMany({
-        where: { status: { not: VehicleStatus.SOLD } },
-        select: { id: true, stockNumber: true, make: true, model: true, year: true, createdAt: true, originCountry: true },
-      }),
-      prisma.vehicle.findMany({
-        where: { createdAt: { gte: from, lte: to } },
-        select: { originCountry: true },
-      }),
-      prisma.expense.aggregate({
-        where: { date: { gte: from, lte: to } },
-        _sum: { amount: true },
-      }),
-    ]);
+          orderBy: { dueDate: "asc" },
+        }),
+        prisma.vehicle.findMany({
+          where: { status: { not: VehicleStatus.SOLD } },
+          select: {
+            id: true,
+            stockNumber: true,
+            make: true,
+            model: true,
+            year: true,
+            createdAt: true,
+            originCountry: true,
+          },
+        }),
+        prisma.vehicle.findMany({
+          where: { createdAt: { gte: from, lte: to } },
+          select: { originCountry: true },
+        }),
+        prisma.expense.aggregate({
+          where: { date: { gte: from, lte: to } },
+          _sum: { amount: true },
+        }),
+      ]);
 
     const sourcing = Object.entries(
       sourcedVehicles.reduce<Record<string, number>>((counts, vehicle) => {
@@ -67,7 +105,10 @@ export async function GET(request: Request) {
       success: true,
       data: {
         summary: calculateReportSummary(
-          sales.map((sale) => ({ salePrice: sale.salePrice, landedCost: sale.vehicle.landedCost })),
+          sales.map((sale) => ({
+            salePrice: sale.salePrice,
+            landedCost: sale.vehicle.landedCost,
+          })),
           installments.map((installment) => ({ amount: installment.amount })),
           inventory.map((vehicle) => vehicle.createdAt),
           expenses._sum.amount || 0
@@ -91,7 +132,9 @@ export async function GET(request: Request) {
         })),
         inventory: inventory.map((vehicle) => ({
           ...vehicle,
-          ageDays: Math.floor((Date.now() - vehicle.createdAt.getTime()) / 86400000),
+          ageDays: Math.floor(
+            (Date.now() - vehicle.createdAt.getTime()) / 86400000
+          ),
         })),
         sourcing,
       },

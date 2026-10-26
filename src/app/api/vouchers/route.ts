@@ -3,8 +3,44 @@ import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireApiRole } from "@/lib/api-auth";
-import { createLedgerEntry } from "@/lib/ledger";
+import {
+  createLedgerEntry,
+  reverseLedgerEntriesByReference,
+  roundCurrency,
+} from "@/lib/ledger";
 import { recordSessionAuditEvent } from "@/lib/audit-log";
+
+function resolvePaymentAccount(paymentMethod: string): string {
+  const lower = String(paymentMethod || "").toLowerCase();
+  if (lower.includes("bank")) {
+    return "1030 - Azizi Bank Commercial USD Account";
+  }
+  if (lower.includes("cash")) {
+    return "1010 - Showroom Central Cash Safe";
+  }
+  return "1020 - Sarrafi Khorasan Holding Account";
+}
+
+function resolveVoucherAccounts(
+  voucherType: string,
+  paymentMethod: string,
+  hasLinkedVehicle: boolean
+): { debitAccount: string; creditAccount: string } {
+  const paymentAccount = resolvePaymentAccount(paymentMethod);
+  const debitAccount =
+    voucherType === "CUSTOMER_PAYMENT"
+      ? paymentAccount
+      : voucherType === "SUPPLIER_PAYMENT"
+      ? "2010 - Accounts Payable (Auto Suppliers UAE/Japan)"
+      : hasLinkedVehicle
+      ? "1040 - Vehicle Inventory Asset (Lot & Port)"
+      : "6020 - Operating Expense - Solar, Fuel & Generator";
+  const creditAccount =
+    voucherType === "CUSTOMER_PAYMENT"
+      ? "1050 - Accounts Receivable (Customer Installments)"
+      : paymentAccount;
+  return { debitAccount, creditAccount };
+}
 
 export async function GET() {
   if (!isDatabaseConfigured()) {
@@ -27,12 +63,12 @@ export async function POST(req: Request) {
   if (!isDatabaseConfigured()) {
     return NextResponse.json({ success: false, fallback: true });
   }
-  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
+  const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT", "SALES"]);
   if (unauthorized) return unauthorized;
 
   try {
     const body = await req.json();
-    const amountUSD = Number(body.amountUSD);
+    const amountUSD = roundCurrency(Number(body.amountUSD));
     const exchangeRate = Number(body.exchangeRate) || 70.5;
     const voucherType = body.voucherType || "CUSTOMER_PAYMENT";
 
@@ -49,25 +85,34 @@ export async function POST(req: Request) {
       );
     }
 
-    const paymentMethod = body.paymentMethod || "Cash";
     const session = await getServerSession(authOptions);
-    const paymentAccount = paymentMethod.toLowerCase().includes("bank")
-      ? "1030 - Azizi Bank Commercial USD Account"
-      : paymentMethod.toLowerCase().includes("cash")
-      ? "1010 - Showroom Central Cash Safe"
-      : "1020 - Sarrafi Khorasan Holding Account";
+    const sessionRole = (session?.user as { role?: string } | undefined)?.role;
+    if (sessionRole === "SALES" && voucherType !== "CUSTOMER_PAYMENT") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Sales agents may only record customer receipt vouchers",
+        },
+        { status: 403 }
+      );
+    }
+
+    const paymentMethod = body.paymentMethod || "Cash";
 
     const created = await prisma.$transaction(async (tx) => {
-      const linkedVehicle = voucherType === "EXPENSE_PAYMENT" && body.vehicleStock
-        ? await tx.vehicle.findUnique({ where: { stockNumber: body.vehicleStock } })
-        : null;
+      const linkedVehicle =
+        voucherType === "EXPENSE_PAYMENT" && body.vehicleStock
+          ? await tx.vehicle.findUnique({ where: { stockNumber: body.vehicleStock } })
+          : null;
       if (voucherType === "EXPENSE_PAYMENT" && body.vehicleStock && !linkedVehicle) {
         throw new Error("The linked vehicle was not found");
       }
 
       const payment = await tx.payment.create({
         data: {
-          voucherNumber: body.voucherNumber || `PV-HRT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          voucherNumber:
+            body.voucherNumber ||
+            `PV-HRT-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
           voucherType,
           partyName: body.partyName,
           partyPhone: body.partyPhone || null,
@@ -93,7 +138,7 @@ export async function POST(req: Request) {
             currency: "USD",
             description: body.purpose || "Expense payment",
             payee: body.partyName || null,
-            receiptNum: body.referenceNumber || null,
+            receiptNum: payment.voucherNumber,
             vehicleId: linkedVehicle?.id || null,
           },
         });
@@ -115,25 +160,20 @@ export async function POST(req: Request) {
         });
       }
 
-      const debitAccount = voucherType === "CUSTOMER_PAYMENT"
-        ? paymentAccount
-        : voucherType === "SUPPLIER_PAYMENT"
-        ? "2010 - Accounts Payable (Auto Suppliers UAE/Japan)"
-        : linkedVehicle
-        ? "1040 - Vehicle Inventory Asset (Lot & Port)"
-        : "6020 - Operating Expense - Solar, Fuel & Generator";
-      const creditAccount = voucherType === "CUSTOMER_PAYMENT"
-        ? "1050 - Accounts Receivable (Customer Installments)"
-        : paymentAccount;
+      const { debitAccount, creditAccount } = resolveVoucherAccounts(
+        voucherType,
+        paymentMethod,
+        Boolean(linkedVehicle)
+      );
 
       await createLedgerEntry(tx, {
-          entryNumber: `JE-PV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          description: body.purpose || "Payment settlement",
-          reference: payment.voucherNumber,
-          debitAccount,
-          creditAccount,
-          amountUSD,
-          amountAFN: payment.amountAFN,
+        entryNumber: `JE-PV-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+        description: body.purpose || "Payment settlement",
+        reference: payment.voucherNumber,
+        debitAccount,
+        creditAccount,
+        amountUSD,
+        amountAFN: payment.amountAFN,
       });
 
       await recordSessionAuditEvent(tx, {
@@ -163,47 +203,207 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
-  if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true });
+  }
 
   try {
     const body = await req.json();
     const voucherId = body.voucherId || body.id;
-    if (!voucherId) return NextResponse.json({ success: false, error: "Voucher ID is required" }, { status: 400 });
-
-    const updateData: any = {};
-    if (body.partyName !== undefined) updateData.partyName = body.partyName;
-    if (body.partyPhone !== undefined) updateData.partyPhone = body.partyPhone;
-    if (body.amountUSD !== undefined) {
-      updateData.amountUSD = Number(body.amountUSD);
-      updateData.amountAFN = Math.round(Number(body.amountUSD) * (Number(body.exchangeRate) || 70.5));
+    if (!voucherId) {
+      return NextResponse.json(
+        { success: false, error: "Voucher ID is required" },
+        { status: 400 }
+      );
     }
-    if (body.paymentMethod !== undefined) updateData.paymentMethod = body.paymentMethod;
-    if (body.sarrafiAccount !== undefined) updateData.sarrafiAccount = body.sarrafiAccount;
-    if (body.purpose !== undefined) updateData.purpose = body.purpose;
 
-    const updated = await prisma.payment.update({
-      where: { id: voucherId },
-      data: updateData,
+    const updated = await prisma.$transaction(async (tx) => {
+      const existing = await tx.payment.findUnique({ where: { id: voucherId } });
+      if (!existing) {
+        throw new Error("Voucher not found");
+      }
+
+      const nextExchangeRate = Number(body.exchangeRate) || existing.exchangeRate || 70.5;
+      const nextAmountUSD =
+        body.amountUSD !== undefined
+          ? roundCurrency(Number(body.amountUSD))
+          : roundCurrency(existing.amountUSD);
+
+      if (!Number.isFinite(nextAmountUSD) || nextAmountUSD <= 0) {
+        throw new Error("Payment amount must be greater than zero");
+      }
+
+      const updateData: Record<string, unknown> = {};
+      if (body.partyName !== undefined) updateData.partyName = body.partyName;
+      if (body.partyPhone !== undefined) updateData.partyPhone = body.partyPhone;
+      if (body.amountUSD !== undefined) {
+        updateData.amountUSD = nextAmountUSD;
+        updateData.amountAFN = Math.round(nextAmountUSD * nextExchangeRate);
+        updateData.exchangeRate = nextExchangeRate;
+      }
+      if (body.paymentMethod !== undefined) updateData.paymentMethod = body.paymentMethod;
+      if (body.sarrafiAccount !== undefined) updateData.sarrafiAccount = body.sarrafiAccount;
+      if (body.purpose !== undefined) updateData.purpose = body.purpose;
+
+      const nextPayment = await tx.payment.update({
+        where: { id: voucherId },
+        data: updateData,
+      });
+
+      const deltaUSD = roundCurrency(nextAmountUSD - existing.amountUSD);
+      if (deltaUSD !== 0) {
+        if (existing.voucherType === "SUPPLIER_PAYMENT" && existing.supplierId) {
+          await tx.supplier.update({
+            where: { id: existing.supplierId },
+            data: {
+              totalPaidUSD: { increment: deltaUSD },
+              balanceUSD: { decrement: deltaUSD },
+            },
+          });
+        }
+
+        if (existing.voucherType === "EXPENSE_PAYMENT") {
+          if (existing.vehicleStock) {
+            await tx.vehicle.updateMany({
+              where: { stockNumber: existing.vehicleStock },
+              data: { landedCost: { increment: deltaUSD } },
+            });
+          }
+          await tx.expense.updateMany({
+            where: { receiptNum: existing.voucherNumber },
+            data: { amount: nextAmountUSD },
+          });
+        }
+      }
+
+      if (deltaUSD !== 0 || nextPayment.paymentMethod !== existing.paymentMethod) {
+        await reverseLedgerEntriesByReference(
+          tx,
+          existing.voucherNumber,
+          "Payment voucher modified"
+        );
+
+        const { debitAccount, creditAccount } = resolveVoucherAccounts(
+          nextPayment.voucherType,
+          nextPayment.paymentMethod,
+          Boolean(nextPayment.vehicleStock)
+        );
+
+        await createLedgerEntry(tx, {
+          entryNumber: `JE-PV-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+          description: nextPayment.purpose || "Payment settlement",
+          reference: nextPayment.voucherNumber,
+          debitAccount,
+          creditAccount,
+          amountUSD: nextPayment.amountUSD,
+          amountAFN: nextPayment.amountAFN,
+        });
+      }
+
+      await recordSessionAuditEvent(tx, {
+        action: "PAYMENT_UPDATED",
+        entityType: "Payment",
+        entityId: nextPayment.id,
+        changes: {
+          voucherNumber: nextPayment.voucherNumber,
+          fromAmountUSD: existing.amountUSD,
+          toAmountUSD: nextPayment.amountUSD,
+          paymentMethod: nextPayment.paymentMethod,
+        },
+      });
+
+      return nextPayment;
     });
+
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message || "Failed to update voucher" }, { status: 500 });
+    const status =
+      error?.message === "Voucher not found"
+        ? 404
+        : error?.message === "Payment amount must be greater than zero"
+        ? 400
+        : 500;
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to update voucher" },
+      { status }
+    );
   }
 }
 
 export async function DELETE(req: Request) {
   const unauthorized = await requireApiRole(["ADMIN", "ACCOUNTANT"]);
   if (unauthorized) return unauthorized;
-  if (!isDatabaseConfigured()) return NextResponse.json({ success: false, fallback: true });
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true });
+  }
 
   try {
     const body = await req.json().catch(() => ({}));
     const voucherId = body.voucherId || body.id;
-    if (!voucherId) return NextResponse.json({ success: false, error: "Voucher ID is required" }, { status: 400 });
+    if (!voucherId) {
+      return NextResponse.json(
+        { success: false, error: "Voucher ID is required" },
+        { status: 400 }
+      );
+    }
 
-    await prisma.payment.delete({ where: { id: voucherId } });
-    return NextResponse.json({ success: true, message: "Voucher deleted successfully" });
+    await prisma.$transaction(async (tx) => {
+      const existing = await tx.payment.findUnique({ where: { id: voucherId } });
+      if (!existing) {
+        throw new Error("Voucher not found");
+      }
+
+      if (existing.voucherType === "SUPPLIER_PAYMENT" && existing.supplierId) {
+        await tx.supplier.update({
+          where: { id: existing.supplierId },
+          data: {
+            totalPaidUSD: { decrement: existing.amountUSD },
+            balanceUSD: { increment: existing.amountUSD },
+          },
+        });
+      }
+
+      if (existing.voucherType === "EXPENSE_PAYMENT") {
+        if (existing.vehicleStock) {
+          await tx.vehicle.updateMany({
+            where: { stockNumber: existing.vehicleStock },
+            data: { landedCost: { decrement: existing.amountUSD } },
+          });
+        }
+        await tx.expense.deleteMany({
+          where: { receiptNum: existing.voucherNumber },
+        });
+      }
+
+      await reverseLedgerEntriesByReference(
+        tx,
+        existing.voucherNumber,
+        "Payment voucher voided/deleted"
+      );
+
+      await tx.payment.delete({ where: { id: voucherId } });
+
+      await recordSessionAuditEvent(tx, {
+        action: "PAYMENT_DELETED",
+        entityType: "Payment",
+        entityId: voucherId,
+        changes: {
+          voucherNumber: existing.voucherNumber,
+          voucherType: existing.voucherType,
+          amountUSD: existing.amountUSD,
+        },
+      });
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Voucher reversed and deleted successfully",
+    });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message || "Failed to delete voucher" }, { status: 500 });
+    const status = error?.message === "Voucher not found" ? 404 : 500;
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to delete voucher" },
+      { status }
+    );
   }
 }

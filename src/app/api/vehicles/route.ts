@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireApiRole } from "@/lib/api-auth";
 import { recordSessionAuditEvent } from "@/lib/audit-log";
+import { createLedgerEntry } from "@/lib/ledger";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,8 @@ export async function GET(request: Request) {
   if (!isDatabaseConfigured()) {
     return NextResponse.json({ success: false, fallback: true, data: [] });
   }
+  const unauthorized = await requireApiRole(["ADMIN", "SALES", "ACCOUNTANT"]);
+  if (unauthorized) return unauthorized;
 
   await ensureDatabaseSchemaSynced();
 
@@ -154,6 +157,30 @@ export async function POST(request: Request) {
       },
     };
 
+    const exchangeRate = Number(body.exchangeRate) || 70.5;
+    const bookOpeningInventoryAsset = async (
+      tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+      created: { id: string; stockNumber: string; make: string; model: string; year: number; status: VehicleStatus }
+    ) => {
+      if (landedCost > 0 && created.status !== VehicleStatus.SOLD) {
+        await createLedgerEntry(tx, {
+          entryNumber: `JE-INV-INIT-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+          description: `Opening inventory asset — ${created.year} ${created.make} ${created.model} (${created.stockNumber})`,
+          reference: created.stockNumber,
+          debitAccount: "1040 - Vehicle Inventory Asset (Lot & Port)",
+          creditAccount: "3010 - Owner Capital & Equity",
+          amountUSD: landedCost,
+          amountAFN: Math.round(landedCost * exchangeRate),
+        });
+      }
+      await recordSessionAuditEvent(tx, {
+        action: "VEHICLE_CREATED",
+        entityType: "Vehicle",
+        entityId: created.id,
+        changes: { stockNumber, status, sellingPrice, landedCost },
+      });
+    };
+
     let vehicle;
     try {
       vehicle = await prisma.$transaction(async (tx) => {
@@ -163,12 +190,7 @@ export async function POST(request: Request) {
             images: true,
           },
         });
-        await recordSessionAuditEvent(tx, {
-          action: "VEHICLE_CREATED",
-          entityType: "Vehicle",
-          entityId: created.id,
-          changes: { stockNumber, status, sellingPrice },
-        });
+        await bookOpeningInventoryAsset(tx, created);
         return created;
       });
     } catch (createError: any) {
@@ -198,12 +220,7 @@ export async function POST(request: Request) {
               images: true,
             },
           });
-          await recordSessionAuditEvent(tx, {
-            action: "VEHICLE_CREATED",
-            entityType: "Vehicle",
-            entityId: created.id,
-            changes: { stockNumber, status, sellingPrice },
-          });
+          await bookOpeningInventoryAsset(tx, created);
           return created;
         });
       } else {

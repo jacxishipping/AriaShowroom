@@ -1,7 +1,10 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { UserRole } from "@prisma/client";
 import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+
+const PASSWORD_STATE_TTL_MS = 15_000;
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -11,9 +14,9 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
-      name: "Sadozai Dealership Credentials",
+      name: "Aria Motors Dealership Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "admin@sadozaimotors.af" },
+        email: { label: "Email", type: "email", placeholder: "admin@ariamotors.af" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -36,9 +39,16 @@ export const authOptions: NextAuthOptions = {
         ) {
           return null;
         }
-        const passwordState = await prisma.$queryRaw<{ passwordChangeRequired: boolean }[]>`
-          SELECT "passwordChangeRequired" FROM "User" WHERE id = ${user.id}
-        `;
+
+        let mustChangePassword = Boolean(user.passwordChangeRequired);
+        try {
+          const passwordState = await prisma.$queryRaw<{ passwordChangeRequired: boolean }[]>`
+            SELECT "passwordChangeRequired" FROM "User" WHERE id = ${user.id}
+          `;
+          mustChangePassword = passwordState[0]?.passwordChangeRequired ?? mustChangePassword;
+        } catch {
+          // Fallback to Prisma model field if raw query fails
+        }
 
         return {
           id: user.id,
@@ -46,35 +56,47 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           role: user.role,
           phone: user.phone || undefined,
-          mustChangePassword: passwordState[0]?.passwordChangeRequired ?? false,
+          mustChangePassword,
         };
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
+      const now = Date.now();
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role || "SALES";
-        token.phone = (user as any).phone;
-        token.mustChangePassword = (user as any).mustChangePassword ?? false;
+        token.role = (user as { role?: UserRole }).role || UserRole.SALES;
+        token.phone = (user as { phone?: string }).phone;
+        token.mustChangePassword = Boolean(
+          (user as { mustChangePassword?: boolean }).mustChangePassword
+        );
+        (token as { passwordCheckedAt?: number }).passwordCheckedAt = now;
+        return token;
       }
-      if (token.id) {
-        const passwordState = await prisma.$queryRaw<
-          { passwordChangeRequired: boolean }[]
-        >`
-          SELECT "passwordChangeRequired" FROM "User" WHERE id = ${token.id}
-        `;
-        token.mustChangePassword =
-          passwordState[0]?.passwordChangeRequired ?? token.mustChangePassword ?? false;
+
+      const lastChecked = Number((token as { passwordCheckedAt?: number }).passwordCheckedAt || 0);
+      if (token.id && isDatabaseConfigured() && now - lastChecked > PASSWORD_STATE_TTL_MS) {
+        try {
+          const passwordState = await prisma.$queryRaw<
+            { passwordChangeRequired: boolean }[]
+          >`
+            SELECT "passwordChangeRequired" FROM "User" WHERE id = ${token.id}
+          `;
+          token.mustChangePassword =
+            passwordState[0]?.passwordChangeRequired ?? token.mustChangePassword ?? false;
+          (token as { passwordCheckedAt?: number }).passwordCheckedAt = now;
+        } catch {
+          // Retain cached token state on transient database connection errors
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id as string;
-        (session.user as any).role = token.role as string;
-        (session.user as any).phone = token.phone as string;
+        (session.user as { id?: string }).id = token.id as string;
+        (session.user as { role?: string }).role = token.role as string;
+        (session.user as { phone?: string }).phone = token.phone as string;
         session.user.mustChangePassword = token.mustChangePassword === true;
       }
       return session;

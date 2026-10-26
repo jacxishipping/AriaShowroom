@@ -46,7 +46,7 @@ export function FirstTimeTutorialModal() {
     resetTutorial,
     language,
     currentRole,
-    setCurrentRole,
+    branding,
     currency,
     setCurrency,
     exchangeRate,
@@ -123,7 +123,7 @@ export function FirstTimeTutorialModal() {
           ? "تاسو په بریا سره لارښود بشپړ کړ!"
           : language === "fa"
           ? "شما با موفقیت راهنمای سیستم را به پایان رساندید!"
-          : "Tutorial completed! Welcome to Sadozai Motors ERP.",
+          : `Tutorial completed! Welcome to ${branding.dealershipName} ERP.`,
         "success"
       );
     }
@@ -378,8 +378,7 @@ export function FirstTimeTutorialModal() {
                           type="button"
                           onClick={() => {
                             setDemoRole(item.role);
-                            setCurrentRole(item.role);
-                            addToast(`Switched active role to ${item.role}`, "info");
+                            addToast(`Previewing ${item.role} perspective in tutorial sandbox`, "info");
                           }}
                           className={`text-start p-2.5 rounded-lg border transition ${
                             demoRole === item.role
@@ -661,7 +660,7 @@ export function FirstTimeTutorialModal() {
                             </div>
                             <div className="flex justify-between">
                               <span className="text-slate-400">Consignee:</span>
-                              <span>Sadozai Motors Herat (Lic #49912)</span>
+                              <span>{branding.dealershipName} ({branding.licenseNumber})</span>
                             </div>
                           </div>
                         )}

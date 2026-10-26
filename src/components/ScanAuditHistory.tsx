@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   ClipboardCheck,
   Search,
-  Filter,
   Download,
   Trash2,
   MapPin,
@@ -16,27 +15,25 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Car,
   ScanLine,
   Zap,
   Camera,
-  Layers,
-  ArrowUpDown,
-  RefreshCw,
 } from "lucide-react";
 import {
-  MuiCard,
   MuiButton,
-  MuiChip,
-  MuiTextField,
-  MenuItem,
   IconButton,
   MuiTable,
   MuiTableHead,
   MuiTableBody,
   MuiTableRow,
   MuiTableCell,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@/components/mui";
+import { useShowroomStore } from "@/store/useShowroomStore";
+import { safeCsvText } from "@/lib/export-utils";
 
 export interface ScanAuditEntry {
   id: string;
@@ -50,7 +47,7 @@ export interface ScanAuditEntry {
   sellingPrice?: number;
   image?: string;
   bayLocation: string;
-  timestamp: string; // Formatted string, e.g. "12:45:10 PM"
+  timestamp: string;
   scannedAt: Date;
   isAudited: boolean;
   scanMethod: "OPTICAL_CAMERA" | "LASER_GUN" | "MANUAL_ENTRY" | "QUICK_CHIP";
@@ -75,13 +72,14 @@ export function ScanAuditHistory({
   onClearHistory,
   onDeleteEntry,
 }: ScanAuditHistoryProps) {
+  const { branding } = useShowroomStore();
   const [search, setSearch] = useState("");
   const [bayFilter, setBayFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "AUDITED" | "PENDING">("ALL");
   const [viewMode, setViewMode] = useState<"table" | "stream">("table");
   const [copiedVin, setCopiedVin] = useState<string | null>(null);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
-  // Derive unique bay locations for the filter
   const bayOptions = useMemo(() => {
     const bays = new Set<string>();
     entries.forEach((e) => {
@@ -90,7 +88,6 @@ export function ScanAuditHistory({
     return Array.from(bays);
   }, [entries]);
 
-  // Filtered entries
   const filteredEntries = useMemo(() => {
     return entries.filter((e) => {
       if (bayFilter !== "ALL" && e.bayLocation !== bayFilter) return false;
@@ -138,14 +135,14 @@ export function ScanAuditHistory({
     ];
 
     const rows = filteredEntries.map((e) => [
-      `"${e.id}"`,
-      `"${e.timestamp}"`,
-      `"${e.vin}"`,
-      `"${e.stockNumber || "N/A"}"`,
-      `"${e.year || ""} ${e.make || ""} ${e.model || ""}"`,
+      safeCsvText(e.id),
+      safeCsvText(e.timestamp),
+      safeCsvText(e.vin),
+      safeCsvText(e.stockNumber || "N/A"),
+      safeCsvText(`${e.year || ""} ${e.make || ""} ${e.model || ""}`.trim()),
       e.year || "",
-      `"${(e.bayLocation || "").replace(/"/g, '""')}"`,
-      `"${e.scanMethod}"`,
+      safeCsvText(e.bayLocation || ""),
+      safeCsvText(e.scanMethod),
       e.isAudited ? "YES" : "NO",
       e.sellingPrice || 0,
     ]);
@@ -153,11 +150,16 @@ export function ScanAuditHistory({
     const csvContent =
       "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
 
+    const slug = (branding.dealershipName || "aria_motors")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `sadozai_lot_scan_audit_${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `${slug || "aria_motors"}_lot_scan_audit_${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -166,7 +168,7 @@ export function ScanAuditHistory({
 
   return (
     <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#121824] shadow-xs overflow-hidden">
-      {/* Top Header Strip with Google Cloud Console / Workspace styling */}
+      {/* Top Header Strip */}
       <div className="p-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/60 dark:bg-[#0E131E] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="h-9 w-9 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
@@ -216,7 +218,6 @@ export function ScanAuditHistory({
       {/* Filter & Action Toolbar */}
       <div className="p-3 border-b border-slate-200/70 dark:border-slate-800/70 bg-white dark:bg-[#121824] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Search Input */}
           <div className="relative">
             <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <input
@@ -228,7 +229,6 @@ export function ScanAuditHistory({
             />
           </div>
 
-          {/* Bay Location Filter */}
           <select
             value={bayFilter}
             onChange={(e) => setBayFilter(e.target.value)}
@@ -242,10 +242,9 @@ export function ScanAuditHistory({
             ))}
           </select>
 
-          {/* Status Filter */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) => setStatusFilter(e.target.value as "ALL" | "AUDITED" | "PENDING")}
             className="h-8 ps-2.5 pe-6 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="ALL">All Statuses</option>
@@ -255,6 +254,7 @@ export function ScanAuditHistory({
 
           {(search || bayFilter !== "ALL" || statusFilter !== "ALL") && (
             <button
+              type="button"
               onClick={() => {
                 setSearch("");
                 setBayFilter("ALL");
@@ -273,9 +273,9 @@ export function ScanAuditHistory({
 
         {/* View mode toggle & Export / Clear buttons */}
         <div className="flex items-center gap-1.5 flex-wrap self-end sm:self-auto">
-          {/* View Mode Toggle */}
           <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 bg-slate-100 dark:bg-slate-900">
             <button
+              type="button"
               onClick={() => setViewMode("table")}
               className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
                 viewMode === "table"
@@ -286,6 +286,7 @@ export function ScanAuditHistory({
               Table View
             </button>
             <button
+              type="button"
               onClick={() => setViewMode("stream")}
               className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
                 viewMode === "stream"
@@ -314,11 +315,7 @@ export function ScanAuditHistory({
               variant="outlined"
               color="inherit"
               size="small"
-              onClick={() => {
-                if (window.confirm("Clear all scanned VIN records for this lot walk session?")) {
-                  onClearHistory();
-                }
-              }}
+              onClick={() => setConfirmClearOpen(true)}
               startIcon={<Trash2 className="h-3 w-3 text-rose-500" />}
               sx={{ fontSize: "11px", py: "3px" }}
             >
@@ -344,7 +341,6 @@ export function ScanAuditHistory({
           </p>
         </div>
       ) : viewMode === "table" ? (
-        /* Detailed Table View */
         <div className="overflow-x-auto">
           <MuiTable dense size="small" className="w-full">
             <MuiTableHead>
@@ -373,7 +369,6 @@ export function ScanAuditHistory({
                         : "bg-slate-50/40 dark:bg-slate-900/40"
                     }`}
                   >
-                    {/* Timestamp & Method */}
                     <MuiTableCell className="whitespace-nowrap">
                       <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
                         <Clock className="h-3 w-3 text-slate-400 shrink-0" />
@@ -400,13 +395,13 @@ export function ScanAuditHistory({
                       </div>
                     </MuiTableCell>
 
-                    {/* VIN with Copy Button */}
                     <MuiTableCell>
                       <div className="flex items-center gap-1.5">
                         <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 tracking-wide">
                           {entry.vin}
                         </span>
                         <button
+                          type="button"
                           onClick={(e) => handleCopyVin(entry.vin, e)}
                           title="Copy VIN"
                           className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
@@ -425,7 +420,6 @@ export function ScanAuditHistory({
                       )}
                     </MuiTableCell>
 
-                    {/* Vehicle Specification */}
                     <MuiTableCell>
                       <div className="flex items-center gap-2">
                         {entry.image && (
@@ -454,7 +448,6 @@ export function ScanAuditHistory({
                       </div>
                     </MuiTableCell>
 
-                    {/* Bay Location */}
                     <MuiTableCell>
                       <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80">
                         <MapPin className="h-3 w-3 text-blue-500 shrink-0" />
@@ -462,9 +455,9 @@ export function ScanAuditHistory({
                       </div>
                     </MuiTableCell>
 
-                    {/* Audit Status */}
                     <MuiTableCell>
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (onToggleAudited) onToggleAudited(entry.id);
@@ -490,7 +483,6 @@ export function ScanAuditHistory({
                       </button>
                     </MuiTableCell>
 
-                    {/* Actions */}
                     <MuiTableCell align="right">
                       <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         {entry.vehicleId && (
@@ -525,7 +517,6 @@ export function ScanAuditHistory({
           </MuiTable>
         </div>
       ) : (
-        /* Timeline Stream View */
         <div className="p-4 space-y-3">
           <div className="relative border-l-2 border-slate-200 dark:border-slate-800 ms-3 space-y-4">
             {filteredEntries.map((entry) => {
@@ -535,9 +526,8 @@ export function ScanAuditHistory({
                 <div
                   key={entry.id}
                   onClick={() => onSelectEntry(entry)}
-                  className={`relative ps-6 group cursor-pointer transition-all`}
+                  className="relative ps-6 group cursor-pointer transition-all"
                 >
-                  {/* Timeline Node Icon */}
                   <div
                     className={`absolute -start-[11px] top-1 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                       entry.isAudited
@@ -552,7 +542,6 @@ export function ScanAuditHistory({
                     )}
                   </div>
 
-                  {/* Card Container */}
                   <div
                     className={`p-3 rounded-xl border transition-all ${
                       isSelected
@@ -638,11 +627,51 @@ export function ScanAuditHistory({
         </div>
 
         <div className="flex items-center gap-3 font-mono text-[10px] text-slate-400">
-          <span>Target Dealership: Sadozai Motors Bagh-e-Azadi</span>
+          <span>
+            Target Dealership: {branding.dealershipName} · {branding.address}
+          </span>
           <span>•</span>
           <span>Last Scan: {entries[0]?.timestamp || "N/A"}</span>
         </div>
       </div>
+
+      {/* Clear Lot Walk Session Confirmation Dialog */}
+      <Dialog
+        open={confirmClearOpen}
+        onClose={() => setConfirmClearOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="font-bold text-sm">
+          Clear Lot Scan Audit Session?
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            This will remove all <strong>{entries.length}</strong> scanned VIN log entries from the active lot walk session. Export the CSV log first if you need an archival copy.
+          </p>
+        </DialogContent>
+        <DialogActions>
+          <MuiButton
+            variant="outlined"
+            color="inherit"
+            size="small"
+            onClick={() => setConfirmClearOpen(false)}
+          >
+            Cancel
+          </MuiButton>
+          <MuiButton
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={() => {
+              setConfirmClearOpen(false);
+              if (onClearHistory) onClearHistory();
+            }}
+          >
+            Clear Session
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

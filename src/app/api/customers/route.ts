@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const stage = searchParams.get("stage");
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (stage && stage !== "ALL") {
       where.leadStage = stage as LeadStage;
     }
@@ -28,7 +28,14 @@ export async function GET(request: Request) {
         sales: {
           include: {
             vehicle: {
-              select: { id: true, stockNumber: true, make: true, model: true, year: true, status: true },
+              select: {
+                id: true,
+                stockNumber: true,
+                make: true,
+                model: true,
+                year: true,
+                status: true,
+              },
             },
           },
         },
@@ -36,13 +43,20 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ success: true, count: customers.length, data: customers });
+    return NextResponse.json({
+      success: true,
+      count: customers.length,
+      data: customers,
+    });
   } catch {
     return NextResponse.json({ success: false, fallback: true, data: [] });
   }
 }
 
 export async function POST(request: Request) {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ success: false, fallback: true });
+  }
   const unauthorized = await requireApiRole(["ADMIN", "SALES"]);
   if (unauthorized) return unauthorized;
 
@@ -69,27 +83,43 @@ export async function POST(request: Request) {
       );
     }
 
+    const cleanTazkira = tazkiraNumber?.trim() || null;
+    if (cleanTazkira) {
+      const existingByTazkira = await prisma.customer.findUnique({
+        where: { tazkiraNumber: cleanTazkira },
+      });
+      if (existingByTazkira) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "A customer with this Tazkira number already exists",
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     const customer = await prisma.$transaction(async (tx) => {
       const created = await tx.customer.create({
         data: {
-        fullName,
-        phone,
-        whatsapp: whatsapp || phone,
-        tazkiraNumber: tazkiraNumber?.trim() || null,
-        city,
-        address,
-        tradeInRecord,
-        budget: Number(budget) || 0,
-        interestedInVehicleId: interestedInVehicleId || null,
-        notes,
-        leadStage: leadStage as LeadStage,
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+          whatsapp: (whatsapp || phone).trim(),
+          tazkiraNumber: cleanTazkira,
+          city,
+          address,
+          tradeInRecord,
+          budget: Number(budget) || 0,
+          interestedInVehicleId: interestedInVehicleId || null,
+          notes,
+          leadStage: leadStage as LeadStage,
         },
       });
       await recordSessionAuditEvent(tx, {
         action: "CUSTOMER_CREATED",
         entityType: "Customer",
         entityId: created.id,
-        changes: { leadStage: created.leadStage },
+        changes: { fullName: created.fullName, leadStage: created.leadStage },
       });
       return created;
     });
@@ -114,7 +144,10 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const customerId = body.customerId || body.id;
     if (!customerId) {
-      return NextResponse.json({ success: false, error: "Customer ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Customer ID is required" },
+        { status: 400 }
+      );
     }
 
     const stageMap: Record<string, LeadStage> = {
@@ -126,28 +159,62 @@ export async function PATCH(request: Request) {
       Lost: LeadStage.LOST,
     };
 
-    const updateData: any = {};
-    if (body.fullName !== undefined) updateData.fullName = body.fullName;
-    if (body.phone !== undefined) updateData.phone = body.phone;
-    if (body.whatsapp !== undefined) updateData.whatsapp = body.whatsapp;
-    if (body.tazkiraNumber !== undefined) updateData.tazkiraNumber = body.tazkiraNumber?.trim() || null;
+    const updateData: Record<string, unknown> = {};
+    if (body.fullName !== undefined) updateData.fullName = String(body.fullName).trim();
+    if (body.phone !== undefined) updateData.phone = String(body.phone).trim();
+    if (body.whatsapp !== undefined) updateData.whatsapp = String(body.whatsapp).trim();
+    if (body.tazkiraNumber !== undefined) {
+      const cleanTazkira = String(body.tazkiraNumber).trim() || null;
+      if (cleanTazkira) {
+        const conflicting = await prisma.customer.findUnique({
+          where: { tazkiraNumber: cleanTazkira },
+        });
+        if (conflicting && conflicting.id !== customerId) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Another customer already holds this Tazkira number",
+            },
+            { status: 409 }
+          );
+        }
+      }
+      updateData.tazkiraNumber = cleanTazkira;
+    }
     if (body.city !== undefined) updateData.city = body.city;
     if (body.address !== undefined) updateData.address = body.address;
+    if (body.tradeInRecord !== undefined) {
+      updateData.tradeInRecord = body.tradeInRecord || null;
+    }
     if (body.budget !== undefined) updateData.budget = Number(body.budget) || 0;
     if (body.notes !== undefined) updateData.notes = body.notes;
-    if (body.interestedInVehicleId !== undefined) updateData.interestedInVehicleId = body.interestedInVehicleId || null;
+    if (body.interestedInVehicleId !== undefined) {
+      updateData.interestedInVehicleId = body.interestedInVehicleId || null;
+    }
     if (body.leadStage !== undefined) {
       updateData.leadStage = stageMap[body.leadStage] || body.leadStage;
     }
 
-    const updated = await prisma.customer.update({
-      where: { id: customerId },
-      data: updateData,
+    const updated = await prisma.$transaction(async (tx) => {
+      const nextCustomer = await tx.customer.update({
+        where: { id: customerId },
+        data: updateData,
+      });
+      await recordSessionAuditEvent(tx, {
+        action: "CUSTOMER_UPDATED",
+        entityType: "Customer",
+        entityId: nextCustomer.id,
+        changes: updateData,
+      });
+      return nextCustomer;
     });
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message || "Failed to update customer" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to update customer" },
+      { status: 500 }
+    );
   }
 }
 
@@ -163,12 +230,47 @@ export async function DELETE(request: Request) {
     const body = await request.json().catch(() => ({}));
     const customerId = body.customerId || body.id || searchParams.get("id");
     if (!customerId) {
-      return NextResponse.json({ success: false, error: "Customer ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Customer ID is required" },
+        { status: 400 }
+      );
     }
 
-    await prisma.customer.delete({ where: { id: customerId } });
-    return NextResponse.json({ success: true, message: "Customer deleted successfully" });
+    const salesCount = await prisma.sale.count({ where: { customerId } });
+    if (salesCount > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Cannot delete a customer with recorded vehicle sales. Void the sale contract first.",
+        },
+        { status: 409 }
+      );
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const existing = await tx.customer.findUnique({ where: { id: customerId } });
+      if (!existing) {
+        throw new Error("Customer not found");
+      }
+      await tx.customer.delete({ where: { id: customerId } });
+      await recordSessionAuditEvent(tx, {
+        action: "CUSTOMER_DELETED",
+        entityType: "Customer",
+        entityId: customerId,
+        changes: { fullName: existing.fullName, phone: existing.phone },
+      });
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Customer deleted successfully",
+    });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message || "Failed to delete customer" }, { status: 500 });
+    const status = error?.message === "Customer not found" ? 404 : 500;
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to delete customer" },
+      { status }
+    );
   }
 }

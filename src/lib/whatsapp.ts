@@ -1,8 +1,10 @@
 /**
  * WhatsApp Notification & Sarrafi Reminders Dispatch Engine
  * Provides pre-formatted trilingual templates (Dari, Pashto, English)
- * and generates wa.me deep-links for Afghanistan/UAE clients.
+ * dynamically bound to the dealership branding store and generates wa.me deep-links.
  */
+
+import { useShowroomStore, DEFAULT_BRANDING } from "@/store/useShowroomStore";
 
 export interface WhatsAppReminderParams {
   customerName: string;
@@ -16,16 +18,27 @@ export interface WhatsAppReminderParams {
   language?: "fa" | "ps" | "en";
 }
 
+function getBrandingSnapshot() {
+  try {
+    return useShowroomStore.getState().branding || DEFAULT_BRANDING;
+  } catch {
+    return DEFAULT_BRANDING;
+  }
+}
+
 export function formatWhatsAppPhone(phone?: string): string {
+  const fallback = getBrandingSnapshot().whatsapp || "93799102030";
   let cleaned = (phone || "").replace(/[^0-9]/g, "");
-  if (cleaned.startsWith("0")) {
+  if (cleaned.startsWith("00")) {
+    cleaned = cleaned.slice(2);
+  } else if (cleaned.startsWith("0")) {
     cleaned = "93" + cleaned.slice(1);
   }
-  return cleaned || "93799102030";
+  return cleaned || fallback.replace(/[^0-9]/g, "") || "93799102030";
 }
 
 export function buildWhatsAppUrl(phone?: string, text?: string): string {
-  const cleanPhone = formatWhatsAppPhone(phone || "93799102030");
+  const cleanPhone = formatWhatsAppPhone(phone);
   return text
     ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
     : `https://wa.me/${cleanPhone}`;
@@ -41,72 +54,82 @@ export function createInstallmentReminderLink({
   installmentNumber = 1,
   language = "fa",
 }: WhatsAppReminderParams): string {
-  const amountAFN = Math.round(amountUSD * exchangeRate);
+  const branding = getBrandingSnapshot();
+  const amountAFN = Math.round(amountUSD * (exchangeRate || 70.5));
   let message = "";
 
   if (language === "ps") {
     message = `محترم ${customerName} صاحب، سلامونه او نېکې هیلې!
-دا د آریا موټرو شرکت (هرات) لخوا ستاسو د موټر (${vehicleName}) د ${installmentNumber}مې برخې قسط یادونه ده.
+دا د ${branding.dealershipNamePs || branding.dealershipName} لخوا ستاسو د موټر (${vehicleName}) د ${installmentNumber}مې برخې قسط یادونه ده.
 
 💵 د تادیې وړ مبلغ: $${amountUSD.toLocaleString()} ډالره (معادل ${amountAFN.toLocaleString()} افغانۍ)
 📅 د سررسید نېټه: ${dueDate || "روان میاشت"}
 
-مهرباني وکړئ د هرات خراسان صرافۍ یا زموږ د نندارتون دفتر له لارې خپله تادیه بشپړه کړئ.
+مهرباني وکړئ د هرات خراسان صرافۍ یا زموږ د نندارتون دفتر (${branding.address}) له لارې خپله تادیه بشپړه کړئ.
 له موږ سره د باور له امله مننه!
-د آریا موټرو هرات اداره`;
+${branding.dealershipNamePs || branding.dealershipName}`;
   } else if (language === "en") {
     message = `Dear ${customerName},
-This is a courteous payment notice from Aria Motors Herat regarding Installment #${installmentNumber} for your ${vehicleName}.
+This is a courteous payment notice from ${branding.dealershipName} regarding Installment #${installmentNumber} for your ${vehicleName}.
 
 💵 Due Amount: $${amountUSD.toLocaleString()} USD (≈ ${amountAFN.toLocaleString()} AFN)
 📅 Due Date: ${dueDate || "Current Cycle"}
 
-Please arrange settlement via Khorasan Sarrafi Exchange or visit our main showroom lot on Bagh-e-Azadi, Herat.
+Please arrange settlement via Khorasan Sarrafi Exchange or visit our showroom at ${branding.address}.
 Thank you for your business!
-Aria Motors Afghanistan`;
+${branding.dealershipName}`;
   } else {
-    // Default: Dari (Farsi)
     message = `محترم ${customerName} گرامی، سلام علیکم و وقت شما بخیر!
 احتراماً به اطلاع می‌رساند که موعد پرداخت قسط شماره ${installmentNumber} موتر شما (${vehicleName}) فرارسیده است.
 
 💵 مبلغ قابل تادیه: $${amountUSD.toLocaleString()} دالر (معادل ${amountAFN.toLocaleString()} افغانی)
 📅 تاریخ سررسید: ${dueDate || "ماه جاری"}
 
-لطفاً جهت تسویه حساب به حساب صرافی خراسان در سرای صرافان هرات و یا دفتر مرکزی نندارتون مراجعه فرمایید.
+لطفاً جهت تسویه حساب به حساب صرافی خراسان در سرای صرافان هرات و یا دفتر مرکزی (${branding.address}) مراجعه فرمایید.
 با تشکر و احترام،
-مدیریت مالی نمایشگاه موتر آریا هرات`;
+مدیریت مالی ${branding.dealershipNameFa || branding.dealershipName}`;
   }
 
-  const cleanPhone = formatWhatsAppPhone(phone);
-  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  return buildWhatsAppUrl(phone, message);
 }
 
 export function createInvoiceWhatsAppLink({
   customerName,
   phone,
-  invoiceNumber,
+  invoiceNumber = "",
   vehicleName,
   amountUSD,
   exchangeRate,
   language = "fa",
 }: WhatsAppReminderParams): string {
-  const amountAFN = Math.round(amountUSD * exchangeRate);
-  let message = "";
+  const branding = getBrandingSnapshot();
+  const amountAFN = Math.round(amountUSD * (exchangeRate || 70.5));
+  const origin =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : "https://ariamotors.af";
+  const verifyUrl = `${origin}/verify?vin=${encodeURIComponent(invoiceNumber)}`;
 
+  let message = "";
   if (language === "ps") {
     message = `ښاغلی ${customerName}،
-د سدوزي موټرو هرات لخوا ستاسو رسمي فاکتور #${invoiceNumber} د (${vehicleName}) لپاره صادر شو.
+د ${branding.dealershipNamePs || branding.dealershipName} لخوا ستاسو رسمي فاکتور #${invoiceNumber} د (${vehicleName}) لپاره صادر شو.
 مجموعه: $${amountUSD.toLocaleString()} ډالره (${amountAFN.toLocaleString()} افغانۍ).
-د تایید لپاره لاندې لېنک وګورئ:
-https://ariashowroom.af/accounting/invoices/${invoiceNumber}`;
+د اصالت تایید لپاره لاندې لېنک وګورئ:
+${verifyUrl}`;
+  } else if (language === "en") {
+    message = `Dear ${customerName},
+Your official commercial invoice #${invoiceNumber} for (${vehicleName}) has been issued by ${branding.dealershipName}.
+Total: $${amountUSD.toLocaleString()} USD (${amountAFN.toLocaleString()} AFN).
+Verify certificate authenticity online:
+${verifyUrl}`;
   } else {
     message = `محترم ${customerName} گرامی،
-فاکتور تجاری و رسمی شما به شماره #${invoiceNumber} برای موتر (${vehicleName}) از سوی شرکت سدوزی موتر هرات صادر گردید.
+فاکتور تجاری و رسمی شما به شماره #${invoiceNumber} برای موتر (${vehicleName}) از سوی ${branding.dealershipNameFa || branding.dealershipName} صادر گردید.
 مجموع حساب: $${amountUSD.toLocaleString()} دالر (${amountAFN.toLocaleString()} افغانی).
-جهت مشاهده و چاپ فاکتور:
-https://ariashowroom.af/accounting/invoices/${invoiceNumber}`;
+جهت استعلام و تأیید اصالت سند:
+${verifyUrl}`;
   }
 
-  const cleanPhone = formatWhatsAppPhone(phone);
-  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  return buildWhatsAppUrl(phone, message);
 }

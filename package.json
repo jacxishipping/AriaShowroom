@@ -8,7 +8,7 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "tsc --noEmit",
-    "test": "tsx --test src/lib/csv.test.ts src/lib/report-metrics.test.ts src/lib/translations.test.ts",
+    "test": "tsx --test src/lib/csv.test.ts src/lib/report-metrics.test.ts src/lib/translations.test.ts src/lib/ledger.test.ts src/lib/export-and-whatsapp.test.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts"

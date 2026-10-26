@@ -10,6 +10,7 @@ import {
   MuiChip,
   MuiTextField,
   MenuItem,
+  IconButton,
   MuiTable,
   MuiTableContainer,
   MuiTableHead,
@@ -17,6 +18,10 @@ import {
   MuiTableRow,
   MuiTableCell,
   MuiPaper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@/components/mui";
 import {
   Building2,
@@ -29,6 +34,7 @@ import {
   Share2,
   Landmark,
   AlertTriangle,
+  Trash2,
 } from "lucide-react";
 
 export default function SupplierLedgerPage() {
@@ -39,11 +45,14 @@ export default function SupplierLedgerPage() {
     exchangeRate,
     recordSupplierPayment,
     addSupplierBill,
+    deleteSupplierBill,
+    currentRole,
     addToast,
     language,
     branding,
   } = useShowroomStore();
   const t = translations[language];
+  const canManageBills = currentRole === "SuperAdmin" || currentRole === "Accountant";
 
   const supplier = suppliers.find(
     (s) => s.id === supplierId || s.id.toLowerCase() === supplierId?.toLowerCase()
@@ -59,6 +68,11 @@ export default function SupplierLedgerPage() {
   const [billStock, setBillStock] = useState("");
   const [billDesc, setBillDesc] = useState("");
   const [billAmount, setBillAmount] = useState<number>(0);
+  const [billPendingDelete, setBillPendingDelete] = useState<{
+    id: string;
+    billNumber: string;
+    amountUSD: number;
+  } | null>(null);
 
   if (!supplier) {
     return (
@@ -149,6 +163,24 @@ export default function SupplierLedgerPage() {
     setBillDesc("");
     setBillAmount(0);
     addToast("New purchase bill booked to supplier ledger!", "success");
+  };
+
+  const handleConfirmDeleteBill = async () => {
+    if (!billPendingDelete) return;
+    const target = billPendingDelete;
+    setBillPendingDelete(null);
+    try {
+      await deleteSupplierBill(supplier.id, target.id);
+      addToast(
+        `Reversed & removed bill ${target.billNumber} ($${target.amountUSD.toLocaleString()})`,
+        "info"
+      );
+    } catch (error) {
+      addToast(
+        error instanceof Error ? error.message : "Unable to delete supplier bill",
+        "error"
+      );
+    }
   };
 
   const handlePrint = () => {
@@ -254,33 +286,35 @@ export default function SupplierLedgerPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 print:hidden">
-            <MuiButton
-              variant={isPaying ? "contained" : "outlined"}
-              color="primary"
-              size="small"
-              onClick={() => {
-                setIsPaying(!isPaying);
-                setIsBilling(false);
-              }}
-              startIcon={<DollarSign className="h-4 w-4" />}
-            >
-              {isPaying ? "Close Payment Form" : "Record Settlement / Pay"}
-            </MuiButton>
+          {canManageBills && (
+            <div className="flex items-center gap-2 print:hidden">
+              <MuiButton
+                variant={isPaying ? "contained" : "outlined"}
+                color="primary"
+                size="small"
+                onClick={() => {
+                  setIsPaying(!isPaying);
+                  setIsBilling(false);
+                }}
+                startIcon={<DollarSign className="h-4 w-4" />}
+              >
+                {isPaying ? "Close Payment Form" : "Record Settlement / Pay"}
+              </MuiButton>
 
-            <MuiButton
-              variant={isBilling ? "contained" : "outlined"}
-              color="secondary"
-              size="small"
-              onClick={() => {
-                setIsBilling(!isBilling);
-                setIsPaying(false);
-              }}
-              startIcon={<Plus className="h-4 w-4" />}
-            >
-              {isBilling ? "Close Bill Form" : "Book New Bill"}
-            </MuiButton>
-          </div>
+              <MuiButton
+                variant={isBilling ? "contained" : "outlined"}
+                color="secondary"
+                size="small"
+                onClick={() => {
+                  setIsBilling(!isBilling);
+                  setIsPaying(false);
+                }}
+                startIcon={<Plus className="h-4 w-4" />}
+              >
+                {isBilling ? "Close Bill Form" : "Book New Bill"}
+              </MuiButton>
+            </div>
+          )}
         </div>
 
         {/* Running Balance KPI Cards */}
@@ -480,6 +514,11 @@ export default function SupplierLedgerPage() {
                   <MuiTableCell header align="center">
                     Status
                   </MuiTableCell>
+                  {canManageBills && (
+                    <MuiTableCell header align="right" className="print:hidden">
+                      Actions
+                    </MuiTableCell>
+                  )}
                 </MuiTableRow>
               </MuiTableHead>
               <MuiTableBody>
@@ -516,6 +555,24 @@ export default function SupplierLedgerPage() {
                         color={bill.status === "Paid" ? "success" : "warning"}
                       />
                     </MuiTableCell>
+                    {canManageBills && (
+                      <MuiTableCell align="right" className="print:hidden">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          title="Reverse & Delete Supplier Bill"
+                          onClick={() =>
+                            setBillPendingDelete({
+                              id: bill.id,
+                              billNumber: bill.billNumber,
+                              amountUSD: bill.amountUSD,
+                            })
+                          }
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </IconButton>
+                      </MuiTableCell>
+                    )}
                   </MuiTableRow>
                 ))}
               </MuiTableBody>
@@ -523,6 +580,46 @@ export default function SupplierLedgerPage() {
           </MuiTableContainer>
         </div>
       </div>
+
+      {/* Delete Supplier Bill Confirmation Dialog */}
+      <Dialog
+        open={Boolean(billPendingDelete)}
+        onClose={() => setBillPendingDelete(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="font-bold text-sm">
+          Reverse & Delete Supplier Bill?
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Deleting bill{" "}
+            <strong className="font-mono">{billPendingDelete?.billNumber}</strong>{" "}
+            (<strong>${billPendingDelete?.amountUSD.toLocaleString()} USD</strong>) will
+            automatically post an offsetting General Journal reversal entry, reduce{" "}
+            <strong>{supplier.companyName}</strong>&apos;s Accounts Payable balance, and
+            reverse any linked vehicle landed cost allocation.
+          </p>
+        </DialogContent>
+        <DialogActions>
+          <MuiButton
+            variant="outlined"
+            color="inherit"
+            size="small"
+            onClick={() => setBillPendingDelete(null)}
+          >
+            Cancel
+          </MuiButton>
+          <MuiButton
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={handleConfirmDeleteBill}
+          >
+            Reverse & Delete Bill
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

@@ -1,16 +1,46 @@
 /**
- * Data Export Utilities for Aria / Sadozai Motors Dealership ERP
+ * Data Export Utilities for Aria Motors Dealership ERP
  * Exports lot inventory and sales ledger to Excel/CSV with UTF-8 BOM
- * to ensure Dari/Pashto Arabic script renders properly in Microsoft Excel.
+ * to ensure Dari/Pashto Arabic script renders properly in Microsoft Excel,
+ * while neutralizing CSV formula injection (=, +, -, @).
  */
 
 import { VehicleItem, SaleRecord, CustomerRecord, InvoiceRecord } from "./mock-data";
+import { useShowroomStore } from "@/store/useShowroomStore";
+
+/**
+ * Escapes double quotes and neutralizes leading spreadsheet formula characters
+ * (=, +, -, @, \t, \r) in text cells so exported CSVs are safe in Excel/Sheets.
+ */
+export function safeCsvText(value: unknown): string {
+  const raw = String(value ?? "");
+  const trimmedStart = raw.replace(/^[\t\r\n ]+/, "");
+  const formulaSafe =
+    trimmedStart.length > 0 && /^[=+\-@]/.test(trimmedStart) && !/^\+\d[\d\s\-()]+$/.test(trimmedStart)
+      ? `'${raw}`
+      : raw;
+  return `"${formulaSafe.replace(/"/g, '""')}"`;
+}
+
+function getLiveExportDefaults() {
+  try {
+    const state = useShowroomStore.getState();
+    const rate = Number(state.exchangeRate) || 70.5;
+    const slug = (state.branding?.dealershipShortCode || "aria").toLowerCase();
+    return { rate, slug };
+  } catch {
+    return { rate: 70.5, slug: "aria" };
+  }
+}
 
 export function exportCustomersToCSV(
   customers: CustomerRecord[],
   vehicles: VehicleItem[] = [],
-  filename = "sadozai_crm_leads.csv"
+  filename?: string
 ) {
+  const { rate: exchangeRate, slug } = getLiveExportDefaults();
+  const targetFilename = filename || `${slug}_crm_leads.csv`;
+
   const headers = [
     "Customer ID",
     "Full Name (نام مشتری)",
@@ -27,8 +57,6 @@ export function exportCustomersToCSV(
     "Created Date (تاریخ ثبت)",
   ];
 
-  const exchangeRate = 70.5;
-
   const rows = customers.map((c) => {
     const matchedVehicle = vehicles.find((v) => v.id === c.interestedInVehicleId);
     const vehicleLabel = matchedVehicle
@@ -37,27 +65,30 @@ export function exportCustomersToCSV(
     const budgetAfn = Math.round((c.budget || 0) * exchangeRate);
 
     return [
-      `"${c.id}"`,
-      `"${(c.fullName || "").replace(/"/g, '""')}"`,
-      `"${(c.tazkiraNumber || "").replace(/"/g, '""')}"`,
-      `"${(c.phone || "").replace(/"/g, '""')}"`,
-      `"${(c.whatsapp || c.phone || "").replace(/"/g, '""')}"`,
-      `"${(c.city || "").replace(/"/g, '""')}"`,
-      `"${c.leadStage}"`,
-      c.budget || 0,
+      safeCsvText(c.id),
+      safeCsvText(c.fullName),
+      safeCsvText(c.tazkiraNumber),
+      safeCsvText(c.phone),
+      safeCsvText(c.whatsapp || c.phone),
+      safeCsvText(c.city),
+      safeCsvText(c.leadStage),
+      Number(c.budget) || 0,
       budgetAfn,
-      `"${vehicleLabel.replace(/"/g, '""')}"`,
-      `"${(c.tradeInRecord || "").replace(/"/g, '""')}"`,
-      `"${(c.notes || "").replace(/"/g, '""')}"`,
-      `"${c.createdAt || ""}"`,
+      safeCsvText(vehicleLabel),
+      safeCsvText(c.tradeInRecord),
+      safeCsvText(c.notes),
+      safeCsvText(c.createdAt),
     ].join(",");
   });
 
-  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
-  downloadBlob(csvContent, filename, "text/csv;charset=utf-8;");
+  const csvContent = "\uFEFF" + [headers.map(safeCsvText).join(","), ...rows].join("\r\n");
+  downloadBlob(csvContent, targetFilename, "text/csv;charset=utf-8;");
 }
 
-export function exportInventoryToCSV(vehicles: VehicleItem[], filename = "sadozai_lot_inventory.csv") {
+export function exportInventoryToCSV(vehicles: VehicleItem[], filename?: string) {
+  const { rate: exchangeRate, slug } = getLiveExportDefaults();
+  const targetFilename = filename || `${slug}_lot_inventory.csv`;
+
   const headers = [
     "Stock Number (نمبر استاک)",
     "Make (کمپنی)",
@@ -85,45 +116,46 @@ export function exportInventoryToCSV(vehicles: VehicleItem[], filename = "sadoza
   ];
 
   const rows = vehicles.map((v) => {
-    const exchangeRate = 70.5;
     const priceAfn = Math.round(v.sellingPrice * exchangeRate);
     const marginUsd = v.sellingPrice - v.landedCost;
     const marginPct = v.landedCost > 0 ? ((marginUsd / v.landedCost) * 100).toFixed(1) : "0";
-    const yard = (v as any).yardLocation || "Main Showroom - Bagh-e-Azadi";
+    const yard = v.yardLocation || "Main Showroom - Bagh-e-Azadi";
 
     return [
-      `"${v.stockNumber}"`,
-      `"${v.make}"`,
-      `"${v.model}"`,
-      v.year,
-      `"${v.trim}"`,
-      `"${v.vin}"`,
-      `"${v.status}"`,
-      `"${v.originCountry}"`,
-      `"${v.steering}"`,
-      `"${v.fuelType}"`,
-      v.mileage,
-      v.purchasePrice,
-      v.freightCost,
-      v.customsDuty,
-      v.repairCost,
-      v.landedCost,
-      v.minTargetPrice,
-      v.sellingPrice,
+      safeCsvText(v.stockNumber),
+      safeCsvText(v.make),
+      safeCsvText(v.model),
+      Number(v.year) || 0,
+      safeCsvText(v.trim),
+      safeCsvText(v.vin),
+      safeCsvText(v.status),
+      safeCsvText(v.originCountry),
+      safeCsvText(v.steering),
+      safeCsvText(v.fuelType),
+      Number(v.mileage) || 0,
+      Number(v.purchasePrice) || 0,
+      Number(v.freightCost) || 0,
+      Number(v.customsDuty) || 0,
+      Number(v.repairCost) || 0,
+      Number(v.landedCost) || 0,
+      Number(v.minTargetPrice) || 0,
+      Number(v.sellingPrice) || 0,
       priceAfn,
       marginUsd,
-      `"${marginPct}%"`,
-      `"${v.customsClearance.replace(/"/g, '""')}"`,
-      `"${yard}"`,
+      safeCsvText(`${marginPct}%`),
+      safeCsvText(v.customsClearance),
+      safeCsvText(yard),
     ].join(",");
   });
 
-  // \uFEFF is UTF-8 Byte Order Mark (BOM) needed by Excel to display Dari/Pashto correctly
-  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
-  downloadBlob(csvContent, filename, "text/csv;charset=utf-8;");
+  const csvContent = "\uFEFF" + [headers.map(safeCsvText).join(","), ...rows].join("\r\n");
+  downloadBlob(csvContent, targetFilename, "text/csv;charset=utf-8;");
 }
 
-export function exportSalesLedgerToCSV(sales: SaleRecord[], filename = "sadozai_sales_ledger.csv") {
+export function exportSalesLedgerToCSV(sales: SaleRecord[], filename?: string) {
+  const { slug } = getLiveExportDefaults();
+  const targetFilename = filename || `${slug}_sales_ledger.csv`;
+
   const headers = [
     "Contract Number (نمبر قرارداد)",
     "Sale Date (تاریخ معامله)",
@@ -136,39 +168,41 @@ export function exportSalesLedgerToCSV(sales: SaleRecord[], filename = "sadozai_
     "Exchange Rate (نرخ اسعار)",
     "Sale Price AFN (معادل افغانی)",
     "Payment Type (نوع پرداخت)",
-    "Sarrafi / Hawala Ref (حواله صرافی)",
+    "Down Payment USD (پیش‌پرداخت)",
     "Contract Status (حالت)",
   ];
 
   const rows = sales.map((s) => {
-    const priceAfn = Math.round(s.salePriceUSD * s.exchangeRate);
-    const sarrafRef = (s as any).sarrafReference || "Cash at Showroom Desk";
+    const priceAfn = Math.round(s.salePriceUSD * (s.exchangeRate || 70.5));
 
     return [
-      `"${s.contractNumber}"`,
-      `"${s.saleDate}"`,
-      `"${s.vehicleName}"`,
-      `"${s.stockNumber}"`,
-      `"${s.customerName}"`,
-      `"${s.customerTazkira}"`,
-      `"${s.customerPhone}"`,
-      s.salePriceUSD,
-      s.exchangeRate,
+      safeCsvText(s.contractNumber),
+      safeCsvText(s.saleDate),
+      safeCsvText(s.vehicleName),
+      safeCsvText(s.stockNumber),
+      safeCsvText(s.customerName),
+      safeCsvText(s.customerTazkira),
+      safeCsvText(s.customerPhone),
+      Number(s.salePriceUSD) || 0,
+      Number(s.exchangeRate) || 70.5,
       priceAfn,
-      `"${s.paymentType}"`,
-      `"${sarrafRef}"`,
-      `"${s.status}"`,
+      safeCsvText(s.paymentType),
+      Number(s.downPaymentUSD) || 0,
+      safeCsvText(s.status),
     ].join(",");
   });
 
-  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
-  downloadBlob(csvContent, filename, "text/csv;charset=utf-8;");
+  const csvContent = "\uFEFF" + [headers.map(safeCsvText).join(","), ...rows].join("\r\n");
+  downloadBlob(csvContent, targetFilename, "text/csv;charset=utf-8;");
 }
 
 export function exportInvoicesToCSV(
   invoices: InvoiceRecord[],
-  filename = "sadozai_commercial_invoices.csv"
+  filename?: string
 ) {
+  const { slug } = getLiveExportDefaults();
+  const targetFilename = filename || `${slug}_commercial_invoices.csv`;
+
   const headers = [
     "Invoice Number (نمبر فاکتور)",
     "Issue Date (تاریخ صدور)",
@@ -191,28 +225,28 @@ export function exportInvoicesToCSV(
 
   const rows = invoices.map((inv) => {
     return [
-      `"${inv.invoiceNumber}"`,
-      `"${inv.issueDate}"`,
-      `"${(inv.customerName || "").replace(/"/g, '""')}"`,
-      `"${inv.customerPhone || ""}"`,
-      `"${inv.customerTazkira || ""}"`,
-      `"${(inv.vehicleDesc || "").replace(/"/g, '""')}"`,
-      `"${inv.vehicleStock || ""}"`,
-      `"${inv.vin || ""}"`,
-      inv.subtotalUSD || 0,
-      inv.customsFeeUSD || 0,
-      inv.registrationFeeUSD || 0,
-      inv.discountUSD || 0,
-      inv.totalUSD || 0,
-      inv.exchangeRate || 70.5,
-      inv.totalAFN || 0,
-      `"${inv.status}"`,
-      `"${(inv.paymentMethod || "").replace(/"/g, '""')}"`,
+      safeCsvText(inv.invoiceNumber),
+      safeCsvText(inv.issueDate),
+      safeCsvText(inv.customerName),
+      safeCsvText(inv.customerPhone),
+      safeCsvText(inv.customerTazkira),
+      safeCsvText(inv.vehicleDesc),
+      safeCsvText(inv.vehicleStock),
+      safeCsvText(inv.vin),
+      Number(inv.subtotalUSD) || 0,
+      Number(inv.customsFeeUSD) || 0,
+      Number(inv.registrationFeeUSD) || 0,
+      Number(inv.discountUSD) || 0,
+      Number(inv.totalUSD) || 0,
+      Number(inv.exchangeRate) || 70.5,
+      Number(inv.totalAFN) || 0,
+      safeCsvText(inv.status),
+      safeCsvText(inv.paymentMethod),
     ].join(",");
   });
 
-  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
-  downloadBlob(csvContent, filename, "text/csv;charset=utf-8;");
+  const csvContent = "\uFEFF" + [headers.map(safeCsvText).join(","), ...rows].join("\r\n");
+  downloadBlob(csvContent, targetFilename, "text/csv;charset=utf-8;");
 }
 
 export { downloadCommercialInvoicePDF } from "./invoice-pdf";

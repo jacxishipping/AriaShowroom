@@ -301,7 +301,6 @@ interface ShowroomStore {
   addInvoice: (invoice: Omit<InvoiceRecord, "id" | "invoiceNumber">) => Promise<void>;
   updateInvoice: (invoiceId: string, updates: Partial<InvoiceRecord>) => Promise<void>;
   deleteInvoice: (invoiceId: string) => Promise<void>;
-  updateInvoiceStatus: (invoiceId: string, status: InvoiceRecord["status"]) => Promise<void>;
 
   // Payment Vouchers Engine
   payments: PaymentVoucherRecord[];
@@ -341,11 +340,16 @@ interface ShowroomStore {
     read: boolean;
     type: "customs" | "sale" | "lead" | "rate";
   }>;
+  addNotification: (item: {
+    title: string;
+    desc: string;
+    type: "customs" | "sale" | "lead" | "rate";
+  }) => void;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
 
   // Live PostgreSQL Database Sync
-  fetchDatabaseRecords: () => Promise<void>;
+  fetchDatabaseRecords: (roleOverride?: RoleType) => Promise<void>;
 }
 
 const initialFilters: FilterState = {
@@ -639,10 +643,18 @@ export const useShowroomStore = create<ShowroomStore>()(
           viewsCount: 1,
           inquiriesCount: 0,
         };
-        await writeRecord("/api/vehicles", vehicleToDatabase(vehicleData));
+        await writeRecord("/api/vehicles", {
+          ...vehicleToDatabase(vehicleData),
+          exchangeRate: get().exchangeRate,
+        });
         set((state) => ({
           vehicles: [newVehicle, ...state.vehicles],
         }));
+        get().addNotification({
+          title: `New Fleet Arrival: ${vehicleData.year} ${vehicleData.make} ${vehicleData.model}`,
+          desc: `Stock #${vehicleData.stockNumber} (${vehicleData.status})`,
+          type: "customs",
+        });
         await get().fetchDatabaseRecords();
         return get().vehicles.find((item) => item.stockNumber === vehicleData.stockNumber) || newVehicle;
       },
@@ -688,6 +700,11 @@ export const useShowroomStore = create<ShowroomStore>()(
         set((state) => ({
           customers: [newCustomer, ...state.customers],
         }));
+        get().addNotification({
+          title: `New Buyer Lead: ${customerData.fullName}`,
+          desc: `${customerData.city} • Stage: ${customerData.leadStage}`,
+          type: "lead",
+        });
         await get().fetchDatabaseRecords();
       },
 
@@ -772,12 +789,21 @@ export const useShowroomStore = create<ShowroomStore>()(
               : saleData.paymentType === "Hawala / Bank Transfer"
               ? "BANK_TRANSFER"
               : "CASH",
+            paymentChannel:
+              saleData.paymentType === "Hawala / Bank Transfer"
+                ? "SARRAFI"
+                : "CASH",
             downPaymentUSD: saleData.downPaymentUSD,
             installmentsRemaining: saleData.installmentsRemaining,
         });
         set((state) => ({
           sales: [newSale, ...state.sales],
         }));
+        get().addNotification({
+          title: `Vehicle Sold: ${saleData.vehicleName}`,
+          desc: `Buyer: ${saleData.customerName} ($${saleData.salePriceUSD.toLocaleString()})`,
+          type: "sale",
+        });
         await get().fetchDatabaseRecords();
       },
 
@@ -903,7 +929,10 @@ export const useShowroomStore = create<ShowroomStore>()(
           ...billData,
           id: `bill-${Date.now()}`,
         };
-        await writeRecord(`/api/suppliers/${encodeURIComponent(billData.supplierId)}/bills`, billData);
+        await writeRecord(`/api/suppliers/${encodeURIComponent(billData.supplierId)}/bills`, {
+          ...billData,
+          exchangeRate: get().exchangeRate,
+        });
         set((state) => ({
           suppliers: state.suppliers.map((s) =>
             s.id === billData.supplierId
@@ -963,16 +992,6 @@ export const useShowroomStore = create<ShowroomStore>()(
         await writeRecord("/api/invoices", invoiceData);
         set((state) => ({
           invoices: [newInvoice, ...state.invoices],
-        }));
-        await get().fetchDatabaseRecords();
-      },
-
-      updateInvoiceStatus: async (invoiceId, status) => {
-        await writeRecord("/api/invoices", { invoiceId, status }, "PATCH");
-        set((state) => ({
-          invoices: state.invoices.map((inv) =>
-            inv.id === invoiceId ? { ...inv, status } : inv
-          ),
         }));
         await get().fetchDatabaseRecords();
       },
@@ -1164,6 +1183,23 @@ export const useShowroomStore = create<ShowroomStore>()(
 
       // Showroom Activity Notifications
       notifications: [],
+      addNotification: ({ title, desc, type }) =>
+        set((state) => ({
+          notifications: [
+            {
+              id: `notif-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+              title,
+              desc,
+              time: new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              read: false,
+              type,
+            },
+            ...state.notifications,
+          ].slice(0, 50),
+        })),
       markNotificationRead: (id) =>
         set((state) => ({
           notifications: state.notifications.map((n) =>
@@ -1175,19 +1211,40 @@ export const useShowroomStore = create<ShowroomStore>()(
           notifications: state.notifications.map((n) => ({ ...n, read: true })),
         })),
 
-      // Live PostgreSQL Database Sync (preserves cached/initial records when DB is offline or unconfigured)
-      fetchDatabaseRecords: async () => {
+      // Live PostgreSQL Database Sync (role-aware; preserves cached/initial records when DB is offline or unconfigured)
+      fetchDatabaseRecords: async (roleOverride) => {
         try {
-          const [vehRes, custRes, saleRes, invRes, vouchRes, suppRes, expRes, jeRes, acctRes] = await Promise.all([
-            fetch("/api/vehicles").then((r) => r.json()).catch(() => null),
-            fetch("/api/customers").then((r) => r.json()).catch(() => null),
-            fetch("/api/sales").then((r) => r.json()).catch(() => null),
-            fetch("/api/invoices").then((r) => r.json()).catch(() => null),
-            fetch("/api/vouchers").then((r) => r.json()).catch(() => null),
-            fetch("/api/suppliers").then((r) => r.json()).catch(() => null),
-            fetch("/api/expenses").then((r) => r.json()).catch(() => null),
-            fetch("/api/journal-entries").then((r) => r.json()).catch(() => null),
-            fetch("/api/accounts").then((r) => r.json()).catch(() => null),
+          const effectiveRole = roleOverride || get().currentRole;
+          const canAccessAccounting =
+            effectiveRole === "SuperAdmin" || effectiveRole === "Accountant";
+
+          const fetchJson = (url: string) =>
+            fetch(url)
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null);
+
+          const [
+            vehRes,
+            custRes,
+            saleRes,
+            invRes,
+            vouchRes,
+            suppRes,
+            expRes,
+            jeRes,
+            acctRes,
+            alertsRes,
+          ] = await Promise.all([
+            fetchJson("/api/vehicles"),
+            fetchJson("/api/customers"),
+            fetchJson("/api/sales"),
+            fetchJson("/api/invoices"),
+            canAccessAccounting ? fetchJson("/api/vouchers") : Promise.resolve(null),
+            canAccessAccounting ? fetchJson("/api/suppliers") : Promise.resolve(null),
+            canAccessAccounting ? fetchJson("/api/expenses") : Promise.resolve(null),
+            canAccessAccounting ? fetchJson("/api/journal-entries") : Promise.resolve(null),
+            canAccessAccounting ? fetchJson("/api/accounts") : Promise.resolve(null),
+            canAccessAccounting ? fetchJson("/api/alerts") : Promise.resolve(null),
           ]);
 
           if (vehRes?.success && Array.isArray(vehRes.data)) {
@@ -1412,6 +1469,60 @@ export const useShowroomStore = create<ShowroomStore>()(
 
           if (acctRes?.success && Array.isArray(acctRes.data)) {
             set({ accounts: acctRes.data });
+          }
+
+          if (alertsRes?.success && alertsRes.data) {
+            const existingById = new Map(
+              get().notifications.map((n) => [n.id, n])
+            );
+            const alertItems: ShowroomStore["notifications"] = [];
+
+            for (const item of alertsRes.data.transit || []) {
+              const id = `alert-transit-${item.id}`;
+              alertItems.push({
+                id,
+                title: `Stale Transit: ${item.make} ${item.model}`,
+                desc: `Stock #${item.stockNumber} in transit > 30 days`,
+                time: item.statusChangedAt
+                  ? new Date(item.statusChangedAt).toISOString().split("T")[0]
+                  : "Alert",
+                read: existingById.get(id)?.read ?? false,
+                type: "customs",
+              });
+            }
+
+            for (const inst of alertsRes.data.installments || []) {
+              const id = `alert-inst-${inst.id}`;
+              alertItems.push({
+                id,
+                title: `Overdue Installment: ${inst.customerName}`,
+                desc: `Contract ${inst.contractNumber} • $${Number(inst.amount || 0).toLocaleString()}`,
+                time: inst.dueDate
+                  ? new Date(inst.dueDate).toISOString().split("T")[0]
+                  : "Overdue",
+                read: existingById.get(id)?.read ?? false,
+                type: "sale",
+              });
+            }
+
+            for (const lead of alertsRes.data.followUps || []) {
+              const id = `alert-lead-${lead.id}`;
+              alertItems.push({
+                id,
+                title: `Lead Follow-Up Needed: ${lead.fullName}`,
+                desc: `Phone ${lead.phone} • Stage: ${lead.leadStage}`,
+                time: lead.updatedAt
+                  ? new Date(lead.updatedAt).toISOString().split("T")[0]
+                  : "Follow-up",
+                read: existingById.get(id)?.read ?? false,
+                type: "lead",
+              });
+            }
+
+            const manualItems = get().notifications.filter(
+              (n) => !n.id.startsWith("alert-")
+            );
+            set({ notifications: [...alertItems, ...manualItems].slice(0, 50) });
           }
         } catch {
           // Using cached showroom state when database is offline

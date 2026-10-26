@@ -2,26 +2,32 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import QRCode from "qrcode";
 import { InvoiceRecord } from "@/lib/mock-data";
+import { useShowroomStore, DEFAULT_BRANDING } from "@/store/useShowroomStore";
 
 /**
- * Generates an SVG/Data-URL QR code for an invoice record.
+ * Escapes untrusted strings prior to HTML template insertion to prevent DOM XSS.
+ */
+export function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Generates an SVG/Data-URL QR code for an invoice record pointing to /verify.
  */
 async function generateInvoiceQRCode(invoice: InvoiceRecord): Promise<string> {
-  const qrPayload = JSON.stringify({
-    type: "COMMERCIAL_INVOICE",
-    inv: invoice.invoiceNumber,
-    buyer: invoice.customerName,
-    tazkira: invoice.customerTazkira || "N/A",
-    vin: invoice.vin || "N/A",
-    stock: invoice.vehicleStock || "N/A",
-    totalUSD: invoice.totalUSD,
-    totalAFN: invoice.totalAFN,
-    date: invoice.issueDate,
-    dealer: "Sadozai Motors Herat - License #49912",
-  });
+  const origin =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : "https://ariamotors.af";
+  const verifyTarget = `${origin}/verify?vin=${encodeURIComponent(invoice.invoiceNumber)}`;
 
   try {
-    return await QRCode.toDataURL(qrPayload, {
+    return await QRCode.toDataURL(verifyTarget, {
       width: 180,
       margin: 1,
       color: {
@@ -37,11 +43,12 @@ async function generateInvoiceQRCode(invoice: InvoiceRecord): Promise<string> {
 
 /**
  * Creates a pristine, print-styled DOM element for an invoice
- * that renders beautifully into a PDF canvas.
+ * that renders cleanly into a PDF canvas with dynamic branding and XSS-safe escaping.
  */
 async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDivElement> {
   const qrUrl = await generateInvoiceQRCode(invoice);
-  const exchangeRate = invoice.exchangeRate || 70.5;
+  const exchangeRate = Number(invoice.exchangeRate) || 70.5;
+  const branding = useShowroomStore.getState().branding || DEFAULT_BRANDING;
 
   const container = document.createElement("div");
   container.id = `temp-pdf-invoice-${Date.now()}`;
@@ -52,28 +59,29 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
   container.style.backgroundColor = "#ffffff";
   container.style.color = "#0f172a";
   container.style.padding = "36px 40px";
-  container.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  container.style.fontFamily =
+    "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
   container.style.boxSizing = "border-box";
   container.style.zIndex = "-1000";
 
-  const itemsHtml = invoice.items
+  const itemsHtml = (invoice.items || [])
     .map(
       (item, idx) => `
       <tr style="border-bottom: 1px solid #e2e8f0;">
         <td style="padding: 10px 14px; font-family: monospace; color: #64748b; font-size: 12px;">${idx + 1}</td>
         <td style="padding: 10px 14px;">
-          <div style="font-weight: 700; font-size: 13px; color: #0f172a;">${item.description}</div>
+          <div style="font-weight: 700; font-size: 13px; color: #0f172a;">${escapeHtml(item.description)}</div>
           ${
             item.descriptionDari
-              ? `<div style="font-size: 11px; color: #64748b; font-family: Tahoma, Arial, sans-serif; direction: rtl; text-align: right; margin-top: 2px;">${item.descriptionDari}</div>`
+              ? `<div style="font-size: 11px; color: #64748b; font-family: Tahoma, Arial, sans-serif; direction: rtl; text-align: right; margin-top: 2px;">${escapeHtml(item.descriptionDari)}</div>`
               : ""
           }
         </td>
         <td style="padding: 10px 14px; text-align: right; font-family: monospace; font-weight: 700; font-size: 13px; color: #0f172a;">
-          $${item.amountUSD.toLocaleString()}
+          $${Number(item.amountUSD || 0).toLocaleString()}
         </td>
         <td style="padding: 10px 14px; text-align: right; font-family: monospace; font-size: 12px; color: #475569;">
-          ؋${Math.round(item.amountUSD * exchangeRate).toLocaleString()}
+          ؋${Math.round(Number(item.amountUSD || 0) * exchangeRate).toLocaleString()}
         </td>
       </tr>
     `
@@ -85,41 +93,41 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
     <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 18px; margin-bottom: 20px;">
       <div>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 40px; height: 40px; background-color: #0f172a; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #38bdf8; font-weight: 900; font-size: 20px;">
-            SM
+          <div style="width: 40px; height: 40px; background-color: #0f172a; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #38bdf8; font-weight: 900; font-size: 16px;">
+            ${escapeHtml(branding.dealershipShortCode || "ARI")}
           </div>
           <div>
             <h1 style="margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; color: #0f172a;">
-              Sadozai Motors Herat
+              ${escapeHtml(branding.dealershipName)}
             </h1>
             <div style="font-size: 12px; font-weight: 700; color: #64748b; direction: rtl; text-align: left; font-family: Tahoma, Arial, sans-serif;">
-              نندارتون و شرکت وارداتی اتومبیل سدوزی هرات
+              ${escapeHtml(branding.dealershipNameFa)}
             </div>
           </div>
         </div>
         <p style="margin: 8px 0 0 0; font-size: 11px; color: #475569; max-width: 440px; line-height: 1.4;">
-          Main Boulevard, Bagh-e-Azadi, Herat, Afghanistan • Registered Dealership License #49912<br />
-          Islam Qala Port Customs Cleared • Direct Vehicle Imports
+          ${escapeHtml(branding.address)} • ${escapeHtml(branding.licenseNumber)}<br />
+          ${escapeHtml(branding.customsTerminalBranch)} • TIN: ${escapeHtml(branding.tinNumber)}
         </p>
         <p style="margin: 4px 0 0 0; font-size: 11px; font-family: monospace; color: #64748b;">
-          Tel: +93 79 910 2030 | WhatsApp: +93 79 912 3456
+          Tel: ${escapeHtml(branding.phone)} | WhatsApp: ${escapeHtml(branding.whatsapp)}
         </p>
       </div>
 
       <div style="text-align: right;">
         <div style="display: inline-block; background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 14px; font-family: monospace; font-size: 13px; font-weight: 800; color: #0f172a;">
-          ${invoice.invoiceNumber}
+          ${escapeHtml(invoice.invoiceNumber)}
         </div>
         <div style="margin-top: 8px; font-size: 11px; color: #64748b; line-height: 1.6;">
-          <div>Issue Date: <strong style="color: #0f172a; font-family: monospace;">${invoice.issueDate}</strong></div>
+          <div>Issue Date: <strong style="color: #0f172a; font-family: monospace;">${escapeHtml(invoice.issueDate)}</strong></div>
           ${
             invoice.dueDate
-              ? `<div>Due Date: <strong style="color: #0f172a; font-family: monospace;">${invoice.dueDate}</strong></div>`
+              ? `<div>Due Date: <strong style="color: #0f172a; font-family: monospace;">${escapeHtml(invoice.dueDate)}</strong></div>`
               : ""
           }
           <div>Status: <span style="display: inline-block; padding: 1px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; background-color: ${
             invoice.status === "Paid" ? "#dcfce7" : "#fef3c7"
-          }; color: ${invoice.status === "Paid" ? "#15803d" : "#b45309"};">${invoice.status}</span></div>
+          }; color: ${invoice.status === "Paid" ? "#15803d" : "#b45309"};">${escapeHtml(invoice.status)}</span></div>
         </div>
       </div>
     </div>
@@ -127,7 +135,7 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
     <!-- Document Title Banner -->
     <div style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border-radius: 8px; padding: 10px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
       <span style="font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-        Official Commercial Tax Invoice & Sales Deed
+        Official Commercial Tax Invoice &amp; Sales Deed
       </span>
       <span style="font-size: 12px; font-family: Tahoma, Arial, sans-serif; direction: rtl; color: #94a3b8; font-weight: 600;">
         فاکتور رسمی تجارتی و سند مالیاتی معامله
@@ -142,19 +150,19 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
           Billed To / مشخصات خریدار
         </div>
         <div style="font-size: 14px; font-weight: 800; color: #0f172a;">
-          ${invoice.customerName}
+          ${escapeHtml(invoice.customerName)}
         </div>
         <div style="font-size: 12px; color: #334155; font-family: monospace; margin-top: 3px;">
-          Phone: ${invoice.customerPhone}
+          Phone: ${escapeHtml(invoice.customerPhone)}
         </div>
         ${
           invoice.customerTazkira
-            ? `<div style="font-size: 11px; color: #64748b; font-family: monospace; margin-top: 2px;">Tazkira ID: ${invoice.customerTazkira}</div>`
+            ? `<div style="font-size: 11px; color: #64748b; font-family: monospace; margin-top: 2px;">Tazkira ID: ${escapeHtml(invoice.customerTazkira)}</div>`
             : ""
         }
         ${
           invoice.customerAddress
-            ? `<div style="font-size: 11px; color: #64748b; margin-top: 2px;">Address: ${invoice.customerAddress}</div>`
+            ? `<div style="font-size: 11px; color: #64748b; margin-top: 2px;">Address: ${escapeHtml(invoice.customerAddress)}</div>`
             : ""
         }
       </div>
@@ -165,16 +173,16 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
           Vehicle Details / مشخصات موتر
         </div>
         <div style="font-size: 14px; font-weight: 800; color: #0f172a;">
-          ${invoice.vehicleDesc || "Imported Automobile"}
+          ${escapeHtml(invoice.vehicleDesc || "Imported Automobile")}
         </div>
         <div style="font-size: 12px; color: #334155; font-family: monospace; margin-top: 3px;">
-          Stock Lot #: <strong>${invoice.vehicleStock || "N/A"}</strong>
+          Stock Lot #: <strong>${escapeHtml(invoice.vehicleStock || "N/A")}</strong>
         </div>
         <div style="font-size: 11px; color: #64748b; font-family: monospace; margin-top: 2px;">
-          VIN / Chassis: ${invoice.vin || "N/A"}
+          VIN / Chassis: ${escapeHtml(invoice.vin || "N/A")}
         </div>
         <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
-          Payment Channel: ${invoice.paymentMethod}
+          Payment Channel: ${escapeHtml(invoice.paymentMethod)}
         </div>
       </div>
     </div>
@@ -210,13 +218,13 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
             Digitally Verified ERP Invoice
           </div>
           <div style="font-size: 10px; color: #475569; margin-top: 2px;">
-            Islam Qala Port Customs Cleared & Registered
+            ${escapeHtml(branding.customsTerminalBranch)}
           </div>
           <div style="font-size: 10px; color: #64748b; font-family: monospace; margin-top: 2px;">
             Exchange Rate: $1 USD = ${exchangeRate} AFN
           </div>
           <div style="font-size: 9px; color: #0284c7; margin-top: 4px; font-weight: 600;">
-            Scan QR code to verify authenticity
+            Scan QR code to verify authenticity online
           </div>
         </div>
       </div>
@@ -225,14 +233,14 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
       <div style="width: 280px; font-size: 12px;">
         <div style="display: flex; justify-content: space-between; padding: 3px 0; color: #475569;">
           <span>Subtotal (مجموع اقلام):</span>
-          <span style="font-family: monospace; font-weight: 600;">$${invoice.subtotalUSD.toLocaleString()} USD</span>
+          <span style="font-family: monospace; font-weight: 600;">$${Number(invoice.subtotalUSD || 0).toLocaleString()} USD</span>
         </div>
         ${
           invoice.customsFeeUSD && invoice.customsFeeUSD > 0
             ? `
           <div style="display: flex; justify-content: space-between; padding: 3px 0; color: #475569;">
             <span>Customs Duty (محصول گمرکی):</span>
-            <span style="font-family: monospace; font-weight: 600;">$${invoice.customsFeeUSD.toLocaleString()} USD</span>
+            <span style="font-family: monospace; font-weight: 600;">$${Number(invoice.customsFeeUSD).toLocaleString()} USD</span>
           </div>
         `
             : ""
@@ -242,7 +250,7 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
             ? `
           <div style="display: flex; justify-content: space-between; padding: 3px 0; color: #475569;">
             <span>Traffic Registration (ثبت ترافیک):</span>
-            <span style="font-family: monospace; font-weight: 600;">$${invoice.registrationFeeUSD.toLocaleString()} USD</span>
+            <span style="font-family: monospace; font-weight: 600;">$${Number(invoice.registrationFeeUSD).toLocaleString()} USD</span>
           </div>
         `
             : ""
@@ -252,7 +260,7 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
             ? `
           <div style="display: flex; justify-content: space-between; padding: 3px 0; color: #16a34a; font-weight: 600;">
             <span>Special Discount (تخفیف):</span>
-            <span style="font-family: monospace;">-$${invoice.discountUSD.toLocaleString()} USD</span>
+            <span style="font-family: monospace;">-$${Number(invoice.discountUSD).toLocaleString()} USD</span>
           </div>
         `
             : ""
@@ -261,10 +269,10 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
           <span style="font-size: 13px; font-weight: 800; color: #0f172a;">Grand Total:</span>
           <div style="text-align: right;">
             <div style="font-size: 18px; font-weight: 900; font-family: monospace; color: #0f172a;">
-              $${invoice.totalUSD.toLocaleString()} USD
+              $${Number(invoice.totalUSD || 0).toLocaleString()} USD
             </div>
             <div style="font-size: 12px; font-weight: 700; font-family: monospace; color: #16a34a; margin-top: 1px;">
-              ؋${invoice.totalAFN.toLocaleString()} AFN
+              ؋${Number(invoice.totalAFN || 0).toLocaleString()} AFN
             </div>
           </div>
         </div>
@@ -275,22 +283,22 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 36px; border-top: 1px dashed #cbd5e1; padding-top: 22px; margin-top: 10px; font-size: 11px; text-align: center;">
       <div>
         <div style="height: 38px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-style: italic; font-size: 10px;">
-          Official Dealership Seal & Stamp
+          Official Dealership Seal &amp; Stamp
         </div>
         <div style="border-top: 1px solid #94a3b8; padding-top: 4px; font-weight: 700; color: #0f172a;">
-          Haji Ahmad Shah (Sadozai Motors CEO)
+          ${escapeHtml(branding.authorizedSignatory)} (${escapeHtml(branding.signatoryTitle)})
         </div>
         <div style="font-size: 10px; color: #64748b; font-family: Tahoma, Arial, sans-serif;">
-          مهر و امضاء مدیریت عمومی نندارتون موتر سدوزی
+          مهر و امضاء مدیریت عمومی ${escapeHtml(branding.dealershipNameFa)}
         </div>
       </div>
 
       <div>
         <div style="height: 38px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-style: italic; font-size: 10px;">
-          Buyer Signature & Fingerprint
+          Buyer Signature &amp; Fingerprint
         </div>
         <div style="border-top: 1px solid #94a3b8; padding-top: 4px; font-weight: 700; color: #0f172a;">
-          ${invoice.customerName}
+          ${escapeHtml(invoice.customerName)}
         </div>
         <div style="font-size: 10px; color: #64748b; font-family: Tahoma, Arial, sans-serif;">
           امضاء و شست خریدار محترم
@@ -300,7 +308,7 @@ async function createInvoicePrintElement(invoice: InvoiceRecord): Promise<HTMLDi
 
     <!-- Footer Copyright & Legal -->
     <div style="margin-top: 28px; padding-top: 10px; border-top: 1px solid #f1f5f9; text-align: center; font-size: 9px; color: #94a3b8; font-family: monospace;">
-      Official Computerized Dealership Tax Invoice • Generated by Sadozai Motors Dealership ERP System • Herat, Afghanistan
+      Official Computerized Dealership Tax Invoice • Generated by ${escapeHtml(branding.dealershipName)} ERP System • ${escapeHtml(branding.address)}
     </div>
   `;
 

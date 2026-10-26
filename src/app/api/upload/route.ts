@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { requireApiRole } from "@/lib/api-auth";
 
+const MAX_FILES = 12;
+const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB per photo
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
+
 export async function POST(request: Request): Promise<NextResponse> {
   const unauthorized = await requireApiRole(["ADMIN", "SALES"]);
   if (unauthorized) return unauthorized;
@@ -22,6 +31,33 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     if (uploadList.length === 0) {
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
+    }
+
+    if (uploadList.length > MAX_FILES) {
+      return NextResponse.json(
+        { error: `Cannot upload more than ${MAX_FILES} photos at once` },
+        { status: 400 }
+      );
+    }
+
+    for (const file of uploadList) {
+      const mime = (file.type || "").toLowerCase();
+      if (!ALLOWED_MIME_TYPES.has(mime)) {
+        return NextResponse.json(
+          {
+            error: `Unsupported file type "${file.type || "unknown"}". Only JPEG, PNG, and WebP images are permitted.`,
+          },
+          { status: 400 }
+        );
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        return NextResponse.json(
+          {
+            error: `File "${file.name}" exceeds the 5 MB per-photo limit.`,
+          },
+          { status: 413 }
+        );
+      }
     }
 
     if (!token) {

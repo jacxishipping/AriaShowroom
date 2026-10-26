@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -47,8 +47,119 @@ export function VerifyContent({ initialQuery }: { initialQuery?: string } = {}) 
       ? branding.dealershipNamePs || branding.dealershipName
       : branding.dealershipName;
 
-  // Exact match across sales contracts, invoices, and vehicles
-  const matchedSale = useMemo(() => {
+  const [remoteLookup, setRemoteLookup] = useState<{
+    loading: boolean;
+    mode: "idle" | "live" | "fallback";
+    vehicle: {
+      stockNumber: string;
+      vin: string;
+      year: number;
+      make: string;
+      model: string;
+      trim: string;
+      color: string;
+      mileage: number;
+      originCountry: string;
+      steering: string;
+      customsClearance: string;
+      cleanTitle: boolean;
+      status: string;
+      yardLocation?: string | null;
+    } | null;
+    sale: {
+      contractNumber: string;
+      customerName: string;
+      vehicleName: string;
+      saleDate: string;
+    } | null;
+    invoice: {
+      invoiceNumber: string;
+      customerName: string;
+      vehicleDesc: string | null;
+      vin: string | null;
+      issueDate: string;
+    } | null;
+  }>({
+    loading: false,
+    mode: "idle",
+    vehicle: null,
+    sale: null,
+    invoice: null,
+  });
+
+  useEffect(() => {
+    if (!activeHash || activeHash.length < 2) {
+      setRemoteLookup({
+        loading: false,
+        mode: "idle",
+        vehicle: null,
+        sale: null,
+        invoice: null,
+      });
+      return;
+    }
+
+    const controller = new AbortController();
+    setRemoteLookup((prev) => ({ ...prev, loading: true }));
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/verify?code=${encodeURIComponent(activeHash)}`,
+          { signal: controller.signal }
+        );
+        const payload = await res.json().catch(() => null);
+        if (controller.signal.aborted) return;
+
+        if (payload?.fallback) {
+          setRemoteLookup({
+            loading: false,
+            mode: "fallback",
+            vehicle: null,
+            sale: null,
+            invoice: null,
+          });
+          return;
+        }
+
+        if (res.ok && payload?.success) {
+          setRemoteLookup({
+            loading: false,
+            mode: "live",
+            vehicle: payload.vehicle || null,
+            sale: payload.sale || null,
+            invoice: payload.invoice || null,
+          });
+          return;
+        }
+
+        setRemoteLookup({
+          loading: false,
+          mode: "live",
+          vehicle: null,
+          sale: null,
+          invoice: null,
+        });
+      } catch {
+        if (controller.signal.aborted) return;
+        setRemoteLookup({
+          loading: false,
+          mode: "fallback",
+          vehicle: null,
+          sale: null,
+          invoice: null,
+        });
+      }
+    }, 200);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [activeHash]);
+
+  // Exact match across sales contracts, invoices, and vehicles (live API first, local fallback when DB is offline)
+  const localMatchedSale = useMemo(() => {
     if (!activeHash) return null;
     const norm = activeHash.toLowerCase();
     return (
@@ -60,7 +171,7 @@ export function VerifyContent({ initialQuery }: { initialQuery?: string } = {}) 
     );
   }, [sales, activeHash]);
 
-  const matchedInvoice = useMemo(() => {
+  const localMatchedInvoice = useMemo(() => {
     if (!activeHash) return null;
     const norm = activeHash.toLowerCase();
     return (
@@ -72,7 +183,7 @@ export function VerifyContent({ initialQuery }: { initialQuery?: string } = {}) 
     );
   }, [invoices, activeHash]);
 
-  const matchedVehicle = useMemo(() => {
+  const localMatchedVehicle = useMemo(() => {
     if (!activeHash) return null;
     const norm = activeHash.toLowerCase();
     return (
@@ -81,13 +192,23 @@ export function VerifyContent({ initialQuery }: { initialQuery?: string } = {}) 
           v.vin.toLowerCase() === norm ||
           v.stockNumber.toLowerCase() === norm ||
           v.id.toLowerCase() === norm ||
-          (matchedSale && matchedSale.stockNumber === v.stockNumber) ||
-          (matchedInvoice && matchedInvoice.vehicleStock === v.stockNumber)
+          (localMatchedSale && localMatchedSale.stockNumber === v.stockNumber) ||
+          (localMatchedInvoice && localMatchedInvoice.vehicleStock === v.stockNumber)
       ) || null
     );
-  }, [vehicles, activeHash, matchedSale, matchedInvoice]);
+  }, [vehicles, activeHash, localMatchedSale, localMatchedInvoice]);
 
-  const isVerified = Boolean(activeHash && (matchedVehicle || matchedSale || matchedInvoice));
+  const matchedSale =
+    remoteLookup.mode === "live" ? remoteLookup.sale : localMatchedSale;
+  const matchedInvoice =
+    remoteLookup.mode === "live" ? remoteLookup.invoice : localMatchedInvoice;
+  const matchedVehicle =
+    remoteLookup.mode === "live" ? remoteLookup.vehicle : localMatchedVehicle;
+
+  const isVerifying = Boolean(activeHash && activeHash.length >= 2 && remoteLookup.loading);
+  const isVerified = Boolean(
+    activeHash && !isVerifying && (matchedVehicle || matchedSale || matchedInvoice)
+  );
 
   return (
     <div className="min-h-screen bg-[#F4F3EF] dark:bg-[#0A0C10] py-6 px-4 sm:px-6 lg:px-8 print:p-0 print:bg-white text-slate-900 dark:text-slate-100">
@@ -274,8 +395,21 @@ export function VerifyContent({ initialQuery }: { initialQuery?: string } = {}) 
           </div>
         )}
 
+        {/* STATE 1.5: Verifying Lookup in Progress */}
+        {activeHash && isVerifying && (
+          <div className="rounded-md border border-[#D8D5CD] dark:border-[#242A38] bg-white dark:bg-[#11141B] p-8 text-center">
+            <p className="text-xs font-mono uppercase tracking-wider text-slate-500 animate-pulse">
+              {language === "fa"
+                ? "در حال استعلام از دفتر ثبت رسمی..."
+                : language === "ps"
+                ? "د رسمي ثبت څخه پلټنه روانه ده..."
+                : "Querying Official Notary Registry..."}
+            </p>
+          </div>
+        )}
+
         {/* STATE 2: Unmatched / Fraud Warning */}
-        {activeHash && !isVerified && (
+        {activeHash && !isVerifying && !isVerified && (
           <div className="rounded-md border-2 border-rose-500/50 bg-white dark:bg-[#11141B] overflow-hidden">
             <div className="p-5 bg-rose-500/10 border-b border-rose-500/30 flex items-start gap-4">
               <div className="h-10 w-10 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0">

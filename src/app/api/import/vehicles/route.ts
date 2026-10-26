@@ -4,6 +4,7 @@ import { prisma, isDatabaseConfigured, ensureDatabaseSchemaSynced } from "@/lib/
 import { requireApiRole } from "@/lib/api-auth";
 import { parseCsv, parseCsvNumber } from "@/lib/csv";
 import { recordSessionAuditEvent } from "@/lib/audit-log";
+import { createLedgerEntry } from "@/lib/ledger";
 
 export const dynamic = "force-dynamic";
 const MAX_CSV_BYTES = 2 * 1024 * 1024;
@@ -247,11 +248,22 @@ export async function POST(request: Request) {
               currency: "USD",
             },
           });
+          if (landedCost > 0 && created.status !== VehicleStatus.SOLD) {
+            await createLedgerEntry(tx, {
+              entryNumber: `JE-INV-IMP-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+              description: `Imported vehicle inventory asset — ${created.year} ${created.make} ${created.model} (${created.stockNumber})`,
+              reference: created.stockNumber,
+              debitAccount: "1040 - Vehicle Inventory Asset (Lot & Port)",
+              creditAccount: "3010 - Owner Capital & Equity",
+              amountUSD: landedCost,
+              amountAFN: Math.round(landedCost * 70.5),
+            });
+          }
           await recordSessionAuditEvent(tx, {
             action: "VEHICLE_IMPORTED",
             entityType: "Vehicle",
             entityId: created.id,
-            changes: { stockNumber: created.stockNumber, status: created.status },
+            changes: { stockNumber: created.stockNumber, status: created.status, landedCost },
           });
         }
       });

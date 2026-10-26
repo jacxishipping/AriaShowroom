@@ -87,11 +87,7 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
     theming?.glassmorphism,
   ]);
 
-  // Synchronize live PostgreSQL database state via Next.js API routes on mount
-  useEffect(() => {
-    fetchDatabaseRecords();
-  }, [fetchDatabaseRecords]);
-
+  // Synchronize role and role-scoped PostgreSQL records only after session is authenticated
   useEffect(() => {
     if (status === "loading") return;
 
@@ -100,12 +96,17 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
       SALES: "SalesAgent",
       ACCOUNTANT: "Accountant",
     } as const;
-    const role = session?.user
+    const rawRole = session?.user
       ? (session.user as typeof session.user & { role?: keyof typeof roleMap }).role
       : undefined;
+    const resolvedRole = rawRole && rawRole in roleMap ? roleMap[rawRole] : "SalesAgent";
 
-    setCurrentRole(role && role in roleMap ? roleMap[role] : "SalesAgent");
-  }, [session, setCurrentRole, status]);
+    setCurrentRole(resolvedRole);
+
+    if (status === "authenticated" && !isStandaloneRoute) {
+      fetchDatabaseRecords(resolvedRole);
+    }
+  }, [session, status, isStandaloneRoute, setCurrentRole, fetchDatabaseRecords]);
 
   if (isStandaloneRoute) {
     return (
